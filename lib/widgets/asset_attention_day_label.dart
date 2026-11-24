@@ -15,7 +15,8 @@ class AssetAttentionDayLabel extends StatelessWidget {
               '注意',
               maxLines: 1,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 10,
+                height: 1.4,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF78350F),
               ),

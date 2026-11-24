@@ -135,24 +135,74 @@ class SelfDevinControlTowerService {
   static const int _taskPageSize = 1000;
   static const int _maxTaskRows = 3000;
 
+  static const String laneSummaryRpcName = 'get_self_devin_lane_summary';
+
+  static String formatLocalDate(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
   Future<SelfDevinControlTowerSnapshot> load({
     SupabaseClient? supabaseClient,
     bool forceRefreshRuns = false,
   }) async {
     final supabase = supabaseClient ?? Supabase.instance.client;
+    final now = DateTime.now();
     final results = await Future.wait<dynamic>(<Future<dynamic>>[
-      _loadOpenTasks(supabase),
+      _tryLoadLaneSummaries(supabase, now),
       ScheduleTaskRunsRepository.fetch(
         supabaseClient: supabase,
         force: forceRefreshRuns,
       ),
     ]);
 
+    final laneSummaryRows = results[0] as List<Map<String, dynamic>>?;
+    final rawRuns =
+        List<Map<String, dynamic>>.from(results[1] as List<dynamic>);
+    if (laneSummaryRows != null) {
+      return buildSnapshotFromLaneSummaries(
+        rawLaneSummaries: laneSummaryRows,
+        rawRuns: rawRuns,
+        now: now,
+      );
+    }
+
+    final rawTasks = await _loadOpenTasks(supabase);
     return buildSnapshot(
-      rawTasks: List<Map<String, dynamic>>.from(results[0] as List<dynamic>),
-      rawRuns: List<Map<String, dynamic>>.from(results[1] as List<dynamic>),
-      now: DateTime.now(),
+      rawTasks: rawTasks,
+      rawRuns: rawRuns,
+      now: now,
     );
+  }
+
+  Future<List<Map<String, dynamic>>?> _tryLoadLaneSummaries(
+    SupabaseClient supabase,
+    DateTime now,
+  ) async {
+    try {
+      final dynamic response = await supabase.rpc(
+        laneSummaryRpcName,
+        params: <String, dynamic>{'p_today': formatLocalDate(now)},
+      );
+      if (response is List && response.isNotEmpty) {
+        final rows = <Map<String, dynamic>>[];
+        for (final dynamic item in response) {
+          if (item is Map) {
+            rows.add(Map<String, dynamic>.from(item));
+          }
+        }
+        final hasKnownLane = rows.any(
+          (Map<String, dynamic> row) =>
+              _normalizeLane(row['lane_id']?.toString()) != null,
+        );
+        if (hasKnownLane) return rows;
+      }
+    } catch (_) {
+      // Fail-open fallback to raw wbs_tasks pagination while RPC rolls out.
+    }
+    return null;
   }
 
   Future<List<Map<String, dynamic>>> _loadOpenTasks(
@@ -195,7 +245,52 @@ class SelfDevinControlTowerService {
     final runRecords = rawRuns.map(_RunRecord.fromMap).toList();
     final loops = _buildLoops(runRecords, effectiveNow);
     final lanes = _buildLanes(taskRecords, effectiveNow);
+    return _composeSnapshot(lanes: lanes, loops: loops);
+  }
 
+  static SelfDevinControlTowerSnapshot buildSnapshotFromLaneSummaries({
+    required List<Map<String, dynamic>> rawLaneSummaries,
+    required List<Map<String, dynamic>> rawRuns,
+    DateTime? now,
+  }) {
+    final effectiveNow = now ?? DateTime.now();
+    final byLane = <String, Map<String, dynamic>>{};
+    for (final Map<String, dynamic> row in rawLaneSummaries) {
+      final normalized = _normalizeLane(row['lane_id']?.toString());
+      if (normalized != null) {
+        byLane.putIfAbsent(normalized, () => row);
+      }
+    }
+
+    int nonNegativeInt(dynamic value) {
+      final parsed = _toInt(value);
+      return parsed < 0 ? 0 : parsed;
+    }
+
+    final lanes = _laneDefs.map((final _LaneDef def) {
+      final row = byLane[def.id] ?? const <String, dynamic>{};
+      return SelfDevinLaneSnapshot(
+        id: def.id,
+        label: def.label,
+        activeTasks: nonNegativeInt(row['active_tasks']),
+        blockedTasks: nonNegativeInt(row['blocked_tasks']),
+        overdueTasks: nonNegativeInt(row['overdue_tasks']),
+        staleTasks: nonNegativeInt(row['stale_tasks']),
+        featureRequestTasks: nonNegativeInt(row['feature_request_tasks']),
+        highPriorityTasks: nonNegativeInt(row['high_priority_tasks']),
+        averageProgress: nonNegativeInt(row['average_progress']),
+      );
+    }).toList();
+
+    final loops =
+        _buildLoops(rawRuns.map(_RunRecord.fromMap).toList(), effectiveNow);
+    return _composeSnapshot(lanes: lanes, loops: loops);
+  }
+
+  static SelfDevinControlTowerSnapshot _composeSnapshot({
+    required List<SelfDevinLaneSnapshot> lanes,
+    required List<SelfDevinLoopSnapshot> loops,
+  }) {
     final openFeatureRequestCount = lanes.fold<int>(
       0,
       (int sum, SelfDevinLaneSnapshot lane) => sum + lane.featureRequestTasks,
@@ -399,7 +494,8 @@ class SelfDevinControlTowerService {
     if (value == 'vscode') return 'vscode';
     if (value == 'web') return 'web';
     if (value == 'win' || value == 'windows') return 'windows';
-    if (value == 'ps' ||
+    if (value == 'powershell' ||
+        value == 'ps' ||
         value == 'ps1' ||
         value == 'ps2' ||
         value == 'ps3' ||

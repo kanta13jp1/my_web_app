@@ -181,6 +181,7 @@ jobs:
           python scripts/classify_ci_changes_test.py
           python -B scripts/test_classify_debt_read_scope.py
           node --test scripts/test_ci_collection.cjs
+          python scripts/supabase_capacity_plan_test.py
           python -B scripts/check_claude_review_workflow_test.py
           python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
@@ -207,6 +208,7 @@ jobs:
           python scripts/wbs_notify_privacy_test.py
           python scripts/test_paid_ai_policy.py
           python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
+          python scripts/ai_university_rss_manifest_test.py
 
       - name: Test high-risk dual security review
         run: >-
@@ -498,6 +500,17 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
+      - name: Verify web font subsetting and SEO shell handoff tests
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_optimize_web_fonts.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_prerender_seo_routes.py'
+          node --test test/web/seo_shell_handoff.test.cjs
+          node --test test/web/generate_ogp_cards.test.mjs
+
       - name: Verify acquisition measurement audit
         run: |
           python -m unittest discover -s test/scripts -p 'test_seo_measurement_audit.py'
@@ -617,6 +630,39 @@ jobs:
         with:
           web-root: build/web
 
+      - name: Setup Node for build-time OGP cards
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Cache Playwright Chromium for OGP cards
+        id: playwright_cache
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Generate and verify build-time OGP and X social cards
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright_cache.outputs.cache-hit }}
+        run: |
+          if [ ! -d node_modules/@playwright/test ]; then
+            npm ci --ignore-scripts
+          fi
+          # CI uses preinstalled Chrome + repo-bundled NotoSansJP-Regular.ttf; Playwright Chromium is cached fallback only.
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/google-chrome-stable ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            if [ "$PLAYWRIGHT_CACHE_HIT" != "true" ]; then
+              npx playwright install --with-deps chromium
+            else
+              npx playwright install-deps chromium
+            fi
+          fi
+          node scripts/generate_ogp_cards.mjs --out-dir build/web
+
       - name: Check build output
         id: web_build_output
         if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
@@ -627,6 +673,15 @@ jobs:
           fi
           echo "Build successful!"
           ls -la build/web
+
+      - name: Optimize bundled web fonts
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 scripts/optimize_web_fonts.py --build-dir build/web --repo-root . --require-fonts
 
       - name: Build business execution browser fixture
         if: steps.changes.outputs.business_execution == 'true'
@@ -691,7 +746,7 @@ jobs:
         if: steps.changes.outputs.business_execution == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
 
       - name: Install existing Playwright browser dependencies

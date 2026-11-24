@@ -4,12 +4,58 @@ import 'dart:typed_data';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:my_web_app/models/investment_asset.dart';
 import 'package:my_web_app/models/investment_portfolio_history.dart';
 import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 
 void main() {
+  for (final price in <double?>[1200, 0, null]) {
+    testWidgets('investment price timestamp distinguishes value $price',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final pricedAt = price == 1200 ? DateTime.utc(2026, 7, 20, 3, 45) : null;
+      final repository = _FakeInvestmentAssetRepository([
+        _fromDraft(
+          id: 'timestamp-fixture',
+          userId: 'user-1',
+          draft: InvestmentAssetDraft(
+            assetType: InvestmentAssetType.stock,
+            ticker: 'TEST',
+            quantity: 2,
+            buyPriceJpy: 1000,
+            currentPriceJpy: price,
+            lastPricedAt: pricedAt,
+          ),
+        ),
+      ]);
+      await _pumpPanel(tester, repository: repository, userId: 'user-1');
+      final label = tester.widget<Text>(
+        find.byKey(
+          const ValueKey<String>(
+            'investment_asset_price_timestamp_timestamp-fixture',
+          ),
+        ),
+      );
+      if (price == null) {
+        expect(label.data, '価格取得時点: 価格未取得');
+      } else if (pricedAt == null) {
+        expect(label.data, '価格取得時点: 未確認');
+      } else {
+        final localTime =
+            DateFormat('yyyy/MM/dd HH:mm').format(pricedAt.toLocal());
+        expect(label.data, '価格取得時点: $localTime（端末時刻）');
+      }
+      expect(repository.fetchCalls, 1);
+      expect(repository.createCalls, 0);
+      expect(repository.updateCalls, 0);
+      expect(repository.deleteCalls, 0);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('logged-out state does not query the repository', (tester) async {
     final repository = _FakeInvestmentAssetRepository(const []);
 
