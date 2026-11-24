@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
+import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,7 +32,11 @@ Future<void> markFixturePhase(WidgetTester tester, String phase) async {
   });
 }
 
-Future<void> showPage(WidgetTester tester, DateTime today) async {
+Future<void> showPage(
+  WidgetTester tester,
+  DateTime today, {
+  AssetWasteTrainingAiService? wasteTrainingAiService,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: AssetManagementPage(
@@ -40,6 +45,7 @@ Future<void> showPage(WidgetTester tester, DateTime today) async {
         debugInitialAssetData: const {},
         // Keep unrelated automatic AI generation out of this calendar test.
         aiSummaryService: AssetManagementAiSummaryService(aiEnabled: false),
+        wasteTrainingAiService: wasteTrainingAiService,
       ),
     ),
   );
@@ -92,8 +98,16 @@ void main() {
         password: fixturePassword,
       ),
     );
+    var wasteTrainingRequests = 0;
+    final wasteTrainingAiService = AssetWasteTrainingAiService(
+      invoker: (body) async {
+        expect(body['action'], 'provider.chat_auto');
+        wasteTrainingRequests++;
+        return {'success': true, 'text': '合成テストの分析結果'};
+      },
+    );
     await markFixturePhase(tester, 'page_a');
-    await showPage(tester, now);
+    await showPage(tester, now, wasteTrainingAiService: wasteTrainingAiService);
     expect(day, findsOneWidget);
     await tester.ensureVisible(day);
     await tester.tap(day);
@@ -149,5 +163,6 @@ void main() {
     expect(status['rejected_authorized_telemetry'], 1);
     expect(status['rejected_writes'], status['rejected_telemetry']);
     expect(status['rejected_identity'], 0);
+    expect(wasteTrainingRequests, greaterThan(0));
   });
 }

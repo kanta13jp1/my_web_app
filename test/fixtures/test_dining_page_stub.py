@@ -1,6 +1,7 @@
+import io
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import subprocess
 
 import dining_page_stub as fixture
@@ -76,6 +77,37 @@ class SyntheticBackendTest(unittest.TestCase):
         self.assertEqual(errors, [413])
         self.assertEqual(fixture.COUNTS['rejected_writes'], 1)
         self.assertTrue(callable(handler.do_TRACE))
+
+    @patch.object(fixture, 'report_rejection')
+    def test_ai_hub_rejects_oversized_bodies_with_bounded_diagnostics(self, report):
+        request = b'{"action":"provider.chat_auto"}'
+        timed_out = Mock()
+        timed_out.read1.side_effect = TimeoutError
+        for size, stream, category in (
+            (1025, io.BytesIO(request.ljust(1025)), 'provider_chat_auto'),
+            (4096, io.BytesIO(request.ljust(4096)), 'provider_chat_auto'),
+            (4097, io.BytesIO(request.ljust(4097)), None),
+            (1025, io.BytesIO(request), None),
+            (1025, timed_out, None),
+        ):
+            with self.subTest(size=size, category=category, stream=stream):
+                handler = object.__new__(fixture.Handler)
+                handler.headers = {'content-length': str(size)}
+                handler.command = 'POST'
+                handler.path = '/functions/v1/ai-hub'
+                handler.connection = Mock()
+                handler.connection.gettimeout.return_value = 8
+                handler.rfile = stream
+                handler.send_error = Mock()
+                handler._handle()
+                handler.send_error.assert_called_once_with(413)
+                self.assertEqual(report.call_args.kwargs['action_category'], category)
+                if size > 4096:
+                    self.assertEqual(stream.tell(), 0)
+                    handler.connection.settimeout.assert_not_called()
+                else:
+                    handler.connection.settimeout.assert_called_with(8)
+        self.assertEqual(fixture.COUNTS['rejected_writes'], 5)
 
     def test_invalid_length_and_transfer_encoding_are_counted(self):
         for headers in [

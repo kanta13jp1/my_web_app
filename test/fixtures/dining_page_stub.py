@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import subprocess
+from time import monotonic
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -112,7 +113,7 @@ def ai_hub_action_category(body):
         if trace_id == 'savings-life-plan-proposal':
             return 'provider_chat_auto_savings_plan'
         message = payload.get('message')
-        if isinstance(message, str) and message.startswith(
+        if isinstance(message, str) and message.lstrip().startswith(
                 'あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。'):
             return 'provider_chat_auto_waste_training'
     return _AI_HUB_DIAGNOSTIC_ACTIONS.get(action, 'unknown')
@@ -218,6 +219,27 @@ def dispatch(method, target, headers, body=b''):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def _read_rejected_body(self, length):
+        # Diagnostics must not hold the fixture server open on a partial upload.
+        deadline = monotonic() + 1
+        original_timeout = self.connection.gettimeout()
+        body = bytearray()
+        try:
+            while len(body) < length:
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    return None
+                self.connection.settimeout(remaining)
+                chunk = self.rfile.read1(length - len(body))
+                if not chunk:
+                    return None
+                body.extend(chunk)
+        except OSError:
+            return None
+        finally:
+            self.connection.settimeout(original_timeout)
+        return body
+
     def _handle(self):
         raw_length = self.headers.get('content-length', '0')
         if (self.headers.get('transfer-encoding') or len(raw_length) > 6 or
@@ -236,7 +258,9 @@ class Handler(BaseHTTPRequestHandler):
                 # This server only accepts synthetic loopback traffic in an isolated test.
                 # Classify known actions in a bounded body without logging its contents.
                 if self.command == 'POST' and path.partition('?')[0] == '/functions/v1/ai-hub' and length <= 4096:
-                    action_category = ai_hub_action_category(self.rfile.read(length))
+                    rejected_body = self._read_rejected_body(length)
+                    if rejected_body is not None:
+                        action_category = ai_hub_action_category(rejected_body)
                 report_rejection(self.command, path, 'oversize_body', length,
                                  action_category=action_category)
             self.send_error(413)
