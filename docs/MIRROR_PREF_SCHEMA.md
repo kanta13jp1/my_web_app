@@ -19,6 +19,7 @@
 | `main_account_id` | `{id: '<accountId>'}` | 使用可能額の基準となるメインバンク口座ID | `_mirrorMainAccount` | `_restoreMainAccountFromMirror` |
 | `watchlist_entries` | `{entries: [{assetType, group, memo, addedAt}]}` | ウォッチリスト項目(注目資産+グループ+メモ) | `_mirrorWatchlist` | `_restoreWatchlistFromMirror` |
 | `watchlist_entries_deleted` | `{ids:[assetType]}` | ウォッチリスト項目の削除tombstone(clear伝播 / union マージでの復活防止) | `_mirrorWatchlistDeleted` | `_pullWatchlistDeleted` |
+| `external_points_v1` | `{version: 1, records: [{id, programName, observedAt, balanceAfter, deltaPoints, ...}]}` | 京王ポイント等の外部ポイント記録履歴・残高(純資産・支出計上外) | `_saveExternalPoints` | `_loadExternalPoints` |
 
 > 入金予定の実体は別テーブル `asset_expected_inflow_items`(本表の対象外)。
 

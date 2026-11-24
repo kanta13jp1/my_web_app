@@ -85,5 +85,100 @@ class ProductionObservabilityMonitorTest(unittest.TestCase):
         self.assertEqual(first["alerts"][-1]["source"], "manual_validation")
 
 
+
+class AlertRoutingTest(unittest.TestCase):
+    def issue(self, number, **overrides):
+        value = {"number": number, "state": "open",
+                 "title": "[Alert][Observability] Production telemetry threshold breach",
+                 "body": "[observability-dedupe:a2126f97a0de97c3]"}
+        value.update(overrides)
+        return value
+
+    def test_dashboard_is_never_alert_destination(self):
+        dashboard = self.issue(5101, title="[Dashboard][Observability] Production telemetry",
+                               body="[observability-dashboard:v1]\n[observability-dedupe:0525f6bf8608751b]")
+        self.assertEqual(monitor.select_alert_issue([dashboard, self.issue(5102)]), 5102)
+
+    def test_oldest_canonical_survives_changed_fingerprint_and_order(self):
+        newer = self.issue(5402, body="[observability-dedupe:0525f6bf8608751b]")
+        self.assertEqual(monitor.select_alert_issue([newer, self.issue(5102)]), 5102)
+
+    def test_closed_pr_missing_marker_and_fuzzy_title_excluded(self):
+        invalid = [self.issue(1, state="closed"), self.issue(2, pull_request={}),
+                   self.issue(3, body=None), self.issue(4, title="unrelated"),
+                   self.issue(5, body="text [observability-dedupe:a2126f97a0de97c3]"),
+                   self.issue(6, body="[observability-dashboard:v1]\n[observability-dedupe:a2126f97a0de97c3]")]
+        self.assertIsNone(monitor.select_alert_issue(invalid))
+
+    def test_validation_and_production_are_separate(self):
+        validation = self.issue(5000, title="[Validation][Observability] Dedupe alert live proof")
+        issues = [validation, self.issue(5102)]
+        self.assertEqual(monitor.select_alert_issue(issues, forced=True), 5000)
+        self.assertEqual(monitor.select_alert_issue(issues), 5102)
+        self.assertIsNone(monitor.select_alert_issue([self.issue(5102)], forced=True))
+
+    def test_load_landing_trial_failures_handles_rows_and_missing(self):
+        self.assertEqual(monitor.load_landing_trial_failures(None), 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "missing.json"
+            self.assertEqual(monitor.load_landing_trial_failures(missing), 0)
+            logs_path = Path(tmp) / "landing-trial.json"
+            logs_path.write_text(
+                json.dumps({"result": [{"timestamp": "2026-11-23T09:11:35Z"}]}),
+                encoding="utf-8",
+            )
+            self.assertEqual(monitor.load_landing_trial_failures(logs_path), 1)
+
+    def test_landing_trial_failure_alert_fires_and_is_deterministic(self):
+        r1 = monitor.build_report(
+            [],
+            {},
+            0,
+            p95_alert_ms=5000,
+            error_rate_alert=0.2,
+            sentry_error_alert=20,
+            resource_alerts={},
+            landing_trial_failures=1,
+            landing_trial_failure_alert=1,
+            landing_trial_status="configured",
+        )
+        r2 = monitor.build_report(
+            [],
+            {},
+            0,
+            p95_alert_ms=5000,
+            error_rate_alert=0.2,
+            sentry_error_alert=20,
+            resource_alerts={},
+            landing_trial_failures=3,
+            landing_trial_failure_alert=1,
+            landing_trial_status="configured",
+        )
+        self.assertTrue(r1["breach"])
+        self.assertEqual(r1["dedupe_key"], r2["dedupe_key"])
+        self.assertEqual(
+            r1["alerts"],
+            [{"source": "landing_trial", "reason": "provider_failed", "label": "growth-hub"}],
+        )
+        self.assertEqual(r1["source_status"]["landing_trial"], "configured")
+        self.assertIn("Landing trial failures (1h): **1**", monitor.render_markdown(r1))
+
+    def test_landing_trial_unconfigured_does_not_alert(self):
+        r = monitor.build_report(
+            [],
+            {},
+            0,
+            p95_alert_ms=5000,
+            error_rate_alert=0.2,
+            sentry_error_alert=20,
+            resource_alerts={},
+            landing_trial_failures=5,
+            landing_trial_failure_alert=1,
+            landing_trial_status="unconfigured",
+        )
+        self.assertFalse(r["breach"])
+        self.assertEqual(r["source_status"]["landing_trial"], "unconfigured")
+
+
 if __name__ == "__main__":
     unittest.main()

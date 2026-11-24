@@ -10,19 +10,28 @@ class _FakeHistoryRepository implements AssetChatHistoryRepository {
 
   final List<AssetChatThreadSummary> _threads;
   final List<String> deletedIds = [];
+  int messageReads = 0;
 
   @override
   Future<AssetChatThreadPage> fetchThreads({
     String searchQuery = '',
+    AssetChatThreadSortBy sortBy = AssetChatThreadSortBy.updatedAt,
     int offset = 0,
     int limit = 50,
   }) async {
     final normalized = searchQuery.trim().toLowerCase();
-    final filtered = normalized.isEmpty
-        ? _threads
+    final filtered = (normalized.isEmpty
+        ? List.of(_threads)
         : _threads
-            .where((thread) => thread.title.toLowerCase().contains(normalized))
-            .toList(growable: false);
+            .where(
+              (thread) => thread.title.toLowerCase().contains(normalized),
+            )
+            .toList())
+      ..sort(
+        (a, b) => sortBy == AssetChatThreadSortBy.createdAt
+            ? b.createdAt.compareTo(a.createdAt)
+            : b.lastMessageAt.compareTo(a.lastMessageAt),
+      );
     final end = (offset + limit).clamp(0, filtered.length);
     return AssetChatThreadPage(
       items:
@@ -37,6 +46,7 @@ class _FakeHistoryRepository implements AssetChatHistoryRepository {
     int offset = 0,
     int limit = 100,
   }) async {
+    messageReads++;
     return AssetChatMessagePage(
       items: [
         AssetChatStoredMessage(
@@ -87,6 +97,31 @@ Widget _app(_FakeHistoryRepository repository) {
 }
 
 void main() {
+  testWidgets('presentation does not fetch again or delete saved history',
+      (tester) async {
+    final repository =
+        _FakeHistoryRepository(threads: [_thread('thread-1', '発表用')]);
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('asset_chat_thread_thread-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('asset_chat_history_present')));
+    await tester.pumpAndSettle();
+    expect(find.text('0 / 2 件'), findsOneWidget);
+    expect(find.text('今月の支払いを確認して'), findsNothing);
+    await tester.tap(find.text('次へ'));
+    await tester.pumpAndSettle();
+    expect(find.text('今月の支払いを確認して'), findsOneWidget);
+    await tester.tap(find.text('次へ'));
+    await tester.pumpAndSettle();
+    expect(find.text('未払い予定を先に確認してください。'), findsOneWidget);
+    await tester.tap(find.byTooltip('発表を終了'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('asset_chat_history_detail')), findsOneWidget);
+    expect(repository.messageReads, 1);
+    expect(repository.deletedIds, isEmpty);
+  });
+
   testWidgets('shows thread list and message detail in a wide layout', (
     tester,
   ) async {
@@ -207,5 +242,42 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('asset_chat_history_thread_list')), findsOne);
+  });
+
+  testWidgets('switches thread sort order between updatedAt and createdAt', (
+    tester,
+  ) async {
+    final oldCreatedRecentUpdated = AssetChatThreadSummary(
+      id: 'thread-updated-first',
+      title: '最近更新された古いセッション',
+      createdAt: DateTime.utc(2026, 8, 1),
+      lastMessageAt: DateTime.utc(2026, 8, 20),
+    );
+    final newCreatedOldUpdated = AssetChatThreadSummary(
+      id: 'thread-created-first',
+      title: '新しく作成されたセッション',
+      createdAt: DateTime.utc(2026, 8, 19),
+      lastMessageAt: DateTime.utc(2026, 8, 19),
+    );
+    final repository = _FakeHistoryRepository(
+      threads: [oldCreatedRecentUpdated, newCreatedOldUpdated],
+    );
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    final firstBefore = tester.getTopLeft(find.text('最近更新された古いセッション')).dy;
+    final secondBefore = tester.getTopLeft(find.text('新しく作成されたセッション')).dy;
+    expect(firstBefore, lessThan(secondBefore));
+
+    await tester.tap(
+      find.byKey(const Key('asset_chat_history_sort_created_at')),
+    );
+    await tester.pumpAndSettle();
+
+    final createdFirstAfter = tester.getTopLeft(find.text('新しく作成されたセッション')).dy;
+    final updatedFirstAfter = tester.getTopLeft(find.text('最近更新された古いセッション')).dy;
+    expect(createdFirstAfter, lessThan(updatedFirstAfter));
+    expect(tester.takeException(), isNull);
   });
 }

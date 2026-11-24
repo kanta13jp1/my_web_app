@@ -1,0 +1,50 @@
+import { test, expect } from '@playwright/test';
+test.beforeEach(async ({page}) => { await page.goto('/labs/acquisition-check/index.html'); });
+test('real-observation sample calculates, exports and stays inside the browser',async({page},info)=>{
+  const failures:string[]=[];const outgoing:string[]=[];
+  page.on('pageerror',e=>failures.push(e.message));
+  page.on('console',m=>{if(m.type()==='error')failures.push(m.text());});
+  page.on('requestfailed',r=>failures.push(r.url()));
+  page.on('response',r=>{if(r.status()>=500)failures.push(r.url());});
+  page.on('request',r=>{if(['fetch','xhr'].includes(r.resourceType()))outgoing.push(r.url());});
+  await page.getByRole('button',{name:'記事の実測例を読み込む'}).click();
+  await page.getByRole('button',{name:'比較する',exact:true}).click();
+  await expect(page.locator('#result')).toContainText('39件（7日） → 73件（7日）');
+  await expect(page.locator('#result')).toContainText('1.87179倍');
+  await expect(page.locator('#result')).toContainText('0.03125');
+  await page.evaluate(async()=>{await Promise.all(document.getAnimations().map(a=>a.finished.catch(()=>{})));});
+  await page.screenshot({path:info.outputPath('sample.png'),fullPage:true});
+  const download=page.waitForEvent('download');await page.getByRole('button',{name:'結果をファイルに保存'}).click();
+  const file=await download;expect(file.suggestedFilename()).toBe('access-comparison.json');
+  const fs=await import('node:fs/promises');const data=JSON.parse(await fs.readFile((await file.path())!,'utf8'));
+  expect(data.result.before.count).toBe(39);expect(data.result.causalEffect).toBeNull();
+  for(let i=0;i<2;i++){await page.screenshot({path:info.outputPath(`frame-${i}.png`)});if(!i)await page.waitForTimeout(500);}
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(failures).toEqual([]);expect(outgoing).toEqual([]);
+});
+test('negative input, missing date, and recovery never leave stale results',async({page},info)=>{
+  await page.getByRole('button',{name:'記事の実測例を読み込む'}).click();
+  await page.getByRole('button',{name:'比較する',exact:true}).click();
+  await page.locator('#data').fill('date,count\n2026-09-13,-1');
+  await expect(page.locator('#result')).toBeHidden();
+  await page.getByRole('button',{name:'比較する',exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText('0以上の整数');
+  await page.locator('#data').fill('date,count\n2026-09-13,1');
+  await page.getByRole('button',{name:'比較する',exact:true}).click();
+  await expect(page.locator('#result')).toContainText('比較を保留');
+  await page.screenshot({path:info.outputPath('missing.png'),fullPage:true});
+  await page.getByRole('button',{name:'記事の実測例を読み込む'}).click();
+  await page.getByRole('button',{name:'比較する',exact:true}).click();
+  await expect(page.getByRole('alert')).toBeEmpty();await expect(page.locator('#result')).toContainText('1.87179倍');
+});
+test('timezone and transport-stage tools explain the actual input',async({page},info)=>{
+  await page.getByRole('button',{name:'3地域の日付を見る'}).click();
+  await expect(page.locator('#date-result')).toContainText('日本時間: 2026-09-21');
+  await expect(page.locator('#date-result')).toContainText('UTC: 2026-09-20');
+  await page.locator('#delivery').fill('id,stage\na,occurred\na,attempted\nb,occurred\nb,attempted\nb,accepted\nb,saved');
+  await page.getByRole('button',{name:'届いた段階を調べる'}).click();
+  await expect(page.locator('#delivery-result')).toContainText('受付結果未確認 1件');
+  await expect(page.locator('#delivery-result')).toContainText('保存確認 1件');
+  await page.screenshot({path:info.outputPath('boundaries.png'),fullPage:true});
+  await page.reload();await expect(page.locator('#data')).toBeEmpty();await expect(page.locator('#delivery')).toBeEmpty();
+});

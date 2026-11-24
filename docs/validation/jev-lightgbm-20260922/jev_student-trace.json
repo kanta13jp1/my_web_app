@@ -1,0 +1,322 @@
+[
+  {
+    "frame": 0,
+    "x": 32,
+    "y": 192,
+    "vx": 0,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 6,
+    "x": 34.730000000000004,
+    "y": 192,
+    "vx": 0.78,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 12,
+    "x": 42.129999999999995,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 18,
+    "x": 51.42999999999998,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 24,
+    "x": 60.72999999999996,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 30,
+    "x": 70.02999999999994,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 36,
+    "x": 79.32999999999993,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 42,
+    "x": 88.62999999999991,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 48,
+    "x": 97.9299999999999,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 54,
+    "x": 107.22999999999988,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 60,
+    "x": 116.52999999999986,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 66,
+    "x": 125.82999999999984,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right"
+  },
+  {
+    "frame": 72,
+    "x": 135.12999999999988,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": false,
+    "action": "right_jump"
+  },
+  {
+    "frame": 78,
+    "x": 144.42999999999995,
+    "y": 164.57999999999998,
+    "vx": 1.55,
+    "vy": -4.120000000000002,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "jump"
+  },
+  {
+    "frame": 84,
+    "x": 152.04999999999993,
+    "y": 143.64,
+    "vx": 1.0699999999999996,
+    "vy": -3.040000000000001,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "jump"
+  },
+  {
+    "frame": 90,
+    "x": 156.78999999999994,
+    "y": 129.17999999999998,
+    "vx": 0.5899999999999999,
+    "vy": -1.9600000000000002,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 96,
+    "x": 163.05999999999995,
+    "y": 121.19999999999999,
+    "vx": 1.3699999999999997,
+    "vy": -0.8800000000000006,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "jump"
+  },
+  {
+    "frame": 102,
+    "x": 169.59999999999994,
+    "y": 119.9,
+    "vx": 0.8899999999999995,
+    "vy": 0.3999999999999993,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 108,
+    "x": 177.54999999999995,
+    "y": 130.28000000000003,
+    "vx": 1.55,
+    "vy": 2.679999999999999,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 114,
+    "x": 186.85000000000002,
+    "y": 154.34,
+    "vx": 1.55,
+    "vy": 4.959999999999998,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "jump"
+  },
+  {
+    "frame": 120,
+    "x": 194.47,
+    "y": 189.4,
+    "vx": 1.0699999999999996,
+    "vy": 6,
+    "grounded": false,
+    "jump_was_pressed": true,
+    "action": "jump"
+  },
+  {
+    "frame": 126,
+    "x": 199.21,
+    "y": 192,
+    "vx": 0.5899999999999999,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 132,
+    "x": 205.48000000000002,
+    "y": 192,
+    "vx": 1.3699999999999997,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 138,
+    "x": 214.73000000000008,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 144,
+    "x": 224.03000000000014,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 150,
+    "x": 233.3300000000002,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 156,
+    "x": 242.63000000000028,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 162,
+    "x": 251.93000000000035,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 168,
+    "x": 261.2300000000004,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 174,
+    "x": 270.5300000000005,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 180,
+    "x": 279.83000000000055,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  },
+  {
+    "frame": 186,
+    "x": 289.1300000000006,
+    "y": 192,
+    "vx": 1.55,
+    "vy": 0,
+    "grounded": true,
+    "jump_was_pressed": true,
+    "action": "right_jump"
+  }
+]

@@ -13,7 +13,8 @@ Always do the following:
 3. If an existing source design exists, inspect it with `figma` MCP
 4. If the task needs exploration, generate or refine options with `aidesigner` MCP
 5. Reconcile every proposal against `lib/services/theme_service.dart`
-6. Produce the final Flutter implementation or review comments only after the above
+6. Apply the implementation or review checklist in `docs/DESIGN.md`
+7. Produce the final Flutter implementation or review comments only after the above
 
 Rules:
 - `docs/DESIGN.md` is the final authority
@@ -21,3 +22,4 @@ Rules:
 - AIDesigner MCP is for speed and variation
 - Always think in desktop and mobile together for new screens
 - Avoid generic SaaS UI and keep alignment with existing project tone
+- Do not define token values or review thresholds in this command

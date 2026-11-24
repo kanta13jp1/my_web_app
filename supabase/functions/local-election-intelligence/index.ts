@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
+  buildDailyRealityHistory,
   evaluateScheduleCollectionQuality,
   type HubDataRow,
   type HubInsertResult,
@@ -8,11 +9,26 @@ import {
   LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE,
   type LocalElectionHubStore,
   persistLocalElectionSnapshot,
+  REALITY_HISTORY_MAX_POINTS,
+  type RealityHistoryPoint,
   type ScheduleCollectionQuality,
   type ScheduleSourceFetchHealth,
   X_POST_CANDIDATE_HUB_SOURCE,
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
+import {
+  fetchKomeitoMemberSnapshot,
+  persistKomeitoSnapshot,
+} from "./komeito_tracker.ts";
+import {
+  fetchIshinMemberSnapshot,
+  persistIshinSnapshot,
+} from "./ishin_tracker.ts";
+import {
+  parseReiwaMemberPageHtml,
+  persistReiwaSnapshot,
+  REIWA_MEMBER_PAGE_URL,
+} from "./reiwa_tracker.ts";
 import {
   buildElectionIntelligenceSnapshot,
   type ElectionModeId,
@@ -30,6 +46,32 @@ import {
   parseNewKokuminElectionListHtml,
   type ScheduleOverviewEntry,
 } from "./schedule_source_parsers.ts";
+import {
+  type AssemblyCategory,
+  decodeHtml,
+  extractClassText,
+  extractIsoDate,
+  extractMunicipality,
+  inferAssemblyCategory,
+  isLocalElectionName,
+  isPrefectureName,
+  type LocalLegislatorProfile,
+  normalizeMemberName,
+  normalizeWhitespace,
+  OFFICIAL_ELECTION_PAGE_URL,
+  OFFICIAL_LOCAL_ELECTION_PAGE_URL,
+  OFFICIAL_LOCAL_MEMBER_PAGE_URL,
+  OFFICIAL_MEMBER_PAGE_URL,
+  type OfficialScheduledCandidate,
+  parseOfficialElectionPrefectureLinks,
+  parseOfficialScheduledCandidates,
+  parsePrefectureDirectoryEntries,
+  parsePrefectureMembers,
+  PREFECTURES,
+  stripTags,
+  toAsciiDigits,
+} from "./official_site_parsers.ts";
+import { generateJsonWithGeminiFirst } from "../_shared/gemini_json_client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,12 +81,11 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OFFICIAL_MEMBER_PAGE_URL = "https://new-kokumin.jp/member";
-const OFFICIAL_ELECTION_PAGE_URL = "https://new-kokumin.jp/election";
 const OFFICIAL_2023_FIRST_HALF_URL =
   "https://new-kokumin.jp/news/election/20230410_election";
 const OFFICIAL_2023_SECOND_HALF_URL =
@@ -79,8 +120,6 @@ const AI_ANALYSIS_TIMEOUT_MS = 6000;
 // 最低保証日数 (これを下回る window は使わない)
 const SCHEDULE_MIN_WINDOW_DAYS = 30;
 
-const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
-const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
 const JP_FIELD_CONSTITUENCY = "\u9078\u6319\u533a";
 const JP_FIELD_ELECTION_COUNT = "\u5f53\u9078\u56de\u6570";
 const JP_FIELD_BIRTH_DATE = "\u751f\u5e74\u6708\u65e5";
@@ -90,87 +129,6 @@ const JP_FIELD_ANNOUNCEMENT_DATE = "\u544a\u793a\u65e5";
 const JP_FIELD_SEATS_AND_CANDIDATES = "\u5b9a\u6570/\u5019\u88dc\u8005\u6570";
 const JP_FIELD_SEATS_AND_CANDIDATES_ALT =
   "\u5b9a\u6570/\u7acb\u5019\u88dc\u8005\u6570";
-const JP_UNDECIDED = "\u672a\u5b9a";
-
-const PREFECTURES = [
-  "\u5317\u6d77\u9053",
-  "\u9752\u68ee\u770c",
-  "\u5ca9\u624b\u770c",
-  "\u5bae\u57ce\u770c",
-  "\u79cb\u7530\u770c",
-  "\u5c71\u5f62\u770c",
-  "\u798f\u5cf6\u770c",
-  "\u8328\u57ce\u770c",
-  "\u6803\u6728\u770c",
-  "\u7fa4\u99ac\u770c",
-  "\u57fc\u7389\u770c",
-  "\u5343\u8449\u770c",
-  "\u6771\u4eac\u90fd",
-  "\u795e\u5948\u5ddd\u770c",
-  "\u65b0\u6f5f\u770c",
-  "\u5bcc\u5c71\u770c",
-  "\u77f3\u5ddd\u770c",
-  "\u798f\u4e95\u770c",
-  "\u5c71\u68a8\u770c",
-  "\u9577\u91ce\u770c",
-  "\u5c90\u961c\u770c",
-  "\u9759\u5ca1\u770c",
-  "\u611b\u77e5\u770c",
-  "\u4e09\u91cd\u770c",
-  "\u6ecb\u8cc0\u770c",
-  "\u4eac\u90fd\u5e9c",
-  "\u5927\u962a\u5e9c",
-  "\u5175\u5eab\u770c",
-  "\u5948\u826f\u770c",
-  "\u548c\u6b4c\u5c71\u770c",
-  "\u9ce5\u53d6\u770c",
-  "\u5cf6\u6839\u770c",
-  "\u5ca1\u5c71\u770c",
-  "\u5e83\u5cf6\u770c",
-  "\u5c71\u53e3\u770c",
-  "\u5fb3\u5cf6\u770c",
-  "\u9999\u5ddd\u770c",
-  "\u611b\u5a9b\u770c",
-  "\u9ad8\u77e5\u770c",
-  "\u798f\u5ca1\u770c",
-  "\u4f50\u8cc0\u770c",
-  "\u9577\u5d0e\u770c",
-  "\u718a\u672c\u770c",
-  "\u5927\u5206\u770c",
-  "\u5bae\u5d0e\u770c",
-  "\u9e7f\u5150\u5cf6\u770c",
-  "\u6c96\u7e04\u770c",
-] as const;
-
-type AssemblyCategory = "prefectural" | "municipal" | "other";
-
-interface LocalLegislatorProfile {
-  prefecture: string;
-  sourceUrl: string;
-  detailUrl: string;
-  name: string;
-  kana: string;
-  constituency: string;
-  municipality: string;
-  assemblyLabel: string;
-  assemblyCategory: AssemblyCategory;
-  electionCountLabel: string;
-  birthDate: string;
-  age: number | null;
-  gender: string;
-  profile: string;
-}
-
-interface OfficialScheduledCandidate {
-  prefecture: string;
-  electionName: string;
-  voteDate: string;
-  name: string;
-  statusLabel: string;
-  detailUrl: string;
-  sourceUrl: string;
-  xHandle: string;
-}
 
 interface PrefectureReality {
   prefecture: string;
@@ -263,11 +221,6 @@ interface ManualScheduleSupplement {
   seatCount?: number;
   totalCandidateCount?: number;
   candidates: ManualScheduledCandidate[];
-}
-
-interface PrefectureDirectoryEntry {
-  prefecture: string;
-  sourceUrl: string;
 }
 
 const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
@@ -541,7 +494,24 @@ interface MemberDetailRequest {
   prefectureHint: string;
 }
 
-type ParsedRequest = SnapshotRequest | MemberDetailRequest;
+interface KomeitoSnapshotRequest {
+  action: "komeitoSnapshot" | "komeitoSnapshotAndQueue";
+}
+
+interface IshinSnapshotRequest {
+  action: "ishinSnapshot" | "ishinSnapshotAndQueue";
+}
+
+interface ReiwaSnapshotRequest {
+  action: "reiwaSnapshot" | "reiwaSnapshotAndQueue";
+}
+
+type ParsedRequest =
+  | SnapshotRequest
+  | MemberDetailRequest
+  | KomeitoSnapshotRequest
+  | IshinSnapshotRequest
+  | ReiwaSnapshotRequest;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -561,6 +531,138 @@ serve(async (req) => {
       );
       return jsonResponse({ success: true, profile });
     }
+    if (
+      parsedRequest.action === "komeitoSnapshot" ||
+      parsedRequest.action === "komeitoSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "komeitoSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const komeitoSnapshot = await fetchKomeitoMemberSnapshot(fetchText);
+      const komeitoPersistence =
+        parsedRequest.action === "komeitoSnapshotAndQueue"
+          ? await persistKomeitoSnapshot(
+            createLocalElectionHubStore(),
+            komeitoSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: komeitoSnapshot,
+        ...(komeitoPersistence
+          ? {
+            persistence: {
+              dataset: komeitoPersistence.dataset,
+              datasetVersion: komeitoPersistence.datasetVersion,
+              snapshotHash: komeitoPersistence.snapshotHash,
+              previousSnapshotId: komeitoPersistence.previousSnapshotId,
+              previousSnapshotHash: komeitoPersistence.previousSnapshotHash,
+              baselineCreated: komeitoPersistence.baselineCreated,
+              snapshotCreated: komeitoPersistence.snapshotCreated,
+              deduplicated: komeitoPersistence.deduplicated,
+              hasChanges: komeitoPersistence.hasChanges,
+              candidateCount: komeitoPersistence.candidateCount,
+              candidatesCreated: komeitoPersistence.candidatesCreated,
+              snapshotId: komeitoPersistence.snapshotRow.id,
+              candidateIds: komeitoPersistence.candidateRows.map((row) =>
+                row.id
+              ),
+            },
+          }
+          : {}),
+      });
+    }
+    if (
+      parsedRequest.action === "ishinSnapshot" ||
+      parsedRequest.action === "ishinSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "ishinSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const ishinSnapshot = await fetchIshinMemberSnapshot(fetchText);
+      const ishinPersistence =
+        parsedRequest.action === "ishinSnapshotAndQueue"
+          ? await persistIshinSnapshot(
+            createLocalElectionHubStore(),
+            ishinSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: ishinSnapshot,
+        ...(ishinPersistence
+          ? {
+            persistence: {
+              dataset: ishinPersistence.dataset,
+              datasetVersion: ishinPersistence.datasetVersion,
+              snapshotHash: ishinPersistence.snapshotHash,
+              previousSnapshotId: ishinPersistence.previousSnapshotId,
+              previousSnapshotHash: ishinPersistence.previousSnapshotHash,
+              baselineCreated: ishinPersistence.baselineCreated,
+              snapshotCreated: ishinPersistence.snapshotCreated,
+              deduplicated: ishinPersistence.deduplicated,
+              hasChanges: ishinPersistence.hasChanges,
+              candidateCount: ishinPersistence.candidateCount,
+              candidatesCreated: ishinPersistence.candidatesCreated,
+              snapshotId: ishinPersistence.snapshotRow.id,
+              candidateIds: ishinPersistence.candidateRows.map((row) => row.id),
+            },
+          }
+          : {}),
+      });
+    }
+    if (
+      parsedRequest.action === "reiwaSnapshot" ||
+      parsedRequest.action === "reiwaSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "reiwaSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const html = await fetchText(REIWA_MEMBER_PAGE_URL);
+      const reiwaSnapshot = parseReiwaMemberPageHtml(
+        html,
+        REIWA_MEMBER_PAGE_URL,
+      );
+      if (!reiwaSnapshot) {
+        throw new HttpError(
+          503,
+          "Reiwa official member directory could not be parsed.",
+        );
+      }
+      const reiwaPersistence =
+        parsedRequest.action === "reiwaSnapshotAndQueue"
+          ? await persistReiwaSnapshot(
+            createLocalElectionHubStore(),
+            reiwaSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: reiwaSnapshot,
+        ...(reiwaPersistence
+          ? {
+            persistence: {
+              dataset: reiwaPersistence.dataset,
+              datasetVersion: reiwaPersistence.datasetVersion,
+              snapshotHash: reiwaPersistence.snapshotHash,
+              previousSnapshotId: reiwaPersistence.previousSnapshotId,
+              previousSnapshotHash: reiwaPersistence.previousSnapshotHash,
+              baselineCreated: reiwaPersistence.baselineCreated,
+              snapshotCreated: reiwaPersistence.snapshotCreated,
+              deduplicated: reiwaPersistence.deduplicated,
+              hasChanges: reiwaPersistence.hasChanges,
+              candidateCount: reiwaPersistence.candidateCount,
+              candidatesCreated: reiwaPersistence.candidatesCreated,
+              snapshotId: reiwaPersistence.snapshotRow.id,
+              candidateIds: reiwaPersistence.candidateRows.map((row) => row.id),
+            },
+          }
+          : {}),
+      });
+    }
     if (parsedRequest.action === "snapshotAndQueue") {
       requireServiceRole(req);
     }
@@ -571,13 +673,29 @@ serve(async (req) => {
       );
     }
 
-    const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
-    const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
+    const memberDirectoryFetch = await fetchWithFallbackUrl(
+      OFFICIAL_LOCAL_MEMBER_PAGE_URL,
+      OFFICIAL_MEMBER_PAGE_URL,
+      (html) =>
+        parsePrefectureDirectoryEntries(html).filter((item) =>
+          item.sourceUrl !== ""
+        ).length >= 10,
+    );
+    const officialElectionFetch = await fetchWithFallbackUrl(
+      OFFICIAL_LOCAL_ELECTION_PAGE_URL,
+      OFFICIAL_ELECTION_PAGE_URL,
+      (html) =>
+        parseOfficialElectionPrefectureLinks(html).size >=
+          MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS,
+    );
     const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(
-      memberPageHtml,
+      memberDirectoryFetch.html,
     );
     const officialElectionPrefectureLinks =
-      parseOfficialElectionPrefectureLinks(officialElectionHtml);
+      parseOfficialElectionPrefectureLinks(
+        officialElectionFetch.html,
+        officialElectionFetch.url,
+      );
 
     const prefectureResults = await mapWithConcurrency(
       prefectureDirectoryEntries,
@@ -592,6 +710,21 @@ serve(async (req) => {
     const failedPrefectureFetches = prefectureResults
       .filter((item) => item.fetchStatus === "failed")
       .map((item) => item.prefecture);
+    const expectedMembersByPrefecture = new Map(
+      prefectureDirectoryEntries.map((entry) => [
+        entry.prefecture,
+        entry.expectedMembers ?? null,
+      ]),
+    );
+    const emptyExpectedPrefectures = prefectureResults
+      .filter((item) => {
+        const expected = expectedMembersByPrefecture.get(item.prefecture);
+        return item.fetchStatus === "success" &&
+          item.currentMembers === 0 &&
+          expected != null &&
+          expected > 0;
+      })
+      .map((item) => item.prefecture);
     const officialCurrentLocalMembers = members.length;
     const linkedPrefectureCount = prefectureDirectoryEntries.filter((item) =>
       item.sourceUrl !== ""
@@ -602,6 +735,9 @@ serve(async (req) => {
     const memberCollectionQualityIssues = [
       ...(failedPrefectureFetches.length > 0
         ? [`prefecture_fetch_failed:${failedPrefectureFetches.join(",")}`]
+        : []),
+      ...(emptyExpectedPrefectures.length > 0
+        ? [`prefecture_members_parsed_zero:${emptyExpectedPrefectures.join(",")}`]
         : []),
       ...(linkedPrefectureCount < 10
         ? [`member_directory_links_too_low:${linkedPrefectureCount}`]
@@ -861,9 +997,22 @@ serve(async (req) => {
       )
       : null;
 
+    const currentHistoryPoint: RealityHistoryPoint | null =
+      snapshot.officialCurrentLocalMembers > 0
+        ? {
+          fetchedAt: snapshot.fetchedAt,
+          officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+          actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+        }
+        : null;
+    const history = await loadServerRealityHistory(currentHistoryPoint);
+
     return jsonResponse({
       success: true,
-      snapshot,
+      snapshot: {
+        ...snapshot,
+        history,
+      },
       ...(persistence
         ? {
           persistence: {
@@ -920,8 +1069,64 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     };
   }
 
+  if (
+    requestedAction === "komeitoSnapshot" ||
+    requestedAction === "komeito_snapshot"
+  ) {
+    return { action: "komeitoSnapshot" };
+  }
+  if (
+    requestedAction === "komeitoSnapshotAndQueue" ||
+    requestedAction === "komeito_snapshot_and_queue"
+  ) {
+    return { action: "komeitoSnapshotAndQueue" };
+  }
+  if (
+    requestedAction === "ishinSnapshot" ||
+    requestedAction === "ishin_snapshot"
+  ) {
+    return { action: "ishinSnapshot" };
+  }
+  if (
+    requestedAction === "ishinSnapshotAndQueue" ||
+    requestedAction === "ishin_snapshot_and_queue"
+  ) {
+    return { action: "ishinSnapshotAndQueue" };
+  }
+  if (
+    requestedAction === "reiwaSnapshot" ||
+    requestedAction === "reiwa_snapshot"
+  ) {
+    return { action: "reiwaSnapshot" };
+  }
+  if (
+    requestedAction === "reiwaSnapshotAndQueue" ||
+    requestedAction === "reiwa_snapshot_and_queue"
+  ) {
+    return { action: "reiwaSnapshotAndQueue" };
+  }
+
   if (req.method === "GET") {
     const url = new URL(req.url);
+    const queryAction = (url.searchParams.get("action") ?? "").trim();
+    if (
+      queryAction === "komeitoSnapshot" ||
+      queryAction === "komeito_snapshot"
+    ) {
+      return { action: "komeitoSnapshot" };
+    }
+    if (
+      queryAction === "ishinSnapshot" ||
+      queryAction === "ishin_snapshot"
+    ) {
+      return { action: "ishinSnapshot" };
+    }
+    if (
+      queryAction === "reiwaSnapshot" ||
+      queryAction === "reiwa_snapshot"
+    ) {
+      return { action: "reiwaSnapshot" };
+    }
     return {
       action: "snapshot",
       includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
@@ -1077,13 +1282,17 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
     async insertSnapshot(
       metadata: Record<string, unknown>,
     ): Promise<HubInsertResult> {
+      const dataset = typeof metadata.dataset === "string" &&
+          metadata.dataset.trim() !== ""
+        ? metadata.dataset.trim()
+        : LOCAL_ELECTION_DATASET;
       const snapshotHash = String(metadata.snapshot_hash ?? "");
       const previousSnapshotId = typeof metadata.previous_snapshot_id ===
             "string" && metadata.previous_snapshot_id
         ? metadata.previous_snapshot_id
         : null;
       const existing = await findSnapshotTransition(
-        LOCAL_ELECTION_DATASET,
+        dataset,
         previousSnapshotId,
         snapshotHash,
       );
@@ -1096,7 +1305,7 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
       } catch (error) {
         if ((error as { code?: string }).code !== "23505") throw error;
         const raced = await findSnapshotTransition(
-          LOCAL_ELECTION_DATASET,
+          dataset,
           previousSnapshotId,
           snapshotHash,
         );
@@ -1124,6 +1333,68 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
       }
     },
   };
+}
+
+const REALITY_HISTORY_SELECT = [
+  "created_at",
+  "observed_at:metadata->>observed_at",
+  "official_current_local_members:metadata->snapshot->metrics->>officialCurrentLocalMembers",
+  "actual_net_increase_required:metadata->snapshot->metrics->>actualNetIncreaseRequired",
+  "legacy_official_current_local_members:metadata->snapshot->>officialCurrentLocalMembers",
+  "legacy_actual_net_increase_required:metadata->snapshot->>actualNetIncreaseRequired",
+].join(",");
+
+/**
+ * Loads sanitized daily local-election history points from persisted `hub_data`
+ * snapshots. Fails open so request-time live snapshot delivery never breaks
+ * when history queries are unavailable.
+ */
+async function loadServerRealityHistory(
+  currentPoint: RealityHistoryPoint | null,
+): Promise<RealityHistoryPoint[]> {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    return buildDailyRealityHistory([], {
+      currentPoint,
+      maxPoints: REALITY_HISTORY_MAX_POINTS,
+      targetMembers: TARGET_LOCAL_MEMBERS,
+    });
+  }
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data, error } = await admin
+      .from("hub_data")
+      .select(REALITY_HISTORY_SELECT)
+      .eq("source", LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE)
+      .filter("metadata->>dataset", "eq", LOCAL_ELECTION_DATASET)
+      .order("created_at", { ascending: false })
+      .limit(400);
+    if (error) {
+      console.warn(
+        "Failed to load local-election server history:",
+        error.message,
+      );
+      return buildDailyRealityHistory([], {
+        currentPoint,
+        maxPoints: REALITY_HISTORY_MAX_POINTS,
+        targetMembers: TARGET_LOCAL_MEMBERS,
+      });
+    }
+    return buildDailyRealityHistory(Array.isArray(data) ? data : [], {
+      currentPoint,
+      maxPoints: REALITY_HISTORY_MAX_POINTS,
+      targetMembers: TARGET_LOCAL_MEMBERS,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("Failed to load local-election server history:", message);
+    return buildDailyRealityHistory([], {
+      currentPoint,
+      maxPoints: REALITY_HISTORY_MAX_POINTS,
+      targetMembers: TARGET_LOCAL_MEMBERS,
+    });
+  }
 }
 
 function jsonResponse(body: unknown, init?: ResponseInit): Response {
@@ -1157,6 +1428,23 @@ async function fetchText(url: string): Promise<string> {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function fetchWithFallbackUrl(
+  primaryUrl: string,
+  fallbackUrl: string,
+  isHealthyHtml: (html: string) => boolean,
+): Promise<{ url: string; html: string }> {
+  try {
+    const primaryHtml = await fetchText(primaryUrl);
+    if (isHealthyHtml(primaryHtml)) {
+      return { url: primaryUrl, html: primaryHtml };
+    }
+  } catch {
+    // Fall back to legacy URL when primary URL is unreachable.
+  }
+  const fallbackHtml = await fetchText(fallbackUrl);
+  return { url: fallbackUrl, html: fallbackHtml };
 }
 
 async function loadElectionModeRegistry(): Promise<{
@@ -1251,90 +1539,6 @@ async function fetchPrefectureReality(
   };
 }
 
-function prefectureSlug(prefecture: string): string {
-  if (prefecture === "\u5317\u6d77\u9053") {
-    return prefecture;
-  }
-  return prefecture.replace(/[\u90fd\u5e9c\u770c]$/u, "");
-}
-
-function prefectureLookupKey(prefecture: string): string {
-  return prefectureSlug(normalizeWhitespace(prefecture).trim());
-}
-
-function parsePrefectureDirectoryEntries(
-  html: string,
-): PrefectureDirectoryEntry[] {
-  const links = new Map<string, string>();
-  const linkRegex =
-    /<a[^>]+href="([^"]*\/member_tag\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gsi;
-  for (const match of html.matchAll(linkRegex)) {
-    const rawLabel = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
-      .trim();
-    const label = extractPrefectureLabel(rawLabel);
-    const rawHref = match[1]?.trim() ?? "";
-    if (!isPrefectureName(label) || rawHref === "") {
-      continue;
-    }
-    const sourceUrl = new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString();
-    links.set(label, sourceUrl);
-    links.set(prefectureLookupKey(label), sourceUrl);
-  }
-  return PREFECTURES.map((prefecture) => ({
-    prefecture,
-    sourceUrl: links.get(prefecture) ??
-      links.get(prefectureLookupKey(prefecture)) ??
-      "",
-  }));
-}
-
-function parsePrefectureMembers(
-  prefecture: string,
-  sourceUrl: string,
-  html: string,
-): LocalLegislatorProfile[] {
-  const sections = matchMemberListSections(html).filter((section) =>
-    section.heading.includes(prefecture) &&
-    section.heading.includes(JP_LOCAL_ASSEMBLY_MEMBERS)
-  );
-  const members: LocalLegislatorProfile[] = [];
-
-  for (const section of sections) {
-    for (const cardHtml of extractListItems(section.listHtml)) {
-      const card = parseMemberCard(cardHtml, sourceUrl);
-      const assemblyCategory = inferAssemblyCategory(card.assemblyLabel);
-      if (card.name === "" || assemblyCategory === "other") {
-        continue;
-      }
-      members.push({
-        prefecture,
-        sourceUrl,
-        detailUrl: card.detailUrl,
-        name: card.name,
-        kana: card.kana,
-        constituency: card.constituency,
-        municipality: extractMunicipality(prefecture, card.constituency),
-        assemblyLabel: card.assemblyLabel,
-        assemblyCategory,
-        electionCountLabel: card.electionCountLabel,
-        birthDate: "",
-        age: null,
-        gender: "",
-        profile: "",
-      });
-    }
-  }
-
-  const unique = new Map<string, LocalLegislatorProfile>();
-  for (const member of members) {
-    const key = member.detailUrl || `${member.prefecture}:${member.name}`;
-    if (!unique.has(key)) {
-      unique.set(key, member);
-    }
-  }
-  return [...unique.values()];
-}
-
 async function fetchMemberDetail(
   detailUrl: string,
   prefectureHint = "",
@@ -1416,64 +1620,6 @@ async function fetchHistoricalResult(): Promise<HistoricalResult> {
   } catch {
     return fallback;
   }
-}
-
-function parseOfficialElectionPrefectureLinks(
-  html: string,
-): Map<string, string> {
-  const links = new Map<string, string>();
-  const linkRegex =
-    /<a[^>]+href="([^"]*post_type=election[^"]*prefectures=[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-  for (const match of html.matchAll(linkRegex)) {
-    const label = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
-      .trim();
-    const rawHref = match[1]?.trim() ?? "";
-    if (!isPrefectureName(label) || rawHref === "") {
-      continue;
-    }
-    links.set(label, new URL(rawHref, OFFICIAL_ELECTION_PAGE_URL).toString());
-  }
-  return links;
-}
-
-function parseOfficialScheduledCandidates(
-  prefecture: string,
-  sourceUrl: string,
-  html: string,
-): OfficialScheduledCandidate[] {
-  const candidates: OfficialScheduledCandidate[] = [];
-  const sections = matchMemberListSections(html).filter((section) =>
-    section.heading.includes(prefecture) &&
-    section.heading.includes(JP_PLANNED_CANDIDATES)
-  );
-
-  for (const section of sections) {
-    for (const cardHtml of extractListItems(section.listHtml)) {
-      const card = parseMemberCard(cardHtml, sourceUrl);
-      const electionName = card.electionCountLabel;
-      const voteDate = normalizeOfficialVoteDate(
-        extractClassText(cardHtml, "m_category"),
-      );
-      const statusLabel = extractClassText(cardHtml, "wins");
-      if (
-        card.name === "" || electionName === "" || statusLabel === "" ||
-        !isLocalElectionName(electionName)
-      ) {
-        continue;
-      }
-      candidates.push({
-        prefecture,
-        electionName,
-        voteDate,
-        name: card.name,
-        statusLabel,
-        detailUrl: card.detailUrl,
-        sourceUrl,
-        xHandle: "",
-      });
-    }
-  }
-  return candidates;
 }
 
 async function fetchUpcomingLocalElectionSchedules(
@@ -2449,79 +2595,44 @@ async function buildAiAnalysis(snapshot: {
   members: LocalLegislatorProfile[];
   upcomingSchedules?: LocalElectionScheduleEntry[];
 }): Promise<AiAnalysis> {
-  if (OPENAI_API_KEY === "") {
-    return buildFallbackAnalysis(snapshot);
+  const fallback = buildFallbackAnalysis(snapshot);
+  const parsed = await generateJsonWithGeminiFirst({
+    systemPrompt:
+      "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
+    userPrompt: JSON.stringify({
+      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+      official2023TotalWins: snapshot.official2023TotalWins,
+      topPrefectures: [...snapshot.prefectures].sort((a, b) =>
+        b.currentMembers - a.currentMembers
+      ).slice(0, 10),
+      topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
+        (b.cdpLocalMembers - b.currentMembers) -
+        (a.cdpLocalMembers - a.currentMembers)
+      ).slice(0, 10),
+      rosterCount: snapshot.members.length,
+      upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
+    }),
+    geminiApiKey: GEMINI_API_KEY,
+    openAiApiKey: OPENAI_API_KEY,
+    temperature: 0.2,
+    maxOutputTokens: 768,
+    timeoutMs: AI_ANALYSIS_TIMEOUT_MS,
+  });
+  if (!parsed) {
+    return fallback;
   }
-  const controller = new AbortController();
-  const timeoutId = setTimeout(
-    () => controller.abort(),
-    AI_ANALYSIS_TIMEOUT_MS,
-  );
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.2,
-        max_tokens: 500,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content:
-              "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
-          },
-          {
-            role: "user",
-            content: JSON.stringify({
-              officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
-              actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
-              official2023TotalWins: snapshot.official2023TotalWins,
-              topPrefectures: [...snapshot.prefectures].sort((a, b) =>
-                b.currentMembers - a.currentMembers
-              ).slice(0, 10),
-              topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
-                (b.cdpLocalMembers - b.currentMembers) -
-                (a.cdpLocalMembers - a.currentMembers)
-              ).slice(0, 10),
-              rosterCount: snapshot.members.length,
-              upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
-            }),
-          },
-        ],
-      }),
-    });
-    if (!response.ok) {
-      return buildFallbackAnalysis(snapshot);
-    }
-    const json = await response.json();
-    const content = json.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || content.trim() === "") {
-      return buildFallbackAnalysis(snapshot);
-    }
-    const parsed = JSON.parse(content);
-    const fallback = buildFallbackAnalysis(snapshot);
-    const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
-    return {
-      summary: sanitizeLine(parsed.summary) || fallback.summary,
-      alerts: sanitizeLines(parsed.alerts, 3),
-      strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
-      scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
-        fallback.scheduleSummary,
-      scheduleAlerts: parsedScheduleAlerts.length > 0
-        ? parsedScheduleAlerts
-        : fallback.scheduleAlerts,
-    };
-  } catch {
-    return buildFallbackAnalysis(snapshot);
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
+  return {
+    summary: sanitizeLine(parsed.summary) || fallback.summary,
+    alerts: sanitizeLines(parsed.alerts, 3),
+    strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
+    scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
+      fallback.scheduleSummary,
+    scheduleAlerts: parsedScheduleAlerts.length > 0
+      ? parsedScheduleAlerts
+      : fallback.scheduleAlerts,
+  };
 }
 
 function buildFallbackAnalysis(snapshot: {
@@ -2645,101 +2756,6 @@ function compareMembers(
   return left.name.localeCompare(right.name, "ja");
 }
 
-function matchMemberListSections(
-  html: string,
-): Array<{ heading: string; listHtml: string }> {
-  const sections: Array<{ heading: string; listHtml: string }> = [];
-  const sectionRegex =
-    /<h2[^>]*class="[^"]*\bmember_sec_ttl\b[^"]*"[^>]*>([\s\S]*?)<\/h2>\s*<ul[^>]*class="[^"]*\bmember_list\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/gsi;
-  for (const match of html.matchAll(sectionRegex)) {
-    sections.push({
-      heading: normalizeWhitespace(decodeHtml(stripTags(match[1] ?? "")))
-        .trim(),
-      listHtml: match[2] ?? "",
-    });
-  }
-  return sections;
-}
-
-function extractListItems(listHtml: string): string[] {
-  const items: string[] = [];
-  const itemRegex = /<li\b[^>]*>([\s\S]*?)<\/li>/gsi;
-  for (const match of listHtml.matchAll(itemRegex)) {
-    items.push(match[1] ?? "");
-  }
-  return items;
-}
-
-function parseMemberCard(
-  cardHtml: string,
-  baseUrl: string,
-): {
-  name: string;
-  kana: string;
-  constituency: string;
-  assemblyLabel: string;
-  electionCountLabel: string;
-  detailUrl: string;
-} {
-  const nameLinkMatch = cardHtml.match(
-    /<dt[^>]*class="[^"]*\bname\b[^"]*"[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
-  );
-  return {
-    name: normalizeMemberName(decodeHtml(stripTags(nameLinkMatch?.[2] ?? ""))),
-    kana: extractClassText(cardHtml, "kana"),
-    constituency: extractClassText(cardHtml, "kind"),
-    assemblyLabel: extractClassText(cardHtml, "area") ||
-      extractClassText(cardHtml, "category"),
-    electionCountLabel: extractClassText(cardHtml, "times"),
-    detailUrl: nameLinkMatch?.[1]
-      ? new URL(nameLinkMatch[1], baseUrl).toString()
-      : "",
-  };
-}
-
-function extractClassText(html: string, className: string): string {
-  const pattern = new RegExp(
-    `<[^>]+class="[^"]*\\b${
-      escapeRegExp(className)
-    }\\b[^"]*"[^>]*>([\\s\\S]*?)<\\/[^>]+>`,
-    "i",
-  );
-  return normalizeWhitespace(
-    decodeHtml(stripTags(html.match(pattern)?.[1] ?? "")),
-  ).trim();
-}
-
-function inferAssemblyCategory(assemblyLabel: string): AssemblyCategory {
-  if (
-    /(\u90fd|\u9053|\u5e9c|\u770c)\u8b70\u4f1a\u8b70\u54e1/u.test(assemblyLabel)
-  ) {
-    return "prefectural";
-  }
-  if (
-    /(\u5e02|\u533a|\u753a|\u6751)\u8b70\u4f1a\u8b70\u54e1/u.test(assemblyLabel)
-  ) {
-    return "municipal";
-  }
-  return "other";
-}
-
-function extractMunicipality(prefecture: string, constituency: string): string {
-  const normalizedPrefecture = prefecture.trim();
-  const normalizedConstituency = constituency.trim();
-  if (normalizedConstituency === "") {
-    return normalizedPrefecture;
-  }
-  if (
-    normalizedPrefecture !== "" &&
-    normalizedConstituency.startsWith(normalizedPrefecture)
-  ) {
-    const sliced = normalizedConstituency.slice(normalizedPrefecture.length)
-      .trim();
-    return sliced === "" ? normalizedPrefecture : sliced;
-  }
-  return normalizedConstituency;
-}
-
 function inferPrefectureFromConstituency(constituency: string): string {
   const normalized = constituency.trim();
   for (const prefecture of PREFECTURES) {
@@ -2766,9 +2782,6 @@ function parseSimpleTable(html: string): Map<string, string> {
   return fields;
 }
 
-function normalizeOfficialVoteDate(value: string): string {
-  return extractIsoDate(value);
-}
 function normalizeJapaneseDate(value: string): string {
   return extractIsoDate(value);
 }
@@ -2795,19 +2808,6 @@ function calculateAge(birthDate: string): number | null {
   return age >= 0 ? age : null;
 }
 
-function extractIsoDate(value: string): string {
-  const normalized = toAsciiDigits(value).replace(/\./g, "/").replace(
-    /\u5e74/g,
-    "/",
-  ).replace(/\u6708/g, "/").replace(/\u65e5/g, "").replace(/\s+/g, "").trim();
-  if (normalized === "" || normalized === JP_UNDECIDED) return "";
-  const match = normalized.match(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})/);
-  if (!match) return normalized.replace(/\//g, "-");
-  return `${match[1]}-${match[2].padStart(2, "0")}-${
-    match[3].padStart(2, "0")
-  }`;
-}
-
 function parseIsoDate(value: string): Date | null {
   const normalized = normalizeSlashedDate(value);
   if (normalized === "") return null;
@@ -2822,16 +2822,6 @@ function addDays(value: Date, days: number): Date {
   const next = new Date(value.getTime());
   next.setDate(next.getDate() + days);
   return next;
-}
-function isPrefectureName(value: string): boolean {
-  return PREFECTURES.includes(value as (typeof PREFECTURES)[number]);
-}
-function extractPrefectureLabel(value: string): string {
-  const normalized = normalizeWhitespace(value).trim();
-  for (const prefecture of PREFECTURES) {
-    if (normalized.includes(prefecture)) return prefecture;
-  }
-  return normalized;
 }
 
 function extractScheduleMunicipality(
@@ -2898,9 +2888,6 @@ function scheduleSeverity(entry: LocalElectionScheduleEntry): number {
   return 2;
 }
 
-function normalizeMemberName(value: string): string {
-  return normalizeWhitespace(value).trim();
-}
 function normalizeCandidateNameForKey(value: string): string {
   return normalizeMemberName(value).replace(/[ \u3000]/g, "");
 }
@@ -2942,16 +2929,6 @@ function toInt(value: string): number {
   const normalized = toAsciiDigits(value).replace(/[^0-9]/g, "");
   return normalized === "" ? 0 : Number.parseInt(normalized, 10);
 }
-function toAsciiDigits(value: string): string {
-  return value.replace(
-    /[\uff10-\uff19]/g,
-    (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0),
-  );
-}
-function stripTags(value: string): string {
-  return value.replace(/<[^>]+>/g, " ");
-}
-
 function stripHtmlToText(html: string): string {
   return decodeHtml(
     html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(
@@ -2959,30 +2936,6 @@ function stripHtmlToText(html: string): string {
       " ",
     ).replace(/<noscript[\s\S]*?<\/noscript>/gi, " ").replace(/<[^>]+>/g, "\n"),
   );
-}
-
-function decodeHtml(value: string): string {
-  return value.replace(/&nbsp;/g, " ").replace(/&#038;/g, "&").replace(
-    /&amp;/g,
-    "&",
-  ).replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">").replace(/&ensp;/g, " ").replace(/&emsp;/g, " ")
-    .replace(/&#x2f;/gi, "/");
-}
-
-function normalizeWhitespace(value: string): string {
-  return value.replace(/\r/g, "\n").replace(/[ \t\u3000]+/g, " ").replace(
-    /\n{2,}/g,
-    "\n",
-  ).trim();
-}
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-function isLocalElectionName(value: string): boolean {
-  return /\u9078\u6319/u.test(value) &&
-    !/(\u8846\u8b70\u9662|\u53c2\u8b70\u9662|\u6bd4\u4f8b|\u653f\u515a|\u4ee3\u8868\u9078|\u515a\u5927\u4f1a)/u
-      .test(value);
 }
 function sanitizeLine(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";

@@ -1,7 +1,8 @@
+-- Repair unapplied schema typo; target stable provider/category, preserving newer revisions.
 -- Issue #5126: Agno API 入門コースのエビデンス契約・現行Memory×Knowledge×Tools統合ラボ・更新日付の強化
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 # Agno API 入門 — Memory × Knowledge × Tools エージェント統合実践 (2026)
 
 **Agno (旧 phidata)** の最新 API (`agno>=1.0.0`) を使い、**短期/長期記憶 (Memory)**、**ベクトル知識検索 (Knowledge)**、**外部ツール (Tools)** を 1 つのエージェントに統合する実践チュートリアルです。
@@ -61,4 +62,5 @@ agent.print_response("私の名前を覚えていますか？ 最新のドル円
 $md$,
   source_url = 'https://docs.agno.com/',
   published_at = '2026-09-02'
-WHERE provider_id = 'agno' AND (title LIKE '%Agno API 入門%' OR id = '41283504-615b-4911-9ebb-af81298a5770' OR sort_order = 3);
+WHERE provider = 'agno' AND category = 'api'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');

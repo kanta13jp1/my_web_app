@@ -1,0 +1,17 @@
+/* Keep the whole interaction readable in a desktop recording. */
+@media (min-width: 801px) {
+  header { padding-top: 16px; padding-bottom: 16px; }
+  main { padding-top: 18px; }
+  .intro { margin-bottom: 18px; }
+  .intro br { display: none; }
+  h1 { font-size: clamp(30px, 3vw, 44px); margin: 8px 0; }
+  #board { aspect-ratio: auto; height: clamp(320px, calc(100svh - 350px), 560px); }
+  #status { min-height: 44px; }
+  aside { padding-top: 0; }
+  .stat { padding: 10px 0; }
+  .controls { margin: 12px 0; }
+  .note { margin-top: 12px; }
+  footer { margin-top: 20px; }
+}
+/* Maintain a usable mirror hit area even on narrow phones. */
+button.piece { min-width: 32px; min-height: 44px; }

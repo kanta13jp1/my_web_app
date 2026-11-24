@@ -1,14 +1,24 @@
+import 'dart:ui' show Tristate;
+import 'package:flutter/semantics.dart';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
+import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
+import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -24,6 +34,7 @@ import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -110,6 +121,133 @@ Future<void> _unmount(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 2));
 }
 
+class _FailingIncomeTemplateRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  Completer<void>? pendingSave;
+  int attempts = 0;
+  bool failTemplate = true;
+  bool failMonth = false;
+  final attemptedIds = <String>[];
+  AssetLiabilityMonthlyState? savedState;
+  @override
+  Future<void> saveMonth({
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) async {
+    if (failMonth) throw StateError('synthetic month save failure');
+    await super.saveMonth(month: month, state: state);
+    savedState = state;
+  }
+
+  @override
+  Future<void> saveRecurringIncomeTemplates(
+    List<AssetLiabilityRecurringIncomeTemplate> templates,
+  ) async {
+    attempts++;
+    await pendingSave?.future;
+    attemptedIds.addAll(templates.map((template) => template.id));
+    if (failTemplate) throw StateError('synthetic local save failure');
+    await super.saveRecurringIncomeTemplates(templates);
+  }
+}
+
+class _BudgetSaveProbe extends AssetCategoryBudgetStore {
+  bool fail = false;
+  int attempts = 0;
+  Completer<void>? pending;
+  @override
+  Future<void> save(
+    Map<String, double> budgets, {
+    SharedPreferences? prefs,
+  }) async {
+    attempts++;
+    await pending?.future;
+    if (fail) throw StateError('synthetic budget save failure');
+    await super.save(budgets, prefs: prefs);
+  }
+}
+
+class _CsvRestoreProbeRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  final snapshots = <AssetLiabilityMonthlySnapshot>[];
+  Completer<void>? pending;
+  int attempts = 0;
+  bool failBeforePersist = false;
+  bool failAfterPersist = false;
+
+  @override
+  Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots() async {
+    return List<AssetLiabilityMonthlySnapshot>.from(snapshots);
+  }
+
+  @override
+  Future<void> saveMonthlySnapshot(
+    AssetLiabilityMonthlySnapshot snapshot,
+  ) async {
+    attempts++;
+    if (failBeforePersist) {
+      throw StateError('synthetic restore failure before persistence');
+    }
+    await pending?.future;
+    snapshots.add(snapshot);
+    if (failAfterPersist) {
+      throw StateError('synthetic restore failure after persistence');
+    }
+  }
+}
+
+Finder _csvRestoreInput() => find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Exported CSV',
+    );
+
+Finder _csvRestoreButton(String label, bool filled) => find.ancestor(
+      of: find.text(label),
+      matching: find.byWidgetPredicate(
+        (widget) => filled ? widget is FilledButton : widget is OutlinedButton,
+      ),
+    );
+
+String _syntheticRestoreCsv(String month) =>
+    'month_key,saved_at,assets,liabilities,net_worth,cash,scheduled,paid,'
+    'unpaid,overdue,actual_paid_payment_total,payment_difference_total\n'
+    '$month,2026-05-31 20:00:00,100,0,100,100,0,0,0,0,0,0';
+
+Future<void> _pumpCsvRestorePage(
+  WidgetTester tester,
+  _CsvRestoreProbeRepository repository,
+) async {
+  await tester.binding.setSurfaceSize(const Size(1200, 2400));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: AssetManagementPage(
+        assetLiabilityRepository: repository,
+        debugCalendarNow: DateTime(2026, 5, 15),
+        debugInitialAssetData: const {
+          '2026-05-15': {'現金': 1000.0},
+        },
+        debugInitialRecentFlows: const [],
+      ),
+    ),
+  );
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+  expect(_csvRestoreInput(), findsOneWidget);
+  expect(repository.attempts, 0);
+  await tester.ensureVisible(_csvRestoreInput());
+  await tester.pump(const Duration(milliseconds: 200));
+}
+
+Future<void> _previewSyntheticRestore(WidgetTester tester, String month) async {
+  await tester.enterText(_csvRestoreInput(), _syntheticRestoreCsv(month));
+  final preview = _csvRestoreButton('Preview', false);
+  await tester.ensureVisible(preview);
+  await tester.tap(preview);
+  await tester.pump();
+}
+
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -118,6 +256,21 @@ void main() {
       url: 'http://127.0.0.1:9999',
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((request) async {
+        const headers = {'content-type': 'application/json'};
+        final isExternalPointsRead = request.method == 'GET' &&
+            request.url.path == '/rest/v1/asset_pref_mirror' &&
+            request.url.queryParameters['pref_key'] == 'eq.external_points_v1';
+        if (isExternalPointsRead) {
+          return http.Response('[]', 200, headers: headers, request: request);
+        }
+        return http.Response(
+          '{"message":"Unexpected HTTP request during asset management smoke test"}',
+          400,
+          headers: headers,
+          request: request,
+        );
+      }),
     );
   });
 
@@ -128,6 +281,243 @@ void main() {
     // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
+  });
+
+  testWidgets('external points follow the asset page account switch', (
+    tester,
+  ) async {
+    const ownerA = 'synthetic-points-owner-a';
+    const ownerB = 'synthetic-points-owner-b';
+    final now = DateTime(2026, 6, 20);
+    const storeA = AssetExternalPointsStore.forOwner(ownerA);
+    const storeB = AssetExternalPointsStore.forOwner(ownerB);
+    final pointA = AssetExternalPointRecord(
+      id: 'fixture-a',
+      programName: 'サンプルポイントA',
+      observedAt: now,
+      balanceAfter: 105,
+    );
+    final pointB = AssetExternalPointRecord(
+      id: 'fixture-b',
+      programName: 'サンプルポイントB',
+      observedAt: now,
+      balanceAfter: 207,
+    );
+    SharedPreferences.setMockInitialValues({
+      'asset_management_display_mode_v1':
+          AssetManagementDisplayMode.full.storageId,
+      storeA.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointA])),
+      storeB.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointB])),
+    });
+
+    Future<void> showOwner(String owner) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugExternalPointsOwnerId: owner,
+            debugNow: now,
+            debugCalendarNow: now,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    Finder point(String name) => find.descendant(
+          of: find.byKey(const Key('asset_external_points_card')),
+          matching: find.text(name),
+        );
+
+    await showOwner(ownerA);
+    expect(point(pointA.programName), findsWidgets);
+    expect(point(pointB.programName), findsNothing);
+
+    await showOwner(ownerB);
+    expect(point(pointA.programName), findsNothing);
+    expect(point(pointB.programName), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
+  });
+
+  testWidgets('CSV edits require a fresh preview before applying',
+      (tester) async {
+    final repository = _CsvRestoreProbeRepository();
+    await _pumpCsvRestorePage(tester, repository);
+    await _previewSyntheticRestore(tester, '2026-04');
+    final apply = _csvRestoreButton('Apply append-only', true);
+    expect(tester.widget<FilledButton>(apply).onPressed, isNotNull);
+
+    await tester.enterText(_csvRestoreInput(), _syntheticRestoreCsv('2026-05'));
+    await tester.pump();
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+    expect(repository.attempts, 0);
+
+    await _previewSyntheticRestore(tester, '2026-05');
+    await tester.ensureVisible(apply);
+    await tester.tap(apply);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(repository.attempts, 1);
+    expect(repository.snapshots.single.monthKey, '2026-05');
+    await _unmount(tester);
+  });
+
+  testWidgets('CSV programmatic edits cannot apply a cached preview',
+      (tester) async {
+    final repository = _CsvRestoreProbeRepository();
+    await _pumpCsvRestorePage(tester, repository);
+    await _previewSyntheticRestore(tester, '2026-04');
+    final input = tester.widget<TextField>(_csvRestoreInput());
+    input.controller!.text = _syntheticRestoreCsv('2026-05');
+    final apply = _csvRestoreButton('Apply append-only', true);
+    await tester.ensureVisible(apply);
+    await tester.tap(apply);
+    await tester.pump();
+    expect(repository.attempts, 0);
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+    expect(find.textContaining('Preview again before applying.'), findsWidgets);
+    await _unmount(tester);
+  });
+
+  testWidgets('CSV pending apply blocks input preview and repeated callbacks',
+      (tester) async {
+    final repository = _CsvRestoreProbeRepository()
+      ..pending = Completer<void>();
+    await _pumpCsvRestorePage(tester, repository);
+    await _previewSyntheticRestore(tester, '2026-05');
+    final apply = _csvRestoreButton('Apply append-only', true);
+    await tester.ensureVisible(apply);
+    await tester.tap(apply);
+    await tester.tap(apply);
+    await tester.pump();
+    expect(repository.attempts, 1);
+    expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isFalse);
+    final preview = _csvRestoreButton('Preview', false);
+    expect(tester.widget<OutlinedButton>(preview).onPressed, isNull);
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+
+    repository.pending!.complete();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(repository.attempts, 1);
+    expect(repository.snapshots.single.monthKey, '2026-05');
+    expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isTrue);
+    expect(tester.widget<OutlinedButton>(preview).onPressed, isNotNull);
+    await _unmount(tester);
+  });
+
+  for (final persistedBeforeFailure in <bool>[false, true]) {
+    testWidgets(
+      'CSV failure after persistence=$persistedBeforeFailure requires new preview',
+      (tester) async {
+        final repository = _CsvRestoreProbeRepository()
+          ..failBeforePersist = !persistedBeforeFailure
+          ..failAfterPersist = persistedBeforeFailure;
+        await _pumpCsvRestorePage(tester, repository);
+        await _previewSyntheticRestore(tester, '2026-05');
+        final inputBefore =
+            tester.widget<TextField>(_csvRestoreInput()).controller!.text;
+        final apply = _csvRestoreButton('Apply append-only', true);
+        await tester.ensureVisible(apply);
+        await tester.tap(apply);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(repository.attempts, 1);
+        expect(repository.snapshots, hasLength(persistedBeforeFailure ? 1 : 0));
+        expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+        expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isTrue);
+        expect(
+          tester.widget<TextField>(_csvRestoreInput()).controller!.text,
+          inputBefore,
+        );
+        expect(find.textContaining('一部が保存済みの可能性'), findsOneWidget);
+        expect(find.textContaining('再プレビューしてください'), findsOneWidget);
+        final preview = _csvRestoreButton('Preview', false);
+        expect(tester.widget<OutlinedButton>(preview).onPressed, isNotNull);
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
+  }
+
+  for (final width in <double>[1200, 390]) {
+    testWidgets('balance change explains recorded-date difference at $width', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.binding.setSurfaceSize(Size(width, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 10, 20),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-01': <String, double>{'現金': 1000},
+              '2026-09-10': <String, double>{'現金': 1200},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      final title = find.text('戦略マップ (資産推移)');
+      await tester.ensureVisible(title);
+      await tester.pump(const Duration(milliseconds: 200));
+      final header = find.ancestor(of: title, matching: find.byType(Row)).first;
+      final toggle = find.descendant(of: header, matching: find.byType(Switch));
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('残高差（前回記録比）'), findsOneWidget);
+      expect(find.text('利益・日次収支とは異なります'), findsOneWidget);
+      final cardNode = tester.getSemantics(
+        find.byKey(const ValueKey('asset-chart-card-semantics')),
+      );
+      expect(cardNode.flagsCollection.isToggled, Tristate.none);
+      expect(
+        cardNode.getSemanticsData().hasAction(SemanticsAction.tap),
+        isFalse,
+      );
+
+      final note = find.textContaining('記録間隔は一定ではありません');
+      expect(note, findsOneWidget);
+      await tester.ensureVisible(note);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(tester.getSize(note).width, lessThanOrEqualTo(width));
+      expect(find.text('戦果レポート (日次損益)'), findsNothing);
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+      await _unmount(tester);
+    });
+  }
+
+  testWidgets('balance change returns to the ordinary trend', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pumpAssetPage(tester);
+    final title = find.text('戦略マップ (資産推移)');
+    await tester.ensureVisible(title);
+    await tester.pump(const Duration(milliseconds: 200));
+    final header = find.ancestor(of: title, matching: find.byType(Row)).first;
+    await tester
+        .tap(find.descendant(of: header, matching: find.byType(Switch)));
+    await tester.pump(const Duration(milliseconds: 200));
+    final changed = find.text('残高差（前回記録比）');
+    await tester.ensureVisible(changed);
+    final changedHeader = find
+        .ancestor(
+          of: changed,
+          matching: find.byType(Row),
+        )
+        .first;
+    await tester.tap(
+      find.descendant(of: changedHeader, matching: find.byType(Switch)),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(title, findsOneWidget);
+    expect(find.textContaining('記録間隔は一定ではありません'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await _unmount(tester);
   });
 
   test('Obsidian解約候補は全変更前に現在のサブスクへ再照合する', () {
@@ -200,6 +590,1081 @@ void main() {
     );
   });
 
+  for (final months in <List<int>>[
+    <int>[1, 3, 5],
+    <int>[2, 4, 6],
+    <int>[1, 2, 3, 4, 5, 6],
+  ]) {
+    testWidgets('income cadence supported registration $months',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {
+              '2026-06-20': {'synthetic cash': 1000.0},
+            },
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialRecentFlows: [
+              for (final month in months)
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 10000,
+                  'description': 'synthetic income',
+                  'occurred_at':
+                      DateTime(2026, month, 15, 12).toIso8601String(),
+                },
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      final cards = tester
+          .widgetList<AssetRecurringTransactionSuggestionCard>(
+            find.byType(AssetRecurringTransactionSuggestionCard),
+          )
+          .where((card) => card.keyPrefix == 'asset_recurring_income')
+          .toList();
+      expect(cards, hasLength(1));
+      final suggestions = cards.single.suggestions;
+      if (months.length == 6) {
+        expect(suggestions, hasLength(1));
+        expect(suggestions.single.typicalAmount, 10000);
+      } else {
+        // The registration destination only supports monthly templates.
+        expect(
+          suggestions,
+          isEmpty,
+          reason: 'Bimonthly income must not become a monthly income plan',
+        );
+      }
+      await _unmount(tester);
+    });
+  }
+
+  for (final width in [1200.0, 390.0]) {
+    for (final failure in [
+      'template',
+      'monthly',
+      'none',
+      'pending',
+      'delete',
+      'delete_monthly',
+      'delete_none',
+      'delete_pending',
+    ]) {
+      testWidgets(
+          'income save failure keeps data and retries $failure width $width',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding
+            .setSurfaceSize(Size(width, width == 390 ? 844 : 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final repository = _FailingIncomeTemplateRepository()
+          ..failTemplate = failure == 'template'
+          ..failMonth = failure == 'monthly';
+        if (failure == 'pending') repository.pendingSave = Completer<void>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              assetLiabilityRepository: repository,
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 1000.0},
+              },
+              debugInitialRecentFlows: [
+                for (final month in [1, 2, 3, 4, 5, 6])
+                  <String, dynamic>{
+                    'action_type': 'conquer',
+                    'amount': 10000,
+                    'description': 'synthetic income',
+                    'occurred_at':
+                        DateTime(2026, month, 15, 12).toIso8601String(),
+                  },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        try {
+          final register = find.byKey(
+            const Key('asset_recurring_income_suggestion_register_0'),
+          );
+          expect(register, findsOneWidget);
+          await tester.ensureVisible(register);
+          await tester.tap(register);
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(AlertDialog), findsOneWidget);
+          final save = find.widgetWithText(FilledButton, '保存');
+          expect(save, findsOneWidget);
+          await tester.ensureVisible(save);
+          await tester.tap(save);
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(repository.attempts, 1);
+          if (failure == 'pending') {
+            expect(tester.widget<FilledButton>(save).onPressed, isNull);
+            final cancel = find.widgetWithText(TextButton, 'キャンセル');
+            expect(tester.widget<TextButton>(cancel).onPressed, isNull);
+            await tester.tap(save);
+            await tester.binding.handlePopRoute();
+            await tester.pump();
+            expect(repository.attempts, 1);
+            expect(find.byType(AlertDialog), findsOneWidget);
+            repository.pendingSave!.complete();
+            await tester.pump();
+          }
+          if (failure == 'template' || failure == 'monthly') {
+            expect(find.byType(AlertDialog), findsOneWidget);
+            expect(
+              find.byKey(const Key('recurring_income_save_error')),
+              findsOneWidget,
+            );
+            expect(find.text('synthetic income'), findsWidgets);
+            repository.failTemplate = false;
+            repository.failMonth = false;
+            await tester.tap(save);
+            await tester.pump(const Duration(milliseconds: 300));
+            expect(repository.attempts, 2);
+          }
+          // Allow the dismissal animation started after async persistence to finish.
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(repository.attemptedIds.toSet(), hasLength(1));
+          final templates = await repository.loadRecurringIncomeTemplates();
+          expect(templates, hasLength(1));
+          expect(repository.savedState, isNotNull);
+          expect(
+            repository.savedState!.incomePlans.where(
+              (plan) => plan.name == 'synthetic income',
+            ),
+            hasLength(1),
+          );
+          if (failure.startsWith('delete')) {
+            repository.failTemplate = failure == 'delete';
+            repository.failMonth = failure == 'delete_monthly';
+            if (failure == 'delete_pending') {
+              repository.pendingSave = Completer<void>();
+            }
+            final chip = find.byWidgetPredicate(
+              (widget) =>
+                  widget is InputChip &&
+                  widget.label is Text &&
+                  ((widget.label as Text).data ?? '')
+                      .contains('synthetic income'),
+            );
+            expect(chip, findsOneWidget);
+            await tester.ensureVisible(chip);
+            final delete = find.descendant(
+              of: chip,
+              matching: find.byTooltip('Delete'),
+            );
+            expect(delete, findsOneWidget);
+            await tester.tap(delete);
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
+            if (failure == 'delete_pending') {
+              expect(chip, findsOneWidget);
+              expect(tester.widget<InputChip>(chip).onDeleted, isNull);
+              await tester.tap(chip);
+              await tester.pump();
+              expect(find.byType(AlertDialog), findsNothing);
+              expect(repository.attempts, 2);
+              repository.pendingSave!.complete();
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 300));
+            }
+            if (failure == 'delete' || failure == 'delete_monthly') {
+              expect(chip, findsOneWidget);
+              expect(find.textContaining('もう一度削除してください'), findsOneWidget);
+              repository.failTemplate = false;
+              repository.failMonth = false;
+              await tester.tap(delete);
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 300));
+            }
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
+            expect(chip, findsNothing);
+            expect(await repository.loadRecurringIncomeTemplates(), isEmpty);
+            expect(repository.savedState!.incomePlans, isEmpty);
+          }
+        } finally {
+          await _unmount(tester);
+        }
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final invalid in ['Infinity', 'abc', '-1']) {
+      testWidgets('budget save retains invalid input $invalid at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+          'asset_category_budgets_v2_synthetic-budget-owner':
+              jsonEncode({'食費': 5000}),
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        final edit = find.byKey(const Key('asset_category_budget_edit'));
+        expect(edit, findsOneWidget);
+        await tester.ensureVisible(edit);
+        await tester.tap(edit);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        final dialog = find.byType(AlertDialog);
+        final field =
+            find.descendant(of: dialog, matching: find.byType(TextField)).first;
+        await tester.enterText(field, invalid);
+        await tester.tap(find.byKey(const Key('asset_category_budget_save')));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          dialog,
+          findsOneWidget,
+          reason: 'invalid input must remain editable',
+        );
+        expect(
+          find
+              .descendant(of: dialog, matching: find.byType(TextField))
+              .evaluate()
+              .any(
+                (e) => (e.widget as TextField).controller!.text == invalid,
+              ),
+          isTrue,
+        );
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          jsonDecode(
+            prefs.getString(
+              'asset_category_budgets_v2_synthetic-budget-owner',
+            )!,
+          ),
+          {'食費': 5000},
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final mode in ['normal', 'retry', 'pending', 'clear']) {
+      testWidgets('budget save lifecycle $mode at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final store = _BudgetSaveProbe()..fail = mode == 'retry';
+        if (mode == 'pending') store.pending = Completer<void>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              categoryBudgetStore: store,
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+
+        await settle();
+        try {
+          final edit = find.byKey(const Key('asset_category_budget_edit'));
+          await tester.ensureVisible(edit);
+          await tester.tap(edit);
+          await settle();
+          final field =
+              find.byKey(const ValueKey('asset_category_budget_input_食費'));
+          expect(field, findsOneWidget);
+          await tester.enterText(field, mode == 'clear' ? '' : '7,500');
+          final save = find.byKey(const Key('asset_category_budget_save'));
+          await tester.tap(save);
+          await settle();
+          if (mode == 'retry') {
+            expect(find.byType(AlertDialog), findsOneWidget);
+            expect(
+              find.byKey(const Key('asset_category_budget_save_error')),
+              findsOneWidget,
+            );
+            expect(tester.widget<TextField>(field).controller!.text, '7,500');
+            expect(await store.load(), {'食費': 5000});
+            store.fail = false;
+            await tester.tap(save);
+            await settle();
+          } else if (mode == 'pending') {
+            expect(tester.widget<ElevatedButton>(save).onPressed, isNull);
+            expect(
+              tester
+                  .widget<TextButton>(
+                    find.widgetWithText(TextButton, 'キャンセル'),
+                  )
+                  .onPressed,
+              isNull,
+            );
+            expect(tester.widget<TextField>(field).enabled, isFalse);
+            expect(store.attempts, 1);
+            expect(await store.load(), {'食費': 5000});
+            store.pending!.complete();
+            await settle();
+          }
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(store.attempts, mode == 'retry' ? 2 : 1);
+          expect(
+            await store.load(),
+            mode == 'clear' ? <String, double>{} : {'食費': 7500},
+          );
+          expect(tester.takeException(), isNull);
+          if (mode == 'clear') {
+            expect(
+              find.byKey(const Key('asset_category_budget_card')),
+              findsNothing,
+            );
+          } else {
+            await tester.ensureVisible(edit);
+            await tester.tap(edit);
+            await settle();
+            expect(tester.widget<TextField>(field).controller!.text, '7500');
+            await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+            await settle();
+            expect(tester.takeException(), isNull);
+          }
+        } finally {
+          if (store.pending != null && !store.pending!.isCompleted) {
+            store.pending!.complete();
+          }
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final query in ['定期収入', '収入予定', '毎月の収入']) {
+      testWidgets('income search reaches editor $query at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 1000.0},
+              },
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump();
+          await tester.pump();
+          await tester.pump(const Duration(seconds: 1));
+          await tester.pump();
+        }
+
+        await settle();
+        try {
+          await tester
+              .tap(find.byKey(const Key('asset_section_search_appbar_button')));
+          await settle();
+          final search = find.byWidgetPredicate(
+            (w) =>
+                w is TextField &&
+                (w.decoration?.hintText?.startsWith('カード名・項目名で検索') ?? false),
+          );
+          expect(search, findsOneWidget);
+          await tester.enterText(search, query);
+          await settle();
+          final destination = find.text('定期収入・収入予定');
+          expect(destination, findsOneWidget);
+          await tester.ensureVisible(destination);
+          await tester.tap(destination);
+          await settle();
+          final editor = find
+              .ancestor(
+                of: find.text('定期収入'),
+                matching:
+                    find.byWidgetPredicate((widget) => widget is TextButton),
+              )
+              .first;
+          expect(editor, findsOneWidget);
+          final center = tester.getCenter(editor);
+          expect(center.dy, greaterThan(56));
+          expect(center.dy, lessThan(size.height));
+          await tester.tap(editor);
+          await settle();
+          expect(find.text('定期収入を追加'), findsOneWidget);
+          await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+          await settle();
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(tester.takeException(), isNull);
+        } finally {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final invalid in ['Infinity', 'abc', '-1']) {
+      testWidgets('budget save retains invalid input $invalid at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_category_budgets_v2_synthetic-budget-owner':
+              jsonEncode({'食費': 5000}),
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        final edit = find.byKey(const Key('asset_category_budget_edit'));
+        expect(edit, findsOneWidget);
+        await tester.ensureVisible(edit);
+        await tester.tap(edit);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        final dialog = find.byType(AlertDialog);
+        final field =
+            find.descendant(of: dialog, matching: find.byType(TextField)).first;
+        await tester.enterText(field, invalid);
+        await tester.tap(find.byKey(const Key('asset_category_budget_save')));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          dialog,
+          findsOneWidget,
+          reason: 'invalid input must remain editable',
+        );
+        expect(
+          find
+              .descendant(of: dialog, matching: find.byType(TextField))
+              .evaluate()
+              .any(
+                (e) => (e.widget as TextField).controller!.text == invalid,
+              ),
+          isTrue,
+        );
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          jsonDecode(
+            prefs.getString(
+              'asset_category_budgets_v2_synthetic-budget-owner',
+            )!,
+          ),
+          {'食費': 5000},
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final mode in ['normal', 'retry', 'pending', 'clear']) {
+      testWidgets('budget save lifecycle $mode at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final store = _BudgetSaveProbe()..fail = mode == 'retry';
+        if (mode == 'pending') store.pending = Completer<void>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              categoryBudgetStore: store,
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+
+        await settle();
+        try {
+          final edit = find.byKey(const Key('asset_category_budget_edit'));
+          await tester.ensureVisible(edit);
+          await tester.tap(edit);
+          await settle();
+          final field =
+              find.byKey(const ValueKey('asset_category_budget_input_食費'));
+          expect(field, findsOneWidget);
+          await tester.enterText(field, mode == 'clear' ? '' : '7,500');
+          final save = find.byKey(const Key('asset_category_budget_save'));
+          await tester.tap(save);
+          await settle();
+          if (mode == 'retry') {
+            expect(find.byType(AlertDialog), findsOneWidget);
+            expect(
+              find.byKey(const Key('asset_category_budget_save_error')),
+              findsOneWidget,
+            );
+            expect(tester.widget<TextField>(field).controller!.text, '7,500');
+            expect(await store.load(), {'食費': 5000});
+            store.fail = false;
+            await tester.tap(save);
+            await settle();
+          } else if (mode == 'pending') {
+            expect(tester.widget<ElevatedButton>(save).onPressed, isNull);
+            expect(
+              tester
+                  .widget<TextButton>(
+                    find.widgetWithText(TextButton, 'キャンセル'),
+                  )
+                  .onPressed,
+              isNull,
+            );
+            expect(tester.widget<TextField>(field).enabled, isFalse);
+            expect(store.attempts, 1);
+            expect(await store.load(), {'食費': 5000});
+            store.pending!.complete();
+            await settle();
+          }
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(store.attempts, mode == 'retry' ? 2 : 1);
+          expect(
+            await store.load(),
+            mode == 'clear' ? <String, double>{} : {'食費': 7500},
+          );
+          expect(tester.takeException(), isNull);
+          if (mode == 'clear') {
+            expect(
+              find.byKey(const Key('asset_category_budget_card')),
+              findsNothing,
+            );
+          } else {
+            await tester.ensureVisible(edit);
+            await tester.tap(edit);
+            await settle();
+            expect(tester.widget<TextField>(field).controller!.text, '7500');
+            await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+            await settle();
+            expect(tester.takeException(), isNull);
+          }
+        } finally {
+          if (store.pending != null && !store.pending!.isCompleted) {
+            store.pending!.complete();
+          }
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
+
+  for (final size in [const Size(1200, 2400), const Size(390, 844)]) {
+    for (final query in ['予算を設定', '予算設定']) {
+      testWidgets('budget search reaches editor $query at ${size.width}',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_category_budgets_v2_synthetic-budget-owner': '{"食費":10000}',
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.full.storageId,
+        });
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 1000.0},
+              },
+            ),
+          ),
+        );
+        Future<void> settle() async {
+          await tester.pump();
+          await tester.pump();
+          await tester.pump(const Duration(seconds: 1));
+          await tester.pump();
+        }
+
+        await settle();
+        try {
+          await tester
+              .tap(find.byKey(const Key('asset_section_search_appbar_button')));
+          await settle();
+          final search = find.byWidgetPredicate(
+            (w) =>
+                w is TextField &&
+                (w.decoration?.hintText?.startsWith('カード名・項目名で検索') ?? false),
+          );
+          expect(search, findsOneWidget);
+          await tester.enterText(search, query);
+          await settle();
+          final destination = find.descendant(
+            of: find.byType(ListTile),
+            matching: find.text('予算を設定'),
+          );
+          expect(destination, findsOneWidget);
+          await tester.ensureVisible(destination);
+          await tester.tap(destination);
+          await settle();
+          final editor = find
+              .ancestor(
+                of: find.text('予算を設定'),
+                matching:
+                    find.byWidgetPredicate((widget) => widget is TextButton),
+              )
+              .first;
+          expect(editor, findsOneWidget);
+          final center = tester.getCenter(editor);
+          expect(center.dy, greaterThan(56));
+          expect(center.dy, lessThan(size.height));
+          await tester.tap(editor);
+          await settle();
+          expect(find.text('カテゴリ別の月次予算'), findsOneWidget);
+          await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+          await settle();
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(tester.takeException(), isNull);
+        } finally {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await settle();
+        }
+      });
+    }
+  }
+
+  testWidgets('fixed cost persistence failure retains edited input',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+        AssetRecurringFixedCostStore.encodeMirrorValue(
+          const <AssetRecurringFixedCost>[
+            AssetRecurringFixedCost(
+              id: 'synthetic_cost',
+              name: 'Synthetic utility',
+              amount: 2000,
+              paymentDay: 7,
+            ),
+          ],
+        ),
+      ),
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1200, 3000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AssetManagementPage(
+          debugRecurringFixedCostStore: _ThrowingRecurringFixedCostStore(),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final edit = find.byTooltip('Synthetic utility を編集');
+      expect(edit, findsOneWidget);
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(RecurringFixedCostEditorDialog), findsOneWidget);
+      final name = find.widgetWithText(TextFormField, '名称');
+      await tester.enterText(name, 'Synthetic utility changed');
+      await tester.tap(find.widgetWithText(FilledButton, '保存'));
+      await tester.pump(const Duration(milliseconds: 500));
+      final persisted = await const AssetRecurringFixedCostStore().load();
+      expect(persisted.single.name, 'Synthetic utility');
+      expect(
+        find.byType(RecurringFixedCostEditorDialog),
+        findsOneWidget,
+        reason: 'Failed persistence must keep entered data for retry',
+      );
+      expect(find.text('Synthetic utility changed'), findsOneWidget);
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance recorded 1200',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_expense 1200',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_income 1200',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance recorded 390',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(390, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_expense 390',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(390, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'pay_date': '2026-05-25',
+              'net_amount': 300000,
+              'confidence': 1,
+            },
+          ],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
+  testWidgets(
+      'disposable cycle budget does not claim a spendable daily balance no_income 390',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.binding.setSurfaceSize(const Size(390, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 6, 20),
+          debugCalendarNow: DateTime(2026, 6, 20),
+          debugInitialPayslipRows: const <Map<String, dynamic>>[],
+          debugInitialAssetData: const {
+            '2026-06-20': {'synthetic cash': 1000.0},
+          },
+          debugInitialRecentFlows: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action_type': 'spend',
+              'amount': 200000,
+              'description': 'synthetic living expense',
+              'occurred_at': '2026-06-15T12:00:00',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    try {
+      final card = find.byKey(const Key('asset_disposable_balance_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text('1日あたり')),
+        findsNothing,
+        reason:
+            'A full-cycle salary remainder excludes recorded spending and is not a daily spendable balance',
+      );
+      expect(
+        find.descendant(of: card, matching: find.text('給料日までの可処分残高')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('日割り使用可能額は未算出'),
+        ),
+        findsWidgets,
+      );
+    } finally {
+      await _unmount(tester);
+    }
+  });
   group('AssetManagementPage smoke', () {
     testWidgets('mobile chat reserves space outside the scrolling content', (
       tester,
@@ -224,6 +1689,25 @@ void main() {
       await tester.tap(find.byKey(const Key('asset_chat_close_button')));
       await tester.pump();
       expect(find.byKey(const Key('asset_chat_open_button')), findsOneWidget);
+      await _unmount(tester);
+    });
+
+    testWidgets('desktop chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
       await _unmount(tester);
     });
 
@@ -409,297 +1893,6 @@ void main() {
     });
 
     testWidgets(
-      'monthly flow card aggregates over the salary cycle, not the month',
-      (tester) async {
-        // 暦月だと給料日(25日)受給分が翌月の窓から外れ収入0=赤字になる回帰を防ぐ。
-        // 当サイクル [給料日, 翌給料日) の窓で収入/支出を集計することを検証する。
-        final now = DateTime.now();
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          now,
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        // 当サイクル開始日(=給料日)に受け取った給料。暦月窓では外れるが、
-        // サイクル窓では収入として計上される。
-        final cycleSalary = DateTime(
-          cycleStart.year,
-          cycleStart.month,
-          cycleStart.day,
-          12,
-        );
-        // 前サイクル(給料日の前日)の収入。当サイクル窓では除外される。
-        final previousCycleIncome = cycleSalary.subtract(
-          const Duration(days: 1),
-        );
-        // 当サイクル内(本日)の支出。
-        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialRecentFlows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'action_type': 'conquer',
-                  'amount': 280000,
-                  'description': '給料',
-                  'occurred_at': cycleSalary.toIso8601String(),
-                },
-                <String, dynamic>{
-                  'action_type': 'expense',
-                  'amount': 50000,
-                  'description': '食費',
-                  'occurred_at': cycleExpense.toIso8601String(),
-                },
-                <String, dynamic>{
-                  'action_type': 'conquer',
-                  'amount': 999999,
-                  'description': '前サイクル収入',
-                  'occurred_at': previousCycleIncome.toIso8601String(),
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final card = find.byKey(
-          const Key('asset_monthly_flow_priority_card'),
-        );
-        expect(card, findsOneWidget);
-
-        // 当サイクルの給料(280,000)が収入として計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥280,000')),
-          findsOneWidget,
-        );
-        // 当サイクルの支出(50,000)も計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥50,000')),
-          findsOneWidget,
-        );
-        // 前サイクルの収入(999,999)は窓外なので除外される。
-        expect(
-          find.descendant(of: card, matching: find.textContaining('999,999')),
-          findsNothing,
-        );
-        // 見出しは暦月ラベルではなく給料サイクルの期間ラベルになっている。
-        expect(
-          find.descendant(
-            of: card,
-            matching: find.textContaining('給料サイクル('),
-          ),
-          findsOneWidget,
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'cycle summary and salary breakdown exclude an unreceived income plan',
-      (tester) async {
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          DateTime.now(),
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
-        final repo = _FakeDebtOverrideRepository(
-          const <String, int>{},
-          monthlyState: AssetLiabilityMonthlyState(
-            incomePlans: <AssetLiabilityIncomePlan>[
-              AssetLiabilityIncomePlan(
-                id: 'unreceived_salary',
-                date: cycleStart,
-                name: '給料予定',
-                amount: 450000,
-                destinationAccountId: null,
-                destinationAccountName: null,
-                received: false,
-              ),
-            ],
-          ),
-        );
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_management_display_mode_v1': 'full',
-        });
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              assetLiabilityRepository: repo,
-              debugInitialRecentFlows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'action_type': 'expense',
-                  'amount': 175110,
-                  'description': '使途不明金（残高差分から自動記録）',
-                  'occurred_at': cycleStart.toIso8601String(),
-                },
-              ],
-              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'amount': 421277,
-                  'description': '給料',
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        for (final key in <String>[
-          'asset_monthly_flow_priority_card',
-          'asset_salary_spending_breakdown_card',
-        ]) {
-          final card = find.byKey(Key(key));
-          expect(card, findsOneWidget);
-          expect(
-            find.descendant(of: card, matching: find.text('¥421,277')),
-            findsOneWidget,
-          );
-          expect(
-            find.descendant(of: card, matching: find.textContaining('871,277')),
-            findsNothing,
-          );
-          expect(
-            find.descendant(of: card, matching: find.text('+¥246,167')),
-            findsOneWidget,
-          );
-        }
-        expect(find.text('期間支出（未照合含む）'), findsOneWidget);
-        expect(find.textContaining('全額が消費や浪費とは限りません'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'monthly flow card counts payslip salary income when no conquer flow exists',
-      (tester) async {
-        // 給料を給与明細(payslips/salary_incomes)でのみ管理しているユーザーは、
-        // 収支フロー(conquer)が無いため収入¥0=常に赤字に見える回帰を防ぐ。
-        // 当サイクルに受給した給料が収入へ合算されることを検証する。
-        final now = DateTime.now();
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          now,
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              // 収支フロー(wealth_struggles)は空。
-              debugInitialRecentFlows: const <Map<String, dynamic>>[],
-              // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
-              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'amount': 280000,
-                  'description': 'Payslip: 自分株式会社',
-                  'source': 'payslip_auto',
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final card = find.byKey(
-          const Key('asset_monthly_flow_priority_card'),
-        );
-        expect(card, findsOneWidget);
-
-        // 給与明細の給料(280,000)が収入として計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥280,000')),
-          findsOneWidget,
-        );
-        // 収入があるので「未記録」の空状態文言は出ない。
-        expect(
-          find.descendant(
-            of: card,
-            matching: find.textContaining('まだこのサイクルの収支が未記録'),
-          ),
-          findsNothing,
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'monthly flow card shows manual income CTA when no income is recorded',
-      (tester) async {
-        // 給与明細も収入フロー(conquer)も無く支出だけのユーザーは収入¥0=赤字に
-        // 見える。手入力収入への導線(CTA)が出て、ワンタップで収支記録の種別が
-        // 「収入」へ切り替わることを検証する。
-        final now = DateTime.now();
-        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialRecentFlows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'action_type': 'expense',
-                  'amount': 50000,
-                  'description': '食費',
-                  'occurred_at': cycleExpense.toIso8601String(),
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(
-          find.byKey(const Key('asset_monthly_flow_income_cta')),
-          findsOneWidget,
-        );
-
-        final dropdownFinder = find.byKey(
-          const Key('asset_flow_type_dropdown'),
-        );
-        // タップ前は既定の支出。
-        expect(
-          tester
-              .widget<DropdownButtonFormField<String>>(dropdownFinder)
-              .initialValue,
-          '支出',
-        );
-
-        final ctaButton = find.byKey(
-          const Key('asset_monthly_flow_income_cta_button'),
-        );
-        await tester.ensureVisible(ctaButton);
-        await tester.pump();
-        await tester.tap(ctaButton);
-        await tester.pump(const Duration(milliseconds: 400));
-
-        // CTA で収支記録の種別が「収入」へ切り替わる(記録時に conquer になる)。
-        expect(
-          tester
-              .widget<DropdownButtonFormField<String>>(dropdownFinder)
-              .initialValue,
-          '収入',
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
       'monthly flow card hides manual income CTA when income exists',
       (tester) async {
         // 当サイクルに収入フロー(conquer)があれば収入¥0ではないので CTA は出ない。
@@ -736,64 +1929,6 @@ void main() {
 
         expect(
           find.byKey(const Key('asset_monthly_flow_income_cta')),
-          findsNothing,
-        );
-
-        await _unmount(tester);
-      },
-    );
-
-    testWidgets(
-      'payslip row and salary_income with same pay date/amount are counted once',
-      (tester) async {
-        // 1枚の給与明細は payslips と salary_incomes の両方に同日同額で入る。
-        // 二重計上(560,000)せず1件(280,000)に畳むことを検証する。
-        final now = DateTime.now();
-        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
-          now,
-          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
-        );
-        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
-
-        await tester.binding.setSurfaceSize(const Size(1200, 2400));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: AssetManagementPage(
-              debugInitialRecentFlows: const <Map<String, dynamic>>[],
-              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'amount': 280000,
-                  'description': 'Payslip: 自分株式会社',
-                  'source': 'payslip_auto',
-                },
-              ],
-              debugInitialPayslipRows: <Map<String, dynamic>>[
-                <String, dynamic>{
-                  'pay_date': payDate,
-                  'net_amount': 280000,
-                  'company_name': '自分株式会社',
-                },
-              ],
-            ),
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final card = find.byKey(
-          const Key('asset_monthly_flow_priority_card'),
-        );
-        expect(card, findsOneWidget);
-
-        // 二重計上されず1件分(280,000)だけ計上される。
-        expect(
-          find.descendant(of: card, matching: find.text('¥280,000')),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: card, matching: find.textContaining('560,000')),
           findsNothing,
         );
 
@@ -964,7 +2099,10 @@ void main() {
     testWidgets('manual prune button cleans expired tombstones', (
       tester,
     ) async {
+      const debtRaw =
+          '[{"id":"unknown-owner","at":"2020-01-01T00:00:00.000Z"}]';
       SharedPreferences.setMockInitialValues(<String, Object>{
+        'debt_payment_day_override_deleted_v1': debtRaw,
         'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
             'id': 'seeded_rule',
@@ -1007,13 +2145,41 @@ void main() {
       await tester.tap(find.byKey(const Key('asset_tombstone_gc_edit')));
       await tester.pump(const Duration(milliseconds: 100));
 
+      final preferences = await SharedPreferences.getInstance();
+      // 起動時の一括掃除は、帰属未確認の元データを変更しない。
+      expect(
+        preferences.getString('debt_payment_day_override_deleted_v1'),
+        debtRaw,
+      );
+      final inflowAfterBoot =
+          preferences.getString('asset_expected_inflow_deleted_ids_v1');
+      expect(inflowAfterBoot, isNotNull);
+      expect(inflowAfterBoot, isNot(contains('old1')));
+      // 起動後に別ドメインの古い記録を追加し、手動掃除を個別に確認する。
+      await preferences.setString(
+        'asset_expected_inflow_deleted_ids_v1',
+        jsonEncode(<Map<String, String>>[
+          <String, String>{
+            'id': 'manual-old',
+            'at': '2020-01-01T00:00:00.000Z',
+          },
+        ]),
+      );
       await tester.tap(find.byKey(const Key('asset_tombstone_gc_prune')));
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        preferences.getString('debt_payment_day_override_deleted_v1'),
+        debtRaw,
+      );
+      final inflowAfterManual =
+          preferences.getString('asset_expected_inflow_deleted_ids_v1');
+      expect(inflowAfterManual, isNotNull);
+      expect(inflowAfterManual, isNot(contains('manual-old')));
+      expect(find.textContaining('古い削除記録を1件 掃除しました'), findsOneWidget);
+      expect(find.textContaining('今回の一括掃除では対象外'), findsOneWidget);
 
-      // ボタン→prune→SnackBar の配線を検証 (件数は boot 自動 prune が先に
-      // 期限切れを掃除するため非依存にする / #part296)。実際の物理削除は
-      // 「boot auto-prune」テストと store 単体テストで担保。
+      // 操作案内の既存文言も維持する。上で追加した1件は手動で掃除済み。
       expect(find.textContaining('件 掃除しました'), findsOneWidget);
 
       await _unmount(tester);
@@ -1479,6 +2645,94 @@ void main() {
       await _unmount(tester);
     });
 
+    for (final width in <double>[1200, 390]) {
+      testWidgets('forecast search reaches its visible card at $width',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding.setSurfaceSize(Size(width, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 10000.0},
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(
+          find.byKey(const Key('asset_section_search_appbar_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        final search = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+        );
+        await tester.enterText(search, '将来');
+        await tester.pump(const Duration(milliseconds: 100));
+        final result = find.text('将来残高予測');
+        expect(result, findsOneWidget);
+        await tester.tap(result);
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
+        expect(search, findsNothing);
+        final title = find.textContaining('将来残高予測(今後');
+        expect(title, findsOneWidget);
+        final rect = tester.getRect(title);
+        expect(rect.bottom, greaterThan(0));
+        expect(rect.top, lessThan(844));
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      });
+    }
+
+    testWidgets('forecast search omits the card when there is no data',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('将来残高予測(今後'), findsNothing);
+      await tester.tap(
+        find.byKey(const Key('asset_section_search_appbar_button')),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final search = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+      );
+      await tester.enterText(search, '将来');
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('将来残高予測'), findsNothing);
+      expect(find.textContaining('一致するカード・項目がありません'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await _unmount(tester);
+    });
+
     testWidgets('shortfall warning appears and clears via expected inflow', (
       tester,
     ) async {
@@ -1507,7 +2761,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
+      expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
       expect(
         find.byKey(const Key('asset_shift_payment_mobit')),
         findsOneWidget,
@@ -1530,7 +2784,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
+      expect(find.textContaining('期間内の最大不足:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1573,7 +2827,7 @@ void main() {
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsNothing);
+      expect(find.textContaining('期間内の最大不足:'), findsNothing);
 
       await _unmount(tester);
     });
@@ -1633,6 +2887,66 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'reconciliation uses confirmed date and keeps revolving settings', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
+      final now = DateTime(2026, 10, 11);
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: now,
+            debugRevolvingConfigsMirror: mirrorValue,
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              <String, int>{},
+              monthlyState: AssetLiabilityMonthlyState(
+                paymentOverrides: const <String, double>{'aupay_card': 77541},
+                confirmedPaymentDays: const <String, double>{'aupay_card': 13},
+                billingConfirmedAccountIds: const <String>{'aupay_card'},
+                cardStatementLines: <AssetLiabilityCardStatementLine>[
+                  AssetLiabilityCardStatementLine(
+                    id: 'confirmed_bill_line',
+                    billingAccountId: 'aupay_card',
+                    billingAccountName: 'auPayカード',
+                    description: 'Synthetic statement',
+                    amount: 1000,
+                    postedAt: DateTime(2026, 9, 11),
+                  ),
+                ],
+              ),
+            ),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('カード明細取り込み・照合'), findsOneWidget);
+      expect(find.textContaining('今回の返済予定: 13日 ¥77,541。'), findsOneWidget);
+      expect(find.textContaining('25日の返済予定'), findsNothing);
+      expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
+      expect(find.textContaining('リボ設定: 最低返済 ¥10,000'), findsOneWidget);
+      await _unmount(tester);
+    });
     testWidgets('revolving payoff chip and payday rule appear on debt cards', (
       tester,
     ) async {
@@ -1683,7 +2997,74 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
-      expect(find.textContaining('25日返済'), findsWidgets);
+      expect(find.textContaining('新規利用分は25日に全額返済'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
+    testWidgets(
+        'revolving inline chips show months, principal estimate, and tooltip only for revolving debt',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            newUsageAmount: 20000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+                'モビット': -80000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final payoffTooltipFinder = find.byKey(
+        const Key('asset_revolving_payoff_chip_aupay_card'),
+      );
+      final principalTooltipFinder = find.byKey(
+        const Key('asset_revolving_principal_chip_aupay_card'),
+      );
+      expect(payoffTooltipFinder, findsOneWidget);
+      expect(principalTooltipFinder, findsOneWidget);
+      expect(find.textContaining('リボ: 概算残り'), findsOneWidget);
+      expect(find.textContaining('今月元金 '), findsOneWidget);
+
+      final payoffTooltip = tester.widget<Tooltip>(payoffTooltipFinder);
+      final principalTooltip = tester.widget<Tooltip>(principalTooltipFinder);
+      expect(payoffTooltip.message, contains('概算'));
+      expect(payoffTooltip.message, contains('請求=リボ設定額'));
+      expect(principalTooltip.message, contains('概算'));
+      expect(principalTooltip.message, contains('請求=リボ設定額'));
+
+      expect(find.text('モビット'), findsWidgets);
+      expect(
+        find.byKey(const Key('asset_revolving_payoff_chip_mobit')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('asset_revolving_principal_chip_mobit')),
+        findsNothing,
+      );
 
       await _unmount(tester);
     });
@@ -1781,27 +3162,84 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('living expense priority toggle immediately reorders actions', (
-      tester,
-    ) async {
+    testWidgets(
+        'safety balance below 5,000 shows and hides low reserve warning',
+        (tester) async {
       final now = DateTime.now();
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       SharedPreferences.setMockInitialValues(<String, Object>{});
-      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{'財布(現金)': 50000},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsNothing,
+      );
+
+      final field = find.byKey(const Key('asset_safety_balance_field'));
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '3000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(field, '10000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('living expense priority toggle immediately reorders actions', (
+      tester,
+    ) async {
+      // The action list displays only its first eight entries. Keep the
+      // fixture date stable so later overdue payments cannot displace it.
+      final now = DateTime(2026, 9, 2);
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Isolate the two actions under test from date-dependent default bills.
+      // The page only renders eight actions; unrelated bills must not decide
+      // whether either target action is present in this ordering test.
+      final defaultBills = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{},
+        baseDate: now,
+        includeDefaultFixedPayments: true,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: now,
             assetLiabilityRepository: _FakeDebtOverrideRepository(
-              <String, int>{'mobit': now.day},
-              // Keep this sorting test independent of the calendar's fixed bills.
-              monthlyState: const AssetLiabilityMonthlyState(
+              <String, int>{'mobit': now.day - 1},
+              monthlyState: AssetLiabilityMonthlyState(
                 paidAccountNames: <String>{
-                  AssetLiabilityPlanningService.kddiProviderAccountId,
-                  AssetLiabilityPlanningService.rentAccountId,
-                  AssetLiabilityPlanningService.waterBillAccountId,
-                  AssetLiabilityPlanningService.gasBillAccountId,
+                  for (final row in defaultBills.cashflowRows) row.accountName,
                 },
               ),
             ),
@@ -1913,6 +3351,215 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'revolving debt renders total interest warning and opens simulator',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -250000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discipline_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_trend_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('24ヶ月完済ライン'), findsWidgets);
+        expect(
+          find.byKey(
+            const Key('asset_debt_trend_interest_warning_famipay_card'),
+          ),
+          findsOneWidget,
+        );
+
+        final simulateButton = find.byKey(
+          const Key('asset_debt_trend_simulate_famipay_card'),
+        );
+        expect(simulateButton, findsOneWidget);
+        await tester.ensureVisible(simulateButton);
+        await tester.tap(simulateButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('revolving_extra_payment_input')),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('閉じる'));
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'overdue bulk confirm dialog marks selected overdue debts paid',
+      (tester) async {
+        final now = DateTime(2026, 9, 5);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{
+                  'mobit': 1,
+                  'acom_card_loan': 2,
+                },
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows) row.accountId,
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -100000,
+                  'アコムカードローン': -80000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final openButton = find.byKey(
+          const Key('asset_overdue_bulk_confirm_button'),
+        );
+        expect(openButton, findsOneWidget);
+        expect(find.text('超過未払いをまとめて確認 (2件)'), findsOneWidget);
+
+        await tester.ensureVisible(openButton);
+        await tester.tap(openButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_overdue_bulk_confirm_dialog')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+          findsOneWidget,
+        );
+        expect(find.text('選択した2件を支払済みにする'), findsOneWidget);
+
+        await tester
+            .tap(find.byKey(const Key('overdue_bulk_clear_all_button')));
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const Key('asset_overdue_bulk_apply_button')),
+              )
+              .onPressed,
+          isNull,
+        );
+
+        await tester.tap(
+          find.byKey(const Key('overdue_bulk_select_all_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.text('選択した1件を支払済みにする'), findsOneWidget);
+
+        final applyButton = find.byKey(
+          const Key('asset_overdue_bulk_apply_button'),
+        );
+        await tester.ensureVisible(applyButton);
+        await tester.tap(applyButton);
+        // Allow the dialog dismissal animation and async state persistence to finish.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_overdue_bulk_confirm_dialog')),
+          findsNothing,
+        );
+        expect(find.text('✅ 超過未払い1件を支払済みにしました'), findsOneWidget);
+        expect(find.text('超過未払いをまとめて確認 (1件)'), findsOneWidget);
+
+        await tester.ensureVisible(openButton);
+        await tester.tap(openButton);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.byKey(const Key('overdue_bulk_item_mobit')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('overdue_bulk_cancel_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('triage guide card shows staged first steps in crisis', (
       tester,
@@ -2216,7 +3863,7 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
-      expect(find.textContaining('登録データに基づく不足額の試算:'), findsOneWidget);
+      expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
       // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
       // 当サイクルの支払が消えるため事前判定が「回避できます」。
       expect(find.textContaining('の設定を26日へ(試算上の不足なし)'), findsOneWidget);
@@ -2301,7 +3948,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
-      expect(find.textContaining('新規利用分は25日に全額返済: 達成'), findsWidgets);
+      expect(find.textContaining('新規利用分は25日に全額返済: 検出なし（未照合）'), findsWidgets);
       expect(find.textContaining('カードは全額一括'), findsNothing);
 
       await _unmount(tester);
@@ -3007,7 +4654,9 @@ void main() {
         expect(find.text('サブスクを削除'), findsOneWidget);
         expect(find.textContaining('月額 ¥1,550'), findsOneWidget);
         expect(find.textContaining('過去の月次履歴・取引履歴は残ります'), findsOneWidget);
-        await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+        await tester.tap(
+          find.widgetWithText(TextButton, 'キャンセル'),
+        );
         await tester.pump(const Duration(milliseconds: 400));
         expect(find.text('サブスクを削除'), findsNothing);
         final afterCancel = await const AssetRecurringFixedCostStore().load();
@@ -3769,6 +5418,10 @@ void main() {
 
         expect(find.text('3ヶ月俯瞰（先月・今月・来月）'), findsOneWidget);
         expect(find.text('固定費: ¥104,648'), findsNWidgets(3));
+        expect(
+          find.textContaining('来月の実績・将来残高予測ではありません。'),
+          findsOneWidget,
+        );
 
         await _unmount(tester);
       },
@@ -3790,10 +5443,10 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
         await tester.pump(const Duration(milliseconds: 300));
 
-        expect(find.text('判定不可'), findsNWidgets(2));
+        expect(find.text('判定不可'), findsOneWidget);
         expect(
           find.text('資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'),
-          findsNWidgets(2),
+          findsOneWidget,
         );
         expect(find.text('釈放'), findsNothing);
         expect(
@@ -3801,12 +5454,14 @@ void main() {
           findsNothing,
         );
 
+        expect(find.byKey(const Key('legacy-meal-rule-history')), findsNothing);
+        expect(find.textContaining('獄中食'), findsNothing);
         await _unmount(tester);
       },
     );
 
     testWidgets(
-      'registered zero-debt snapshot still shows the paid-off state',
+      'registered asset-only zero does not prove full repayment',
       (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
           'asset_management_display_mode_v1':
@@ -3829,12 +5484,19 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(find.text('判定不可'), findsNothing);
-        expect(find.text('釈放'), findsNWidgets(2));
+        expect(find.text('釈放'), findsNothing);
+        expect(find.text('登録残高0円'), findsOneWidget);
         expect(
-          find.text('借金は完済済みです。収監モードは解除されました。'),
+          find.text('登録済み負債の合計は0円です。未登録の負債がないか確認してください。'),
           findsOneWidget,
         );
+        expect(
+          find.text('借金は完済済みです。収監モードは解除されました。'),
+          findsNothing,
+        );
 
+        expect(find.byKey(const Key('legacy-meal-rule-history')), findsNothing);
+        expect(find.textContaining('獄中食'), findsNothing);
         await _unmount(tester);
       },
     );
@@ -3910,5 +5572,1251 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3623: missing card statement shows critical action item and direct import jump',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'paypay_card': 2},
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                  paymentOverrides: const <String, double>{
+                    'paypay_card': 20000,
+                    AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+                  },
+                  paymentSourceAccountIds: const <String, String>{
+                    'paypay_card': 'wallet_cash',
+                  },
+                  cardBillingAccountIds: const <String, String>{
+                    AssetLiabilityPlanningService.kddiProviderAccountId:
+                        'paypay_card',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'PayPayカード': -20000,
+                  'KDDI': -5764,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.text('要確認：PayPayカードのカード明細の取り込みが必要です'),
+          findsOneWidget,
+        );
+        final importActionBtn = find.byKey(
+          const Key('asset_action_import_statement_paypay_card'),
+        );
+        expect(importActionBtn, findsOneWidget);
+        expect(find.textContaining('を選択しました'), findsNothing);
+
+        await tester.ensureVisible(importActionBtn);
+        await tester.tap(importActionBtn);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.textContaining(
+            'PayPayカードを選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。',
+          ),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
+    testWidgets(
+      'subscription excess alert card renders active list and jumps on tap',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{'財布(現金)': 50000},
+              },
+              debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_1',
+                  name: 'Claude',
+                  amount: 3000,
+                  paymentDay: 10,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_2',
+                  name: 'Notion',
+                  amount: 2000,
+                  paymentDay: 12,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_3',
+                  name: 'Netflix',
+                  amount: 1500,
+                  paymentDay: 15,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_4',
+                  name: 'iCloud+',
+                  amount: 1300,
+                  paymentDay: 18,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_5',
+                  name: 'Google AI Pro',
+                  amount: 8000,
+                  paymentDay: 20,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final card = find.byKey(
+          const Key('asset_subscription_excess_alert_card'),
+        );
+        expect(card, findsOneWidget);
+        expect(find.textContaining('サブスクリプション過多アラート（5件）'), findsOneWidget);
+        expect(find.textContaining('Google AI Pro'), findsWidgets);
+
+        final reviewButton = find.byKey(
+          const Key('asset_subscription_excess_review_button'),
+        );
+        expect(reviewButton, findsOneWidget);
+        await tester.ensureVisible(reviewButton);
+        await tester.tap(reviewButton);
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3308: payment flag inconsistency section fixes R3 row via actual payment dialog',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 1},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{'mobit'},
+                  paymentOverrides: <String, double>{'mobit': 15000},
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -300000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final section = find.byKey(
+          const Key('asset_payment_inconsistency_section'),
+        );
+        expect(section, findsOneWidget);
+        expect(find.text('支払記録の不整合（1件）'), findsOneWidget);
+        expect(
+          find.byKey(const Key('asset_inconsistency_row_mobit')),
+          findsOneWidget,
+        );
+
+        final editBtn = find.byKey(
+          const Key('asset_inconsistency_edit_actual_mobit'),
+        );
+        await tester.ensureVisible(editBtn);
+        await tester.pump();
+        await tester.tap(editBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_inconsistency_fix_dialog')),
+          findsOneWidget,
+        );
+        final useScheduledBtn = find.byKey(
+          const Key('asset_inconsistency_use_scheduled_button'),
+        );
+        expect(useScheduledBtn, findsOneWidget);
+        await tester.tap(useScheduledBtn);
+        await tester.pump();
+
+        final saveBtn = find.byKey(
+          const Key('asset_inconsistency_save_button'),
+        );
+        await tester.tap(saveBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_inconsistency_fix_dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_inconsistency_section')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3309: highlights high interest debts, shows header interest total, and toggles sort mode',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        const jibunId =
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId;
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 4800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{
+                  'mobit': 20,
+                  'yokohama_bank': 5,
+                  jibunId: 3,
+                },
+                monthlyState: const AssetLiabilityMonthlyState(
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    'yokohama_bank': 0.145,
+                    jibunId: 0.05,
+                  },
+                  paymentOverrides: <String, double>{
+                    'mobit': 15000,
+                    'yokohama_bank': 10000,
+                    jibunId: 5000,
+                  },
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                    'yokohama_bank': 'wallet_cash',
+                    jibunId: 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -300000,
+                  '横浜銀行': -200000,
+                  'じぶん銀行カードローン': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('負債マスタ（高金利優先）'), findsOneWidget);
+        final interestChip = find.byKey(
+          const Key('asset_debt_monthly_interest_header_chip'),
+        );
+        expect(interestChip, findsOneWidget);
+        expect(
+          find.descendant(
+            of: interestChip,
+            matching: find.textContaining('今月の金利負担（概算）:'),
+          ),
+          findsOneWidget,
+        );
+
+        final mobitBadge = find.byKey(
+          const Key('asset_debt_high_rate_badge_mobit'),
+        );
+        final yokohamaBadge = find.byKey(
+          const Key('asset_debt_high_rate_badge_yokohama_bank'),
+        );
+        expect(mobitBadge, findsOneWidget);
+        expect(yokohamaBadge, findsOneWidget);
+        expect(
+          find.descendant(of: mobitBadge, matching: find.text('高金利 18.0%')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: yokohamaBadge, matching: find.text('要注意 14.5%')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_high_rate_badge_$jibunId')),
+          findsNothing,
+        );
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_20')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_5')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_3')),
+          findsNothing,
+        );
+
+        final mobitTitle =
+            find.byKey(const Key('asset_debt_master_title_mobit'));
+        final yokohamaTitle = find.byKey(
+          const Key('asset_debt_master_title_yokohama_bank'),
+        );
+        final jibunTitle = find.byKey(
+          const Key('asset_debt_master_title_$jibunId'),
+        );
+        expect(
+          tester.getTopLeft(mobitTitle).dy,
+          lessThan(tester.getTopLeft(yokohamaTitle).dy),
+        );
+        expect(
+          tester.getTopLeft(yokohamaTitle).dy,
+          lessThan(tester.getTopLeft(jibunTitle).dy),
+        );
+
+        final paymentDayChip = find.byKey(
+          const Key('asset_debt_sort_payment_day'),
+        );
+        await tester.ensureVisible(paymentDayChip);
+        await tester.pump();
+        await tester.tap(paymentDayChip);
+        await tester.pump();
+
+        expect(find.text('負債マスタ（支払日順）'), findsOneWidget);
+        expect(
+          tester.getTopLeft(jibunTitle).dy,
+          lessThan(tester.getTopLeft(yokohamaTitle).dy),
+        );
+        expect(
+          tester.getTopLeft(yokohamaTitle).dy,
+          lessThan(tester.getTopLeft(mobitTitle).dy),
+        );
+
+        final highInterestChip = find.byKey(
+          const Key('asset_debt_sort_high_interest'),
+        );
+        await tester.ensureVisible(highInterestChip);
+        await tester.pump();
+        await tester.tap(highInterestChip);
+        await tester.pump();
+
+        expect(find.text('負債マスタ（高金利優先）'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3290: displays top 5 monthly interest card, total badge matching Dart calculation, and copy shortcut',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        const jibunId =
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId;
+        const acomShopId = AssetLiabilityPlanningService.acomShoppingAccountId;
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    acomShopId: 0.16,
+                    'acom_card_loan': 0.15,
+                    'yokohama_bank': 0.145,
+                    'smbc_card_loan': 0.145,
+                    jibunId: 0.05,
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -800000,
+                  'アコムショッピング': -600000,
+                  'アコムカードローン': -500000,
+                  '横浜銀行': -400000,
+                  '三井住友銀行CL': -300000,
+                  'じぶん銀行カードローン': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_top_monthly_interest_card')),
+          findsOneWidget,
+        );
+        expect(find.text('今月の利息トップ5'), findsOneWidget);
+
+        final totalBadge = find.byKey(
+          const Key('asset_top_interest_total_badge'),
+        );
+        expect(totalBadge, findsOneWidget);
+        expect(
+          find.descendant(
+            of: totalBadge,
+            matching: find.textContaining('今月の利息合計（概算）:'),
+          ),
+          findsOneWidget,
+        );
+
+        final headerInterestText = tester
+            .widget<Text>(
+              find.descendant(
+                of: find.byKey(
+                  const Key('asset_debt_monthly_interest_header_chip'),
+                ),
+                matching: find.byType(Text),
+              ),
+            )
+            .data!;
+        final totalBadgeText = tester
+            .widget<Text>(
+              find.descendant(of: totalBadge, matching: find.byType(Text)),
+            )
+            .data!;
+        final expectedAmountSuffix = headerInterestText.split(': ').last;
+        expect(totalBadgeText, endsWith(expectedAmountSuffix));
+
+        expect(
+          find.byKey(const Key('asset_top_interest_row_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_$acomShopId')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_acom_card_loan')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_smbc_card_loan')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_$jibunId')),
+          findsNothing,
+        );
+
+        final consultBtn = find.byKey(
+          const Key('asset_top_interest_consult_mobit'),
+        );
+        await tester.ensureVisible(consultBtn);
+        await tester.pump();
+        await tester.tap(consultBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(copiedClipboard, contains('モビット'));
+        expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3330 & #3368: displays discrepancy highlight, syncs scheduled payment with reason, and supports undo',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 4200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'yokohama_bank': 15},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{'yokohama_bank'},
+                  paymentOverrides: <String, double>{'yokohama_bank': 0},
+                  actualPaymentAmounts: <String, double>{'yokohama_bank': 5146},
+                  paymentSourceAccountIds: <String, String>{
+                    'yokohama_bank': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  '横浜銀行': -171547,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_discrepancy_row_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_diff_badge_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(find.text('差分あり'), findsWidgets);
+
+        final fixBtn = find.byKey(
+          const Key('asset_discrepancy_fix_yokohama_bank'),
+        );
+        await tester.ensureVisible(fixBtn);
+        await tester.pump();
+        await tester.tap(fixBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discrepancy_fix_dialog')),
+          findsOneWidget,
+        );
+        await tester.enterText(
+          find.byKey(const Key('asset_discrepancy_reason_field')),
+          '引落実額に確定',
+        );
+        await tester.tap(
+          find.byKey(const Key('asset_discrepancy_sync_confirm_button')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discrepancy_fix_dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsNothing,
+        );
+
+        final undoFinder = find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('元に戻す'),
+        );
+        expect(undoFinder, findsOneWidget);
+
+        await tester.tap(undoFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3406, #3358 & #3375: displays principal/interest efficiency, consultation copy template, and dynamic priority list amounts',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 1, 'yokohama_bank': 15},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paymentOverrides: <String, double>{
+                    'mobit': 25000,
+                    'yokohama_bank': 15000,
+                  },
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    'yokohama_bank': 0.145,
+                  },
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                    'yokohama_bank': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -1500000,
+                  '横浜銀行': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // #3406: 元金・利息内訳チップと元金充当率低警告
+        final mobitPi = find.byKey(
+          const Key('asset_debt_principal_interest_mobit'),
+        );
+        final yokohamaPi = find.byKey(
+          const Key('asset_debt_principal_interest_yokohama_bank'),
+        );
+        expect(mobitPi, findsOneWidget);
+        expect(yokohamaPi, findsOneWidget);
+        expect(
+          find.descendant(of: mobitPi, matching: find.textContaining('元金')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: mobitPi, matching: find.textContaining('利息')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_low_principal_warning_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            const Key('asset_debt_low_principal_warning_yokohama_bank'),
+          ),
+          findsNothing,
+        );
+
+        // #3375: 返済優先リストに利率・残高順＋予定額・月利息・上乗せ目安
+        final mobitPriority = find.byKey(
+          const Key('asset_repayment_priority_row_mobit'),
+        );
+        final yokohamaPriority = find.byKey(
+          const Key('asset_repayment_priority_row_yokohama_bank'),
+        );
+        expect(mobitPriority, findsOneWidget);
+        expect(yokohamaPriority, findsOneWidget);
+        expect(
+          tester.getTopLeft(mobitPriority).dy,
+          lessThan(tester.getTopLeft(yokohamaPriority).dy),
+        );
+        expect(
+          find.descendant(
+            of: mobitPriority,
+            matching: find.textContaining('推奨上乗せ目安 +¥5,000'),
+          ),
+          findsOneWidget,
+        );
+
+        // #3358: 支払相談優先先のワンクリックコピーテンプレ
+        final copyConsultBtn = find.byKey(
+          const Key('asset_payment_consultation_copy_mobit'),
+        );
+        await tester.ensureVisible(copyConsultBtn);
+        await tester.pump();
+        await tester.tap(copyConsultBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(copiedClipboard, contains('モビット'));
+        expect(copiedClipboard, contains('支払予定日: 2026/09/01'));
+        expect(copiedClipboard, contains('推定最低支払額:'));
+        expect(copiedClipboard, contains('年利: 18.0%'));
+        expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #4103 & #4086: displays red AppBar discipline badge, modal roadmap, confirmed schedule override, and task creation',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final headerBadge = find.byKey(
+          const Key('asset_discipline_header_badge'),
+        );
+        expect(headerBadge, findsOneWidget);
+        expect(
+          find.descendant(of: headerBadge, matching: find.text('未照合 1件')),
+          findsOneWidget,
+        );
+
+        await tester.tap(headerBadge);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('asset_discipline_violations_modal')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            const Key('asset_discipline_modal_escape_plan_famipay_card'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('解消目標: 12ヶ月以内に毎月'),
+          findsOneWidget,
+        );
+
+        final applyPlanBtn = find.byKey(
+          const Key('asset_discipline_apply_plan_famipay_card'),
+        );
+        expect(applyPlanBtn, findsOneWidget);
+        await tester.tap(applyPlanBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('asset_discipline_apply_plan_confirm_dialog')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('+¥30,000'), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const Key('asset_discipline_confirm_apply_famipay_card')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('ファミペイの支払予定額を'), findsOneWidget);
+
+        final createTaskBtn = find.byKey(
+          const Key('asset_discipline_create_task_famipay_card'),
+        );
+        await tester.tap(createTaskBtn);
+        await tester.pumpAndSettle();
+        expect(find.text('ファミペイの返済タスクを作成しました'), findsOneWidget);
+
+        final closeModalBtn = find.descendant(
+          of: find.byKey(const Key('asset_discipline_violations_modal')),
+          matching: find.text('閉じる'),
+        );
+        await tester.tap(closeModalBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('ファミペイ 解消計画: 12ヶ月以内に毎月'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3342 & #3442: displays overdue late-fee alerts and payment-day shortage fire-drill recalculation',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+
+        final now = DateTime(2026, 9, 15);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 5},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paymentOverrides: <String, double>{'mobit': 5000},
+                  annualRateOverrides: <String, double>{'mobit': 0.18},
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 200000,
+                  'モビット': -500000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // #3442: 遅延損害金・延滞金バナー、支払日リスクチップ、負債個別チップ表示
+        final lateFeeBanner = find.byKey(
+          const Key('asset_overdue_late_fee_alert_banner'),
+        );
+        expect(lateFeeBanner, findsOneWidget);
+        expect(
+          find.descendant(
+            of: lateFeeBanner,
+            matching: find.textContaining('元の負債残高に加算されます'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_late_fee_5')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_late_fee_mobit')),
+          findsOneWidget,
+        );
+
+        // #3342: 不足額バナーと 3 即応アクション
+        final shortageBanner = find.byKey(
+          const Key('asset_payment_risk_shortage_banner_5'),
+        );
+        expect(shortageBanner, findsOneWidget);
+        expect(
+          find.descendant(
+            of: shortageBanner,
+            matching: find.textContaining('不足: ¥15,000'),
+          ),
+          findsOneWidget,
+        );
+        final increaseBtn = find.byKey(
+          const Key('asset_payment_risk_increase_btn_5'),
+        );
+        final sourceBtn = find.byKey(
+          const Key('asset_payment_risk_source_btn_5'),
+        );
+        final contactBtn = find.byKey(
+          const Key('asset_payment_risk_contact_btn_5'),
+        );
+        expect(increaseBtn, findsOneWidget);
+        expect(sourceBtn, findsOneWidget);
+        expect(contactBtn, findsOneWidget);
+
+        await tester.ensureVisible(contactBtn);
+        await tester.pump();
+        await tester.tap(contactBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(copiedClipboard, contains('モビット'));
+        expect(copiedClipboard, contains('支払予定日: 2026/09/05'));
+        expect(
+          find.text('5日の債権者連絡メモを起票し相談文をコピーしました'),
+          findsOneWidget,
+        );
+
+        await tester.ensureVisible(increaseBtn);
+        await tester.pump();
+        await tester.tap(increaseBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_increase_dialog_5')),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const Key('asset_payment_risk_increase_save_5')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_shortage_banner_5')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
+  testWidgets(
+    'anonymous unconfirmed read never claims empty income or offers empty CTA',
+    (tester) async {
+      // This isolate starts anonymous and its setUp resets shared write locks.
+      // No auth transition is awaited inside the widget FakeAsync zone.
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      debugPrint('SYNTHETIC_ANONYMOUS before widget');
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository:
+                SharedPreferencesAssetLiabilityRepository(),
+            debugInitialAssetData: {},
+            debugInitialRecentFlows: [],
+          ),
+        ),
+      );
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      debugPrint('SYNTHETIC_ANONYMOUS widget ready');
+      final card = find.byKey(const Key('asset_monthly_flow_priority_card'));
+      expect(card, findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_monthly_flow_income_cta')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.textContaining('収入の読み取りを確認できないため未計算'),
+        ),
+        findsWidgets,
+      );
+      expect(tester.takeException(), isNull);
+      await _unmount(tester);
+      debugPrint('SYNTHETIC_ANONYMOUS unmounted');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
+  testWidgets(
+    'Issue #3289, #3395 & #3298: toggles emergency defense mode, renders AI history diff, and resolves reverse transfer conflicts',
+    (tester) async {
+      final now = DateTime(2026, 6, 25);
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 6000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: now,
+            assetLiabilityRepository: _FakeDebtOverrideRepository(
+              const <String, int>{'mobit': 26},
+              monthlyState: AssetLiabilityMonthlyState(
+                paidAccountNames: const <String>{'家賃'},
+                paymentOverrides: const <String, double>{'mobit': 120000},
+                paymentSourceAccountIds: const <String, String>{
+                  'mobit': 'smbc_otsuka_branch',
+                },
+                transferTasks: <AssetLiabilityTransferTask>[
+                  AssetLiabilityTransferTask(
+                    id: 'conflict-task-smoke',
+                    fromAccountId: 'smbc_otsuka_branch',
+                    fromAccountName: '三井住友銀行大塚支店',
+                    toAccountId: 'jibun_bank',
+                    toAccountName: 'じぶん銀行',
+                    amount: 80000,
+                    dueDate: DateTime(2026, 6, 26),
+                  ),
+                ],
+              ),
+            ),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '三井住友銀行大塚支店': 100000,
+                'じぶん銀行': 150000,
+                'モビット': -500000,
+              },
+            },
+            debugInitialAiSummaryReferencedHistory: <AssetManagementAiAnalysisHistoryEntry>[
+              AssetManagementAiAnalysisHistoryEntry(
+                id: 'hist-prev-1',
+                requestFingerprint: 'fp-prev-1',
+                summaryText: '前回要約: 負債削減と支払期日前の残高移動を優先しましょう。',
+                status: 'success',
+                source: 'gemini',
+                generatedAt: DateTime(2026, 6, 10, 12, 0),
+                createdAt: DateTime(2026, 6, 10, 12, 0),
+                reportBaseDate: DateTime(2026, 6, 10),
+                providerChoiceReason: 'smoke',
+                providerRoute: const <String, dynamic>{},
+                inputPayload: const <String, dynamic>{
+                  'workbook': <String, dynamic>{
+                    'totals': <String, dynamic>{
+                      'liability_total': -650000,
+                      'cash_like_total': 120000,
+                      'cash_after_scheduled_payments': -10000,
+                      'monthly_unpaid_payment_total': 90000,
+                    },
+                  },
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // #3395: 過去AI分析履歴との比較 UI が3セクションを表示する
+      final historyCard = find.byKey(
+        const Key('asset_ai_history_comparison_card'),
+      );
+      expect(historyCard, findsOneWidget);
+      expect(
+        find.descendant(
+          of: historyCard,
+          matching: find.text('前回からの改善点'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: historyCard,
+          matching: find.text('前回から悪化した点'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: historyCard,
+          matching: find.text('前回から未解決のままの事項'),
+        ),
+        findsOneWidget,
+      );
+
+      // #3289: 生活防衛モードトグルで必須支出のみ表示＆OFFで復元
+      final toggleChip = find.byKey(
+        const Key('asset_emergency_defense_mode_toggle'),
+      );
+      expect(toggleChip, findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_emergency_defense_summary')),
+        findsNothing,
+      );
+
+      await tester.ensureVisible(toggleChip);
+      await tester.pump();
+      await tester.tap(toggleChip);
+      await tester.pumpAndSettle();
+
+      final summaryBox = find.byKey(
+        const Key('asset_emergency_defense_summary'),
+      );
+      expect(summaryBox, findsOneWidget);
+      expect(
+        find.descendant(
+          of: summaryBox,
+          matching: find.textContaining('今月の必要最低限合計'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(toggleChip);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('asset_emergency_defense_summary')),
+        findsNothing,
+      );
+
+      // #3298: 逆方向資金移動の衝突バナーと解消ダイアログ
+      final conflictBanner = find.byKey(
+        const Key('asset_transfer_conflict_banner'),
+      );
+      expect(conflictBanner, findsOneWidget);
+
+      final resolveBtn = find.byKey(
+        const Key('asset_transfer_conflict_resolve_button_0'),
+      );
+      await tester.ensureVisible(resolveBtn);
+      await tester.pump();
+      await tester.tap(resolveBtn);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('asset_transfer_conflict_dialog')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const Key('asset_transfer_conflict_postpone_button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('asset_transfer_conflict_banner')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+
+      await _unmount(tester);
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 }

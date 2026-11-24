@@ -40,13 +40,13 @@ argument-hint: <handoff-bundle-file-path-or-paste>
 
 ### Step 2: `docs/DESIGN.md` と差分チェック
 
-1. `docs/DESIGN.md` を Read して現在のトークン (Orange=`#FF6B35`, Indigo=`#6366F1`, surface0/1/2 等) を把握
+1. `docs/DESIGN.md` を Read して現在のトークン名、役割、値を把握
 2. bundle の `design_tokens.colors` を現行と比較し、差分を表示:
    ```
    ## カラートークン差分
    | トークン名 | DESIGN.md 現行 | Claude Design 提案 | 判定 |
    | --- | --- | --- | --- |
-   | primary | #FF6B35 | #FF8C42 | 要検討 (明度+10%) |
+   | primary | `<current>` | `<proposal>` | 要検討 |
    | ... | ... | ... | ✅ 既存と一致 |
    ```
 3. 差分が多い場合、ユーザーに「DESIGN.md を更新しますか？ (y/n)」を確認
@@ -71,22 +71,14 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFFF6B35), // Orange primary (DESIGN.md)
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+      child: Text(label),
     );
   }
 }
 ```
 
 変換ルール:
-- `background-color` / `color` → `Color(0xFF...)` (hex 大文字)
+- `background-color` / `color` → `Theme.of(context).colorScheme` または既存の共有トークンへ対応付ける。incoming hex を直接埋め込まない
 - `padding` → `EdgeInsets.symmetric/all/fromLTRB`
 - `border-radius` → `BorderRadius.circular`
 - `font-family` → `GoogleFonts.notoSansJp` or `const TextStyle(fontFamily: ...)`

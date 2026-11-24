@@ -278,10 +278,14 @@ class LocalElectionPrefecturePlan {
         .toInt();
   }
 
-  String get currentCandidateWinRateLabel =>
-      postConventionBattleCount > 0 || announcedCandidateCount > 0
-          ? '$currentCandidateWinRatePercent%'
-          : '-';
+  String get currentCandidateWinRateLabel {
+    if (postConventionBattleCount > 0 ||
+        candidateWinRatePercent > 0 ||
+        newElectionActual > 0) {
+      return '$currentCandidateWinRatePercent%';
+    }
+    return '未実施';
+  }
 
   int get kpiActualLocalMembers => incumbentRetentionActual + newElectionActual;
 
@@ -574,10 +578,12 @@ class LocalElectionPlanDashboard {
             .toInt();
   }
 
-  String get currentCandidateWinRateLabel =>
-      totalPostConventionBattleCount > 0 || totalAnnouncedCandidateCount > 0
-          ? '$currentCandidateWinRatePercent%'
-          : '-';
+  String get currentCandidateWinRateLabel {
+    if (totalPostConventionBattleCount > 0 || totalNewElectionActual > 0) {
+      return '$currentCandidateWinRatePercent%';
+    }
+    return '未実施';
+  }
 
   int get totalCloseRaceSupportRounds => prefectures.fold<int>(
         0,

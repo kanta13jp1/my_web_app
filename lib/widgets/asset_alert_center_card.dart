@@ -24,19 +24,26 @@ class AssetAlertCenterCard extends StatelessWidget {
   /// 「非表示を戻す」リンク。null なら出さない。
   final VoidCallback? onRestoreDismissed;
 
-  static const Color _critical = Color(0xFFDC2626);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _info = Color(0xFF4F46E5);
-  static const Color _muted = Color(0xFF6B7280);
+  Color _warningColor(ThemeData theme) {
+    return theme.brightness == Brightness.dark
+        ? const Color(0xFFFBBF24)
+        : const Color(0xFFD97706);
+  }
 
-  Color _severityColor(AssetAlertSeverity severity) {
+  Color _infoColor(ThemeData theme) {
+    return theme.brightness == Brightness.dark
+        ? const Color(0xFFA5B4FC)
+        : const Color(0xFF4F46E5);
+  }
+
+  Color _severityColor(ThemeData theme, AssetAlertSeverity severity) {
     switch (severity) {
       case AssetAlertSeverity.critical:
-        return _critical;
+        return theme.colorScheme.error;
       case AssetAlertSeverity.warning:
-        return _warning;
+        return _warningColor(theme);
       case AssetAlertSeverity.info:
-        return _info;
+        return _infoColor(theme);
     }
   }
 
@@ -87,25 +94,55 @@ class AssetAlertCenterCard extends StatelessWidget {
   }
 
   Widget _buildHeader(ThemeData theme) {
-    return Row(
-      children: [
-        const Icon(Icons.notifications_active_outlined, color: _info),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'アラートセンター',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    final hasCounts = center.criticalCount > 0 || center.warningCount > 0;
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.notifications_active_outlined,
+                color: _infoColor(theme),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'アラートセンター',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        if (center.criticalCount > 0)
-          _buildCountChip(theme, '緊急 ${center.criticalCount}', _critical),
-        if (center.warningCount > 0) ...[
-          const SizedBox(width: 6),
-          _buildCountChip(theme, '注意 ${center.warningCount}', _warning),
+          if (hasCounts)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (center.criticalCount > 0)
+                  _buildCountChip(
+                    theme,
+                    '緊急 ${center.criticalCount}',
+                    theme.colorScheme.error,
+                  ),
+                if (center.warningCount > 0)
+                  _buildCountChip(
+                    theme,
+                    '注意 ${center.warningCount}',
+                    _warningColor(theme),
+                  ),
+              ],
+            ),
         ],
-      ],
+      ),
     );
   }
 
@@ -127,7 +164,7 @@ class AssetAlertCenterCard extends StatelessWidget {
   }
 
   Widget _buildAlertRow(ThemeData theme, AssetAlert alert) {
-    final color = _severityColor(alert.severity);
+    final color = _severityColor(theme, alert.severity);
     return Container(
       key: Key('asset_alert_row_${alert.id}'),
       margin: const EdgeInsets.only(bottom: 8),
@@ -147,6 +184,7 @@ class AssetAlertCenterCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSeverityBadge(theme, alert.severity, color),
                     const SizedBox(width: 8),
@@ -163,7 +201,9 @@ class AssetAlertCenterCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   alert.detail,
-                  style: theme.textTheme.bodySmall?.copyWith(color: _muted),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -172,8 +212,11 @@ class AssetAlertCenterCard extends StatelessWidget {
             IconButton(
               key: Key('asset_alert_dismiss_${alert.id}'),
               icon: const Icon(Icons.close, size: 18),
-              color: _muted,
+              color: theme.colorScheme.onSurfaceVariant,
               tooltip: '非表示にする',
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               onPressed: () => onDismiss!(alert.id),
             ),
         ],
@@ -203,28 +246,44 @@ class AssetAlertCenterCard extends StatelessWidget {
   }
 
   Widget _buildEmpty(ThemeData theme) {
+    final canRestore = center.dismissedCount > 0 && onRestoreDismissed != null;
+    final emptyColor = theme.brightness == Brightness.dark
+        ? const Color(0xFF34D399)
+        : const Color(0xFF059669);
     return Card(
       key: const Key('asset_alert_center_card_empty'),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: Color(0xFF059669)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '対応が必要なアラートはありません。',
-                style: theme.textTheme.bodyMedium,
+        child: SizedBox(
+          width: double.infinity,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_outline, color: emptyColor),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '対応が必要なアラートはありません。',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            if (center.dismissedCount > 0 && onRestoreDismissed != null)
-              TextButton(
-                key: const Key('asset_alert_center_restore_empty'),
-                onPressed: onRestoreDismissed,
-                child: Text('非表示 ${center.dismissedCount} 件を戻す'),
-              ),
-          ],
+              if (canRestore)
+                TextButton(
+                  key: const Key('asset_alert_center_restore_empty'),
+                  onPressed: onRestoreDismissed,
+                  child: Text('非表示 ${center.dismissedCount} 件を戻す'),
+                ),
+            ],
+          ),
         ),
       ),
     );

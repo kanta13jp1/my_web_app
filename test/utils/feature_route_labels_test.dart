@@ -92,4 +92,67 @@ void main() {
       expect(canonicalFeatureRoutePath('/unknown-feature'), '/unknown-feature');
     });
   });
+
+  group('resolveRecentFeatureLabel', () {
+    test('正規ラベルがあるルートは旧英語保存ラベルより日本語ラベルを優先する', () {
+      expect(
+        resolveRecentFeatureLabel(
+          '/local-election-schedule',
+          'Local Election 700',
+        ),
+        '2027 統一地方選 700必達管理室',
+      );
+      expect(
+        resolveRecentFeatureLabel('/ai-observability', 'Ai Observability'),
+        'AI 可観測性',
+      );
+      expect(
+        resolveRecentFeatureLabel('/profile-settings', 'Profile Settings'),
+        'プロフィール設定',
+      );
+      expect(
+        resolveRecentFeatureLabel('/import', 'Import'),
+        'データインポート',
+      );
+      expect(
+        resolveRecentFeatureLabel('/project-gantt', 'Project Gantt'),
+        'WBS ガントチャート',
+      );
+      expect(
+        resolveRecentFeatureLabel('/terms', 'Terms'),
+        '利用規約',
+      );
+      expect(
+        resolveRecentFeatureLabel('/philosophy', 'Philosophy'),
+        '自分株式会社とは',
+      );
+      expect(
+        resolveRecentFeatureLabel('/privacy', 'Privacy'),
+        'プライバシーポリシー',
+      );
+      expect(
+        resolveRecentFeatureLabel('/note-editor', 'Note Editor'),
+        'ノート作成',
+      );
+      expect(
+        resolveRecentFeatureLabel('/asset-management', 'Asset Management'),
+        '資産・家計管理',
+      );
+      expect(
+        resolveRecentFeatureLabel('/cfo-office', 'Cfo Office'),
+        '財務・資産管理 (CFO)',
+      );
+      expect(
+        resolveRecentFeatureLabel('/reading-list', 'Reading List'),
+        '読書リスト',
+      );
+    });
+
+    test('未知ルートは保存済みラベルを活かす', () {
+      expect(
+        resolveRecentFeatureLabel('/custom-tool', 'カスタムツール'),
+        'カスタムツール',
+      );
+    });
+  });
 }

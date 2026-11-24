@@ -1,0 +1,254 @@
+name: Reviewed typing-only public-base release
+run-name: Typing-only release ${{ inputs.expected_head_sha }}
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/typing-game-release.yml
+      - scripts/typing_game_release_guard.py
+      - scripts/typing_game_release_guard_test.py
+  workflow_dispatch:
+    inputs:
+      approved_release:
+        description: Owner-approved typing-only production release
+        required: true
+        type: boolean
+        default: false
+      expected_head_sha:
+        required: true
+        type: string
+      public_base_sha:
+        required: true
+        type: string
+        default: 3e51cb05abca06d5117a6da74de2fa6e4f66f40a
+      source_head_sha:
+        required: true
+        type: string
+        default: 164db7c3d187845d43c127a0c1e9a2ceaf93ee60
+      source_base_sha:
+        required: true
+        type: string
+        default: b2087377928d4cd2f0b703ea9e3684fc8499681b
+      support_pr:
+        description: Merged, reviewed PR containing these three release tooling files
+        required: true
+        type: number
+      support_head_sha:
+        required: true
+        type: string
+      support_base_sha:
+        required: true
+        type: string
+      validation_run:
+        required: true
+        type: number
+        default: 41816554760
+      validation_head_sha:
+        required: true
+        type: string
+        default: 999cb37c4a8674e8b3006ce1ac54b4dc5962cc62
+
+permissions: {}
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && 'deploy-prod' || format('typing-guard-{0}', github.event.pull_request.number) }}
+  cancel-in-progress: false
+
+env:
+  PRODUCTION_DEPLOY_HOLD: ${{ vars.PRODUCTION_DEPLOY_HOLD }}
+  EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
+  PUBLIC_BASE: ${{ inputs.public_base_sha }}
+  SOURCE_HEAD: ${{ inputs.source_head_sha }}
+  SOURCE_BASE: ${{ inputs.source_base_sha }}
+  SUPPORT_PR: ${{ inputs.support_pr }}
+  SUPPORT_HEAD: ${{ inputs.support_head_sha }}
+  SUPPORT_BASE: ${{ inputs.support_base_sha }}
+  VALIDATION_RUN: ${{ inputs.validation_run }}
+  VALIDATION_HEAD: ${{ inputs.validation_head_sha }}
+
+jobs:
+  guard-tests:
+    name: Typing release guard tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: python -B -m unittest discover -s scripts -p typing_game_release_guard_test.py
+
+  preflight:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'kanta13jp1/my_web_app' && github.actor == 'kanta13jp1' && inputs.approved_release && inputs.expected_head_sha == github.sha
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify release guard tests
+        run: python -B -m unittest discover -s scripts -p typing_game_release_guard_test.py
+      - name: Verify reviewed selection and unchanged public base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -c 'import os,re; names=["EXPECTED_HEAD","PUBLIC_BASE","SOURCE_HEAD","SOURCE_BASE","SUPPORT_HEAD","SUPPORT_BASE","VALIDATION_HEAD"]; assert all(re.fullmatch("[0-9a-f]{40}",os.environ[n]) for n in names), "Invalid immutable SHA input"'
+          git fetch --no-tags origin main "$SOURCE_HEAD" "$SUPPORT_HEAD" "$VALIDATION_HEAD"
+          python -B scripts/typing_game_release_guard.py \
+            --expected-head "$EXPECTED_HEAD" --public-base "$PUBLIC_BASE" \
+            --source-head "$SOURCE_HEAD" --source-base "$SOURCE_BASE" \
+            --support-pr "$SUPPORT_PR" --support-head "$SUPPORT_HEAD" --support-base "$SUPPORT_BASE" \
+            --validation-run "$VALIDATION_RUN" --validation-head "$VALIDATION_HEAD"
+
+  deploy:
+    needs: preflight
+    if: needs.preflight.result == 'success' && inputs.approved_release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.10'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+      - name: Generate an unused version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          test -n "$latest"
+          version=$(python -c 'import json,sys,urllib.request; public=json.load(urllib.request.urlopen("https://my-web-app-b67f4.web.app/version.json",timeout=30)); a,b,c=max(tuple(map(int,sys.argv[1][1:].split("."))),tuple(map(int,public["version"].split(".")))); print(f"{a}.{b}.{c+1}")' "$latest")
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+      - name: Build with preserved production configuration
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          python scripts/validate_flutter_supabase_env.py
+          mkdir -p .ci-generated
+          count=$(python scripts/ai_university_provider_catalog.py --output .ci-generated/ai-university-catalog.json)
+          flutter pub get
+          flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart --concurrency=1
+          flutter build web --release --pwa-strategy=none --build-name="$VERSION" --build-number="$GITHUB_RUN_NUMBER" \
+            --dart-define=ENVIRONMENT=production --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+            --dart-define=APP_VERSION="$VERSION" --dart-define=BUILD_NUMBER="$GITHUB_RUN_NUMBER" \
+            --dart-define=AI_UNIVERSITY_PROVIDER_COUNT="$count" \
+            --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
+            --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
+            --dart-define=POSTHOG_PROJECT_TOKEN="$POSTHOG_PROJECT_TOKEN" --dart-define=POSTHOG_HOST="$POSTHOG_HOST" \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
+          python scripts/render_web_supabase_config.py
+          VERSION="$VERSION" python -c 'import json,os,datetime; from pathlib import Path; Path("build/web/version.json").write_text(json.dumps(dict(version=os.environ["VERSION"],commit=os.environ["GITHUB_SHA"],buildNumber=os.environ["GITHUB_RUN_NUMBER"],deployedAt=datetime.datetime.now(datetime.timezone.utc).isoformat())))'
+          cp web/release-notes.json build/web/release-notes.json
+          cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
+          sed -i "s|/ogp\\.png\"|/ogp.png?v=$VERSION\"|g" build/web/index.html
+          python scripts/prerender_seo_routes.py --template build/web/index.html --outdir build/web --routes web/seo/comparison-routes.json --public-routes web/seo/public-routes.json --ai-university-catalog .ci-generated/ai-university-catalog.json
+          python scripts/generate_sitemap.py --out build/web/sitemap.xml
+          python scripts/production_journey_probe.py --root-dir build/web --public-routes web/seo/public-routes.json
+      - uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+      - name: Preserve verified public lab bytes
+        env:
+          FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+          EXPECTED_PUBLIC_BASE: ${{ inputs.public_base_sha }}
+        run: |
+          python -m venv /tmp/typing-release-tools
+          /tmp/typing-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
+          python scripts/echo_pump_release/test_preserve_live_labs.py
+          /tmp/typing-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py capture
+      - name: Final review and live-base recheck
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -c 'import os,re; names=["EXPECTED_HEAD","PUBLIC_BASE","SOURCE_HEAD","SOURCE_BASE","SUPPORT_HEAD","SUPPORT_BASE","VALIDATION_HEAD"]; assert all(re.fullmatch("[0-9a-f]{40}",os.environ[n]) for n in names), "Invalid immutable SHA input"'
+          git fetch --no-tags origin main "$SOURCE_HEAD" "$SUPPORT_HEAD" "$VALIDATION_HEAD"
+          python -B scripts/typing_game_release_guard.py \
+            --expected-head "$EXPECTED_HEAD" --public-base "$PUBLIC_BASE" \
+            --source-head "$SOURCE_HEAD" --source-base "$SOURCE_BASE" \
+            --support-pr "$SUPPORT_PR" --support-head "$SUPPORT_HEAD" --support-base "$SUPPORT_BASE" \
+            --validation-run "$VALIDATION_RUN" --validation-head "$VALIDATION_HEAD"
+      - name: Deploy only Firebase Hosting
+        env:
+          FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+          EXPECTED_PUBLIC_BASE: ${{ inputs.public_base_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          key_file=$(mktemp)
+          output_file=$(mktemp)
+          trap 'rm -f "$key_file" "$output_file"' EXIT
+          printf '%s' "$FIREBASE_ACCOUNT_JSON" > "$key_file"
+          unset FIREBASE_ACCOUNT_JSON
+          export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
+          /tmp/typing-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          npx -y firebase-tools@15.34.0 deploy --only hosting --project my-web-app-b67f4 --json > "$output_file"
+          jq -e '.status == "success"' "$output_file" > /dev/null
+      - name: Verify exact commit and preserved public labs
+        env:
+          EXPECTED_PUBLIC_BASE: ${{ inputs.public_base_sha }}
+        run: |
+          set -euo pipefail
+          /tmp/typing-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py public
+          python - <<'PY'
+          import json,os,time,urllib.request
+          for _ in range(8):
+              url='https://my-web-app-b67f4.web.app/version.json?typing='+os.environ['GITHUB_RUN_ID']
+              request=urllib.request.Request(url,headers={'Cache-Control':'no-cache'})
+              with urllib.request.urlopen(request,timeout=30) as response: version=json.load(response)
+              if version.get('commit')==os.environ['EXPECTED_HEAD']: break
+              time.sleep(10)
+          else: raise SystemExit('Publication unconfirmed: live commit does not match candidate; do not retry deployment blindly')
+          print('Verified exact production commit',os.environ['EXPECTED_HEAD'])
+          PY
+      - name: Verify actual production game input and existing routes
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          cp test/e2e/typing_game.spec.ts test/e2e/typing_game_live.spec.ts
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('test/e2e/typing_game_live.spec.ts')
+          source=path.read_text()
+          assert source.count("page.goto('/')")==1
+          path.write_text(source.replace("page.goto('/')", "page.goto('/typing-game')"))
+          PY
+          E2E_BASE_URL=https://my-web-app-b67f4.web.app npx playwright test test/e2e/typing_game_live.spec.ts test/e2e/sea_shelter_route.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Preserve non-secret release evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: typing-release-evidence
+          path: |
+            .deploy-logs/preserved-lab.json
+            build/web/version.json
+            test-results/
+            playwright-report/
+          retention-days: 30

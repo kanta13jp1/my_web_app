@@ -1,3 +1,5 @@
+import { decideMario, MarioError } from "./jev_mario.ts";
+import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
@@ -9,6 +11,17 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { checkAndRecordAiUsage, supabaseUsageStore } from "./usage_gate.ts";
+import {
+  createSupabaseDailyQuotaStore,
+  enforceDailyAiQuota,
+  readDailyAiQuotaStatus,
+} from "./daily_quota_gate.ts";
+import {
+  createSupabaseCustomDataSourceStore,
+  handleDataSourceRegister,
+  handleDataSourceStatus,
+  validateMessagesContextBudget,
+} from "./context_limits.ts";
 import {
   authorizeAiHubAction,
   resolveAuthenticatedUserId,
@@ -46,6 +59,12 @@ import {
   normalizeAiRouterPreference,
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
+import {
+  buildGuardrailBlockedPayload,
+  evaluateComplianceGuardrail,
+  evaluateMessagesGuardrail,
+  type GuardrailMode,
+} from "./compliance_guardrails.ts";
 import {
   buildTaskClarityPrompt,
   evaluateTaskClarityHeuristically,
@@ -153,6 +172,12 @@ import {
   buildSubscriptionStatementPrompt,
   parseSubscriptionStatementResponse,
 } from "./subscription_statement_scan.ts";
+import {
+  buildPalmReadingPrompt,
+  decodePalmImageBase64,
+  normalizePalmHandSide,
+  parsePalmReadingResponse,
+} from "./palm_reading.ts";
 import {
   createWriterKnowledgeGraphGateway,
   handleWriterKnowledgeGraphAction,
@@ -675,15 +700,15 @@ const TIER_PROVIDERS: Record<Tier, string[]> = {
     "moonshot",
   ],
   performance: [
-    "openai",
     "google",
+    "openai",
     "mistral",
     "cohere",
     "perplexity",
     "nebius",
     "qwen",
   ],
-  premium: ["anthropic", "openai", "google"],
+  premium: ["anthropic", "google", "openai"],
 };
 
 const TIER_ORDER: Tier[] = ["free", "budget", "performance", "premium"];
@@ -6547,6 +6572,221 @@ serve(async (req: Request) => {
         });
       }
 
+      case "palm_reading.analyze": {
+        const handSide = normalizePalmHandSide(
+          body.hand_side ?? body.handSide,
+        );
+        if (!handSide) {
+          return json({ error: "hand_side must be left or right" }, 400);
+        }
+        const requestId = asString(body.request_id ?? body.requestId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(requestId)
+        ) {
+          return json({ error: "valid request_id required" }, 400);
+        }
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        if (
+          !["image/png", "image/jpeg", "image/webp"].includes(image.mimeType)
+        ) {
+          return json({ error: "PNG, JPEG, or WebP image required" }, 400);
+        }
+
+        const { data: existing, error: existingError } = await admin
+          .from("palm_readings")
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .eq("user_id", userId!)
+          .eq("request_id", requestId)
+          .maybeSingle();
+        if (existingError) throw new Error(existingError.message);
+        if (existing) {
+          return json({
+            success: true,
+            idempotent_replay: true,
+            image_persisted: true,
+            reading: existing,
+          });
+        }
+
+        const imageBytes = decodePalmImageBase64(
+          image.base64,
+          image.mimeType,
+        );
+        if (!imageBytes) {
+          return json({
+            error: "imageBase64 is invalid or does not match mimeType",
+          }, 400);
+        }
+
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "palm_reading.analyze",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+
+        const { data: previousRows, error: previousError } = await admin
+          .from("palm_readings")
+          .select("id,analysis,created_at")
+          .eq("user_id", userId!)
+          .eq("hand_side", handSide)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(1);
+        if (previousError) throw new Error(previousError.message);
+        const previous = previousRows?.[0] as
+          | Record<string, unknown>
+          | undefined;
+
+        const usage = await checkAndRecordAiUsage(
+          supabaseUsageStore(admin),
+          userId!,
+        );
+        if (!usage.allowed) {
+          return json({
+            success: false,
+            status: "freeLimitReached",
+            error: "usageLimitReached",
+            message: "AIの無料利用上限に達しました。",
+          }, 402);
+        }
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            success: false,
+            status: "budgetExceeded",
+            error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+            message:
+              "AIの予算上限に達しました。時間をおいて再試行してください。",
+          }, 429);
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+
+        const raw = await callGemini(
+          buildPalmReadingPrompt(handSide, previous?.analysis),
+          geminiKey,
+          image,
+        );
+        const payload = parsePalmReadingResponse(raw, Boolean(previous));
+        if (!payload) {
+          return json({
+            success: false,
+            status: "invalidAiResponse",
+            message: "AI鑑定結果を安全な形式に整えられませんでした。",
+          }, 502);
+        }
+        if (!payload.analysis.photo_quality.is_usable) {
+          return json({
+            success: false,
+            status: "imageNeedsRetake",
+            message: payload.analysis.photo_quality.feedback,
+            photo_quality: payload.analysis.photo_quality,
+          });
+        }
+
+        const readingId = crypto.randomUUID();
+        const extension = image.mimeType === "image/png"
+          ? "png"
+          : image.mimeType === "image/webp"
+          ? "webp"
+          : "jpg";
+        const imagePath = `${userId}/${readingId}.${extension}`;
+        const { error: uploadError } = await admin.storage
+          .from("palm-readings")
+          .upload(imagePath, imageBytes, {
+            contentType: image.mimeType,
+            upsert: false,
+          });
+        if (uploadError) throw new Error(uploadError.message);
+
+        const { data: reading, error: insertError } = await admin
+          .from("palm_readings")
+          .insert({
+            id: readingId,
+            request_id: requestId,
+            user_id: userId!,
+            hand_side: handSide,
+            image_path: imagePath,
+            image_mime_type: image.mimeType,
+            analysis: payload.analysis,
+            comparison: payload.comparison,
+            provider: "google",
+            model: "gemini-2.5-flash",
+            schema_version: 1,
+            quality_score: payload.analysis.photo_quality.score,
+          })
+          .select(
+            "id,request_id,hand_side,image_path,image_mime_type,analysis,comparison,provider,model,schema_version,quality_score,created_at",
+          )
+          .single();
+        if (insertError) {
+          await admin.storage.from("palm-readings").remove([imagePath]);
+          throw new Error(insertError.message);
+        }
+
+        return json({
+          success: true,
+          idempotent_replay: false,
+          image_persisted: true,
+          reading,
+        });
+      }
+
+      case "palm_reading.delete": {
+        const readingId = asString(body.reading_id ?? body.readingId);
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(readingId)
+        ) {
+          return json({ error: "valid reading_id required" }, 400);
+        }
+        const { data: ownedReading, error: lookupError } = await admin
+          .from("palm_readings")
+          .select("id,image_path")
+          .eq("id", readingId)
+          .eq("user_id", userId!)
+          .maybeSingle();
+        if (lookupError) throw new Error(lookupError.message);
+        if (!ownedReading) return json({ error: "reading not found" }, 404);
+
+        const imagePath = asString(ownedReading.image_path);
+        if (imagePath) {
+          const { error: removeError } = await admin.storage
+            .from("palm-readings")
+            .remove([imagePath]);
+          if (removeError) throw new Error(removeError.message);
+        }
+        const { error: deleteError } = await admin
+          .from("palm_readings")
+          .delete()
+          .eq("id", readingId)
+          .eq("user_id", userId!);
+        if (deleteError) throw new Error(deleteError.message);
+        return json({ success: true, deleted_id: readingId });
+      }
+
       case "payslip.parse":
       case "parse-payslip": {
         if (!isPayslipIngestionAction(action)) {
@@ -6575,6 +6815,66 @@ serve(async (req: Request) => {
           },
         });
         return json({ success: true, ...result });
+      }
+
+      case "mario.jev_decide": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+        }
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          return json(await decideMario({
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          }));
+        } catch (error) {
+          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          return json({ error: "provider_unavailable" }, 503);
+        }
+      }
+
+      case "expense.jev_search":
+      case "expense.jev_suggest": {
+        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
+            action, provider: "typesafe",
+          }), 409);
+        }
+        // Re-read the authenticated account; anonymous sessions must not spend.
+        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        try {
+          const result = await classifyJevExpense({
+            semanticSearch: action === "expense.jev_search",
+            userId: account?.error ? null : account?.data.user?.id ?? null,
+            anonymous: account?.data.user?.is_anonymous !== false,
+            body,
+            apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+            reserve: async (id) => {
+              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
+                p_user_id: id,
+              });
+              if (error) throw new Error("quota_unavailable");
+              return data === true;
+            },
+          });
+          return json(result);
+        } catch (error) {
+          if (error instanceof JevExpenseError) {
+            return json({ error: error.code }, error.status);
+          }
+          return json({ error: "provider_unavailable" }, 503);
+        }
       }
 
       case "expense.classify":
@@ -6944,6 +7244,19 @@ serve(async (req: Request) => {
           );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+        const contextCheck = validateMessagesContextBudget(finalMessages);
+        if (!contextCheck.allowed) {
+          return json({
+            success: false,
+            status: "contextLimitExceeded",
+            code: "context_limit_exceeded",
+            estimated_units: contextCheck.estimatedUnits,
+            max_units: contextCheck.maxUnits,
+            exceeded_by: contextCheck.exceededBy,
+            message:
+              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
+          }, 413);
+        }
         const requestStartedAt = performance.now();
         const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
@@ -6982,6 +7295,11 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        // userId が無いのは内部 EF (service role) 呼び出しのみ。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (userId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7003,6 +7321,27 @@ serve(async (req: Request) => {
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
           }
+          const dailyQuota = await enforceDailyAiQuota(
+            createSupabaseDailyQuotaStore(admin),
+            userId,
+          );
+          if (!dailyQuota.allowed) {
+            return json({
+              success: false,
+              status: "dailyQuotaExceeded",
+              code: "daily_quota_exceeded",
+              plan: dailyQuota.plan,
+              used: dailyQuota.used,
+              daily_limit: dailyQuota.dailyLimit,
+              remaining: dailyQuota.remaining ?? 0,
+              quota_date: dailyQuota.quotaDate,
+              reset_at: dailyQuota.resetAt,
+              message:
+                `本日のプラン別AI利用上限(${
+                  dailyQuota.dailyLimit ?? 0
+                }回)に達しました。`,
+            }, 429);
+          }
         }
 
         try {
@@ -7023,6 +7362,8 @@ serve(async (req: Request) => {
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
           const requestedModel = String(body.model ?? cfg.defaultModel);
+          const guardrailMode: GuardrailMode =
+            body.guardrail_mode === "strict_block" ? "strict_block" : "default";
           const logProviderChat = async (
             params: {
               success: boolean;
@@ -7056,6 +7397,31 @@ serve(async (req: Request) => {
               // ignore logging errors
             }
           };
+          const inputCheck = evaluateMessagesGuardrail(
+            finalMessages,
+            guardrailMode,
+          );
+          if (!inputCheck.allowed) {
+            await logProviderChat({
+              success: false,
+              statusCode: 422,
+              model: requestedModel,
+              errorMessage: inputCheck.auditSummary,
+            });
+            return json(
+              buildGuardrailBlockedPayload(inputCheck, {
+                provider: providerId,
+                traceId,
+                action: "provider.chat",
+              }),
+              422,
+            );
+          }
+          finalMessages.splice(
+            0,
+            finalMessages.length,
+            ...inputCheck.sanitizedMessages,
+          );
           const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
@@ -7106,7 +7472,30 @@ serve(async (req: Request) => {
           try {
             data = JSON.parse(respText);
           } catch {
-            const outputChars = respText.slice(0, 2000).length;
+            const rawPlainText = respText.slice(0, 2000);
+            const plainOutputCheck = evaluateComplianceGuardrail(rawPlainText, {
+              stage: "output",
+              mode: guardrailMode,
+            });
+            if (!plainOutputCheck.allowed) {
+              await logProviderChat({
+                success: false,
+                statusCode: 422,
+                model: requestedModel,
+                outputChars: rawPlainText.length,
+                errorMessage: plainOutputCheck.auditSummary,
+              });
+              return json(
+                buildGuardrailBlockedPayload(plainOutputCheck, {
+                  provider: providerId,
+                  traceId,
+                  action: "provider.chat",
+                }),
+                422,
+              );
+            }
+            const safePlainText = plainOutputCheck.sanitizedText;
+            const outputChars = safePlainText.length;
             const estimatedCost = calculateApiCost(
               requestedModel,
               estimateTokensFromChars(inputChars),
@@ -7118,13 +7507,28 @@ serve(async (req: Request) => {
               model: requestedModel,
               outputChars,
               estimatedCostUsd: estimatedCost,
+              errorMessage: plainOutputCheck.action === "masked"
+                ? plainOutputCheck.auditSummary
+                : null,
             });
             await recordSpend("ef", "ai-hub", estimatedCost);
             return json({
               success: true,
               provider: providerId,
               status: "implemented",
-              text: respText.slice(0, 2000),
+              text: safePlainText,
+              guardrail: {
+                checked: true,
+                action: plainOutputCheck.action !== "allowed"
+                  ? plainOutputCheck.action
+                  : inputCheck.action,
+                categories: [
+                  ...new Set([
+                    ...inputCheck.categories,
+                    ...plainOutputCheck.categories,
+                  ]),
+                ],
+              },
               observability: {
                 provider: providerId,
                 model: requestedModel,
@@ -7171,25 +7575,63 @@ serve(async (req: Request) => {
                 "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
+          const outputCheck = evaluateComplianceGuardrail(content, {
+            stage: "output",
+            mode: guardrailMode,
+          });
+          if (!outputCheck.allowed) {
+            await logProviderChat({
+              success: false,
+              statusCode: 422,
+              model: usedModel,
+              outputChars,
+              errorMessage: outputCheck.auditSummary,
+            });
+            return json(
+              buildGuardrailBlockedPayload(outputCheck, {
+                provider: providerId,
+                traceId,
+                action: "provider.chat",
+              }),
+              422,
+            );
+          }
+          const safeContent = outputCheck.sanitizedText;
+          const safeOutputChars = safeContent.length;
           const estimatedCost = calculateApiCost(
             usedModel,
             estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            estimateTokensFromChars(safeOutputChars),
           );
           await logProviderChat({
             success: true,
             statusCode: 200,
             model: usedModel,
-            outputChars,
+            outputChars: safeOutputChars,
             estimatedCostUsd: estimatedCost,
+            errorMessage: outputCheck.action === "masked"
+              ? outputCheck.auditSummary
+              : null,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
           return json({
             success: true,
             provider: providerId,
             status: "implemented",
-            text: content,
+            text: safeContent,
             model: usedModel,
+            guardrail: {
+              checked: true,
+              action: outputCheck.action !== "allowed"
+                ? outputCheck.action
+                : inputCheck.action,
+              categories: [
+                ...new Set([
+                  ...inputCheck.categories,
+                  ...outputCheck.categories,
+                ]),
+              ],
+            },
             observability: {
               provider: providerId,
               model: usedModel,
@@ -7197,7 +7639,7 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              output_chars: outputChars,
+              output_chars: safeOutputChars,
               action: "provider.chat",
               status_code: 200,
               provider_choice_reason: providerChoiceReason,
@@ -7236,6 +7678,21 @@ serve(async (req: Request) => {
             409,
           );
         }
+        const precheckMessages = messages ??
+          [{ role: "user", content: userMsg }];
+        const contextCheck = validateMessagesContextBudget(precheckMessages);
+        if (!contextCheck.allowed) {
+          return json({
+            success: false,
+            status: "contextLimitExceeded",
+            code: "context_limit_exceeded",
+            estimated_units: contextCheck.estimatedUnits,
+            max_units: contextCheck.maxUnits,
+            exceeded_by: contextCheck.exceededBy,
+            message:
+              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
+          }, 413);
+        }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
           return json({
@@ -7248,6 +7705,10 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (routingUserId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7268,6 +7729,27 @@ serve(async (req: Request) => {
                 }回)に達しました。` +
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
+          }
+          const dailyQuota = await enforceDailyAiQuota(
+            createSupabaseDailyQuotaStore(admin),
+            routingUserId,
+          );
+          if (!dailyQuota.allowed) {
+            return json({
+              success: false,
+              status: "dailyQuotaExceeded",
+              code: "daily_quota_exceeded",
+              plan: dailyQuota.plan,
+              used: dailyQuota.used,
+              daily_limit: dailyQuota.dailyLimit,
+              remaining: dailyQuota.remaining ?? 0,
+              quota_date: dailyQuota.quotaDate,
+              reset_at: dailyQuota.resetAt,
+              message:
+                `本日のプラン別AI利用上限(${
+                  dailyQuota.dailyLimit ?? 0
+                }回)に達しました。`,
+            }, 429);
           }
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
@@ -8870,6 +9352,50 @@ serve(async (req: Request) => {
           const msg = e instanceof Error ? e.message : String(e);
           return json({ success: false, error: msg }, 500);
         }
+      }
+
+      case "quota.daily_status": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const status = await readDailyAiQuotaStatus(
+          createSupabaseDailyQuotaStore(admin),
+          userId,
+        );
+        return json({
+          success: true,
+          allowed: status.allowed,
+          reason: status.reason,
+          plan: status.plan,
+          used: status.used,
+          daily_limit: status.dailyLimit,
+          remaining: status.remaining,
+          quota_date: status.quotaDate,
+          reset_at: status.resetAt,
+        });
+      }
+
+      case "data_sources.status": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const res = await handleDataSourceStatus(
+          createSupabaseCustomDataSourceStore(admin),
+          userId,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "data_sources.register": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const res = await handleDataSourceRegister(
+          createSupabaseCustomDataSourceStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
       }
 
       default:

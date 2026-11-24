@@ -1,0 +1,114 @@
+name: External Regulation Impact Alert
+
+on:
+  repository_dispatch:
+    types: [external-regulation-high-impact]
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "Title of the external regulation or supply-chain impact"
+        required: true
+      jurisdiction_code:
+        description: "Target country/region code (e.g. JP, CN, KR, EU, US, APAC)"
+        required: true
+        default: "JP"
+      factor_category:
+        description: "regulation | political_claim | economic_embargo | supply_chain_disruption"
+        required: true
+        default: "regulation"
+      affected_product_area:
+        description: "Affected product domain or supply-chain workflow"
+        required: true
+      impact_level:
+        description: "low | medium | high | critical"
+        required: true
+        default: "high"
+      source_reference:
+        description: "Primary official source URL or reference identifier"
+        required: true
+      summary:
+        description: "Summary of impact assessment"
+        required: false
+        default: ""
+      effective_date:
+        description: "Optional ISO YYYY-MM-DD effective date"
+        required: false
+        default: ""
+      stakeholders:
+        description: "Comma-separated GitHub handles to mention"
+        required: false
+        default: ""
+      dry_run:
+        description: "Validate without creating a GitHub Issue"
+        required: false
+        default: "false"
+
+permissions: {}
+
+concurrency:
+  group: external-regulation-impact-alert-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-alert:
+    name: Validate regulation impact and escalate high alerts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate payload and create or update alert Issue
+        id: validate_alert
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REG_DISPATCH_PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+          REG_TITLE: ${{ inputs.title }}
+          REG_JURISDICTION_CODE: ${{ inputs.jurisdiction_code }}
+          REG_FACTOR_CATEGORY: ${{ inputs.factor_category }}
+          REG_AFFECTED_PRODUCT_AREA: ${{ inputs.affected_product_area }}
+          REG_IMPACT_LEVEL: ${{ inputs.impact_level }}
+          REG_VERIFICATION_STATUS: "pending_fact_check"
+          REG_AWAITING_FACT_CHECK: "true"
+          REG_SOURCE_REFERENCE: ${{ inputs.source_reference }}
+          REG_EFFECTIVE_DATE: ${{ inputs.effective_date }}
+          REG_SUMMARY: ${{ inputs.summary }}
+          REG_STAKEHOLDERS: ${{ inputs.stakeholders }}
+          REG_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          python3 -B scripts/validate_external_regulation_impact.py \
+            --from-env \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --create-issue \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Job Summary
+        if: always()
+        env:
+          VALIDATION_VALID: ${{ steps.validate_alert.outputs.valid }}
+          REQUIRES_ESCALATION: ${{ steps.validate_alert.outputs.requires_escalation }}
+          VERIFICATION_STATUS: ${{ steps.validate_alert.outputs.verification_status }}
+          ALERT_ACTION: ${{ steps.validate_alert.outputs.action }}
+          ISSUE_URL: ${{ steps.validate_alert.outputs.issue_url }}
+        run: |
+          {
+            echo "## External Regulation Impact Alert"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Valid | ${VALIDATION_VALID:-false} |"
+            echo "| Requires Escalation | ${REQUIRES_ESCALATION:-false} |"
+            echo "| Verification Status | ${VERIFICATION_STATUS:-pending_fact_check} |"
+            echo "| Action | ${ALERT_ACTION:-none} |"
+            echo "| Issue URL | ${ISSUE_URL:-none} |"
+          } >> "$GITHUB_STEP_SUMMARY"
