@@ -112,7 +112,7 @@ class _DelayedAiComplianceRepository
 
 List<AiComplianceRule> _seedRules() {
   return <AiComplianceRule>[
-    AiComplianceRule(
+    const AiComplianceRule(
       id: 'rule-elevenlabs',
       ruleKey: 'elevenlabs_paid_at_generation',
       aiProvider: ComplianceAiProvider.elevenlabs,
@@ -123,7 +123,7 @@ List<AiComplianceRule> _seedRules() {
       sortOrder: 10,
       termsVersion: '2026-11',
     ),
-    AiComplianceRule(
+    const AiComplianceRule(
       id: 'rule-copyright',
       ruleKey: 'copyright_non_similarity_no_reliance',
       aiProvider: ComplianceAiProvider.general,
