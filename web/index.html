@@ -36,12 +36,12 @@
   >
   <meta
     property="og:image"
-    content="https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png"
+    content="https://my-web-app-b67f4.web.app/ogp-lp-20261123.png"
   >
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="自分株式会社 - 悩みを1行入れるとAIが今日やる1件を提案">
+  <meta property="og:image:alt" content="自分株式会社 - 散らばる毎日を今日やる1件へ整理するAIライフマネジメント">
   <meta property="og:site_name" content="自分株式会社">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:locale:alternate" content="en_US">
@@ -55,9 +55,9 @@
   >
   <meta
     property="twitter:image"
-    content="https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png"
+    content="https://my-web-app-b67f4.web.app/ogp-lp-20261123.png"
   >
-  <meta property="twitter:image:alt" content="自分株式会社 - 悩みを1行入れるとAIが今日やる1件を提案">
+  <meta property="twitter:image:alt" content="自分株式会社 - 散らばる毎日を今日やる1件へ整理するAIライフマネジメント">
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png">
@@ -761,10 +761,14 @@
       } else if (
         signal.indexOf('flow_state') !== -1 ||
         signal.indexOf('pkce') !== -1 ||
+        signal.indexOf('code verifier') !== -1 ||
+        signal.indexOf('code_verifier') !== -1 ||
         signal.indexOf('code exchange') !== -1 ||
         signal.indexOf('exchange external code') !== -1 ||
         signal.indexOf('unable to exchange') !== -1 ||
-        signal.indexOf('oauth state') !== -1
+        signal.indexOf('oauth state') !== -1 ||
+        signal.indexOf('oauth_state') !== -1 ||
+        signal.indexOf('invalid_grant') !== -1
       ) {
         category = 'callback_exchange';
       }
@@ -842,8 +846,12 @@
         if (link) link.setAttribute('href', url);
       }
 
-      var defaultOgImageUrl = 'https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png';
-      var aiUniversityOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+      var defaultOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-lp-20261123.png';
+      var aiUniversityOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-ai-university-20261123.png';
+      var competitorsOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-competitors-20261123.png';
+      var philosophyOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-philosophy-20261123.png';
+      var referralOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-referral-20261123.png';
+      var pricingOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-pricing-20261123.png';
 
       function applyRouteMeta(meta) {
         var url = 'https://my-web-app-b67f4.web.app' + path;
@@ -902,11 +910,18 @@
         },
         '/philosophy': {
           title: '自分株式会社とは？人生を経営する9原則と実践方法',
-          desc: '自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。'
+          desc: '自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。',
+          image: philosophyOgImageUrl
         },
         '/referral': {
           title: '紹介プログラム | 自分株式会社',
-          desc: '自分株式会社の紹介コード、招待リンク、紹介実績を確認できる紹介プログラムページです。'
+          desc: '自分株式会社の紹介コード、招待リンク、紹介実績を確認できる紹介プログラムページです。',
+          image: referralOgImageUrl
+        },
+        '/subscription-billing': {
+          title: 'プランと応援 | 自分株式会社',
+          desc: '自分株式会社のFree、Pro、Teamプランと1回100円の応援を確認できます。Proは月額980円、Teamは1席あたり月額2,980円です。',
+          image: pricingOgImageUrl
         },
         '/public-guitar-gallery': {
           title: '公開ギターギャラリー | 自分株式会社',
@@ -938,7 +953,8 @@
         },
         '/competitors': {
           title: '競合比較 174社一覧 | 自分株式会社',
-          desc: 'Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のライフマネジメントOS。'
+          desc: 'Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のライフマネジメントOS。',
+          image: competitorsOgImageUrl
         },
         '/tech-blog-tracker': {
           title: 'テックブログトラッカー | 自分株式会社',
@@ -1192,6 +1208,8 @@
           setMeta('og:url', window.location.href);
           setMeta('twitter:url', window.location.href);
           setMeta('og:type', 'article');
+          setMeta('og:image', competitorsOgImageUrl);
+          setMeta('twitter:image', competitorsOgImageUrl);
           setMeta('og:image:alt', meta.title + ' 比較');
           setMeta('twitter:image:alt', meta.title + ' 比較');
           setCanonical(window.location.href);

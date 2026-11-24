@@ -53,6 +53,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
@@ -400,6 +401,14 @@ Future<void> main() async {
     httpClient: SupabaseTracingHttpClient(),
   );
 
+  final authClient = Supabase.instance.client.auth;
+  final startupAuthErrorSubscription = authClient.onAuthStateChange.listen(
+    (_) {},
+    onError: (Object error, StackTrace _) {
+      LandingOAuthCallbackFailure.captureStartupError(error);
+    },
+  );
+
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
   AppLogger.setErrorReporter(
     (message, {error, stackTrace}) => ErrorReporter.instance.report(
@@ -422,6 +431,7 @@ Future<void> main() async {
       );
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(startupAuthErrorSubscription.cancel());
         unawaited(_configureStartupNotifications(notificationService));
       });
     },
