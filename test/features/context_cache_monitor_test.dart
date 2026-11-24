@@ -108,8 +108,10 @@ void main() {
           controller.setWorkflowFilter('');
           controller.setUserFilter('user-beta');
           expect(controller.state.filteredMetrics.length, 1);
-          expect(controller.state.filteredMetrics.first.workflowKey,
-              'issue-triage');
+          expect(
+            controller.state.filteredMetrics.first.workflowKey,
+            'issue-triage',
+          );
 
           controller.dispose();
           expect(controller.isDisposed, isTrue);
