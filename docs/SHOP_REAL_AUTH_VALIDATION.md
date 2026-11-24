@@ -106,6 +106,22 @@ click categories, phase and value-free submit diagnostics to the CI log too.
 It leaves all interactions, four scenarios, assertions and time bounds intact.
 Retrieve the new artifact immediately and preserve an immutable local copy.
 
+On 2026-11-24, two Flutter 3.38.10 Web semantics mechanics observed in run
+39121568399 were addressed in `test/e2e-real-auth/shop_real_auth.spec.ts` only:
+- `SemanticTextField` attaches DOM `input` listeners asynchronously on a later
+  frame after `focus` (`text_field.dart` / `text_editing.dart`). The test now
+  settles animation frames after focus, verifies Dart controller persistence
+  via a focus/blur round-trip check (using length equality without logging
+  values), and re-checks non-empty inputs after scrolling the submit button into
+  view, recording only closed retry counters (`inputRefills`).
+- Each star `IconButton` in the review dialog supplies both `tooltip` and
+  `Icon.semanticLabel`, which `computeDomSemanticsLabel()` concatenates with a
+  newline (`label_and_value.dart`). Star selection now asserts the open dialog
+  title, narrows to `^星Nを選択(?:\s+星Nを選択)?$` (`count === 1`), verifies the
+  live selection status, and scopes the review body locator to `textarea`.
+Application code (`lib/`), SQL migrations, acceptance criteria, and isolation
+boundaries remain unchanged.
+
 The 2026-10-04 diagnosis records token request/response/failure counts and separate
 normal-click start/completion/error categories, plus empty-input booleans, button
 geometry/hit-test booleans and presence of two known validation messages. Values,

@@ -50,22 +50,84 @@ async function isolation(page: Page) {
     return route.abort('blockedbyclient');
   });
   const observed = { calls, blocked, pageErrors, phase: 'boot',
-    inputDiagnostics: [] as unknown[], submitDiagnostics: [] as unknown[], inputFailure: 'none', auth };
+    inputDiagnostics: [] as unknown[], submitDiagnostics: [] as unknown[], inputFailure: 'none',
+    inputRefills: { email: 0, password: 0, postScroll: 0 }, auth };
   observations.set(page, observed);
   return observed;
+}
+
+async function settleFrames(page: Page, frames = 2) {
+  await page.evaluate(
+    count => new Promise<void>(resolve => {
+      let remaining = count;
+      const step = () => (--remaining <= 0 ? resolve() : requestAnimationFrame(step));
+      requestAnimationFrame(step);
+    }),
+    frames,
+  );
+}
+
+async function waitFlutter(page: Page) {
+  await page.locator('flutter-view, flt-glass-pane').first().waitFor({ timeout: 60_000 });
+  await page.locator('#seo-shell').waitFor({ state: 'detached' });
 }
 
 async function boot(page: Page, path: string) {
   const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
   expect(response?.ok()).toBe(true);
-  await page.locator('flutter-view, flt-glass-pane').first().waitFor({ timeout: 60_000 });
-  await page.locator('#seo-shell').waitFor({ state: 'detached' });
+  await waitFlutter(page);
 }
 
 async function click(page: Page, target: Locator) {
   await target.scrollIntoViewIfNeeded();
   await expect(target).toBeEnabled();
   await target.click(); // No force/JS click: use real pointer input.
+}
+
+async function enterField(page: Page, target: Locator, value: string) {
+  await expect(target).toHaveCount(1);
+  await target.scrollIntoViewIfNeeded();
+  await expect(target).toBeVisible();
+  await expect(target).toBeEditable();
+  const expectedLen = value.trim().length;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await target.focus({ timeout: 20_000 });
+    await expect(target).toBeFocused({ timeout: 20_000 });
+    await settleFrames(page, 3);
+    await page.waitForTimeout(150);
+    await target.fill(value, { timeout: 20_000 });
+    await settleFrames(page, 2);
+    await page.waitForTimeout(100);
+    await target.blur();
+    await settleFrames(page, 2);
+    await page.waitForTimeout(100);
+    await target.focus({ timeout: 20_000 });
+    await settleFrames(page, 3);
+    await page.waitForTimeout(150);
+    await target.blur();
+    await settleFrames(page, 2);
+    const persisted = await target.evaluate(
+      (el, len) => (el as HTMLInputElement | HTMLTextAreaElement).value.trim().length === len,
+      expectedLen,
+    );
+    if (persisted) return attempt;
+  }
+  throw new Error('Input value did not persist across Flutter focus round-trip');
+}
+
+async function selectStar(page: Page, rating: number) {
+  await expect(page.getByText('口コミ・評価を登録', { exact: true })).toBeVisible();
+  const star = page.getByRole('button', {
+    name: new RegExp(`^星${rating}を選択(?:\\s+星${rating}を選択)?$`),
+  });
+  await expect(star).toHaveCount(1);
+  await click(page, star);
+  await expect(page.getByText(`選択中：星${rating} / 5`, { exact: true })).toBeVisible();
+}
+
+function reviewBodyInput(page: Page) {
+  return page.getByRole('textbox', { name: '口コミ（任意）', exact: false })
+    .and(page.locator('textarea'));
 }
 
 async function footer(page: Page) {
@@ -88,30 +150,48 @@ async function login(page: Page, name: string) {
   // characters), not the exact widget label. Keep the label contract and narrow
   // to the actual password control; never fall back to an arbitrary text input.
   // Omit credential values and Playwright fill call logs even on failure.
+  const observed = observations.get(page)!;
+  const email = page.getByLabel('メールアドレス', { exact: true });
+  const password = page.getByLabel('パスワード', { exact: false })
+    .and(page.locator('input[type="password"]'));
   let field = 'email';
   try {
-    observations.get(page)!.phase = 'email-input';
-    await page.getByLabel('メールアドレス', { exact: true }).fill(users[name].email, { timeout: 20_000 });
+    observed.phase = 'email-input';
+    observed.inputRefills.email = await enterField(page, email, users[name].email);
     field = 'password';
-    observations.get(page)!.phase = 'password-input';
+    observed.phase = 'password-input';
     await passwordDiagnostics(page, 'before-password-fill');
-    const password = page.getByLabel('パスワード', { exact: false })
-      .and(page.locator('input[type="password"]'));
-    await expect(password).toHaveCount(1);
-    await expect(password).toBeVisible();
-    await expect(password).toBeEditable();
-    await password.fill(users[name].password, { timeout: 20_000 });
+    observed.inputRefills.password = await enterField(page, password, users[name].password);
   } catch (error) {
     // Classify only; never persist the error/call log, which may contain a value.
     const message = error instanceof Error ? error.message : '';
-    observations.get(page)!.inputFailure = message.includes('strict mode violation') ? 'non-unique-locator' :
-      message.includes('Timeout') || message.includes('timeout') ? 'timeout' : 'other';
+    observed.inputFailure = message.includes('strict mode violation') ? 'non-unique-locator' :
+      message.includes('Timeout') || message.includes('timeout') ? 'timeout' :
+      message.includes('did not persist') ? 'not-persisted' : 'other';
     await passwordDiagnostics(page, 'input-failed');
     throw new Error(`Could not fill isolated ${field} input; credentials omitted`);
   }
-  observations.get(page)!.phase = 'real-auth-submit';
-  const observed = observations.get(page)!;
+  observed.phase = 'real-auth-submit';
   const submit = page.getByRole('button', { name: 'メールでログイン', exact: true });
+  await submit.scrollIntoViewIfNeeded();
+  await settleFrames(page, 2);
+  const isNonEmpty = (locator: Locator) =>
+    locator.evaluate(el => (el as HTMLInputElement).value.trim().length > 0).catch(() => false);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const emailOk = await isNonEmpty(email);
+    const passwordOk = await isNonEmpty(password);
+    if (emailOk && passwordOk) break;
+    if (!emailOk) {
+      await enterField(page, email, users[name].email);
+      observed.inputRefills.postScroll++;
+    }
+    if (!passwordOk) {
+      await enterField(page, password, users[name].password);
+      observed.inputRefills.postScroll++;
+    }
+    await submit.scrollIntoViewIfNeeded();
+    await settleFrames(page, 2);
+  }
   await submitDiagnostics(page, submit, 'before-click');
   // Handle the response waiter immediately so its rejection cannot hide a
   // pending pointer operation. Preserve both independent outcomes and bounds.
@@ -128,6 +208,7 @@ async function login(page: Page, name: string) {
   } catch (error) {
     observed.auth.clickFailure = safeFailure(error);
   }
+  await settleFrames(page, 2);
   await submitDiagnostics(page, submit, 'after-click');
   const response = await authResponse;
   expect(observed.auth.clickCompleted, 'Normal login pointer action completed').toBe(true);
@@ -201,7 +282,7 @@ async function passwordDiagnostics(page: Page, stage: string) {
 async function capture(page: Page, info: TestInfo, name: string) {
   // Explicit product-only captures. No login page, password, trace or video.
   expect(new URL(page.url()).pathname).toBe('/shop/product');
-  await page.evaluate(() => new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+  await settleFrames(page, 2);
   mkdirSync('shop-real-auth-evidence', { recursive: true });
   await page.screenshot({ path: `shop-real-auth-evidence/${info.project.name}-${name}.png`, animations: 'disabled' });
 }
@@ -218,7 +299,7 @@ test.afterEach(async ({ page }, info) => {
   // short-lived artifact. Never log the input operations or raw exceptions.
   console.log('AUTH_DIAGNOSTIC ' + JSON.stringify({
     project: info.project.name, phase: observed.phase, auth: observed.auth,
-    submit: observed.submitDiagnostics,
+    inputRefills: observed.inputRefills, submit: observed.submitDiagnostics,
   }));
   // Always retain value-free diagnostics, including on failure. Do not capture
   // credentials, full DOM, login screenshots, input values, traces or headers.
@@ -230,8 +311,8 @@ test.afterEach(async ({ page }, info) => {
     contentType: 'application/json',
     body: JSON.stringify({ scope: 'Disposable actual Auth/REST; synthetic purchases; not production or payment proof',
       route: page.url(), phase: observed.phase, inputs, inputDiagnostics: observed.inputDiagnostics,
-      inputFailure: observed.inputFailure, submitDiagnostics: observed.submitDiagnostics,
-      auth: observed.auth, calls: observed.calls,
+      inputFailure: observed.inputFailure, inputRefills: observed.inputRefills,
+      submitDiagnostics: observed.submitDiagnostics, auth: observed.auth, calls: observed.calls,
       blocked: [...observed.blocked], pageErrors: observed.pageErrors }),
   });
   observations.delete(page);
@@ -247,18 +328,19 @@ test('real purchaser login returns to product with attribution; review create/ed
   await login(page, 'a');
   await footer(page);
   await click(page, page.getByRole('button', { name: '口コミ・評価を書く', exact: true }));
-  await click(page, page.getByRole('button', { name: '星5を選択', exact: true }));
-  await page.getByRole('textbox', { name: '口コミ（任意）', exact: true }).fill('実認証による検証用の口コミ');
+  await selectStar(page, 5);
+  await enterField(page, reviewBodyInput(page), '実認証による検証用の口コミ');
   await click(page, page.getByRole('button', { name: '公開して保存', exact: true }));
   await expect(page.getByText('あなたの評価：★ 5 / 5', { exact: true })).toBeVisible();
   await footer(page);
   await capture(page, info, 'review-created');
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitFlutter(page);
   await footer(page);
   await expect(page.getByText('あなたの評価：★ 5 / 5', { exact: true })).toBeVisible();
   await click(page, page.getByRole('button', { name: '自分の口コミを編集', exact: true }));
-  await click(page, page.getByRole('button', { name: '星4を選択', exact: true }));
-  await page.getByRole('textbox', { name: '口コミ（任意）', exact: true }).fill('編集が保存された検証用の口コミ');
+  await selectStar(page, 4);
+  await enterField(page, reviewBodyInput(page), '編集が保存された検証用の口コミ');
   await click(page, page.getByRole('button', { name: '公開して保存', exact: true }));
   await expect(page.getByText('あなたの評価：★ 4 / 5', { exact: true })).toBeVisible();
   await footer(page);
@@ -270,7 +352,8 @@ test('real purchaser login returns to product with attribution; review create/ed
   await capture(page, info, 'review-deleted');
   expect(observed.calls.filter(c => c.path.endsWith('/save_shop_product_review') && c.status >= 200 && c.status < 300)).toHaveLength(2);
   await click(page, page.getByRole('button', { name: '口コミ・評価を書く', exact: true }));
-  await page.getByRole('textbox', { name: '口コミ（任意）', exact: true }).fill('ログアウトで中断する未送信の下書き');
+  await expect(page.getByText('口コミ・評価を登録', { exact: true })).toBeVisible();
+  await enterField(page, reviewBodyInput(page), 'ログアウトで中断する未送信の下書き');
   // The isolated Dart entrypoint calls the real Supabase client's signOut.
   // No auth event/session/HTTP response is fabricated by this bridge.
   await page.evaluate(async () => {
