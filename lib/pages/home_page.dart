@@ -85,6 +85,7 @@ import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
 import '../utils/home_calendar_visible_range.dart';
+import '../utils/home_cashflow_bundle_loader.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -861,101 +862,36 @@ class _HomePageState extends State<HomePage> with RouteAware {
       );
     }
 
-    final normalizedCalStart = _startOfDay(calendarStart);
-    final normalizedCalEndExclusive =
-        _startOfDay(calendarEnd).add(const Duration(days: 1));
-    final queryStart = _minDate(monthStart, normalizedCalStart);
-    final queryEndExclusive = _maxDate(nextMonth, normalizedCalEndExclusive);
-
-    try {
-      final dynamic rowsRaw = await AssetFlowRequest.table(
-        Supabase.instance.client,
-      )
+    final bundle = await loadHomeCashflowBundle(
+      userId: userId,
+      monthStart: monthStart,
+      nextMonth: nextMonth,
+      calendarStart: calendarStart,
+      calendarEnd: calendarEnd,
+      fetchRows: (query) => AssetFlowRequest.table(Supabase.instance.client)
           .select('action_type,amount,occurred_at')
-          .eq('user_id', userId)
-          .gte('occurred_at', queryStart.toUtc().toIso8601String())
-          .lt('occurred_at', queryEndExclusive.toUtc().toIso8601String())
-          .order('occurred_at', ascending: true);
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-
-      var incomeTotal = 0;
-      var expenseTotal = 0;
-      var incomeCount = 0;
-      var expenseCount = 0;
-      DateTime? lastRecordedAt;
-      final dailyByDate = <String, HomeDailyCashflowSummary>{};
-
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        final actionType = row['action_type']?.toString() ?? '';
-        final amount = _toIntValue(row['amount']);
-        final occurredAt = DateTime.tryParse(
-          row['occurred_at']?.toString() ?? '',
-        )?.toLocal();
-        if (occurredAt == null) continue;
-
-        if (!occurredAt.isBefore(monthStart) &&
-            occurredAt.isBefore(nextMonth)) {
-          if (lastRecordedAt == null || occurredAt.isAfter(lastRecordedAt)) {
-            lastRecordedAt = occurredAt;
-          }
-          if (actionType == 'conquer') {
-            incomeTotal += amount;
-            incomeCount += 1;
-          } else if (actionType == 'expense') {
-            expenseTotal += amount;
-            expenseCount += 1;
-          }
-        }
-
-        if (!occurredAt.isBefore(normalizedCalStart) &&
-            occurredAt.isBefore(normalizedCalEndExclusive)) {
-          final dateKey = _statusDateKey(occurredAt);
-          final current =
-              dailyByDate[dateKey] ?? const HomeDailyCashflowSummary();
-          dailyByDate[dateKey] = switch (actionType) {
-            'conquer' => current.copyWith(
-                incomeTotal: current.incomeTotal + amount,
-                incomeCount: current.incomeCount + 1,
-              ),
-            'expense' => current.copyWith(
-                expenseTotal: current.expenseTotal + amount,
-                expenseCount: current.expenseCount + 1,
-              ),
-            'transfer' => current.copyWith(
-                transferTotal: current.transferTotal + amount,
-                transferCount: current.transferCount + 1,
-              ),
-            'borrowing' => current.copyWith(
-                borrowingTotal: current.borrowingTotal + amount,
-                borrowingCount: current.borrowingCount + 1,
-              ),
-            _ => current,
-          };
-        }
-      }
-
-      return (
-        monthlySummary: _HomeMonthlyCashflowSummary(
-          month: monthStart,
-          incomeTotal: incomeTotal,
-          expenseTotal: expenseTotal,
-          incomeCount: incomeCount,
-          expenseCount: expenseCount,
-          reviewDone: reviewDone,
-          lastRecordedAt: lastRecordedAt,
-        ),
-        dailyByDate: dailyByDate,
-      );
-    } catch (e) {
-      debugPrint('Error loading cashflow bundle: $e');
-      return (
-        monthlySummary: _HomeMonthlyCashflowSummary(
-          month: monthStart,
-          reviewDone: reviewDone,
-        ),
-        dailyByDate: <String, HomeDailyCashflowSummary>{},
-      );
-    }
+          .eq('user_id', query.userId)
+          .gte('occurred_at', query.startUtcIso)
+          .lt('occurred_at', query.endExclusiveUtcIso)
+          .order('occurred_at', ascending: true),
+      dateKeyFor: _statusDateKey,
+      amountFor: _toIntValue,
+      onError: (error, _) {
+        debugPrint('Error loading cashflow bundle: $error');
+      },
+    );
+    return (
+      monthlySummary: _HomeMonthlyCashflowSummary(
+        month: monthStart,
+        incomeTotal: bundle.monthlyTotals.incomeTotal,
+        expenseTotal: bundle.monthlyTotals.expenseTotal,
+        incomeCount: bundle.monthlyTotals.incomeCount,
+        expenseCount: bundle.monthlyTotals.expenseCount,
+        reviewDone: reviewDone,
+        lastRecordedAt: bundle.monthlyTotals.lastRecordedAt,
+      ),
+      dailyByDate: bundle.dailyByDate,
+    );
   }
 
   String _dailyTodoCategoryLabel(String? category) {
