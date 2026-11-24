@@ -47,7 +47,26 @@ jobs:
           RECORDS_JSON: ${{ github.event.inputs.records_json || '[]' }}
         run: |
           set -euo pipefail
-          python3 -B -c 'import json, os, pathlib; data = json.loads(os.environ.get("RECORDS_JSON") or "[]"); assert isinstance(data, list); pathlib.Path("rlhf_pending_records.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")'
+          python3 -B - <<'PY'
+          import json
+          import os
+          import pathlib
+          import sys
+
+          raw = os.environ.get("RECORDS_JSON") or "[]"
+          try:
+              data = json.loads(raw)
+          except json.JSONDecodeError as exc:
+              print(f"::error::Invalid records_json input: {exc}", file=sys.stderr)
+              sys.exit(1)
+          if not isinstance(data, list):
+              print("::error::records_json must decode to a JSON array", file=sys.stderr)
+              sys.exit(1)
+          pathlib.Path("rlhf_pending_records.json").write_text(
+              json.dumps(data, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          PY
 
       - name: Run RLHF issue dispatcher tests and queue evaluation
         id: dispatch

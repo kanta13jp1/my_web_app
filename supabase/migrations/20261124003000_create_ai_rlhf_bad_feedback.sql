@@ -287,7 +287,7 @@ begin
         )
       );
       v_payload_text := v_payload::text;
-      v_signature := 'sha256=' || encode(
+      v_signature := 'sha256=' || pg_catalog.encode(
         extensions.hmac(convert_to(v_payload_text, 'utf8'), convert_to(v_hmac_cred, 'utf8'), 'sha256'),
         'hex'
       );
