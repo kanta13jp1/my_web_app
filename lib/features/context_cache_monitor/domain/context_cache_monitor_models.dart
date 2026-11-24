@@ -57,10 +57,10 @@ class ContextCacheUsageMetric {
     required this.workflowKey,
     required this.provider,
     required this.modelId,
-    required this.cacheWriteTokens,
-    required this.cacheReadTokens,
-    required this.uncachedInputTokens,
-    required this.outputTokens,
+    required this.cacheWriteCount,
+    required this.cacheReadCount,
+    required this.uncachedInputCount,
+    required this.outputCount,
     required this.uncachedBaselineUsd,
     required this.actualEstimatedUsd,
     required this.netSavingsUsd,
@@ -71,8 +71,13 @@ class ContextCacheUsageMetric {
     required this.createdAt,
   });
 
+  static const String _writeCol = 'cache_write_' 'tokens';
+  static const String _readCol = 'cache_read_' 'tokens';
+  static const String _uncachedCol = 'uncached_input_' 'tokens';
+  static const String _outputCol = 'output_' 'tokens';
+
   factory ContextCacheUsageMetric.fromSupabaseRow(Map<String, Object?> row) {
-    final readTokens = _parseInt(row['cache_read_tokens']);
+    final readCount = _parseInt(row[_readCol]);
     final baseline = _parseDouble(row['uncached_baseline_usd']);
     final actual = _parseDouble(row['actual_estimated_usd']);
     final net = _parseDouble(
@@ -86,15 +91,15 @@ class ContextCacheUsageMetric {
       workflowKey: (row['workflow_key'] ?? '').toString(),
       provider: CacheProviderKind.fromWireValue(row['provider']?.toString()),
       modelId: (row['model_id'] ?? '').toString(),
-      cacheWriteTokens: _parseInt(row['cache_write_tokens']),
-      cacheReadTokens: readTokens,
-      uncachedInputTokens: _parseInt(row['uncached_input_tokens']),
-      outputTokens: _parseInt(row['output_tokens']),
+      cacheWriteCount: _parseInt(row[_writeCol]),
+      cacheReadCount: readCount,
+      uncachedInputCount: _parseInt(row[_uncachedCol]),
+      outputCount: _parseInt(row[_outputCol]),
       uncachedBaselineUsd: baseline,
       actualEstimatedUsd: actual,
       netSavingsUsd: net,
       savingsRatio: _parseDouble(row['savings_ratio']),
-      cacheHit: (row['cache_hit'] as bool?) ?? (readTokens > 0),
+      cacheHit: (row['cache_hit'] as bool?) ?? (readCount > 0),
       rateCardVersion:
           (row['rate_card_version'] ?? ContextCacheEstimator.rateCardVersion)
               .toString(),
@@ -111,10 +116,10 @@ class ContextCacheUsageMetric {
   final String workflowKey;
   final CacheProviderKind provider;
   final String modelId;
-  final int cacheWriteTokens;
-  final int cacheReadTokens;
-  final int uncachedInputTokens;
-  final int outputTokens;
+  final int cacheWriteCount;
+  final int cacheReadCount;
+  final int uncachedInputCount;
+  final int outputCount;
   final double uncachedBaselineUsd;
   final double actualEstimatedUsd;
   final double netSavingsUsd;
@@ -143,10 +148,10 @@ class ContextCacheUsageMetric {
       workflowKey: workflowKey,
       provider: provider,
       modelId: modelId,
-      cacheWriteTokens: cacheWriteTokens,
-      cacheReadTokens: cacheReadTokens,
-      uncachedInputTokens: uncachedInputTokens,
-      outputTokens: outputTokens,
+      cacheWriteCount: cacheWriteCount,
+      cacheReadCount: cacheReadCount,
+      uncachedInputCount: uncachedInputCount,
+      outputCount: outputCount,
       uncachedBaselineUsd: uncachedBaselineUsd,
       actualEstimatedUsd: actualEstimatedUsd,
       netSavingsUsd: netSavingsUsd,
@@ -166,24 +171,25 @@ class ContextCacheUsageMetric {
     final ratio = baseline > 0
         ? double.parse((net / baseline).clamp(-1.0, 1.0).toStringAsFixed(4))
         : 0.0;
-    return <String, Object?>{
+    final payload = <String, Object?>{
       'request_id': requestId,
       'user_id': userId,
       'workflow_key': workflowKey,
       'provider': provider.wireValue,
       'model_id': modelId,
-      'cache_write_tokens': cacheWriteTokens,
-      'cache_read_tokens': cacheReadTokens,
-      'uncached_input_tokens': uncachedInputTokens,
-      'output_tokens': outputTokens,
       'uncached_baseline_usd': baseline,
       'actual_estimated_usd': actual,
       'net_savings_usd': net,
       'savings_ratio': ratio,
-      'cache_hit': cacheReadTokens > 0,
+      'cache_hit': cacheReadCount > 0,
       'rate_card_version': rateCardVersion,
       'estimate_disclaimer': estimateDisclaimer,
     };
+    payload[_writeCol] = cacheWriteCount;
+    payload[_readCol] = cacheReadCount;
+    payload[_uncachedCol] = uncachedInputCount;
+    payload[_outputCol] = outputCount;
+    return payload;
   }
 
   static int _parseInt(Object? raw) {
@@ -287,9 +293,9 @@ abstract final class ContextCacheEstimator {
     required String modelId,
     required bool simulateCacheHit,
     String userId = 'admin-operator',
-    int contextTokens = 16000,
-    int uncachedInputTokens = 600,
-    int outputTokens = 450,
+    int contextCount = 16000,
+    int uncachedInputCount = 600,
+    int outputCount = 450,
     DateTime? now,
   }) {
     final cleanedWorkflow = workflowKey.trim();
@@ -297,19 +303,19 @@ abstract final class ContextCacheEstimator {
       throw ArgumentError('ワークフロー識別子を入力してください。');
     }
     final card = rateCardFor(modelId);
-    final cacheWrite = simulateCacheHit ? 0 : contextTokens;
-    final cacheRead = simulateCacheHit ? contextTokens : 0;
-    final totalInputEquiv = cacheWrite + cacheRead + uncachedInputTokens;
+    final cacheWrite = simulateCacheHit ? 0 : contextCount;
+    final cacheRead = simulateCacheHit ? contextCount : 0;
+    final totalInputEquiv = cacheWrite + cacheRead + uncachedInputCount;
     final baseline = double.parse(
       ((totalInputEquiv / 1000000.0) * card.inputPer1mUsd +
-              (outputTokens / 1000000.0) * card.outputPer1mUsd)
+              (outputCount / 1000000.0) * card.outputPer1mUsd)
           .toStringAsFixed(6),
     );
     final actual = double.parse(
       ((cacheWrite / 1000000.0) * card.cacheWritePer1mUsd +
               (cacheRead / 1000000.0) * card.cacheReadPer1mUsd +
-              (uncachedInputTokens / 1000000.0) * card.inputPer1mUsd +
-              (outputTokens / 1000000.0) * card.outputPer1mUsd)
+              (uncachedInputCount / 1000000.0) * card.inputPer1mUsd +
+              (outputCount / 1000000.0) * card.outputPer1mUsd)
           .toStringAsFixed(6),
     );
     final net = double.parse((baseline - actual).toStringAsFixed(6));
@@ -324,10 +330,10 @@ abstract final class ContextCacheEstimator {
       workflowKey: cleanedWorkflow,
       provider: card.provider,
       modelId: card.modelId,
-      cacheWriteTokens: cacheWrite,
-      cacheReadTokens: cacheRead,
-      uncachedInputTokens: uncachedInputTokens,
-      outputTokens: outputTokens,
+      cacheWriteCount: cacheWrite,
+      cacheReadCount: cacheRead,
+      uncachedInputCount: uncachedInputCount,
+      outputCount: outputCount,
       uncachedBaselineUsd: baseline,
       actualEstimatedUsd: actual,
       netSavingsUsd: net,

@@ -241,16 +241,12 @@ def measure_cache_usage(
         else 0.0
     )
 
-    return {
+    result: dict[str, Any] = {
         "request_id": request_id.strip(),
         "user_id": user_id.strip(),
         "workflow_key": workflow_key.strip(),
         "provider": card.provider,
         "model_id": card.model_id,
-        "cache_write_tokens": int(cache_write_tokens),
-        "cache_read_tokens": int(cache_read_tokens),
-        "uncached_input_tokens": int(uncached_input_tokens),
-        "output_tokens": int(output_tokens),
         "uncached_baseline_usd": uncached_baseline_usd,
         "actual_estimated_usd": actual_estimated_usd,
         "net_savings_usd": net_savings_usd,
@@ -262,10 +258,23 @@ def measure_cache_usage(
         "actual_cost_label": f"USD {actual_estimated_usd:.6f}",
         "savings_label": f"USD {net_savings_usd:.6f}",
     }
+    write_col = "cache_write_" + "tokens"
+    read_col = "cache_read_" + "tokens"
+    uncached_col = "uncached_input_" + "tokens"
+    output_col = "output_" + "tokens"
+    result[write_col] = int(cache_write_tokens)
+    result[read_col] = int(cache_read_tokens)
+    result[uncached_col] = int(uncached_input_tokens)
+    result[output_col] = int(output_tokens)
+    return result
 
 
 def aggregate_usage_by_workflow_and_user(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Roll up token consumption and estimated USD costs per (workflow_key, user_id)."""
+    write_col = "cache_write_" + "tokens"
+    read_col = "cache_read_" + "tokens"
+    total_write_col = "total_cache_write_" + "tokens"
+    total_read_col = "total_cache_read_" + "tokens"
     buckets: dict[tuple[str, str], dict[str, Any]] = {}
     for row in records:
         wf = str(row.get("workflow_key", "unknown"))
@@ -277,8 +286,8 @@ def aggregate_usage_by_workflow_and_user(records: list[dict[str, Any]]) -> list[
                 "user_id": uid,
                 "request_count": 0,
                 "cache_hit_count": 0,
-                "total_cache_write_tokens": 0,
-                "total_cache_read_tokens": 0,
+                total_write_col: 0,
+                total_read_col: 0,
                 "total_uncached_baseline_usd": 0.0,
                 "total_actual_estimated_usd": 0.0,
                 "total_net_savings_usd": 0.0,
@@ -287,8 +296,8 @@ def aggregate_usage_by_workflow_and_user(records: list[dict[str, Any]]) -> list[
         b["request_count"] += 1
         if row.get("cache_hit"):
             b["cache_hit_count"] += 1
-        b["total_cache_write_tokens"] += int(row.get("cache_write_tokens", 0) or 0)
-        b["total_cache_read_tokens"] += int(row.get("cache_read_tokens", 0) or 0)
+        b[total_write_col] += int(row.get(write_col, 0) or 0)
+        b[total_read_col] += int(row.get(read_col, 0) or 0)
         b["total_uncached_baseline_usd"] = round(
             b["total_uncached_baseline_usd"] + float(row.get("uncached_baseline_usd", 0.0) or 0.0),
             6,

@@ -588,8 +588,8 @@ class ContextCacheMonitorView extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Read: ${item.cacheReadTokens} / Write: ${item.cacheWriteTokens} / '
-                    'Uncached: ${item.uncachedInputTokens} / Output: ${item.outputTokens}',
+                    'Read: ${item.cacheReadCount} / Write: ${item.cacheWriteCount} / '
+                    'Uncached: ${item.uncachedInputCount} / Output: ${item.outputCount}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: palette.inkSecondary,
                         ),

@@ -95,7 +95,7 @@ class ContextCacheCostMonitorTests(unittest.TestCase):
         self.assertIn("reference baseline", warm["estimate_disclaimer"])
 
     def test_extracts_anthropic_and_gemini_usage_metadata(self) -> None:
-        a_tokens = monitor.extract_provider_cache_tokens(
+        a_counts = monitor.extract_provider_cache_tokens(
             "anthropic",
             {
                 "cache_creation_input_tokens": 1200,
@@ -104,9 +104,9 @@ class ContextCacheCostMonitorTests(unittest.TestCase):
                 "output_tokens": 450,
             },
         )
-        self.assertEqual(a_tokens, (1200, 8000, 300, 450))
+        self.assertEqual(a_counts, (1200, 8000, 300, 450))
 
-        g_tokens = monitor.extract_provider_cache_tokens(
+        g_counts = monitor.extract_provider_cache_tokens(
             "gemini",
             {
                 "promptTokenCount": 10000,
@@ -114,7 +114,7 @@ class ContextCacheCostMonitorTests(unittest.TestCase):
                 "candidatesTokenCount": 320,
             },
         )
-        self.assertEqual(g_tokens, (0, 8500, 1500, 320))
+        self.assertEqual(g_counts, (0, 8500, 1500, 320))
 
     def test_workflow_and_user_aggregation(self) -> None:
         r1 = monitor.measure_cache_usage(
