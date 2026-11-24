@@ -59,6 +59,12 @@ import {
   handleAsyncJobStatus,
   handleAsyncJobUpdateStatus,
 } from "./async_jobs.ts";
+import {
+  createSupabaseStageGateStore,
+  handleStageGateDecide,
+  handleStageGateList,
+  handleStageGateSubmit,
+} from "./stage_gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2995,6 +3001,33 @@ description: ${pageDescription}
         const res = await handleAsyncJobUpdateStatus(
           createSupabaseAsyncJobStore(admin),
           userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "stage_gate.list": {
+        const res = await handleStageGateList(
+          createSupabaseStageGateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "stage_gate.submit": {
+        const res = await handleStageGateSubmit(
+          createSupabaseStageGateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "stage_gate.decide": {
+        const res = await handleStageGateDecide(
+          createSupabaseStageGateStore(admin),
+          { userId, isServiceRole },
           body,
         );
         return json(res.body, res.status);

@@ -175,29 +175,46 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     super.initState();
     _pageScrollController.addListener(_updateMobileStickyVisibility);
     _trialPromptFocusNode.addListener(_handleTrialPromptFocusChanged);
-    _oauthCallbackFailure = LandingOAuthCallbackFailure.fromUri(_landingUri);
+    final startupFailure =
+        LandingOAuthCallbackFailure.takePendingStartupError();
+    _oauthCallbackFailure =
+        LandingOAuthCallbackFailure.fromUri(_landingUri) ?? startupFailure;
     _experimentAssignment = widget.experimentAssignment;
     if (_experimentAssignment != null) {
       _experimentBootstrapFuture = Future.value(_experimentAssignment!);
     } else {
       _experimentBootstrapFuture = _loadConversionExperiment();
     }
-    _authSubscription = widget.adapter.authStateChanges().listen((data) {
-      if (!mounted) return;
-      if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-        unawaited(
-          widget.signupCompletionService.completeIfPending(
-            signupUserId: data.session?.user.id,
-            signupEmail: data.session?.user.email,
-            accountCreatedAt: DateTime.tryParse(
-              data.session?.user.createdAt ?? '',
+    _authSubscription = widget.adapter.authStateChanges().listen(
+      (data) {
+        if (!mounted) return;
+        if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+          unawaited(
+            widget.signupCompletionService.completeIfPending(
+              signupUserId: data.session?.user.id,
+              signupEmail: data.session?.user.email,
+              accountCreatedAt: DateTime.tryParse(
+                data.session?.user.createdAt ?? '',
+              ),
             ),
-          ),
-        );
-        unawaited(widget.growthService.applyPendingReferralIfPossible());
-        _goToAuthenticatedEntry();
-      }
-    });
+          );
+          unawaited(widget.growthService.applyPendingReferralIfPossible());
+          _goToAuthenticatedEntry();
+        }
+      },
+      onError: (Object error, StackTrace _) {
+        LandingOAuthCallbackFailure.takePendingStartupError();
+        if (!mounted) {
+          return;
+        }
+        final failure = LandingOAuthCallbackFailure.fromError(error);
+        if (_oauthCallbackFailure?.category == failure.category) {
+          return;
+        }
+        setState(() => _oauthCallbackFailure = failure);
+        unawaited(_handleOAuthCallbackFailure(failure));
+      },
+    );
     final oauthCallbackFailure = _oauthCallbackFailure;
     if (oauthCallbackFailure != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -559,6 +576,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       return;
     }
 
+    final tracksSignup = _analyticsEnabled && _isSignUp;
     setState(() {
       _isLoading = true;
       _magicLinkErrorMessage = null;
@@ -566,27 +584,29 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     });
     try {
       await _preserveTrialForGoogle();
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await _markSignupCompletionPending();
       }
-      unawaited(_recordSignupSubmitStages());
-      unawaited(_acquisitionService.recordLandingSignupSubmit());
+      if (_isSignUp) {
+        unawaited(_recordSignupSubmitStages());
+        unawaited(_acquisitionService.recordLandingSignupSubmit());
+      }
       final launched = await widget.adapter.signInWithGoogle(
         redirectTo: _webRedirectUrl,
       );
       if (!launched) {
-        if (_analyticsEnabled) {
+        if (tracksSignup) {
           await widget.signupCompletionService.cancelPending();
         }
         _showMessage('Googleログイン画面を開けませんでした。再読み込みしてから再実行してください。');
       }
     } on LandingPageAuthUnavailableException {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await widget.signupCompletionService.cancelPending();
       }
       _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
-      if (_analyticsEnabled) {
+      if (tracksSignup) {
         await widget.signupCompletionService.cancelPending();
       }
       _showMessage(_resolveGoogleAuthError(error));
