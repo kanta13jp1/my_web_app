@@ -9,9 +9,17 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any, Callable
+
+try:
+    from competitor_url_verifier import verify_source_url
+except ModuleNotFoundError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from competitor_url_verifier import verify_source_url
 
 
 def stage_candidates(
@@ -22,6 +30,8 @@ def stage_candidates(
     existing: list[dict[str, Any]],
     week_str: str,
     opener: Callable[..., Any] = urllib.request.urlopen,
+    verify_urls: bool = False,
+    url_verifier: Callable[[str | None], dict[str, Any]] | None = None,
 ) -> tuple[int, int, int, list[str]]:
     existing_ids = {str(c.get("id", "")).lower() for c in existing}
     existing_ids.discard("")
@@ -62,6 +72,14 @@ def stage_candidates(
             "discovery_week": week_str,
             "raw_gemini_output": json.dumps(c, ensure_ascii=False),
         }
+        if verify_urls or url_verifier is not None:
+            verifier_fn = url_verifier or verify_source_url
+            url_check = verifier_fn(c.get("website"))
+            payload["source_url_status_code"] = url_check.get("source_url_status_code")
+            payload["source_url_checked_at"] = url_check.get("source_url_checked_at")
+            payload["source_url_error"] = url_check.get("source_url_error")
+            payload["needs_manual_review"] = bool(url_check.get("needs_manual_review", False))
+            payload["review_decision"] = "pending"
         payload = {k: v for k, v in payload.items() if v is not None}
 
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -196,6 +214,7 @@ def main() -> int:
         candidates=candidates,
         existing=existing,
         week_str=week_str,
+        verify_urls=True,
     )
 
     log_payload = build_discovery_log_payload(
