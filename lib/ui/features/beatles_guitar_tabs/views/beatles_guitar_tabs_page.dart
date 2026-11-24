@@ -3,19 +3,24 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../data/services/chord_lyrics_catalog_service.dart';
 import '../../../../data/services/guitar_metronome_audio_service.dart';
 import '../../../../data/services/structured_tab_catalog_service.dart';
 import '../../../../data/services/structured_tab_pdf_service.dart';
+import '../../../../data/services/user_chord_lyrics_storage_service.dart';
 import '../../../../data/services/user_structured_tab_storage_service.dart';
 import '../../../../domain/models/guitar_daily_course.dart';
 import '../../../../domain/models/guitar_tab_song.dart';
 import '../../../../theme/design_tokens.dart';
 import '../view_models/beatles_guitar_tabs_view_model.dart';
+import 'widgets/chord_lyrics_studio_panel.dart';
 import 'widgets/guitar_tab_staff.dart';
 import 'widgets/structured_tab_studio_panel.dart';
 
 /// dark surface2(#1E1E1E)・surface3(#2A2A2A) 上で WCAG 2.1 AA (4.5:1 以上) を満たす補助文字色。
 const Color _mutedAccessibleText = Color(0xFF9CA3AF);
+
+enum _GuitarStudioMode { catalog, structuredScore, chordLyrics }
 
 class BeatlesGuitarTabsPage extends StatefulWidget {
   const BeatlesGuitarTabsPage({
@@ -24,12 +29,16 @@ class BeatlesGuitarTabsPage extends StatefulWidget {
     this.userTabStorageService,
     this.pdfService,
     this.metronomeAudioService,
+    this.chordLyricsCatalogService,
+    this.userChordLyricsStorageService,
   });
 
   final StructuredTabCatalogService? structuredCatalogService;
   final UserStructuredTabStorageService? userTabStorageService;
   final StructuredTabPdfService? pdfService;
   final GuitarMetronomeAudioService? metronomeAudioService;
+  final ChordLyricsCatalogService? chordLyricsCatalogService;
+  final UserChordLyricsStorageService? userChordLyricsStorageService;
 
   static const double _wideBreakpoint = 860;
 
@@ -38,7 +47,7 @@ class BeatlesGuitarTabsPage extends StatefulWidget {
 }
 
 class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
-  bool _showStructuredScore = false;
+  _GuitarStudioMode _mode = _GuitarStudioMode.catalog;
 
   @override
   Widget build(BuildContext context) {
@@ -62,60 +71,65 @@ class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
         child: Column(
           children: <Widget>[
             _GuitarModeSwitcher(
-              showStructuredScore: _showStructuredScore,
-              onChanged: (bool next) {
-                if (_showStructuredScore == next) return;
+              mode: _mode,
+              onChanged: (_GuitarStudioMode next) {
+                if (_mode == next) return;
                 setState(() {
-                  _showStructuredScore = next;
+                  _mode = next;
                 });
               },
             ),
             Expanded(
-              child: _showStructuredScore
-                  ? StructuredTabStudioPanel(
-                      catalogService: widget.structuredCatalogService,
-                      userStorageService: widget.userTabStorageService,
-                      pdfService: widget.pdfService,
-                      metronomeAudioService: widget.metronomeAudioService,
-                    )
-                  : ListenableBuilder(
-                      listenable: viewModel,
-                      builder: (BuildContext context, _) {
-                        return switch (viewModel.status) {
-                          BeatlesGuitarTabsStatus.initial ||
-                          BeatlesGuitarTabsStatus.loading =>
-                            const Center(
-                              child: CircularProgressIndicator(
-                                color: DesignTokens.orange,
-                              ),
+              child: switch (_mode) {
+                _GuitarStudioMode.structuredScore => StructuredTabStudioPanel(
+                    catalogService: widget.structuredCatalogService,
+                    userStorageService: widget.userTabStorageService,
+                    pdfService: widget.pdfService,
+                    metronomeAudioService: widget.metronomeAudioService,
+                  ),
+                _GuitarStudioMode.chordLyrics => ChordLyricsStudioPanel(
+                    catalogService: widget.chordLyricsCatalogService,
+                    userStorageService: widget.userChordLyricsStorageService,
+                  ),
+                _GuitarStudioMode.catalog => ListenableBuilder(
+                    listenable: viewModel,
+                    builder: (BuildContext context, _) {
+                      return switch (viewModel.status) {
+                        BeatlesGuitarTabsStatus.initial ||
+                        BeatlesGuitarTabsStatus.loading =>
+                          const Center(
+                            child: CircularProgressIndicator(
+                              color: DesignTokens.orange,
                             ),
-                          BeatlesGuitarTabsStatus.failure => _ErrorState(
-                              message: viewModel.errorMessage ?? '読み込みに失敗しました。',
-                              onRetry: viewModel.load,
-                            ),
-                          BeatlesGuitarTabsStatus.ready => LayoutBuilder(
-                              builder: (
-                                BuildContext context,
-                                BoxConstraints constraints,
-                              ) {
-                                if (constraints.maxWidth >=
-                                    BeatlesGuitarTabsPage._wideBreakpoint) {
-                                  return _WideLayout(
-                                    viewModel: viewModel,
-                                    metronomeAudioService:
-                                        widget.metronomeAudioService,
-                                  );
-                                }
-                                return _CompactLayout(
+                          ),
+                        BeatlesGuitarTabsStatus.failure => _ErrorState(
+                            message: viewModel.errorMessage ?? '読み込みに失敗しました。',
+                            onRetry: viewModel.load,
+                          ),
+                        BeatlesGuitarTabsStatus.ready => LayoutBuilder(
+                            builder: (
+                              BuildContext context,
+                              BoxConstraints constraints,
+                            ) {
+                              if (constraints.maxWidth >=
+                                  BeatlesGuitarTabsPage._wideBreakpoint) {
+                                return _WideLayout(
                                   viewModel: viewModel,
                                   metronomeAudioService:
                                       widget.metronomeAudioService,
                                 );
-                              },
-                            ),
-                        };
-                      },
-                    ),
+                              }
+                              return _CompactLayout(
+                                viewModel: viewModel,
+                                metronomeAudioService:
+                                    widget.metronomeAudioService,
+                              );
+                            },
+                          ),
+                      };
+                    },
+                  ),
+              },
             ),
           ],
         ),
@@ -126,12 +140,12 @@ class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
 
 class _GuitarModeSwitcher extends StatelessWidget {
   const _GuitarModeSwitcher({
-    required this.showStructuredScore,
+    required this.mode,
     required this.onChanged,
   });
 
-  final bool showStructuredScore;
-  final ValueChanged<bool> onChanged;
+  final _GuitarStudioMode mode;
+  final ValueChanged<_GuitarStudioMode> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -150,28 +164,53 @@ class _GuitarModeSwitcher extends StatelessWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1440),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: _ModeTabButton(
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+              final useRow = constraints.maxWidth >= 520 && textScale <= 1.3;
+              final buttons = <Widget>[
+                _ModeTabButton(
                   buttonKey: const Key('guitar_mode_catalog'),
                   icon: Icons.library_music_outlined,
                   label: '練習カタログ',
-                  selected: !showStructuredScore,
-                  onTap: () => onChanged(false),
+                  selected: mode == _GuitarStudioMode.catalog,
+                  onTap: () => onChanged(_GuitarStudioMode.catalog),
                 ),
-              ),
-              const SizedBox(width: DesignTokens.space8),
-              Expanded(
-                child: _ModeTabButton(
+                _ModeTabButton(
                   buttonKey: const Key('guitar_mode_structured_score'),
                   icon: Icons.queue_music,
                   label: '構造化TABスコア',
-                  selected: showStructuredScore,
-                  onTap: () => onChanged(true),
+                  selected: mode == _GuitarStudioMode.structuredScore,
+                  onTap: () => onChanged(_GuitarStudioMode.structuredScore),
                 ),
-              ),
-            ],
+                _ModeTabButton(
+                  buttonKey: const Key('guitar_mode_chord_lyrics'),
+                  icon: Icons.lyrics_outlined,
+                  label: '弾き語りコード譜',
+                  selected: mode == _GuitarStudioMode.chordLyrics,
+                  onTap: () => onChanged(_GuitarStudioMode.chordLyrics),
+                ),
+              ];
+              if (useRow) {
+                return Row(
+                  children: <Widget>[
+                    Expanded(child: buttons[0]),
+                    const SizedBox(width: DesignTokens.space8),
+                    Expanded(child: buttons[1]),
+                    const SizedBox(width: DesignTokens.space8),
+                    Expanded(child: buttons[2]),
+                  ],
+                );
+              }
+              return SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  spacing: DesignTokens.space8,
+                  runSpacing: DesignTokens.space8,
+                  children: buttons,
+                ),
+              );
+            },
           ),
         ),
       ),
