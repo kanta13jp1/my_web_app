@@ -4,9 +4,11 @@ import {
   assertRejects,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  buildDailyRealityHistory,
   canonicalizeLocalElectionSnapshot,
   computeLocalElectionDiff,
   evaluateScheduleCollectionQuality,
+  extractRealityHistoryPoint,
   hashLocalElectionSnapshot,
   type HubDataRow,
   type HubInsertResult,
@@ -738,4 +740,150 @@ Deno.test("incomplete collection is rejected before history or queue writes", as
   );
   assertEquals(store.snapshots.length, 0);
   assertEquals(store.candidates.length, 0);
+});
+
+Deno.test("extractRealityHistoryPoint parses PostgREST projections and full rows", () => {
+  const projected = extractRealityHistoryPoint({
+    created_at: "2026-11-22T07:17:16.000Z",
+    observed_at: "2026-11-22T07:17:15.500Z",
+    official_current_local_members: "421",
+    actual_net_increase_required: "279",
+  });
+  assertEquals(projected, {
+    fetchedAt: "2026-11-22T07:17:15.500Z",
+    officialCurrentLocalMembers: 421,
+    actualNetIncreaseRequired: 279,
+  });
+
+  const targetReached = extractRealityHistoryPoint({
+    created_at: "2027-04-26T00:00:00.000Z",
+    metadata: {
+      snapshot: {
+        metrics: {
+          officialCurrentLocalMembers: 700,
+          actualNetIncreaseRequired: 0,
+        },
+      },
+    },
+  });
+  assertEquals(targetReached, {
+    fetchedAt: "2027-04-26T00:00:00.000Z",
+    officialCurrentLocalMembers: 700,
+    actualNetIncreaseRequired: 0,
+  });
+
+  const legacy = extractRealityHistoryPoint({
+    created_at: "2026-04-01T00:00:00.000Z",
+    legacy_official_current_local_members: "352",
+  });
+  assertEquals(legacy, {
+    fetchedAt: "2026-04-01T00:00:00.000Z",
+    officialCurrentLocalMembers: 352,
+    actualNetIncreaseRequired: 348,
+  });
+
+  assertEquals(
+    extractRealityHistoryPoint({
+      created_at: "2026-11-22T00:00:00.000Z",
+      official_current_local_members: "0",
+    }),
+    null,
+  );
+  assertEquals(
+    extractRealityHistoryPoint({
+      created_at: "invalid-date",
+      official_current_local_members: 421,
+    }),
+    null,
+  );
+});
+
+Deno.test("buildDailyRealityHistory deduplicates by JST day and keeps chronological order", () => {
+  const rows = [
+    // 2026-11-21T14:59:59Z == 2026-11-21 23:59:59 JST (11/21)
+    {
+      created_at: "2026-11-21T14:59:59.000Z",
+      official_current_local_members: "418",
+      actual_net_increase_required: "282",
+    },
+    // 2026-11-21T15:00:00Z == 2026-11-22 00:00:00 JST (11/22)
+    {
+      created_at: "2026-11-21T15:00:00.000Z",
+      official_current_local_members: "419",
+      actual_net_increase_required: "281",
+    },
+    // Same JST day (11/22 04:39 JST) — superseded by later 11/22 observation
+    {
+      created_at: "2026-11-21T19:39:23.000Z",
+      official_current_local_members: "420",
+      actual_net_increase_required: "280",
+    },
+    // Ignored invalid row
+    {
+      created_at: "2026-11-20T00:00:00.000Z",
+      official_current_local_members: "0",
+    },
+  ];
+
+  const merged = buildDailyRealityHistory(rows, {
+    currentPoint: {
+      fetchedAt: "2026-11-22T07:17:16.000Z",
+      officialCurrentLocalMembers: 421,
+      actualNetIncreaseRequired: 279,
+    },
+    maxPoints: 2,
+  });
+
+  assertEquals(merged, [
+    {
+      fetchedAt: "2026-11-21T14:59:59.000Z",
+      officialCurrentLocalMembers: 418,
+      actualNetIncreaseRequired: 282,
+    },
+    {
+      fetchedAt: "2026-11-22T07:17:16.000Z",
+      officialCurrentLocalMembers: 421,
+      actualNetIncreaseRequired: 279,
+    },
+  ]);
+
+  const capped = buildDailyRealityHistory(rows, {
+    currentPoint: {
+      fetchedAt: "2026-11-23T01:00:00.000Z",
+      officialCurrentLocalMembers: 422,
+      actualNetIncreaseRequired: 278,
+    },
+    maxPoints: 2,
+  });
+  assertEquals(capped.length, 2);
+  assertEquals(capped[0].officialCurrentLocalMembers, 420);
+  assertEquals(capped[1].officialCurrentLocalMembers, 422);
+});
+
+Deno.test("buildDailyRealityHistory extracts persisted MemoryStore snapshot chain", async () => {
+  const store = new MemoryStore();
+  await persistLocalElectionSnapshot(
+    store,
+    baseSnapshot(),
+    "2026-07-12T06:00:00.000Z",
+  );
+  await persistLocalElectionSnapshot(
+    store,
+    changedSnapshot(),
+    "2026-07-13T06:00:00.000Z",
+  );
+
+  const history = buildDailyRealityHistory(store.snapshots);
+  assertEquals(history, [
+    {
+      fetchedAt: "2026-07-12T06:00:00.000Z",
+      officialCurrentLocalMembers: 1,
+      actualNetIncreaseRequired: 699,
+    },
+    {
+      fetchedAt: "2026-07-13T06:00:00.000Z",
+      officialCurrentLocalMembers: 2,
+      actualNetIncreaseRequired: 698,
+    },
+  ]);
 });

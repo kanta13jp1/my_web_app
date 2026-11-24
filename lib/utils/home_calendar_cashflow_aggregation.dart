@@ -33,6 +33,10 @@ Map<String, HomeDailyCashflowSummary> aggregateHomeCalendarCashflow(
           transferTotal: current.transferTotal + amount,
           transferCount: current.transferCount + 1,
         ),
+      'borrowing' => current.copyWith(
+          borrowingTotal: current.borrowingTotal + amount,
+          borrowingCount: current.borrowingCount + 1,
+        ),
       _ => current,
     };
   }

@@ -1,6 +1,8 @@
 {
   "_note": "厳選した真に代替可能な競合の /vs-<slug> ルート。scripts/prerender_seo_routes.py が各ルートの静的HTMLを build/web/vs-<slug>/index.html に生成し、scripts/generate_sitemap.py が sitemap に含める。doorway ページ化を避けるため、実際に代替検討され得る productivity / notes / tasks / finance / team / habit / AI カテゴリに絞る。全 slug は ComparisonPage の _competitorInfo に実データを持つ。",
   "site": "https://my-web-app-b67f4.web.app",
+  "default_image": "/ogp-competitors-20261123.png",
+  "default_image_alt": "自分株式会社 競合比較 - 174社以上のSaaSと統合ライフOSを比較",
   "routes": [
     { "slug": "notion", "competitor": "Notion", "category": "ノート・情報整理", "title": "自分株式会社 vs Notion | Notion代替を探すなら", "description": "Notionは自由な情報整理ツール。自分株式会社はAIが今日の最優先タスクを1件に絞り、ノート・資産・習慣まで統合する生活OS。無料で始められます。", "points": ["Notionは自分で構造を設計するツール。自分株式会社はAIが優先順位と次の一手まで提案", "メモ・タスク・資産・習慣を1アプリに統合。Notionのように複数DBを組む必要がない", "Markdownでのデータ取り込みに対応。無料コア + Proで支援"] },
     { "slug": "evernote", "competitor": "Evernote", "category": "ノート・情報整理", "title": "自分株式会社 vs Evernote | Evernote代替アプリ", "description": "Evernoteのノート・タグ・全文検索をAIで強化。メモに留まらず資産管理・習慣化・AI提案まで一元化した無料コア+Pro対応の代替。", "points": ["ノート・タグ・検索に加え、AIが行動提案まで実行", "資産管理・習慣化・タスク管理を同じアプリで完結", "Markdown取り込み対応。月額課金なしの無料コアから利用可"] },

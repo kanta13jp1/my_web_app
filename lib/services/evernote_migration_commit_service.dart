@@ -1338,7 +1338,7 @@ class EvernoteMigrationCommitService {
     if (committedSummary.exportSha256 != exportSha256 ||
         committedSummary.noteCount != audit.noteCount ||
         committedSummary.resourceCount != audit.resourceCount ||
-        committedSummary.warnings.isNotEmpty ||
+        (!allowBlockedWarnings && committedSummary.warnings.isNotEmpty) ||
         committedSourceIds.length != expectedBySourceId.length ||
         transferredBytes != transferTotalBytes) {
       throw StateError('The streamed Evernote commit did not fully verify.');

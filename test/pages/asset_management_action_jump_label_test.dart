@@ -187,4 +187,97 @@ void main() {
       expect(breakdown[1].amount, 27013);
     });
   });
+
+  group('revolvingStatementGroups', () {
+    test('リボ払い設定を持つ照合グループのみを抽出する', () {
+      const data = AssetLiabilityCardStatementReconciliationData(
+        groups: <AssetLiabilityCardStatementReconciliationGroup>[
+          AssetLiabilityCardStatementReconciliationGroup(
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPAYカード',
+            billedAmount: 25000,
+            configuredDetailTotal: 0,
+            statementLineTotal: 15000,
+            configuredItems: <AssetLiabilityCardBillingReviewItem>[],
+            statementLines: <AssetLiabilityCardStatementLine>[],
+            alerts: <String>[],
+            revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+              balance: 100000,
+              creditLimit: 300000,
+              monthlyAmount: 10000,
+              newUsageAmount: 15000,
+              existingBalanceAmount: 85000,
+              paymentDay: 25,
+              overLimitAmount: 0,
+              billedAmount: 25000,
+            ),
+          ),
+          AssetLiabilityCardStatementReconciliationGroup(
+            billingAccountId: 'famipay',
+            billingAccountName: 'ファミペイ',
+            billedAmount: 12000,
+            configuredDetailTotal: 12000,
+            statementLineTotal: 12000,
+            configuredItems: <AssetLiabilityCardBillingReviewItem>[],
+            statementLines: <AssetLiabilityCardStatementLine>[],
+            alerts: <String>[],
+          ),
+        ],
+        unmatchedStatementLines: <AssetLiabilityCardStatementLine>[],
+      );
+
+      final result = revolvingStatementGroups(data);
+      expect(result.length, 1);
+      expect(result.first.billingAccountId, 'aupay_card');
+      expect(result.first.revolvingBilling!.newUsageAmount, 15000);
+    });
+  });
+
+  group('safetyEnvelope', () {
+    test('封印有効時は安全余裕に封印額を加算し、解除時は元の安全余裕に戻る', () {
+      expect(
+        effectiveSafetyReserve(
+          minimumSafetyBalance: 10000,
+          safetyEnvelopeEnabled: true,
+          safetyEnvelopeAmount: 15000,
+        ),
+        25000,
+      );
+      expect(
+        effectiveSafetyReserve(
+          minimumSafetyBalance: 10000,
+          safetyEnvelopeEnabled: false,
+          safetyEnvelopeAmount: 15000,
+        ),
+        10000,
+      );
+    });
+
+    test('封印中は支払可能残高から封印額を除外し、解除時は元の残高に戻る', () {
+      expect(
+        availableBalanceAfterSafetyEnvelope(
+          balance: 20000,
+          safetyEnvelopeEnabled: true,
+          safetyEnvelopeAmount: 15000,
+        ),
+        5000,
+      );
+      expect(
+        availableBalanceAfterSafetyEnvelope(
+          balance: 12000,
+          safetyEnvelopeEnabled: true,
+          safetyEnvelopeAmount: 15000,
+        ),
+        -3000,
+      );
+      expect(
+        availableBalanceAfterSafetyEnvelope(
+          balance: 12000,
+          safetyEnvelopeEnabled: false,
+          safetyEnvelopeAmount: 15000,
+        ),
+        12000,
+      );
+    });
+  });
 }

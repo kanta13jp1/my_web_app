@@ -11,6 +11,7 @@ import {
   API_RATE_LIMIT_PER_MINUTE,
   type ApiKeyRow,
   type AuditLogRow,
+  authenticateJibunApiBearerForMcp,
   generateApiKey,
   generateSigningSecret,
   handleJibunApiAction,
@@ -1213,4 +1214,66 @@ Deno.test("webhook.delete returns 404 for missing / other-user webhook", async (
     getUserId: () => Promise.resolve("user-1"),
   });
   assertEquals(response!.status, 404);
+});
+Deno.test("authenticateJibunApiBearerForMcp validates keys and enforces worker rate limits", async () => {
+  const store = new FakeJibunApiStore();
+  const generated = generateApiKey();
+  const row = await store.insertKey({
+    user_id: "user-mcp-1",
+    name: "Antigravity",
+    key_prefix: generated.prefix,
+    key_hash: await sha256Hex(generated.key),
+    scopes: ["notes.read", "workers.invoke"],
+    expires_at: null,
+  });
+
+  const okRes = await authenticateJibunApiBearerForMcp(
+    new Request("https://example.test/tools-hub/mcp", {
+      headers: { Authorization: `Bearer ${generated.key}` },
+    }),
+    store,
+    "mcp.notes.list",
+  );
+  assertEquals(okRes.ok, true);
+  if (okRes.ok) {
+    assertEquals(okRes.key.user_id, "user-mcp-1");
+  }
+
+  const badPrefixRes = await authenticateJibunApiBearerForMcp(
+    new Request("https://example.test/tools-hub/mcp", {
+      headers: { Authorization: generated.key },
+    }),
+    store,
+    "mcp.notes.list",
+  );
+  assertEquals(badPrefixRes.ok, false);
+  if (!badPrefixRes.ok) {
+    assertEquals(badPrefixRes.status, 401);
+  }
+
+  store.rateLimitCounts["mcp.workers.invoke"] = WORKER_INVOKE_LIMIT_PER_MINUTE;
+  const limitRes = await authenticateJibunApiBearerForMcp(
+    new Request("https://example.test/tools-hub/mcp", {
+      headers: { Authorization: `Bearer ${generated.key}` },
+    }),
+    store,
+    "mcp.workers.invoke",
+  );
+  assertEquals(limitRes.ok, false);
+  if (!limitRes.ok) {
+    assertEquals(limitRes.status, 429);
+  }
+
+  await store.revokeKey("user-mcp-1", row.id);
+  const revokedRes = await authenticateJibunApiBearerForMcp(
+    new Request("https://example.test/tools-hub/mcp", {
+      headers: { Authorization: `Bearer ${generated.key}` },
+    }),
+    store,
+    "mcp.notes.list",
+  );
+  assertEquals(revokedRes.ok, false);
+  if (!revokedRes.ok) {
+    assertEquals(revokedRes.status, 401);
+  }
 });

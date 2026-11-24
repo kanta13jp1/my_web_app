@@ -10,6 +10,7 @@ String normalizeRoutePath(String routePath) {
 String documentTitleForRoute(String routePath) {
   return switch (normalizeRoutePath(routePath)) {
     '/philosophy' => philosophyDocumentTitle,
+    '/vibe-sim-lab' => 'Vibe Sim 物理破綻診断ラボ | 自分株式会社',
     '/' => landingDocumentTitle,
     _ => '自分株式会社',
   };

@@ -197,7 +197,11 @@ class DisposableBalanceService {
     final daysRemaining =
         (nextPayday.difference(normalizedAsOf).inDays - 1).clamp(1, 366);
 
-    final sortedPayslips = payslips.toList(growable: false)
+    final sortedPayslips = payslips
+        .where(
+          (payslip) => !_dateOnly(payslip.payDate).isAfter(normalizedAsOf),
+        )
+        .toList(growable: false)
       ..sort((a, b) => b.payDate.compareTo(a.payDate));
     DisposableBalancePayslip? currentPayslip;
     for (final payslip in sortedPayslips) {

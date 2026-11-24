@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/self_mental_health_risk_service.dart';
+import '../widgets/self_mental_health_risk_panel.dart';
+
 class MentalHealthTrackerPage extends StatefulWidget {
-  const MentalHealthTrackerPage({super.key});
+  final SelfMentalHealthRiskService? riskService;
+  final DateTime? debugNow;
+
+  const MentalHealthTrackerPage({
+    super.key,
+    this.riskService,
+    this.debugNow,
+  });
 
   @override
   State<MentalHealthTrackerPage> createState() =>
@@ -10,8 +20,9 @@ class MentalHealthTrackerPage extends StatefulWidget {
 }
 
 class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
-  final _supabase = Supabase.instance.client;
   final _noteCtrl = TextEditingController();
+
+  SupabaseClient get _supabase => Supabase.instance.client;
 
   bool _loading = false;
   bool _saving = false;
@@ -148,6 +159,11 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            SelfMentalHealthRiskPanel(
+              service: widget.riskService,
+              debugNow: widget.debugNow,
+            ),
+            const SizedBox(height: 12),
             _buildRecordCard(),
             if (_latestSummary != null) ...[
               const SizedBox(height: 12),

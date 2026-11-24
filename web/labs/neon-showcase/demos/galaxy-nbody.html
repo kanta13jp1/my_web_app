@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #020308; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="cinema">
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const hctx = hudCanvas.getContext('2d');
+const W = 1280, H = 720;
+
+// ---------------------------------------------------------------------------
+// WebGL2 Additive Glowing Star Shader
+// ---------------------------------------------------------------------------
+const vsSrc = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aCol;
+layout(location=2) in float aSize;
+uniform mat4 uVP;
+out vec3 vCol;
+void main() {
+  vec4 p = uVP * vec4(aPos, 1.0);
+  gl_Position = p;
+  float dist = max(1.0, p.w);
+  gl_PointSize = clamp(aSize * 54.0 / dist, 2.2, 26.0);
+  vCol = aCol;
+}`;
+
+const fsSrc = `#version 300 es
+precision highp float;
+in vec3 vCol;
+out vec4 fragColor;
+void main() {
+  vec2 d = gl_PointCoord - vec2(0.5);
+  float r2 = dot(d, d);
+  if (r2 > 0.25) discard;
+  float glow = exp(-r2 * 14.0);
+  float core = exp(-r2 * 56.0);
+  vec3 col = vCol * glow + vec3(1.0) * core * 0.70;
+  fragColor = vec4(col * 0.85, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+gl.linkProgram(prog);
+gl.useProgram(prog);
+const uVP = gl.getUniformLocation(prog, 'uVP');
+
+// ---------------------------------------------------------------------------
+// 3D Camera Math
+// ---------------------------------------------------------------------------
+function mat4Mul(a, b) {
+  const o = new Float32Array(16);
+  for (let i=0;i<4;i++) for (let j=0;j<4;j++)
+    o[j*4+i] = a[i]*b[j*4]+a[4+i]*b[j*4+1]+a[8+i]*b[j*4+2]+a[12+i]*b[j*4+3];
+  return o;
+}
+function mat4Perspective(fov, aspect, near, far) {
+  const f = 1/Math.tan(fov/2), nf = 1/(near-far);
+  return new Float32Array([f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+}
+function mat4LookAt(eye, target, up) {
+  let zx=eye[0]-target[0], zy=eye[1]-target[1], zz=eye[2]-target[2];
+  let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+  let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+  l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+  let yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+  return new Float32Array([
+    xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+    -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+    -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+    -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+  ]);
+}
+
+// ---------------------------------------------------------------------------
+// 12,000-Particle N-Body Galaxy Simulation
+// ---------------------------------------------------------------------------
+const N = 12000;
+const pos = new Float32Array(N * 3);
+const vel = new Float32Array(N * 3);
+const col = new Float32Array(N * 3);
+const size = new Float32Array(N);
+
+// Deterministic PRNG
+let seed = 1337;
+function rnd() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+}
+
+// Two Supermassive Black Hole cores
+const cores = [
+  { x: -14.0, y: 2.8, z: -2.0, vx: 0.92, vy: -0.35, vz: 0.20, m: 44.0 },
+  { x:  14.0, y: -2.8, z: 2.0, vx: -0.98, vy: 0.35, vz: -0.20, m: 36.0 }
+];
+
+function initGalaxy(startIdx, count, core, radiusMax, tiltX, tiltZ, isBlue) {
+  const cx = Math.cos(tiltX), sx = Math.sin(tiltX);
+  const cz = Math.cos(tiltZ), sz = Math.sin(tiltZ);
+
+  for (let k = 0; k < count; k++) {
+    const i = startIdx + k;
+    // Exponential disk distribution + 2 spiral arms
+    const u = rnd();
+    const r = 0.35 + Math.pow(u, 1.35) * radiusMax;
+    const arm = (k % 2) * Math.PI;
+    const theta = arm + r * 0.48 + (rnd() - 0.5) * 0.85;
+    const h = (rnd() - 0.5) * 0.65 * Math.exp(-r / (radiusMax * 0.5));
+
+    let lx = Math.cos(theta) * r;
+    let ly = h;
+    let lz = Math.sin(theta) * r;
+
+    // Circular orbital velocity v = sqrt(G * M / sqrt(r^2 + eps^2))
+    const vOrb = Math.sqrt(core.m / Math.sqrt(r * r + 1.2));
+    let lvx = -Math.sin(theta) * vOrb;
+    let lvy = (rnd() - 0.5) * 0.12;
+    let lvz = Math.cos(theta) * vOrb;
+
+    // Rotate disk by tiltX, tiltZ
+    const rotVec = (vx, vy, vz) => {
+      // around X
+      const y1 = vy * cx - vz * sx, z1 = vy * sx + vz * cx;
+      // around Z
+      const x2 = vx * cz - y1 * sz, y2 = vx * sz + y1 * cz;
+      return [x2, y2, z1];
+    };
+
+    const [rx, ry, rz] = rotVec(lx, ly, lz);
+    const [rvx, rvy, rvz] = rotVec(lvx, lvy, lvz);
+
+    pos[i*3]   = core.x + rx;
+    pos[i*3+1] = core.y + ry;
+    pos[i*3+2] = core.z + rz;
+
+    vel[i*3]   = core.vx + rvx;
+    vel[i*3+1] = core.vy + rvy;
+    vel[i*3+2] = core.vz + rvz;
+
+    const heat = 1.0 - Math.min(1.0, r / radiusMax);
+    if (isBlue) {
+      col[i*3]   = 0.25 + 0.75 * heat;
+      col[i*3+1] = 0.65 + 0.35 * heat;
+      col[i*3+2] = 1.0;
+    } else {
+      col[i*3]   = 1.0;
+      col[i*3+1] = 0.42 + 0.52 * heat;
+      col[i*3+2] = 0.18 + 0.65 * heat;
+    }
+    size[i] = 1.1 + heat * 1.4 + rnd() * 0.6;
+  }
+}
+
+initGalaxy(0, 6500, cores[0], 10.5, 0.38, 0.22, true);
+initGalaxy(6500, 5500, cores[1], 9.2, -0.52, -0.30, false);
+
+// Background distant static stars (tiny)
+for (let i = 11600; i < N; i++) {
+  const a = rnd() * Math.PI * 2;
+  const b = (rnd() - 0.5) * Math.PI;
+  const dist = 55 + rnd() * 45;
+  pos[i*3] = Math.cos(a)*Math.cos(b)*dist;
+  pos[i*3+1] = Math.sin(b)*dist;
+  pos[i*3+2] = Math.sin(a)*Math.cos(b)*dist;
+  vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0;
+  col[i*3] = 0.6; col[i*3+1] = 0.7; col[i*3+2] = 0.9;
+  size[i] = 0.7;
+}
+
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+
+const posBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+const colBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, colBuf);
+gl.bufferData(gl.ARRAY_BUFFER, col, gl.STATIC_DRAW);
+gl.enableVertexAttribArray(1);
+gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+
+const sizeBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuf);
+gl.bufferData(gl.ARRAY_BUFFER, size, gl.STATIC_DRAW);
+gl.enableVertexAttribArray(2);
+gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 0, 0);
+
+// ---------------------------------------------------------------------------
+// Physics Step (Symplectic Euler + Dynamical Friction for Realistic Merger)
+// ---------------------------------------------------------------------------
+let simTime = 0.0;
+const SOFT = 1.65;
+
+function stepPhysics(dt) {
+  simTime += dt;
+  const c0 = cores[0], c1 = cores[1];
+
+  // Core-core gravitational attraction + gentle dynamical friction
+  const dx = c1.x - c0.x, dy = c1.y - c0.y, dz = c1.z - c0.z;
+  const d2 = dx*dx + dy*dy + dz*dz + 6.5;
+  const invD3 = 1.0 / (d2 * Math.sqrt(d2));
+  // Effective dark-matter halo + core pull
+  const F = 185.0 * invD3;
+
+  c0.vx += dx * F * (c1.m / 40.0) * dt;
+  c0.vy += dy * F * (c1.m / 40.0) * dt;
+  c0.vz += dz * F * (c1.m / 40.0) * dt;
+
+  c1.vx -= dx * F * (c0.m / 40.0) * dt;
+  c1.vy -= dy * F * (c0.m / 40.0) * dt;
+  c1.vz -= dz * F * (c0.m / 40.0) * dt;
+
+  // Dynamical friction when halos overlap
+  if (d2 < 180.0) {
+    const damp = 1.0 - 0.24 * dt;
+    c0.vx *= damp; c0.vy *= damp; c0.vz *= damp;
+    c1.vx *= damp; c1.vy *= damp; c1.vz *= damp;
+  }
+
+  c0.x += c0.vx * dt; c0.y += c0.vy * dt; c0.z += c0.vz * dt;
+  c1.x += c1.vx * dt; c1.y += c1.vy * dt; c1.z += c1.vz * dt;
+
+  // Update 11,600 active galaxy stars
+  const m0 = c0.m, m1 = c1.m;
+  const c0x = c0.x, c0y = c0.y, c0z = c0.z;
+  const c1x = c1.x, c1y = c1.y, c1z = c1.z;
+
+  for (let i = 0; i < 11600; i++) {
+    const i3 = i * 3;
+    const px = pos[i3], py = pos[i3+1], pz = pos[i3+2];
+
+    const dx0 = c0x - px, dy0 = c0y - py, dz0 = c0z - pz;
+    const r0_2 = dx0*dx0 + dy0*dy0 + dz0*dz0 + SOFT;
+    const f0 = m0 / (r0_2 * Math.sqrt(r0_2));
+
+    const dx1 = c1x - px, dy1 = c1y - py, dz1 = c1z - pz;
+    const r1_2 = dx1*dx1 + dy1*dy1 + dz1*dz1 + SOFT;
+    const f1 = m1 / (r1_2 * Math.sqrt(r1_2));
+
+    const vx = vel[i3]   + (dx0 * f0 + dx1 * f1) * dt;
+    const vy = vel[i3+1] + (dy0 * f0 + dy1 * f1) * dt;
+    const vz = vel[i3+2] + (dz0 * f0 + dz1 * f1) * dt;
+
+    vel[i3] = vx; vel[i3+1] = vy; vel[i3+2] = vz;
+    pos[i3] = px + vx * dt;
+    pos[i3+1] = py + vy * dt;
+    pos[i3+2] = pz + vz * dt;
+  }
+}
+
+let camYawOff = 0.0;
+let camElevOff = 0.0;
+let camZoom = 1.0;
+
+function renderGalaxy() {
+  gl.viewport(0, 0, W, H);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE);
+  gl.clearColor(0.008, 0.011, 0.024, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  // Midpoint of both galaxies
+  const mx = (cores[0].x + cores[1].x) * 0.5;
+  const my = (cores[0].y + cores[1].y) * 0.5;
+  const mz = (cores[0].z + cores[1].z) * 0.5;
+
+  // Sweeping orbital camera + live user drag orbit & zoom
+  const ang = -0.35 + simTime * 0.055 + camYawOff;
+  const dist = (41.0 - Math.sin(Math.min(1, simTime / 28.0) * Math.PI) * 9.0) * camZoom;
+  const eye = [
+    mx + Math.sin(ang) * dist,
+    my + Math.max(-24, Math.min(34, 13.5 - simTime * 0.15 + camElevOff)),
+    mz + Math.cos(ang) * dist
+  ];
+
+  const proj = mat4Perspective(50 * Math.PI / 180, W / H, 0.5, 220.0);
+  const view = mat4LookAt(eye, [mx, my, mz], [0, 1, 0]);
+  const vp = mat4Mul(proj, view);
+
+  gl.uniformMatrix4fv(uVP, false, vp);
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, pos);
+  gl.bindVertexArray(vao);
+  gl.drawArrays(gl.POINTS, 0, N);
+
+  // Minimal Scientific HUD
+  hctx.clearRect(0, 0, W, H);
+  hctx.save();
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.62)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+  hctx.lineWidth = 1.2;
+  hctx.beginPath(); hctx.roundRect(24, 22, 430, 56, 10); hctx.fill(); hctx.stroke();
+
+  const phase = simTime < 8.5 ? 'APPROACH' : simTime < 17.5 ? 'TIDAL INTERACTION' : 'CORE MERGER';
+  const myr = Math.round(simTime * 14.5);
+  hctx.fillStyle = '#00E5FF';
+  hctx.font = '700 13px "Consolas", monospace';
+  hctx.fillText('N-BODY GRAVITY SIM  |  PARTICLES: 12,000  |  ASSETS: 0', 40, 44);
+  hctx.fillStyle = '#F8FAFC';
+  hctx.fillText(`PHASE: ${phase}  |  T + ${myr} Myr`, 40, 65);
+  hctx.restore();
+}
+
+window.stepGalaxy = (dt) => {
+  // 2 substeps for crisp orbital accuracy
+  stepPhysics(dt * 0.5);
+  stepPhysics(dt * 0.5);
+  renderGalaxy();
+};
+
+if (!window.__RECORDING__) {
+  let paused = false;
+  let speedMult = 1;
+  let dragging = false, lx = 0, ly = 0;
+  glCanvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    camYawOff += (e.clientX - lx) * 0.008;
+    camElevOff += (e.clientY - ly) * 0.08;
+    lx = e.clientX; ly = e.clientY;
+    renderGalaxy();
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  glCanvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    camZoom = Math.max(0.55, Math.min(1.85, camZoom + e.deltaY * 0.0008));
+    renderGalaxy();
+  }, { passive: false });
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('ドラッグで3D銀河カメラを自由回転 · ホイールでズーム · 2x速で衝突加速');
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2 : 1;
+      btn.classList.toggle('active', speedMult === 2);
+    });
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ 衝突やり直し', () => window.location.reload());
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    if (!paused) window.stepGalaxy(dt * speedMult);
+    requestAnimationFrame(loop);
+  }
+  window.stepGalaxy(0.016);
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>
