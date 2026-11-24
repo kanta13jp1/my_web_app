@@ -239,8 +239,8 @@ CREATE TRIGGER trg_guard_long_form_summary
 CREATE OR REPLACE FUNCTION public.enqueue_long_form_summary_on_save()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public, auth
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
 AS $enqueue$
 DECLARE
   v_recent_jobs integer;
@@ -290,6 +290,9 @@ BEGIN
   RETURN NEW;
 END;
 $enqueue$;
+
+REVOKE ALL ON FUNCTION public.enqueue_long_form_summary_on_save()
+  FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS trg_enqueue_long_form_summary_on_save
   ON public.long_form_documents;
