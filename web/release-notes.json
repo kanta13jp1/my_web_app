@@ -31,6 +31,45 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-6271",
+          "links": [
+            {
+              "title": "PR #6271",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6271"
+            }
+          ],
+          "mergedAt": "2026-11-24T04:18:46Z",
+          "summary": "#6271 feat: APAC多言語・多通貨メタデータスキーマと動的切替・為替要検証警告UIを実装 (#2594)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6272",
+          "links": [
+            {
+              "title": "PR #6272",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6272"
+            }
+          ],
+          "mergedAt": "2026-11-24T03:50:17Z",
+          "summary": "#6272 feat: インテークデータの法規制・コンプライアンスリスク自動スクリーニング・審査UIを実装 (#2595)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6270",
+          "links": [
+            {
+              "title": "PR #6270",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6270"
+            }
+          ],
+          "mergedAt": "2026-11-24T03:35:07Z",
+          "summary": "#6270 feat: 月次システム利用統計集計・キャパシティレポート自動通知・管理者UIを実装 (#2745)"
+        },
+        {
+          "category": "feature",
           "id": "pr-6269",
           "links": [
             {
@@ -379,45 +418,6 @@
           ],
           "mergedAt": "2026-11-23T15:21:57Z",
           "summary": "#6241 feat(チャット): バックグラウンド処理通知バナーと並行サブセッション切替を追加 (#2800 #2801)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6239",
-          "links": [
-            {
-              "title": "PR #6239",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6239"
-            }
-          ],
-          "mergedAt": "2026-11-23T14:49:10Z",
-          "summary": "#6239 feat(ai): 汎用UIアクション型・安全フォールバックと意図外使用監査ダッシュボードを追加 (#1366 #2795 #1365)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-6240",
-          "links": [
-            {
-              "title": "PR #6240",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6240"
-            }
-          ],
-          "mergedAt": "2026-11-23T14:33:12Z",
-          "summary": "#6240 fix(lp): AI体験後の保存CTAコントラスト修正とモバイル1タップGoogle保存導線を改善"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6238",
-          "links": [
-            {
-              "title": "PR #6238",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6238"
-            }
-          ],
-          "mergedAt": "2026-11-23T14:18:47Z",
-          "summary": "#6238 feat(チャット・UI): セッション日時ソート・逐次レンダリング・AIインライン差分表示を追加 (#1361 #1359 #2802)"
         }
       ],
       "date": "2026-11-24",
