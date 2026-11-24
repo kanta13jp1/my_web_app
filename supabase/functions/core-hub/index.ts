@@ -52,6 +52,13 @@ import {
   renderBlogMarkdown,
   renderBlogNotFoundHtml,
 } from "./blog_view.ts";
+import {
+  createSupabaseAsyncJobStore,
+  handleAsyncJobEnqueue,
+  handleAsyncJobList,
+  handleAsyncJobStatus,
+  handleAsyncJobUpdateStatus,
+} from "./async_jobs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2955,6 +2962,42 @@ description: ${pageDescription}
         });
         if (rErr) return json({ error: rErr.message }, 500);
         return json({ success: true });
+      }
+
+      case "async_job.enqueue": {
+        const res = await handleAsyncJobEnqueue(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "async_job.status": {
+        const res = await handleAsyncJobStatus(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "async_job.list": {
+        const res = await handleAsyncJobList(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "async_job.update_status": {
+        const res = await handleAsyncJobUpdateStatus(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
       }
 
       default:
