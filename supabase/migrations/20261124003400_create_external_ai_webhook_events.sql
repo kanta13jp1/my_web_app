@@ -167,6 +167,8 @@ set search_path = public, auth, pg_catalog, pg_temp
 as $guard_events$
 declare
   v_jwt_role text;
+  v_claims_raw text;
+  v_claims_json jsonb;
   v_is_service boolean;
   v_is_admin boolean;
 begin
@@ -175,6 +177,17 @@ begin
     nullif(current_setting('request.jwt.claim.role', true), ''),
     ''
   );
+  if v_jwt_role = '' then
+    v_claims_raw := nullif(current_setting('request.jwt.claims', true), '');
+    if v_claims_raw is not null then
+      begin
+        v_claims_json := v_claims_raw::jsonb;
+        v_jwt_role := coalesce(nullif(v_claims_json ->> 'role', ''), '');
+      exception when others then
+        v_jwt_role := '';
+      end;
+    end if;
+  end if;
   v_is_service := (v_jwt_role = 'service_role')
     or (
       v_jwt_role = ''
@@ -223,6 +236,9 @@ begin
 end;
 $guard_events$;
 
+revoke all on function public.guard_external_ai_webhook_events()
+  from public, anon, authenticated;
+
 drop trigger if exists guard_external_ai_webhook_events
   on public.external_ai_webhook_events;
 create trigger guard_external_ai_webhook_events
@@ -238,6 +254,8 @@ set search_path = public, auth, pg_catalog, pg_temp
 as $guard_keys$
 declare
   v_jwt_role text;
+  v_claims_raw text;
+  v_claims_json jsonb;
   v_is_service boolean;
   v_is_admin boolean;
 begin
@@ -246,6 +264,17 @@ begin
     nullif(current_setting('request.jwt.claim.role', true), ''),
     ''
   );
+  if v_jwt_role = '' then
+    v_claims_raw := nullif(current_setting('request.jwt.claims', true), '');
+    if v_claims_raw is not null then
+      begin
+        v_claims_json := v_claims_raw::jsonb;
+        v_jwt_role := coalesce(nullif(v_claims_json ->> 'role', ''), '');
+      exception when others then
+        v_jwt_role := '';
+      end;
+    end if;
+  end if;
   v_is_service := (v_jwt_role = 'service_role')
     or (
       v_jwt_role = ''
@@ -293,6 +322,9 @@ begin
   return new;
 end;
 $guard_keys$;
+
+revoke all on function public.guard_external_ai_webhook_keys()
+  from public, anon, authenticated;
 
 drop trigger if exists guard_external_ai_webhook_keys
   on public.external_ai_webhook_keys;

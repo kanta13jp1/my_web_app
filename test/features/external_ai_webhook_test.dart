@@ -207,11 +207,13 @@ void main() {
             const ValueKey<String>('webhook_key_label_field'),
           );
           await tester.ensureVisible(labelField);
+          await tester.pumpAndSettle();
           await tester.enterText(labelField, 'Zapier Sync');
           final createBtn = find.byKey(
             const ValueKey<String>('webhook_create_key_button'),
           );
           await tester.ensureVisible(createBtn);
+          await tester.pumpAndSettle();
           await tester.tap(createBtn);
           await tester.pumpAndSettle();
 
@@ -226,13 +228,14 @@ void main() {
             const ValueKey<String>('webhook_dry_run_button'),
           );
           await tester.ensureVisible(dryRunBtn);
+          await tester.pumpAndSettle();
           await tester.tap(dryRunBtn);
           await tester.pumpAndSettle();
           expect(
             repo.invokedEndpoints,
-            equals(<String>['external-ai-webhook']),
+            equals(const <String>['external-ai-webhook']),
           );
-          expect(repo.dryRunCalls, equals(<bool>[true]));
+          expect(repo.dryRunCalls, equals(const <bool>[true]));
 
           repo.simulateRealtimeIncomingEvent(
             ExternalAiWebhookEvent(
@@ -259,6 +262,7 @@ void main() {
             const ValueKey<String>('webhook_filter_analytics'),
           );
           await tester.ensureVisible(analyticsFilter);
+          await tester.pumpAndSettle();
           await tester.tap(analyticsFilter);
           await tester.pumpAndSettle();
 
@@ -301,6 +305,7 @@ void main() {
             const ValueKey<String>('webhook_retry_button'),
           );
           await tester.ensureVisible(retryBtn);
+          await tester.pumpAndSettle();
           await tester.tap(retryBtn);
           await tester.pumpAndSettle();
 
