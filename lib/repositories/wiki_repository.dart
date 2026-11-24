@@ -142,8 +142,7 @@ class WikiRepository {
       throw ArgumentError('Wiki page title is required');
     }
     final trimmedParent = parentId?.trim();
-    if (parentId != null &&
-        (trimmedParent == null || trimmedParent.isEmpty)) {
+    if (parentId != null && (trimmedParent == null || trimmedParent.isEmpty)) {
       throw ArgumentError('Invalid Wiki parent ID');
     }
     final data = _response(
