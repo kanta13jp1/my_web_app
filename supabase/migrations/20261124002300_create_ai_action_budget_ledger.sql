@@ -137,7 +137,7 @@ create policy "ai_action_budget_ledger_select_own_or_admin"
   );
 
 -- Direct client INSERT/DELETE on ai_action_budget_ledger are revoked from authenticated;
--- all budget ledger inserts must go through record_ai_action_usage_atomic().
+-- all budget ledger inserts must go through record_ai_action_usage_tx().
 drop policy if exists "ai_action_budget_ledger_insert_own"
   on public.ai_action_budget_ledger;
 drop policy if exists "ai_action_budget_ledger_delete_own_or_admin"
@@ -153,7 +153,7 @@ declare
   jwt_role text;
   v_rpc_owner name;
   v_is_service boolean;
-  v_is_atomic_rpc boolean;
+  v_is_tx_rpc boolean;
   caller_is_admin boolean;
 begin
   jwt_role := coalesce(
@@ -166,7 +166,7 @@ begin
     into v_rpc_owner
     from pg_catalog.pg_proc as proc
    where proc.oid = pg_catalog.to_regprocedure(
-     'public.record_ai_action_usage_atomic(text,text,integer,integer,numeric,text)'
+     'public.record_ai_action_usage_tx(text,text,integer,integer,numeric,text)'
    );
 
   v_is_service := (
@@ -176,15 +176,15 @@ begin
       and jwt_role = ''
     )
   );
-  v_is_atomic_rpc := (
-    coalesce(current_setting('app.ai_action_budget_atomic_rpc', true), '') = 'on'
+  v_is_tx_rpc := (
+    coalesce(current_setting('app.ai_action_budget_tx_rpc', true), '') = 'on'
     and (
       current_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
       or (v_rpc_owner is not null and current_user = v_rpc_owner)
     )
   );
 
-  if v_is_service or v_is_atomic_rpc then
+  if v_is_service or v_is_tx_rpc then
     if tg_op = 'INSERT' then
       new.created_at := coalesce(new.created_at, timezone('utc', now()));
     end if;
@@ -281,7 +281,7 @@ declare
   jwt_role text;
   v_rpc_owner name;
   v_is_service boolean;
-  v_is_atomic_rpc boolean;
+  v_is_tx_rpc boolean;
   config_paused boolean;
 begin
   jwt_role := coalesce(
@@ -294,7 +294,7 @@ begin
     into v_rpc_owner
     from pg_catalog.pg_proc as proc
    where proc.oid = pg_catalog.to_regprocedure(
-     'public.record_ai_action_usage_atomic(text,text,integer,integer,numeric,text)'
+     'public.record_ai_action_usage_tx(text,text,integer,integer,numeric,text)'
    );
 
   v_is_service := (
@@ -304,8 +304,8 @@ begin
       and jwt_role = ''
     )
   );
-  v_is_atomic_rpc := (
-    coalesce(current_setting('app.ai_action_budget_atomic_rpc', true), '') = 'on'
+  v_is_tx_rpc := (
+    coalesce(current_setting('app.ai_action_budget_tx_rpc', true), '') = 'on'
     and (
       current_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
       or (v_rpc_owner is not null and current_user = v_rpc_owner)
@@ -324,8 +324,8 @@ begin
   end if;
 
   if tg_op = 'INSERT' then
-    if not v_is_atomic_rpc then
-      raise exception 'Direct inserts into ai_action_budget_ledger are disabled; use record_ai_action_usage_atomic'
+    if not v_is_tx_rpc then
+      raise exception 'Direct inserts into ai_action_budget_ledger are disabled; use record_ai_action_usage_tx'
         using errcode = '42501';
     end if;
     if auth.uid() is null or new.user_id is distinct from auth.uid() then
@@ -366,7 +366,11 @@ create trigger guard_ai_action_budget_ledger_fields
   for each row
   execute function public.guard_ai_action_budget_ledger_fields();
 
-create or replace function public.record_ai_action_usage_atomic(
+-- Drop legacy RPC name if present in local/staging DBs; double-quoted to prevent
+-- supabase/cli v2.84.2 pkg/parser/state.go:46-52 from matching unquoted ATOMIC as BEGIN ATOMIC.
+drop function if exists public."record_ai_action_usage_atomic"(text, text, integer, integer, numeric, text);
+
+create or replace function public.record_ai_action_usage_tx(
   p_action_name text,
   p_model_id text,
   p_input_tokens integer,
@@ -394,8 +398,8 @@ begin
       using errcode = '42501';
   end if;
 
-  v_previous_guard := current_setting('app.ai_action_budget_atomic_rpc', true);
-  perform set_config('app.ai_action_budget_atomic_rpc', 'on', true);
+  v_previous_guard := current_setting('app.ai_action_budget_tx_rpc', true);
+  perform set_config('app.ai_action_budget_tx_rpc', 'on', true);
 
   begin
     insert into public.ai_action_budget_configs (user_id, monthly_usd_cap)
@@ -457,7 +461,7 @@ begin
   exception
     when others then
       perform set_config(
-        'app.ai_action_budget_atomic_rpc',
+        'app.ai_action_budget_tx_rpc',
         coalesce(v_previous_guard, ''),
         true
       );
@@ -465,7 +469,7 @@ begin
   end;
 
   perform set_config(
-    'app.ai_action_budget_atomic_rpc',
+    'app.ai_action_budget_tx_rpc',
     coalesce(v_previous_guard, ''),
     true
   );
@@ -478,10 +482,10 @@ begin
 end;
 $fn$;
 
-revoke all on function public.record_ai_action_usage_atomic(text, text, integer, integer, numeric, text) from public, anon;
-grant execute on function public.record_ai_action_usage_atomic(text, text, integer, integer, numeric, text) to authenticated, service_role;
+revoke all on function public.record_ai_action_usage_tx(text, text, integer, integer, numeric, text) from public, anon;
+grant execute on function public.record_ai_action_usage_tx(text, text, integer, integer, numeric, text) to authenticated, service_role;
 
 comment on table public.ai_action_budget_configs is
   'Per-user monthly USD AI budget threshold and auto-pause configuration (#2609).';
 comment on table public.ai_action_budget_ledger is
-  'Append-only per-action AI token and estimated USD cost ledger written exclusively via record_ai_action_usage_atomic() (#2609).';
+  'Append-only per-action AI token and estimated USD cost ledger written exclusively via record_ai_action_usage_tx() (#2609).';
