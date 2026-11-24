@@ -7,7 +7,11 @@ class AgentToolPolicyPreviewService {
       body: {
         'action': 'agent.tool_policy.preview',
         'actor_role': role,
-        'requested_scopes': scopes.split(','),
+        'requested_scopes': scopes
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList(),
       },
     );
     final data = response.data;
