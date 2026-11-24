@@ -442,13 +442,3 @@ jobs:
               --comment "WBS task $task_id is completed, so scheduled WBS sync closed this issue. Reason: $reason" \
               || true
           done
-
-      - name: Sync Notion WBS mirror
-        run: |
-          curl -fsS -X POST "$SUPABASE_URL/functions/v1/schedule-hub" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            --max-time 30 \
-            -d '{"action":"notion.sync_wbs","limit":100,"offset":0}' \
-            || true

@@ -94,6 +94,7 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "parse-payslip",
   "mario.jev_decide",
   "expense.jev_suggest",
+  "expense.jev_search",
   "expense.classify",
   "classify-expense",
   "expense.weekly_coaching.generate",
@@ -116,6 +117,9 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "english_reading.ability",
   "english_reading.generate_lesson",
   "home.recommend",
+  "quota.daily_status",
+  "data_sources.status",
+  "data_sources.register",
 ]);
 
 // Paid LLM gateways: callable by a signed-in user, or by other Edge Functions

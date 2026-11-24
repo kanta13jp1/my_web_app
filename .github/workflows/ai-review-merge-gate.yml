@@ -1,0 +1,39 @@
+name: AI Review Merge Gate
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: ai-review-merge-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  evidence:
+    # A real PR job is visible to branch protection even when the separate
+    # Checks API review is missing from the PR status-check rollup.
+    name: AI Review Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      actions: read
+    steps:
+      - name: Checkout without persistent credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Test the fail-closed evidence bridge without credentials
+        run: python -B scripts/ai_review_merge_gate_test.py
+      - name: Verify actual trusted review evidence for this immutable PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: python -B scripts/ai_review_merge_gate.py --pr "$PR_NUMBER" --head "$PR_HEAD" --base "$PR_BASE"

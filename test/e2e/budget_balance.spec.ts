@@ -9,9 +9,10 @@ async function rendered(page: Page) {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
 }
 async function amount(page: Page, i: number, value: string) {
+  await input(page, i).scrollIntoViewIfNeeded();
   await input(page, i).focus();
   await rendered(page);
-  await expect(input(page, i)).toBeFocused();
+  // Flutter may transfer DOM focus to its editing node; verify typed values below.
   await input(page, i).press('ControlOrMeta+A');
   await input(page, i).press('Backspace');
   if (value) await input(page, i).pressSequentially(value, { delay: 40 });

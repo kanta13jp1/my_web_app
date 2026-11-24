@@ -1,0 +1,83 @@
+name: Komeito Member Tracker Queue
+
+# Issue #4026: Fetches official Komeito member summary (komei.or.jp/member/)
+# daily and creates HITL review candidates when counts change. Never calls x.post.
+on:
+  schedule:
+    # Daily 23:15 UTC (= 08:15 JST).
+    - cron: "15 23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fetch snapshot only without persisting or queueing"
+        type: boolean
+        default: true
+
+concurrency:
+  group: komeito-member-tracker-queue
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  queue:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+
+    steps:
+      - name: Validate service-role secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Fetch and optionally queue Komeito member snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          dry_run="${DRY_RUN_INPUT:-false}"
+          action="komeitoSnapshotAndQueue"
+          if [ "${dry_run}" = "true" ]; then
+            action="komeitoSnapshot"
+          fi
+          response_file="${RUNNER_TEMP}/komeito-snapshot.json"
+          if ! curl --fail-with-body --silent --show-error \
+            --max-time 90 \
+            --retry 2 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --request POST \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data "{\"action\":\"${action}\"}" \
+            --output "${response_file}" \
+            "${SUPABASE_URL}/functions/v1/local-election-intelligence"; then
+            if jq -e . "${response_file}" >/dev/null 2>&1; then
+              jq '{success, error}' "${response_file}"
+            fi
+            exit 1
+          fi
+          jq -e '.success == true and (.snapshot.totalMembers | type == "number")' \
+            "${response_file}" >/dev/null
+          jq '{
+            success,
+            asOfDate: .snapshot.asOfDate,
+            totalMembers: .snapshot.totalMembers,
+            localMembers: .snapshot.local.subtotal.total,
+            liveDirectoryTotal: (.snapshot.liveDirectory.totalMembers // null),
+            livePrefectureCount: ((.snapshot.liveDirectory.prefectures // []) | length),
+            persistence: (.persistence // null)
+          }' "${response_file}"

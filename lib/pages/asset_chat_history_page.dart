@@ -179,6 +179,41 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
               ),
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  '並び順:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                ChoiceChip(
+                  key: const Key('asset_chat_history_sort_updated_at'),
+                  label: const Text('更新日時順'),
+                  selected:
+                      _viewModel.sortBy == AssetChatThreadSortBy.updatedAt,
+                  onSelected: (_) => unawaited(
+                    _viewModel.setSortBy(AssetChatThreadSortBy.updatedAt),
+                  ),
+                ),
+                ChoiceChip(
+                  key: const Key('asset_chat_history_sort_created_at'),
+                  label: const Text('作成日時順'),
+                  selected:
+                      _viewModel.sortBy == AssetChatThreadSortBy.createdAt,
+                  onSelected: (_) => unawaited(
+                    _viewModel.setSortBy(AssetChatThreadSortBy.createdAt),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         Expanded(child: _buildThreadList()),
       ],
     );
@@ -251,7 +286,9 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            subtitle: Text('最終更新 ${_formatDateTime(thread.lastMessageAt)}'),
+            subtitle: Text(
+              '最終更新 ${_formatDateTime(thread.lastMessageAt)} ・ 作成 ${_formatDateTime(thread.createdAt)}',
+            ),
             trailing: IconButton(
               key: Key('asset_chat_delete_${thread.id}'),
               tooltip: 'このチャットを削除',

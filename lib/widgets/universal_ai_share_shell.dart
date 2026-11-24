@@ -114,12 +114,34 @@ bool shouldShowUniversalAiShareFab({
       (routePath != '/' || isLoggedIn);
 }
 
+/// Keep the mobile asset page's right-hand chat action tappable.
+/// This is a route-local placement override, not a saved preference change.
+AiShareButtonPosition resolveAiShareFabPosition({
+  required AiShareButtonPosition preferred,
+  required String routePath,
+  required double screenWidth,
+}) {
+  if (routePath == '/asset-management' &&
+      screenWidth < kAiShareFabMinScreenWidth &&
+      preferred == AiShareButtonPosition.bottomRight) {
+    return AiShareButtonPosition.bottomLeft;
+  }
+  return preferred;
+}
+
 double resolveAiShareFabBottomOffset({
   required String routePath,
   required double screenWidth,
 }) {
   final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
   if (isMusubi) return kAiShareFabMusubiBottomOffset;
+
+  // デスクトップ幅の /asset-management では右下に「資産AIに相談」FABが常駐するため、
+  // 上方向へ退避して重なりを防ぐ。
+  if (routePath == '/asset-management' &&
+      screenWidth >= kAiShareFabMinScreenWidth) {
+    return kAiShareFabMusubiBottomOffset;
+  }
 
   final isLandingMobile = routePath == '/' && screenWidth < 720;
   return isLandingMobile
@@ -219,7 +241,11 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
           valueListenable: universalAiShareRouteObserver.currentPage,
           builder: (context, page, _) {
             return _positionedFab(
-              preferences.position,
+              resolveAiShareFabPosition(
+                preferred: preferences.position,
+                routePath: page.routePath,
+                screenWidth: MediaQuery.sizeOf(context).width,
+              ),
               SafeArea(
                 child: _UniversalAiShareFab(
                   page: page,
@@ -349,7 +375,7 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
-    final showInbox = isLoggedIn;
+    final showInbox = isLoggedIn && page.routePath != '/note-editor';
     final showShareAction = showShare &&
         shouldShowUniversalAiShareFab(
           routePath: page.routePath,

@@ -105,5 +105,38 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('uses light foreground colors when isDark is true',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.light(),
+          home: const Scaffold(
+            body: SingleChildScrollView(
+              child: GrowTogetherShareCard(isDark: true),
+            ),
+          ),
+        ),
+      );
+
+      final heading = tester.widget<Text>(find.text('みんなでアプリを育てる'));
+      expect(heading.style?.color, Colors.white);
+
+      final message = tester.widget<Text>(
+        find.text(GrowTogetherShare.fullShareMessage),
+      );
+      expect(message.style?.color, const Color(0xFFE2E8F0));
+
+      final copyButton = tester.widget<OutlinedButton>(
+        find.byKey(const Key('grow_together_copy_button')),
+      );
+      expect(
+        copyButton.style?.foregroundColor?.resolve(<WidgetState>{}),
+        Colors.white,
+      );
+    });
   });
 }
