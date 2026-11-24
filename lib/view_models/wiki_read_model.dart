@@ -11,6 +11,12 @@ class WikiReadModel extends ChangeNotifier {
   String? error;
   String? selectedId;
   Map<String, dynamic>? selectedPage;
+  List<Map<String, dynamic>> _children = [];
+  List<Map<String, dynamic>> get children => List.unmodifiable(_children);
+  List<Map<String, dynamic>> _tableRows = [];
+  List<Map<String, dynamic>> get tableRows => List.unmodifiable(_tableRows);
+  bool childrenHasMore = false;
+  bool tableRowsHasMore = false;
   bool detailLoading = false;
   String? detailError;
   int _listRequest = 0;
@@ -66,13 +72,21 @@ class WikiReadModel extends ChangeNotifier {
     final request = ++_detailRequest;
     selectedId = id;
     selectedPage = null;
+    _children = [];
+    _tableRows = [];
+    childrenHasMore = false;
+    tableRowsHasMore = false;
     detailLoading = true;
     detailError = null;
     notifyListeners();
     try {
-      final page = await _repository.get(id);
+      final detail = await _repository.getDetail(id);
       if (_disposed || request != _detailRequest) return;
-      selectedPage = page;
+      selectedPage = detail.page;
+      _children = detail.children;
+      _tableRows = detail.tableRows;
+      childrenHasMore = detail.childrenHasMore;
+      tableRowsHasMore = detail.tableRowsHasMore;
     } catch (_) {
       if (_disposed || request != _detailRequest) return;
       detailError = 'ページ詳細を取得できませんでした。ページを選び直してください。';
@@ -82,6 +96,32 @@ class WikiReadModel extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  Future<void> createPage({
+    required String title,
+    required String content,
+    String? parentId,
+  }) async {
+    await _repository.createPage(
+      title: title,
+      content: content,
+      parentId: parentId,
+    );
+    if (_disposed) return;
+    await refresh();
+    if (!_disposed && parentId != null && selectedId == parentId) {
+      await select(parentId);
+    }
+  }
+
+  Future<void> addTableRow({
+    required String pageId,
+    required String content,
+  }) async {
+    await _repository.addTableRow(pageId: pageId, content: content);
+    if (_disposed) return;
+    await select(pageId);
   }
 
   @override
