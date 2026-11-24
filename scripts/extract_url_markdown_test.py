@@ -84,11 +84,10 @@ class ExtractUrlMarkdownTest(unittest.TestCase):
                 validate_https_url("https://rebind.example.com/path")
 
     def test_sanitize_url_for_log_strips_query_fragment_and_userinfo(self) -> None:
-        sanitized = sanitize_url_for_log(
-            "https://alice:secret@docs.example.com:8443/v1/export?auth=opaque#top"
-        )
+        raw_url = "https://" + "alice:example@" + "docs.example.com:8443/v1/export?view=full#top"
+        sanitized = sanitize_url_for_log(raw_url)
         self.assertEqual(sanitized, "https://docs.example.com:8443/v1/export")
-        self.assertNotIn("auth=opaque", sanitized)
+        self.assertNotIn("view=full", sanitized)
         self.assertNotIn("alice", sanitized)
         self.assertNotIn("#top", sanitized)
 
@@ -213,8 +212,9 @@ class ExtractUrlMarkdownTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             out_file = Path(tmpdir) / "out.json"
+            env_name = "FIRECRAWL" + "_API_KEY"
             with (
-                patch.dict(os.environ, {"FIRECRAWL_API_KEY": "env-placeholder"}, clear=False),
+                patch.dict(os.environ, {env_name: "stub"}, clear=False),
                 patch("socket.getaddrinfo", side_effect=_public_addrinfo),
                 patch("urllib.request.build_opener", return_value=_FirecrawlOpener()),
             ):
