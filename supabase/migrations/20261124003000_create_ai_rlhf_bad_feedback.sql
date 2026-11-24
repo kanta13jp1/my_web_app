@@ -310,7 +310,7 @@ begin
 
   -- Keep dispatch_status as 'pending' when webhook dispatch is skipped or
   -- fails so scheduled/manual dispatchers can retry it.
-  return null;
+  return new;
 end;
 $webhook$;
 
