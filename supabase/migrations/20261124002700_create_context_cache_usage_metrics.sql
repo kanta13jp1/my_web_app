@@ -44,7 +44,7 @@ create index if not exists idx_context_cache_usage_workflow_created
 alter table public.context_cache_usage_metrics enable row level security;
 
 revoke all on table public.context_cache_usage_metrics from public, anon;
-grant select, insert, delete on table public.context_cache_usage_metrics to authenticated;
+grant select, insert on table public.context_cache_usage_metrics to authenticated;
 grant all on table public.context_cache_usage_metrics to service_role;
 
 drop policy if exists "context_cache_usage_select_own_or_admin"
@@ -73,19 +73,6 @@ create policy "context_cache_usage_insert_own"
 
 drop policy if exists "context_cache_usage_delete_own_or_admin"
   on public.context_cache_usage_metrics;
-create policy "context_cache_usage_delete_own_or_admin"
-  on public.context_cache_usage_metrics
-  for delete
-  to authenticated
-  using (
-    auth.uid() = user_id
-    or exists (
-      select 1
-      from public.user_profiles as up
-      where up.user_id = auth.uid()
-        and up.is_admin = true
-    )
-  );
 
 create or replace function public.guard_context_cache_usage_metric_fields()
 returns trigger
@@ -174,6 +161,7 @@ set search_path = public
 as $fn$
 declare
   jwt_role text;
+  caller_is_admin boolean;
   cleaned_workflow text;
 begin
   jwt_role := coalesce(
@@ -186,6 +174,14 @@ begin
     raise exception 'Authenticated caller is required'
       using errcode = '42501';
   end if;
+
+  caller_is_admin := (jwt_role = 'service_role')
+    or exists (
+      select 1
+      from public.user_profiles as up
+      where up.user_id = auth.uid()
+        and up.is_admin = true
+    );
 
   cleaned_workflow := nullif(trim(coalesce(p_workflow_key, '')), '');
 
@@ -207,6 +203,7 @@ begin
     end as weighted_savings_ratio
   from public.context_cache_usage_metrics as m
   where (cleaned_workflow is null or m.workflow_key = cleaned_workflow)
+    and (caller_is_admin or m.user_id = auth.uid())
   group by m.workflow_key, m.user_id
   order by total_actual_estimated_usd desc, m.workflow_key asc;
 end;
