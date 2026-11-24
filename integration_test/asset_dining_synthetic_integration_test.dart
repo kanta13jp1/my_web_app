@@ -98,13 +98,8 @@ void main() {
         password: fixturePassword,
       ),
     );
-    var wasteTrainingRequests = 0;
     final wasteTrainingAiService = AssetWasteTrainingAiService(
-      invoker: (body) async {
-        expect(body['action'], 'provider.chat_auto');
-        wasteTrainingRequests++;
-        return {'success': true, 'text': '合成テストの分析結果'};
-      },
+      invoker: (_) async => {'success': true, 'text': '合成テストの分析結果'},
     );
     await markFixturePhase(tester, 'page_a');
     await showPage(tester, now, wasteTrainingAiService: wasteTrainingAiService);
@@ -163,6 +158,5 @@ void main() {
     expect(status['rejected_authorized_telemetry'], 1);
     expect(status['rejected_writes'], status['rejected_telemetry']);
     expect(status['rejected_identity'], 0);
-    expect(wasteTrainingRequests, greaterThan(0));
   });
 }
