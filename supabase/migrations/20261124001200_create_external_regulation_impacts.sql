@@ -72,7 +72,11 @@ create policy "external_regulation_impacts_update_own"
   on public.external_regulation_impacts
   for update
   using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
+  with check (
+    (select auth.uid()) = user_id
+    and verification_status = 'pending_fact_check'
+    and awaiting_fact_check = true
+  );
 
 drop policy if exists "external_regulation_impacts_delete_own"
   on public.external_regulation_impacts;
@@ -87,19 +91,19 @@ language plpgsql
 security definer
 set search_path = public
 as $guard$
+declare
+  jwt_role text;
 begin
-  if coalesce(
-       nullif(auth.role(), ''),
-       nullif(current_setting('request.jwt.claim.role', true), ''),
-       ''
-     ) = 'service_role'
+  jwt_role := coalesce(
+    nullif(auth.jwt() ->> 'role', ''),
+    nullif(auth.role(), ''),
+    ''
+  );
+
+  if jwt_role = 'service_role'
      or (
        session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
-       and coalesce(
-         nullif(auth.role(), ''),
-         nullif(current_setting('request.jwt.claim.role', true), ''),
-         ''
-       ) = ''
+       and jwt_role = ''
      ) then
     return new;
   end if;
@@ -114,8 +118,10 @@ begin
   end if;
 
   if tg_op = 'UPDATE' then
-    if new.user_id is distinct from old.user_id then
-      raise exception 'Cannot reassign external regulation impact ownership'
+    if new.id is distinct from old.id
+       or new.user_id is distinct from old.user_id
+       or new.created_at is distinct from old.created_at then
+      raise exception 'Cannot modify immutable id, user_id, or created_at fields'
         using errcode = '42501';
     end if;
     if new.verification_status is distinct from old.verification_status
