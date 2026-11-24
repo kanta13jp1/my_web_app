@@ -227,19 +227,14 @@ SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
 DECLARE
-  v_reset_count integer := 0;
+  v_deleted_count integer := 0;
 BEGIN
-  UPDATE public.user_daily_ai_request_quotas
-  SET request_count = 0,
-      updated_at = now()
-  WHERE quota_date = p_target_date;
-
-  GET DIAGNOSTICS v_reset_count = ROW_COUNT;
-
   DELETE FROM public.user_daily_ai_request_quotas
   WHERE quota_date < (p_target_date - 30);
 
-  RETURN v_reset_count;
+  GET DIAGNOSTICS v_deleted_count = ROW_COUNT;
+
+  RETURN v_deleted_count;
 END;
 $$;
 
