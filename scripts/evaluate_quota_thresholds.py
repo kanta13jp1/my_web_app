@@ -388,7 +388,7 @@ def _apply_supabase_state(
             created_issue_number=created_map.get(ev.tool),
         )
         _http_json(
-            f"{rest_base_url.rstrip('/')}/ai_quota_pause_state",
+            f"{rest_base_url.rstrip('/')}/ai_quota_pause_state?on_conflict=tool",
             method="POST",
             headers=headers,
             payload=row_payload,

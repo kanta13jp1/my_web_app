@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
+      # Each check step below writes usage_json to GITHUB_OUTPUT on ok/api_error/error/skipped.
       anthropic_usage: ${{ steps.anthropic.outputs.usage_json }}
       openai_usage: ${{ steps.openai.outputs.usage_json }}
       copilot_usage: ${{ steps.copilot.outputs.usage_json }}
