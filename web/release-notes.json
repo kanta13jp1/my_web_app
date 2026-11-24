@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-11-23",
+    "date": "2026-11-24",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-11-23T00:00:00Z",
+  "generatedAt": "2026-11-24T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -29,6 +29,123 @@
         "fix"
       ],
       "changes": [
+        {
+          "category": "feature",
+          "id": "pr-6269",
+          "links": [
+            {
+              "title": "PR #6269",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6269"
+            }
+          ],
+          "mergedAt": "2026-11-24T02:21:01Z",
+          "summary": "#6269 feat: 大規模コンテキスト推定表示・上限バリデーション・データソース登録上限を実装 (#2701)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6268",
+          "links": [
+            {
+              "title": "PR #6268",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6268"
+            }
+          ],
+          "mergedAt": "2026-11-24T02:08:47Z",
+          "summary": "#6268 feat: ステージゲート方式タスク承認ワークフロー・RLS履歴・管理者UIを実装 (#2593)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6267",
+          "links": [
+            {
+              "title": "PR #6267",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6267"
+            }
+          ],
+          "mergedAt": "2026-11-24T01:53:53Z",
+          "summary": "#6267 feat: HTTP 認証インターセプター・トークン自動更新・401 ログイン遷移を一元化 (#2604)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-6247",
+          "links": [
+            {
+              "title": "PR #6247",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6247"
+            }
+          ],
+          "mergedAt": "2026-11-24T01:22:45Z",
+          "summary": "#6247 fix(landing): Google OAuth PKCEコールバック失敗の捕捉・復旧UI表示とログイン誤計測を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6264",
+          "links": [
+            {
+              "title": "PR #6264",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6264"
+            }
+          ],
+          "mergedAt": "2026-11-24T00:43:35Z",
+          "summary": "#6264 feat: 競合AI情報源URLのHTTP自動検証と手動レビューUIを実装 (#2698)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6266",
+          "links": [
+            {
+              "title": "PR #6266",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6266"
+            }
+          ],
+          "mergedAt": "2026-11-24T00:26:11Z",
+          "summary": "#6266 feat: ユーザープラン別の日次AIリクエスト上限管理システムを実装 (#2699)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6263",
+          "links": [
+            {
+              "title": "PR #6263",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6263"
+            }
+          ],
+          "mergedAt": "2026-11-24T00:06:46Z",
+          "summary": "#6263 feat: 長時間処理の非同期ジョブ管理とステータス照会UIを実装 (#2731)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6262",
+          "links": [
+            {
+              "title": "PR #6262",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6262"
+            }
+          ],
+          "mergedAt": "2026-11-23T23:45:36Z",
+          "summary": "#6262 feat: 内部レビューチェックリストと品質メトリクス導入 (#2725)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6261",
+          "links": [
+            {
+              "title": "PR #6261",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6261"
+            }
+          ],
+          "mergedAt": "2026-11-23T23:26:22Z",
+          "summary": "#6261 feat: 競合発見バッチ実行ログと0件候補アラートを追加 (#2696)"
+        },
         {
           "category": "feature",
           "id": "pr-6260",
@@ -265,19 +382,6 @@
         },
         {
           "category": "feature",
-          "id": "pr-6231",
-          "links": [
-            {
-              "title": "PR #6231",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6231"
-            }
-          ],
-          "mergedAt": "2026-11-23T15:02:34Z",
-          "summary": "#6231 feat(資産管理): 「消費・浪費・投資」割合ダッシュボードと返済期日リマインダー・遅延損害金ガイダンスを追加 (#1368 #2749)"
-        },
-        {
-          "category": "feature",
           "id": "pr-6239",
           "links": [
             {
@@ -314,113 +418,9 @@
           ],
           "mergedAt": "2026-11-23T14:18:47Z",
           "summary": "#6238 feat(チャット・UI): セッション日時ソート・逐次レンダリング・AIインライン差分表示を追加 (#1361 #1359 #2802)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-6230",
-          "links": [
-            {
-              "title": "PR #6230",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6230"
-            }
-          ],
-          "mergedAt": "2026-11-23T13:54:43Z",
-          "summary": "#6230 fix(payroll): 給与控除の日本語・単数英語キー正規化と未来支給日ガードを追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6237",
-          "links": [
-            {
-              "title": "PR #6237",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6237"
-            }
-          ],
-          "mergedAt": "2026-11-23T13:40:29Z",
-          "summary": "#6237 feat(キャリア): メンタルヘルス・バーンアウト警戒と月次KPI決算自動レポートを追加 (#1393 #2771 #2772)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6236",
-          "links": [
-            {
-              "title": "PR #6236",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6236"
-            }
-          ],
-          "mergedAt": "2026-11-23T13:11:37Z",
-          "summary": "#6236 feat(observability): landing.trialの503プロバイダー失敗を毎時監視アラートへ統合"
-        },
-        {
-          "category": "fix",
-          "id": "pr-6235",
-          "links": [
-            {
-              "title": "PR #6235",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6235"
-            }
-          ],
-          "mergedAt": "2026-11-23T12:58:33Z",
-          "summary": "#6235 fix(growth): LP実験レポートのGoogle OAuth失敗判定に直近14日窓を導入し過去失敗の永久ロックを解消"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6232",
-          "links": [
-            {
-              "title": "PR #6232",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6232"
-            }
-          ],
-          "mergedAt": "2026-11-23T12:42:06Z",
-          "summary": "#6232 feat(キャリア・UI): 人的スキル資産ポートフォリオとAtomic Designフォーカス喪失検証を追加 (#1392 #2770 #2730)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6233",
-          "links": [
-            {
-              "title": "PR #6233",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6233"
-            }
-          ],
-          "mergedAt": "2026-11-23T12:29:48Z",
-          "summary": "#6233 feat(mcp): Antigravity向けStreamable HTTP MCPサーバー対応と自分APIキー認証ブリッジを追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6234",
-          "links": [
-            {
-              "title": "PR #6234",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6234"
-            }
-          ],
-          "mergedAt": "2026-11-23T12:08:44Z",
-          "summary": "#6234 perf(edge): 主要Edge FunctionsのAI優先順をGemini先行へ統一しOpenAI 429フォールバック遅延を解消"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6227",
-          "links": [
-            {
-              "title": "PR #6227",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6227"
-            }
-          ],
-          "mergedAt": "2026-11-23T11:33:51Z",
-          "summary": "#6227 feat(local-election): 公明党トラッカーに47都道府県別ライブ差分検知を追加 (#4026)"
         }
       ],
-      "date": "2026-11-23",
+      "date": "2026-11-24",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,
