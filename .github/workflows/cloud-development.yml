@@ -389,7 +389,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
+          python3 scripts/serve_spa.py build/web --port 7358 > agent-policy-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
           for _ in {1..20}; do
@@ -406,7 +406,7 @@ jobs:
           path: |
             playwright-report/
             test-results/
-            search-server.log
+            agent-policy-server.log
           if-no-files-found: ignore
 
   slide-number-check-e2e:
@@ -444,11 +444,11 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Run note search pending E2E
+      - name: Run slide number check E2E
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
+          python3 scripts/serve_spa.py build/web --port 7358 > slide-number-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
           for _ in {1..20}; do
@@ -457,7 +457,7 @@ jobs:
           done
           E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/slide_number_check.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
-      - name: Upload note search E2E report
+      - name: Upload slide number check E2E report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -465,7 +465,7 @@ jobs:
           path: |
             playwright-report/
             test-results/
-            search-server.log
+            slide-number-server.log
           if-no-files-found: ignore
 
   asset-balance-history-e2e:
