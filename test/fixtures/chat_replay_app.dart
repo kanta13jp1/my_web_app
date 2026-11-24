@@ -23,6 +23,7 @@ class ReplayFixtureRepository implements AssetChatHistoryRepository {
   @override
   Future<AssetChatThreadPage> fetchThreads({
     String searchQuery = '',
+    AssetChatThreadSortBy sortBy = AssetChatThreadSortBy.updatedAt,
     int offset = 0,
     int limit = 50,
   }) async {

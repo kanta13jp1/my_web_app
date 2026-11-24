@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-02T18:20:58.390737+00:00",
+  "generated_at": "2026-11-10T19:18:08.121876+00:00",
   "entries": [
     {
       "status": "existing",
@@ -1547,6 +1547,31 @@
         "commit_sha": "efbe365c91f67d36d460fd22b8ebdba05b03f537",
         "workflow_run": "33651743844",
         "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33651743844/job/100325209631",
+        "release_status": "passed"
+      }
+    },
+    {
+      "number": 4744,
+      "url": "https://github.com/kanta13jp1/my_web_app/issues/4744",
+      "dedupe_key": "tiger-site-review:20260823T194058+0900:whole_site",
+      "subject_id": "whole_site",
+      "provenance": "Issue body and GitHub API; mutable state synchronization seed only, no review findings or scores",
+      "cycle_id": "20260823T194058+0900",
+      "lane": "site_review",
+      "github_state": "OPEN",
+      "closed_at": null,
+      "github_updated_at": "2026-11-10T19:12:36Z",
+      "remediation_state": "in_progress",
+      "remediation_label": "対策中・Issue #4744",
+      "remediation_detail": "本番反映を確認済み。需要・収益など元指摘の未解決部分を追跡中です。",
+      "queue_status": "WAITING_PROOF",
+      "synced_at": "2026-11-10T19:12:38.647572+00:00",
+      "implementation": {
+        "pr_number": 6011,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/6011",
+        "commit_sha": "522be4257b9f0a87038f51cd9f50391bb52d41d9",
+        "workflow_run": "42877680626",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/42877680626",
         "release_status": "passed"
       }
     }

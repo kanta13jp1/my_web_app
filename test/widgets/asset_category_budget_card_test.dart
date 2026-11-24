@@ -7,17 +7,33 @@ Future<void> _pump(
   WidgetTester tester,
   CategoryBudgetReport report, {
   VoidCallback? onEdit,
+  ThemeData? theme,
+  String? periodLabel,
+  TextScaler? textScaler,
 }) {
   return tester.pumpWidget(
     MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: AssetCategoryBudgetCard(
-            report: report,
-            onEditBudgets: onEdit,
-            currencyFormatter: (value) => '¥${value.round()}',
-          ),
-        ),
+      theme: theme,
+      home: Builder(
+        builder: (context) {
+          final child = Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCategoryBudgetCard(
+                report: report,
+                onEditBudgets: onEdit,
+                currencyFormatter: (value) => '¥${value.round()}',
+                periodLabel: periodLabel,
+              ),
+            ),
+          );
+          if (textScaler == null) {
+            return child;
+          }
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+            child: child,
+          );
+        },
       ),
     ),
   );
@@ -101,5 +117,137 @@ void main() {
       // 各行は MergeSemantics で1ノードに統合(断片的な読み上げを防ぐ)。
       expect(find.byType(MergeSemantics), findsWidgets);
     });
+
+    testWidgets(
+      'renders without overflow on 320px narrow screen with long labels and large amounts',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(320, 640));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final report = AssetCategoryBudgetService.build(
+          actualByCategory: <String, double>{
+            '非常に長い食費および外食・交際費カテゴリ名のテスト': 123456789,
+            '非常に長い光熱費・通信費・住居関連維持費カテゴリ名': 98765432,
+          },
+          budgets: <String, double>{
+            '非常に長い食費および外食・交際費カテゴリ名のテスト': 100000000,
+          },
+        );
+
+        await _pump(
+          tester,
+          report,
+          onEdit: () {},
+          periodLabel: '5/25〜6/24(給料サイクル)',
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.byKey(const Key('asset_category_budget_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_category_budget_total_percent')),
+          findsOneWidget,
+        );
+        expect(find.text('消化率 222%'), findsOneWidget);
+        expect(find.text('予算を設定'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'renders without overflow on 320px narrow screen with enlarged text scale',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(320, 640));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final report = AssetCategoryBudgetService.build(
+          actualByCategory: <String, double>{
+            '非常に長い食費および日用品カテゴリ名のテスト': 60000000,
+          },
+          budgets: <String, double>{
+            '非常に長い食費および日用品カテゴリ名のテスト': 50000000,
+          },
+        );
+
+        await _pump(
+          tester,
+          report,
+          onEdit: () {},
+          periodLabel: '5/25〜6/24(給料サイクル)',
+          textScaler: const TextScaler.linear(2),
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.byKey(const Key('asset_category_budget_total_percent')),
+          findsOneWidget,
+        );
+        expect(find.text('消化率 120%'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'renders in ThemeData.dark() and shows total percentage',
+      (tester) async {
+        final darkTheme = ThemeData.dark();
+        final overReport = AssetCategoryBudgetService.build(
+          actualByCategory: <String, double>{'食費': 60000},
+          budgets: <String, double>{'食費': 50000},
+        );
+
+        await _pump(
+          tester,
+          overReport,
+          theme: darkTheme,
+          onEdit: () {},
+          periodLabel: '5/25〜6/24(給料サイクル)',
+        );
+
+        expect(tester.takeException(), isNull);
+
+        final percentFinder = find.byKey(
+          const Key('asset_category_budget_total_percent'),
+        );
+        expect(percentFinder, findsOneWidget);
+        expect(tester.widget<Text>(percentFinder).data, '消化率 120%');
+
+        final context = tester.element(
+          find.byKey(const Key('asset_category_budget_card')),
+        );
+        final scheme = Theme.of(context).colorScheme;
+        final totalIndicator = tester.widget<LinearProgressIndicator>(
+          find.byType(LinearProgressIndicator).first,
+        );
+        expect(totalIndicator.color, scheme.error);
+        expect(
+          totalIndicator.backgroundColor,
+          scheme.surfaceContainerHighest,
+        );
+
+        final underReport = AssetCategoryBudgetService.build(
+          actualByCategory: <String, double>{'食費': 25000},
+          budgets: <String, double>{'食費': 50000},
+        );
+
+        await _pump(
+          tester,
+          underReport,
+          theme: darkTheme,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(tester.widget<Text>(percentFinder).data, '消化率 50%');
+
+        final underIndicator = tester.widget<LinearProgressIndicator>(
+          find.byType(LinearProgressIndicator).first,
+        );
+        expect(underIndicator.color, scheme.primary);
+        expect(
+          underIndicator.backgroundColor,
+          scheme.surfaceContainerHighest,
+        );
+      },
+    );
   });
 }

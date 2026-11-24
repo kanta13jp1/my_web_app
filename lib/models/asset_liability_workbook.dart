@@ -1,3 +1,6 @@
+import 'package:my_web_app/models/contact_log.dart';
+import 'package:my_web_app/services/card_statement_refetch_service.dart';
+
 enum AssetLiabilityAccountKind {
   cash,
   deposit,
@@ -410,6 +413,10 @@ class AssetRecurringFixedCost {
   /// 振替日 (1-31)。
   final int paymentDay;
 
+  /// 最後に支払対象となる請求日（当日を含む）。未設定は従来どおり。
+  /// 解約希望とは独立し、過去の確定請求や実負債を削除しない。
+  final DateTime? lastBillingDate;
+
   /// 発生周期 (毎月 / 隔月偶数月 / 隔月奇数月)。
   final AssetRecurringFixedCostCadence cadence;
 
@@ -440,6 +447,7 @@ class AssetRecurringFixedCost {
     required this.name,
     required this.amount,
     required this.paymentDay,
+    this.lastBillingDate,
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
@@ -475,11 +483,44 @@ class AssetRecurringFixedCost {
     }
   }
 
+  /// 実際の請求日で周期と最終請求日を判定する（時刻は比較しない）。
+  bool appliesToPaymentDate(DateTime paymentDate) {
+    if (!appliesToMonth(paymentDate.month)) return false;
+    final last = lastBillingDate;
+    if (last == null) return true;
+    return !DateTime(paymentDate.year, paymentDate.month, paymentDate.day)
+        .isAfter(DateTime(last.year, last.month, last.day));
+  }
+
+  /// 月末を超える振替日はその月の最終日に丸める。
+  bool appliesToBillingMonth(DateTime month) {
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    return appliesToPaymentDate(
+      DateTime(month.year, month.month, paymentDay.clamp(1, lastDay).toInt()),
+    );
+  }
+
+  static DateTime? parseBillingDate(String? value) {
+    if (value == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
+      return null;
+    }
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null || billingDateLabel(parsed) != value) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  static String billingDateLabel(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
   AssetRecurringFixedCost copyWith({
     String? id,
     String? name,
     double? amount,
     int? paymentDay,
+    DateTime? lastBillingDate,
+    bool clearLastBillingDate = false,
     AssetRecurringFixedCostCadence? cadence,
     String? sourceAccountId,
     bool clearSourceAccountId = false,
@@ -495,6 +536,9 @@ class AssetRecurringFixedCost {
       name: name ?? this.name,
       amount: amount ?? this.amount,
       paymentDay: paymentDay ?? this.paymentDay,
+      lastBillingDate: clearLastBillingDate
+          ? null
+          : (lastBillingDate ?? this.lastBillingDate),
       cadence: cadence ?? this.cadence,
       sourceAccountId: clearSourceAccountId
           ? null
@@ -515,6 +559,8 @@ class AssetRecurringFixedCost {
       'name': name,
       'amount': amount,
       'paymentDay': paymentDay,
+      if (lastBillingDate != null)
+        'lastBillingDate': billingDateLabel(lastBillingDate!),
       'cadence': cadence.name,
       if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
         'sourceAccountId': sourceAccountId,
@@ -591,6 +637,7 @@ class AssetRecurringFixedCost {
       name: name,
       amount: amount,
       paymentDay: paymentDay,
+      lastBillingDate: parseBillingDate(json['lastBillingDate']?.toString()),
       cadence: cadence,
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
@@ -727,6 +774,15 @@ class AssetLiabilityDebtRow {
   /// null なら通常の負債 (請求額は手入力 or 推定)。
   final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
 
+  /// 遅延損害金計算に用いた年利（期限超過の未払直接対象のみ非 null）。
+  final double? lateFeeAnnualRate;
+
+  /// 当サイクル支払日からの超過日数（期限前・支払済は 0）。
+  final int overdueDays;
+
+  /// 日割り概算の遅延損害金・延滞金見込み額（円）。
+  final double estimatedLateFeeAmount;
+
   const AssetLiabilityDebtRow({
     required this.id,
     this.recurringFixedCostId,
@@ -759,7 +815,14 @@ class AssetLiabilityDebtRow {
     required this.requiresAction,
     this.fullPaymentEstimate = false,
     this.revolvingBilling,
+    this.lateFeeAnnualRate,
+    this.overdueDays = 0,
+    this.estimatedLateFeeAmount = 0,
   });
+
+  /// 遅延損害金・延滞金見込みを加算した負債残高（絶対値）。
+  double get projectedBalanceWithLateFee =>
+      balance.abs() + estimatedLateFeeAmount;
 
   /// リボ払いカードか (= 最低返済額 + 新規利用額を25日に返すか)。
   bool get isRevolving => revolvingBilling != null;
@@ -770,6 +833,15 @@ class AssetLiabilityDebtRow {
 
   double get effectivePaidPaymentAmount =>
       paid ? actualPaymentAmount ?? scheduledPaymentAmount : 0;
+
+  /// 今月の返済額として元金・利息判定に使う金額。
+  ///
+  /// 支払済みで実支払額が記録されていれば実額を、それ以外は今月支払予定額を使う。
+  /// 予定額 0 円のまま実額を支払済み記録した月を「返済 0 円」と誤判定しない。
+  double get effectiveMonthlyPaymentAmount =>
+      paid && actualPaymentAmount != null
+          ? actualPaymentAmount!
+          : scheduledPaymentAmount;
 
   double? get paymentDifferenceAmount {
     if (!paid || actualPaymentAmount == null) {
@@ -793,6 +865,8 @@ class AssetLiabilityPaymentDayRisk {
   final bool requiresAction;
   final bool isPast;
   final bool isToday;
+  final double shortageAmount;
+  final double estimatedLateFeeTotal;
 
   const AssetLiabilityPaymentDayRisk({
     required this.paymentDay,
@@ -808,11 +882,14 @@ class AssetLiabilityPaymentDayRisk {
     required this.requiresAction,
     required this.isPast,
     required this.isToday,
+    this.shortageAmount = 0,
+    this.estimatedLateFeeTotal = 0,
   });
 
   bool get isUpcoming => !isPast && !isToday;
   bool get hasManualPayments => manualPaymentCount > 0;
   bool get hasEstimatedPayments => estimatedPaymentCount > 0;
+  bool get hasShortage => shortageAmount >= 1;
 }
 
 enum AssetLiabilityCashRiskLevel { normal, watch, caution, short }
@@ -884,6 +961,7 @@ class AssetLiabilityCashflowRow {
   final double cashBeforePayment;
   final double cashAfterPayment;
   final AssetLiabilityCashRiskLevel riskLevel;
+  final bool essential;
 
   const AssetLiabilityCashflowRow({
     required this.eventType,
@@ -912,10 +990,12 @@ class AssetLiabilityCashflowRow {
     required this.cashBeforePayment,
     required this.cashAfterPayment,
     required this.riskLevel,
+    this.essential = false,
   });
 
   bool get isPayment => eventType == AssetLiabilityCashflowEventType.payment;
   bool get isIncome => eventType == AssetLiabilityCashflowEventType.income;
+  bool get deferrable => isPayment && !essential;
   bool get isDirectCashflowTarget =>
       !includedInBillingAccount &&
       paymentMethod == AssetLiabilityPaymentMethod.direct;
@@ -955,6 +1035,8 @@ class AssetLiabilityTransferSuggestion {
   final String toAccountName;
   final double amount;
   final DateTime? neededBy;
+  final String? targetPaymentName;
+  final DateTime? targetPaymentDate;
 
   const AssetLiabilityTransferSuggestion({
     required this.fromAccountId,
@@ -963,7 +1045,12 @@ class AssetLiabilityTransferSuggestion {
     required this.toAccountName,
     required this.amount,
     required this.neededBy,
+    this.targetPaymentName,
+    this.targetPaymentDate,
   });
+
+  String get dedupeKey =>
+      '${fromAccountId}__${toAccountId}__${amount.round()}__${neededBy?.toIso8601String().split('T').first ?? 'any'}';
 }
 
 class AssetLiabilityTransferTask {
@@ -980,6 +1067,7 @@ class AssetLiabilityTransferTask {
   final bool canceled;
   final DateTime? canceledAt;
   final String cancellationReason;
+  final String? dedupeKey;
 
   const AssetLiabilityTransferTask({
     required this.id,
@@ -995,6 +1083,7 @@ class AssetLiabilityTransferTask {
     this.canceled = false,
     this.canceledAt,
     this.cancellationReason = '',
+    this.dedupeKey,
   });
 
   AssetLiabilityTransferTask copyWith({
@@ -1011,6 +1100,7 @@ class AssetLiabilityTransferTask {
     bool? canceled,
     DateTime? canceledAt,
     String? cancellationReason,
+    String? dedupeKey,
   }) {
     return AssetLiabilityTransferTask(
       id: id ?? this.id,
@@ -1026,8 +1116,28 @@ class AssetLiabilityTransferTask {
       canceled: canceled ?? this.canceled,
       canceledAt: canceledAt ?? this.canceledAt,
       cancellationReason: cancellationReason ?? this.cancellationReason,
+      dedupeKey: dedupeKey ?? this.dedupeKey,
     );
   }
+}
+
+/// 登録済み口座間移動タスクと自動提案の逆方向衝突情報 (#3298)。
+class AssetTransferConflict {
+  final String id;
+  final AssetLiabilityTransferTask task;
+  final AssetLiabilityTransferSuggestion suggestion;
+  final int dayGap;
+  final double recommendedDifferenceAmount;
+  final String summary;
+
+  const AssetTransferConflict({
+    required this.id,
+    required this.task,
+    required this.suggestion,
+    required this.dayGap,
+    required this.recommendedDifferenceAmount,
+    required this.summary,
+  });
 }
 
 class AssetLiabilityMonthlySnapshot {
@@ -1224,6 +1334,19 @@ class AssetLiabilityCardStatementLine {
   final DateTime? postedAt;
   final String description;
   final double amount;
+  final String? category;
+
+  /// 仮内訳フラグ (#3349)。正式内訳合計・明細合計から除外し二重計上を防ぐ。
+  final bool isProvisional;
+
+  /// 手動照合・昇格で設定内訳合計へ加算する調整行か (#3329 / #3326 / #3349)。
+  final bool isConfiguredAdjustment;
+
+  /// 明細合計が既に請求額と一致している場合に設定内訳側のみを合わせるフラグ。
+  final bool excludeFromStatementTotal;
+
+  /// 仮内訳の作成日時（翌月繰越の要確認バッジ判定に使用）。
+  final DateTime? createdAt;
 
   const AssetLiabilityCardStatementLine({
     required this.id,
@@ -1232,6 +1355,11 @@ class AssetLiabilityCardStatementLine {
     required this.postedAt,
     required this.description,
     required this.amount,
+    this.category,
+    this.isProvisional = false,
+    this.isConfiguredAdjustment = false,
+    this.excludeFromStatementTotal = false,
+    this.createdAt,
   });
 
   AssetLiabilityCardStatementLine copyWith({
@@ -1241,6 +1369,11 @@ class AssetLiabilityCardStatementLine {
     DateTime? postedAt,
     String? description,
     double? amount,
+    String? category,
+    bool? isProvisional,
+    bool? isConfiguredAdjustment,
+    bool? excludeFromStatementTotal,
+    DateTime? createdAt,
   }) {
     return AssetLiabilityCardStatementLine(
       id: id ?? this.id,
@@ -1249,6 +1382,13 @@ class AssetLiabilityCardStatementLine {
       postedAt: postedAt ?? this.postedAt,
       description: description ?? this.description,
       amount: amount ?? this.amount,
+      category: category ?? this.category,
+      isProvisional: isProvisional ?? this.isProvisional,
+      isConfiguredAdjustment:
+          isConfiguredAdjustment ?? this.isConfiguredAdjustment,
+      excludeFromStatementTotal:
+          excludeFromStatementTotal ?? this.excludeFromStatementTotal,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
@@ -1330,6 +1470,9 @@ class AssetLiabilityCardStatementReconciliationGroup {
   /// リボ払いでは 請求額 ≠ 明細合計 が正常なため、不一致アラートは抑止する。
   final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
 
+  /// 仮内訳行一覧 (#3349)。正式内訳合計・明細合計からは除外される。
+  final List<AssetLiabilityCardStatementLine> provisionalBillingDetails;
+
   const AssetLiabilityCardStatementReconciliationGroup({
     required this.billingAccountId,
     required this.billingAccountName,
@@ -1341,11 +1484,17 @@ class AssetLiabilityCardStatementReconciliationGroup {
     required this.alerts,
     this.fixActions = const <AssetLiabilityCardStatementFixAction>[],
     this.revolvingBilling,
+    this.provisionalBillingDetails = const <AssetLiabilityCardStatementLine>[],
   });
 
   double get statementDifference => statementLineTotal - billedAmount;
   double get configuredDifference => configuredDetailTotal - billedAmount;
   bool get hasStatementLines => statementLines.isNotEmpty;
+  bool get hasProvisionalDetails => provisionalBillingDetails.isNotEmpty;
+  double get provisionalTotal => provisionalBillingDetails.fold<double>(
+        0,
+        (sum, line) => sum + line.amount,
+      );
   bool get needsReview => alerts.isNotEmpty;
   bool get hasFixActions => fixActions.isNotEmpty;
 
@@ -1393,6 +1542,13 @@ class AssetLiabilityCardStatementReconciliationData {
   }
 
   bool get hasNeedsReview => needsReviewGroups.isNotEmpty;
+
+  List<AssetLiabilityCardStatementLine> get provisionalBillingDetails => [
+        for (final group in groups) ...group.provisionalBillingDetails,
+      ];
+
+  bool get hasManualStatementPending =>
+      needsReviewGroups.any((group) => !group.hasStatementLines);
 }
 
 class AssetLiabilityCardBillingReviewData {
@@ -1437,8 +1593,81 @@ class AssetLiabilityCsvExportBundle {
   });
 }
 
+enum AssetPaymentInconsistencyRule {
+  paidWithoutActual,
+  zeroScheduledWithActual,
+  pastDuePaidWithoutActual,
+}
+
+/// R1〜R3 に該当する支払フラグ・予定額・実支払額の不整合 1 件。
+class AssetPaymentInconsistency {
+  final String accountId;
+  final String accountName;
+  final AssetPaymentInconsistencyRule rule;
+  final int? paymentDay;
+  final DateTime? paymentDate;
+  final double scheduledPaymentAmount;
+  final double? actualPaymentAmount;
+  final bool paid;
+  final bool isPastDue;
+  final String reasonLabel;
+  final String suggestedAction;
+
+  const AssetPaymentInconsistency({
+    required this.accountId,
+    required this.accountName,
+    required this.rule,
+    required this.paymentDay,
+    required this.paymentDate,
+    required this.scheduledPaymentAmount,
+    required this.actualPaymentAmount,
+    required this.paid,
+    required this.isPastDue,
+    required this.reasonLabel,
+    required this.suggestedAction,
+  });
+
+  String get ruleCode {
+    return switch (rule) {
+      AssetPaymentInconsistencyRule.paidWithoutActual => 'R1',
+      AssetPaymentInconsistencyRule.zeroScheduledWithActual => 'R2',
+      AssetPaymentInconsistencyRule.pastDuePaidWithoutActual => 'R3',
+    };
+  }
+
+  bool get matchesR1 =>
+      rule == AssetPaymentInconsistencyRule.paidWithoutActual ||
+      rule == AssetPaymentInconsistencyRule.pastDuePaidWithoutActual;
+
+  bool get matchesR2 =>
+      rule == AssetPaymentInconsistencyRule.zeroScheduledWithActual;
+
+  bool get matchesR3 =>
+      rule == AssetPaymentInconsistencyRule.pastDuePaidWithoutActual;
+}
+
+class AssetPaymentInconsistencySummary {
+  final int totalCount;
+  final int r1Count;
+  final int r2Count;
+  final int r3Count;
+
+  const AssetPaymentInconsistencySummary({
+    required this.totalCount,
+    required this.r1Count,
+    required this.r2Count,
+    required this.r3Count,
+  });
+
+  bool get hasInconsistencies => totalCount > 0;
+}
+
 class AssetLiabilityWorkbook {
   final DateTime baseDate;
+
+  /// 終了済みを含む契約情報。現在負債とは区別してAIへ渡す。
+  final List<AssetRecurringFixedCost> recurringFixedCosts;
+  final Map<String, DateTime> recurringBillingDates;
   final List<AssetLiabilityAccount> accounts;
   final List<AssetLiabilityDebtRow> debtMasterRows;
   final List<AssetLiabilityDebtRow> repaymentPriorityRows;
@@ -1487,8 +1716,26 @@ class AssetLiabilityWorkbook {
   /// 抑止するために insight 層へ渡す。
   final Map<String, AssetCardUsagePolicy> cardUsagePolicies;
 
+  /// paid / actual_payment_amount / scheduled_payment_amount の R1〜R3 不整合一覧。
+  final List<AssetPaymentInconsistency> paymentInconsistencies;
+
+  /// 生活防衛モード既定フラグおよび必須支出後の手元残高 (#3289)。
+  final bool emergencyMode;
+  final double? cashAfterEssentials;
+
+  /// 登録済み移動タスクと移動提案の逆方向衝突一覧 (#3298)。
+  final List<AssetTransferConflict> collisionTransfers;
+
+  /// 期限超過・高金利先への債権者連絡タスク一覧 (#3288)。
+  final List<CreditorContactTask> creditorContactTasks;
+
+  /// カード請求ホスト単位の明細再取得・失敗監視ステータス (#3299)。
+  final Map<String, CardStatementImportStatus> statementImportStatuses;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
+    this.recurringFixedCosts = const <AssetRecurringFixedCost>[],
+    this.recurringBillingDates = const <String, DateTime>{},
     required this.accounts,
     required this.debtMasterRows,
     required this.repaymentPriorityRows,
@@ -1520,7 +1767,22 @@ class AssetLiabilityWorkbook {
     this.scheduledExpenseAccountIds = const <String>{},
     this.subscriptionFixedCostAccountIds = const <String>{},
     this.cardUsagePolicies = const <String, AssetCardUsagePolicy>{},
+    this.paymentInconsistencies = const <AssetPaymentInconsistency>[],
+    this.emergencyMode = false,
+    this.cashAfterEssentials,
+    this.collisionTransfers = const <AssetTransferConflict>[],
+    this.creditorContactTasks = const <CreditorContactTask>[],
+    this.statementImportStatuses = const <String, CardStatementImportStatus>{},
   });
+
+  AssetPaymentInconsistencySummary get paymentInconsistencySummary {
+    return AssetPaymentInconsistencySummary(
+      totalCount: paymentInconsistencies.length,
+      r1Count: paymentInconsistencies.where((item) => item.matchesR1).length,
+      r2Count: paymentInconsistencies.where((item) => item.matchesR2).length,
+      r3Count: paymentInconsistencies.where((item) => item.matchesR3).length,
+    );
+  }
 
   /// 直接観測した残高だけで構成する現在口座一覧。
   List<AssetLiabilityAccount> get currentAccounts => accounts
@@ -1695,8 +1957,13 @@ class AssetLiabilityWorkbook {
         );
   }
 
+  List<AssetLiabilityCardStatementLine> get provisionalBillingDetails =>
+      cardStatementReconciliation.provisionalBillingDetails;
+
   AssetLiabilityWorkbook copyWith({
     DateTime? baseDate,
+    List<AssetRecurringFixedCost>? recurringFixedCosts,
+    Map<String, DateTime>? recurringBillingDates,
     List<AssetLiabilityAccount>? accounts,
     List<AssetLiabilityDebtRow>? debtMasterRows,
     List<AssetLiabilityDebtRow>? repaymentPriorityRows,
@@ -1728,9 +1995,13 @@ class AssetLiabilityWorkbook {
     Set<String>? scheduledExpenseAccountIds,
     Set<String>? subscriptionFixedCostAccountIds,
     Map<String, AssetCardUsagePolicy>? cardUsagePolicies,
+    List<AssetPaymentInconsistency>? paymentInconsistencies,
   }) {
     return AssetLiabilityWorkbook(
       baseDate: baseDate ?? this.baseDate,
+      recurringFixedCosts: recurringFixedCosts ?? this.recurringFixedCosts,
+      recurringBillingDates:
+          recurringBillingDates ?? this.recurringBillingDates,
       accounts: accounts ?? this.accounts,
       debtMasterRows: debtMasterRows ?? this.debtMasterRows,
       repaymentPriorityRows:
@@ -1776,6 +2047,8 @@ class AssetLiabilityWorkbook {
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds ??
           this.subscriptionFixedCostAccountIds,
       cardUsagePolicies: cardUsagePolicies ?? this.cardUsagePolicies,
+      paymentInconsistencies:
+          paymentInconsistencies ?? this.paymentInconsistencies,
     );
   }
 }

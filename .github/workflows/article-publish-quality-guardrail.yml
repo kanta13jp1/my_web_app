@@ -1,0 +1,101 @@
+name: Article Publish Quality Guardrail
+
+on:
+  pull_request:
+    paths:
+      - 'docs/blog-drafts/**'
+      - 'docs/blog/zenn/**'
+      - 'scripts/article_quality_guardrail.py'
+      - '.github/workflows/article-publish-quality-guardrail.yml'
+  workflow_dispatch:
+    inputs:
+      target_files:
+        description: 'Optional space-separated article paths (leave empty to run --self-test)'
+        required: false
+        default: ''
+
+concurrency:
+  group: article-quality-guardrail-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  guardrail:
+    name: Validate article quality and topic uniqueness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run article guardrail offline unit tests
+        run: python3 -B test/scripts/test_article_quality_guardrail.py -v
+
+      - name: Evaluate changed or target articles
+        id: run_guardrail
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          TARGET_FILES_INPUT: ${{ github.event.inputs.target_files || '' }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${BASE_SHA}" ]; then
+            git fetch --depth=1 origin "${BASE_SHA}"
+            python3 -B scripts/article_quality_guardrail.py \
+              --changed-since "${BASE_SHA}" \
+              --json-out guardrail-report.json \
+              --markdown-out guardrail-report.md \
+              --github-output "${GITHUB_OUTPUT}"
+          elif [ -n "${TARGET_FILES_INPUT}" ]; then
+            read -r -a targets <<< "${TARGET_FILES_INPUT}"
+            python3 -B scripts/article_quality_guardrail.py \
+              --files "${targets[@]}" \
+              --json-out guardrail-report.json \
+              --markdown-out guardrail-report.md \
+              --github-output "${GITHUB_OUTPUT}"
+          else
+            python3 -B scripts/article_quality_guardrail.py --self-test
+            {
+              echo "guardrail_status=self_test_pass"
+              echo "checked_count=0"
+              echo "failed_count=0"
+            } >> "${GITHUB_OUTPUT}"
+            printf "# Article Quality Guardrail Self-Test\n\n- Status: PASS\n" > guardrail-report.md
+            printf '{"status":"self_test_pass","checked_count":0,"failed_count":0}\n' > guardrail-report.json
+          fi
+
+      - name: Upload article quality guardrail report artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: article-quality-guardrail-report
+          path: |
+            guardrail-report.json
+            guardrail-report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append job summary
+        if: always()
+        env:
+          GUARDRAIL_STATUS: ${{ steps.run_guardrail.outputs.guardrail_status }}
+          CHECKED_COUNT: ${{ steps.run_guardrail.outputs.checked_count }}
+          FAILED_COUNT: ${{ steps.run_guardrail.outputs.failed_count }}
+        run: |
+          {
+            echo "## Article Quality Guardrail"
+            echo "- Status: \`${GUARDRAIL_STATUS}\`"
+            echo "- Checked: \`${CHECKED_COUNT}\`, Failed: \`${FAILED_COUNT}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

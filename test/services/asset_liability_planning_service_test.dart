@@ -165,6 +165,50 @@ void main() {
       );
     });
 
+    test('uses the recorded actual payment for principal when the row is paid',
+        () {
+      // 今月支払予定額は 0 円のまま、実際には 15,000 円を支払済みとして記録した月。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 0},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+        paidAccountNames: const <String>{'モビット'},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.scheduledPaymentAmount, 0);
+      expect(mobit.monthlyInterestEstimate, closeTo(1250, 0.001));
+      expect(mobit.principalPaymentEstimate, closeTo(13750, 0.001));
+      expect(mobit.balanceAfterPaymentEstimate, closeTo(-86250, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 15000);
+    });
+
+    test('keeps the scheduled payment for principal while unpaid', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 5000},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.principalPaymentEstimate, closeTo(3750, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 5000);
+    });
+
     test('uses annual rate overrides for interest and priority signals', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -2459,5 +2503,40 @@ void main() {
       expect(acomShopping.kind, AssetLiabilityAccountKind.shoppingDebt);
       expect(acomShopping.paymentDay, 26);
     });
+
+    test(
+      'computes PaymentDayRisk.shortageAmount and overdue late-fee estimates (#3342, #3442)',
+      () {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            '現金': 200000,
+            'モビット': -500000,
+          },
+          baseDate: DateTime(2026, 9, 15),
+          paymentDayOverrides: const <String, int>{'mobit': 5},
+          annualRateOverrides: const <String, double>{'mobit': 0.18},
+          monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        );
+
+        final mobit = workbook.debtMasterRows.firstWhere(
+          (row) => row.id == 'mobit',
+        );
+        expect(mobit.overdueDays, 10);
+        expect(mobit.lateFeeAnnualRate, 0.18);
+        // 5000 * 0.18 * 10 / 365 = 24.65 -> 25
+        expect(mobit.estimatedLateFeeAmount, 25);
+        expect(mobit.projectedBalanceWithLateFee, 500025);
+
+        final risk5 = workbook.paymentDayRisks.firstWhere(
+          (risk) => risk.paymentDay == 5 && risk.requiresAction,
+        );
+        expect(risk5.hasShortage, isTrue);
+        expect(
+          risk5.shortageAmount,
+          mobit.minimumPaymentEstimate - mobit.scheduledPaymentAmount,
+        );
+        expect(risk5.estimatedLateFeeTotal, 25);
+      },
+    );
   });
 }

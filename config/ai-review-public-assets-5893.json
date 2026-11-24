@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "repository": "kanta13jp1/my_web_app",
+  "pull_request": 5893,
+  "provider": "google-gemini",
+  "endpoint": "https://generativelanguage.googleapis.com/v1beta/",
+  "method": "generateContent",
+  "owner_consent": "2026-11-03 user approval in Codex chat",
+  "related_paths": [
+    "assets/echo_pump/WORKSHOP_PROVENANCE.json",
+    "assets/echo_pump/workshop_background.png",
+    "lib/pages/echo_pump_game_page.dart",
+    "lib/widgets/echo_pump_inventory.dart",
+    "test/e2e/echo_pump_audio.spec.ts",
+    "test/e2e/echo_pump_room_stage.spec.ts",
+    "test/widgets/echo_pump_inventory_test.dart"
+  ],
+  "assets": [
+    {
+      "path": "assets/echo_pump/workshop_background.png",
+      "head_blob": "0c2aee246edefde54ca06764c803227324867128",
+      "sha256": "d67476ce11378201f050e620cefcfa1260ababecd8c17ed520cf94df9cc0c6a4",
+      "bytes": 2656979,
+      "width": 1672,
+      "height": 941,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "4a5eccc4103f4581b8301b9ca940a407d3a282f9"
+    }
+  ]
+}

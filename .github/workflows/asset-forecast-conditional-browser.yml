@@ -1,0 +1,48 @@
+name: Asset forecast conditional browser
+
+on:
+  pull_request:
+    paths:
+      - 'lib/services/asset_cashflow_forecast_service.dart'
+      - 'lib/widgets/asset_cashflow_forecast_card.dart'
+      - 'integration_test/asset_cashflow_forecast_conditional_test.dart'
+      - '.github/workflows/asset-forecast-conditional-browser.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: asset-forecast-conditional-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Run synthetic conditional display in Chrome
+        shell: bash
+        run: |
+          chromedriver --port=4444 > /tmp/asset-forecast-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status > /dev/null
+          flutter drive \
+            --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
+            -d web-server --browser-name=chrome --headless
