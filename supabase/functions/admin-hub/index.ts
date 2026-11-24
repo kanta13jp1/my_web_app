@@ -20,6 +20,12 @@ import {
   handleCompetitorCandidateReview,
   handleCompetitorCandidateVerifyUrl,
 } from "./competitor_candidates.ts";
+import {
+  createSupabaseCapacityReportStore,
+  handleCapacityReportAggregate,
+  handleCapacityReportList,
+  handleCapacityReportNotify,
+} from "./capacity_report.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -901,6 +907,42 @@ serve(async (req: Request) => {
         }
         const res = await handleCompetitorCandidateReview(
           createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "capacity_report.list": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCapacityReportList(
+          createSupabaseCapacityReportStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "capacity_report.aggregate": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCapacityReportAggregate(
+          createSupabaseCapacityReportStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "capacity_report.notify": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCapacityReportNotify(
+          createSupabaseCapacityReportStore(admin),
           { userId, isServiceRole },
           body,
         );

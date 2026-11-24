@@ -26,6 +26,8 @@ jobs:
     name: Check AI Tool Quotas
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      quota_payload_json: ${{ steps.export_quota_payload.outputs.quota_payload_json }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -528,3 +530,52 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
               f.write(report)
           EOF
+
+      - name: Export validated quota payload JSON
+        id: export_quota_payload
+        if: always()
+        env:
+          ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json || '{}' }}
+          OPENAI_USAGE: ${{ steps.openai.outputs.usage_json || '{}' }}
+          COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json || '{}' }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json || '{}' }}
+          GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json || '{}' }}
+          HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json || '{}' }}
+        run: python3 scripts/evaluate_quota_thresholds.py --from-env --export-github-output "$GITHUB_OUTPUT"
+
+  enforce-quota-thresholds:
+    needs: check-quotas
+    if: always() && (needs.check-quotas.result == 'success' || needs.check-quotas.result == 'failure')
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: read
+      issues: write
+    name: Enforce 80%/100% Quota Thresholds & Auto-Pause
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+      QUOTA_PAYLOAD_JSON: ${{ needs.check-quotas.outputs.quota_payload_json || '[]' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Evaluate 80% warnings and 100% auto-pause thresholds
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/evaluate_quota_thresholds.py --from-env --dry-run --summary-out "$GITHUB_STEP_SUMMARY"
+          elif [ -n "${QUOTA_ALERT_WEBHOOK_URL:-}" ]; then
+            python scripts/evaluate_quota_thresholds.py --from-env --apply --create-issues --notify-slack --summary-out "$GITHUB_STEP_SUMMARY"
+          else
+            python scripts/evaluate_quota_thresholds.py --from-env --apply --create-issues --summary-out "$GITHUB_STEP_SUMMARY"
+          fi
