@@ -186,6 +186,7 @@ void main() {
                 const ValueKey<String>('depth_selected_comparison_summary'),
               ),
               matching: find.textContaining('USD 0.0320'),
+              matchRoot: true,
             ),
             findsOneWidget,
           );
@@ -211,6 +212,18 @@ void main() {
           final pollBtn = find.byKey(
             const ValueKey<String>('depth_poll_button'),
           );
+          await tester.ensureVisible(pollBtn);
+          await tester.tap(pollBtn);
+          await tester.pumpAndSettle();
+
+          expect(
+            find.descendant(
+              of: find.byKey(const ValueKey<String>('depth_job_status_badge')),
+              matching: find.textContaining('実行中'),
+            ),
+            findsOneWidget,
+          );
+
           await tester.ensureVisible(pollBtn);
           await tester.tap(pollBtn);
           await tester.pumpAndSettle();
