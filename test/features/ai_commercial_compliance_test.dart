@@ -111,7 +111,7 @@ class _DelayedAiComplianceRepository
 }
 
 List<AiComplianceRule> _seedRules() {
-  return const <AiComplianceRule>[
+  return <AiComplianceRule>[
     AiComplianceRule(
       id: 'rule-elevenlabs',
       ruleKey: 'elevenlabs_paid_at_generation',
