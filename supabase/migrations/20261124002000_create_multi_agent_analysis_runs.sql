@@ -77,7 +77,7 @@ declare
 begin
   jwt_role := coalesce(
     nullif(auth.jwt() ->> 'role', ''),
-    nullif(auth.role(), ''),
+    nullif(current_setting('request.jwt.claim.role', true), ''),
     ''
   );
 
