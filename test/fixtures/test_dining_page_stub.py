@@ -96,6 +96,13 @@ class SyntheticBackendTest(unittest.TestCase):
     def test_ai_hub_action_category_only_returns_fixed_labels(self):
         self.assertEqual(fixture.ai_hub_action_category(
             b'{"action":"provider.chat","private":"synthetic_secret"}'), 'provider_chat')
+        for trace, label in (
+            ('asset-management-ai-summary', 'provider_chat_auto_asset_summary'),
+            ('savings-life-plan-proposal', 'provider_chat_auto_savings_plan'),
+            ('synthetic_secret', 'provider_chat_auto'),
+        ):
+            body = json.dumps({'action': 'provider.chat_auto', 'trace_id': trace}).encode()
+            self.assertEqual(fixture.ai_hub_action_category(body), label)
         for body in (b'{"action":"synthetic_secret"}', b'{"action":[]}', b'['):
             self.assertEqual(fixture.ai_hub_action_category(body), 'unknown')
 

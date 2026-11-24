@@ -105,6 +105,12 @@ def ai_hub_action_category(body):
     action = payload.get('action') if isinstance(payload, dict) else None
     if not isinstance(action, str):
         return 'unknown'
+    if action == 'provider.chat_auto':
+        trace_id = payload.get('trace_id')
+        if trace_id == 'asset-management-ai-summary':
+            return 'provider_chat_auto_asset_summary'
+        if trace_id == 'savings-life-plan-proposal':
+            return 'provider_chat_auto_savings_plan'
     return _AI_HUB_DIAGNOSTIC_ACTIONS.get(action, 'unknown')
 
 
