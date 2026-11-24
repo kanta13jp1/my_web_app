@@ -722,6 +722,7 @@ class LocalElectionRealitySnapshot {
   final List<LocalElectionLegislatorProfile> members;
   final List<LocalElectionScheduleEntry> upcomingSchedules;
   final List<PastElectionResult> pastElectionResults;
+  final List<LocalElectionRealityHistoryPoint> history;
 
   const LocalElectionRealitySnapshot({
     required this.fetchedAt,
@@ -745,6 +746,7 @@ class LocalElectionRealitySnapshot {
     required this.members,
     required this.upcomingSchedules,
     this.pastElectionResults = const <PastElectionResult>[],
+    this.history = const <LocalElectionRealityHistoryPoint>[],
   });
 
   LocalElectionRealitySnapshot.empty()
@@ -768,7 +770,8 @@ class LocalElectionRealitySnapshot {
         prefectures = const <LocalElectionPrefectureReality>[],
         members = const <LocalElectionLegislatorProfile>[],
         upcomingSchedules = const <LocalElectionScheduleEntry>[],
-        pastElectionResults = const <PastElectionResult>[];
+        pastElectionResults = const <PastElectionResult>[],
+        history = const <LocalElectionRealityHistoryPoint>[];
 
   factory LocalElectionRealitySnapshot.fromJson(Map<String, dynamic> json) {
     return LocalElectionRealitySnapshot(
@@ -818,6 +821,7 @@ class LocalElectionRealitySnapshot {
       members: _readMembers(json['members']),
       upcomingSchedules: _readSchedules(json['upcomingSchedules']),
       pastElectionResults: _readPastResults(json['pastElectionResults']),
+      history: _readHistory(json['history']),
     );
   }
 
@@ -845,6 +849,7 @@ class LocalElectionRealitySnapshot {
           upcomingSchedules.map((item) => item.toJson()).toList(),
       'pastElectionResults':
           pastElectionResults.map((item) => item.toJson()).toList(),
+      'history': history.map((item) => item.toJson()).toList(),
     };
   }
 
@@ -1107,6 +1112,27 @@ class LocalElectionRealitySnapshot {
     return value.whereType<Map>().map((item) {
       return PastElectionResult.fromJson(Map<String, dynamic>.from(item));
     }).toList();
+  }
+
+  static List<LocalElectionRealityHistoryPoint> _readHistory(Object? value) {
+    if (value is! List) {
+      return const <LocalElectionRealityHistoryPoint>[];
+    }
+    final points = value
+        .whereType<Map>()
+        .map(
+          (item) => LocalElectionRealityHistoryPoint.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .where(
+          (item) =>
+              item.fetchedAt.millisecondsSinceEpoch > 0 &&
+              item.officialCurrentLocalMembers > 0,
+        )
+        .toList()
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+    return points;
   }
 
   static int _scheduleSeverity(LocalElectionScheduleEntry entry) {

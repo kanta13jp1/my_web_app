@@ -19,6 +19,32 @@ class LandingOAuthCallbackFailure {
   final LandingOAuthCallbackFailureCategory category;
   final String userMessage;
 
+  static LandingOAuthCallbackFailure? _pendingStartupFailure;
+
+  static void captureStartupError(Object error) {
+    _pendingStartupFailure ??= fromError(error);
+  }
+
+  static LandingOAuthCallbackFailure? takePendingStartupError() {
+    final pending = _pendingStartupFailure;
+    _pendingStartupFailure = null;
+    return pending;
+  }
+
+  @visibleForTesting
+  static void resetStartupErrorForTest() {
+    _pendingStartupFailure = null;
+  }
+
+  static LandingOAuthCallbackFailure fromError(Object error) {
+    final signal = error.toString().toLowerCase();
+    final category = _classify(signal);
+    return LandingOAuthCallbackFailure(
+      category: category,
+      userMessage: _messageFor(category),
+    );
+  }
+
   static LandingOAuthCallbackFailure? fromUri(Uri? uri) {
     if (uri == null) {
       return null;
@@ -87,10 +113,14 @@ class LandingOAuthCallbackFailure {
     }
     if (signal.contains('flow_state') ||
         signal.contains('pkce') ||
+        signal.contains('code verifier') ||
+        signal.contains('code_verifier') ||
         signal.contains('code exchange') ||
         signal.contains('exchange external code') ||
         signal.contains('unable to exchange') ||
-        signal.contains('oauth state')) {
+        signal.contains('oauth state') ||
+        signal.contains('oauth_state') ||
+        signal.contains('invalid_grant')) {
       return LandingOAuthCallbackFailureCategory.callbackExchange;
     }
     return LandingOAuthCallbackFailureCategory.unknown;

@@ -7,6 +7,7 @@ abstract class AssetChatHistoryRepository {
 
   Future<AssetChatThreadPage> fetchThreads({
     String searchQuery = '',
+    AssetChatThreadSortBy sortBy = AssetChatThreadSortBy.updatedAt,
     int offset = 0,
     int limit = 50,
   });
@@ -45,6 +46,7 @@ class SupabaseAssetChatHistoryRepository implements AssetChatHistoryRepository {
   @override
   Future<AssetChatThreadPage> fetchThreads({
     String searchQuery = '',
+    AssetChatThreadSortBy sortBy = AssetChatThreadSortBy.updatedAt,
     int offset = 0,
     int limit = 50,
   }) async {
@@ -59,7 +61,7 @@ class SupabaseAssetChatHistoryRepository implements AssetChatHistoryRepository {
     }
     try {
       final rows = await request
-          .order('last_message_at', ascending: false)
+          .order(sortBy.columnName, ascending: false)
           .order('id', ascending: true)
           .range(safeOffset, safeOffset + safeLimit);
       final pageRows = _rows(rows);

@@ -1,0 +1,81 @@
+name: Career Monthly KPI Closing Report
+
+on:
+  schedule:
+    # Run at 14:00 UTC (23:00 JST) on month-end candidate days 28-31.
+    - cron: '0 14 28-31 * *'
+  workflow_dispatch:
+    inputs:
+      month_key:
+        description: 'Optional YYYY-MM override'
+        required: false
+        default: ''
+
+permissions: {}
+
+concurrency:
+  group: career-monthly-kpi-closing-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  monthly-closing-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Verify deterministic KPI closing calculator
+        run: python -B -m unittest scripts/career_kpi_closing_report_test.py
+
+      - name: Generate monthly KPI closing report
+        id: close
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MONTH_KEY: ${{ inputs.month_key }}
+        run: |
+          mkdir -p artifacts
+          ARGS=(--self-check --output-json artifacts/career-monthly-close.json --output-md artifacts/career-monthly-close.md)
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            ARGS+=(--check-month-end)
+          fi
+          if [ -n "$INPUT_MONTH_KEY" ]; then
+            ARGS+=(--month "$INPUT_MONTH_KEY")
+          fi
+          SUMMARY=$(python -B scripts/career_kpi_closing_report.py "${ARGS[@]}")
+          printf '%s\n' "$SUMMARY"
+          {
+            echo "summary<<EOF_KPI_SUMMARY"
+            printf '%s\n' "$SUMMARY"
+            echo "EOF_KPI_SUMMARY"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write monitoring summary
+        if: always()
+        env:
+          SUMMARY_OUTPUT: ${{ steps.close.outputs.summary }}
+        run: |
+          {
+            echo "## Career Monthly KPI Closing Report"
+            echo '```json'
+            printf '%s\n' "$SUMMARY_OUTPUT"
+            echo '```'
+            if [ -f artifacts/career-monthly-close.md ]; then
+              cat artifacts/career-monthly-close.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload closing report artifacts
+        if: always() && hashFiles('artifacts/career-monthly-close.*') != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: career-monthly-kpi-closing-report
+          path: artifacts/career-monthly-close.*
+          retention-days: 30

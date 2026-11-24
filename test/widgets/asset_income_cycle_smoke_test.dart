@@ -434,16 +434,23 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+      // 支給日を迎えた給与明細があれば新サイクルへ切り替え、未確認バナーは出さない。
+      // (口座着金確認自体は別途行う。)
+      expect(find.text('給与の口座入金は未確認です'), findsNothing);
       final prefs = await SharedPreferences.getInstance();
       expect(
         prefs.getString(AssetSalaryResetMarkerStore.prefsKey),
-        previousCycleKey,
-        reason: '給与明細だけでは口座入金と判定して支払チェックをリセットしない',
+        AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            now,
+            salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+          ),
+        ),
+        reason: '支給日を迎えた給与明細で支払チェックを新サイクルへ切り替える',
       );
       await tester.binding.setSurfaceSize(const Size(390, 1200));
       await tester.pump();
-      expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+      expect(find.text('給与の口座入金は未確認です'), findsNothing);
       expect(tester.takeException(), isNull);
       // 収入があるので「未記録」の空状態文言は出ない。
       expect(

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "repository": "kanta13jp1/my_web_app",
+  "pull_request": 6244,
+  "provider": "google-gemini",
+  "endpoint": "https://generativelanguage.googleapis.com/v1beta/",
+  "method": "generateContent",
+  "owner_consent": "2026-11-24 owner approval in Antigravity chat (Option A)",
+  "related_paths": [
+    "lib/widgets/landing_page_content.dart",
+    "test/e2e/visual_regression.spec.ts-snapshots/landing-chromium-linux.png",
+    "test/e2e/visual_regression.spec.ts-snapshots/landing-mobile-chrome-linux.png",
+    "test/pages/landing_page_conversion_test.dart"
+  ],
+  "assets": [
+    {
+      "path": "test/e2e/visual_regression.spec.ts-snapshots/landing-chromium-linux.png",
+      "base_blob": "94e0b0b5e7c2664fc25e412e81b2fc58bab446aa",
+      "head_blob": "4820be825ca3e64a74461bc158924f59a8fa3059",
+      "sha256": "b984b4c8c2012c726d3d5554d669067c6f0139ae3f35500c7f5bf2e0580ecd35",
+      "bytes": 625190,
+      "width": 1440,
+      "height": 1000,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "6e81f57024ab2135728fbb134d85879e36fa3fa7"
+    },
+    {
+      "path": "test/e2e/visual_regression.spec.ts-snapshots/landing-mobile-chrome-linux.png",
+      "base_blob": "7febaf096c43f9debd571f2e81d80ca71f4d7d2a",
+      "head_blob": "7ca1504cc9b9cee4b26f63dbfb3b294e0c17e4b2",
+      "sha256": "b2903bcefcc74f4d34234721872299beff8f5479c6b6e3c29bfc731c613b5fb0",
+      "bytes": 138218,
+      "width": 393,
+      "height": 727,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "6e81f57024ab2135728fbb134d85879e36fa3fa7"
+    }
+  ]
+}

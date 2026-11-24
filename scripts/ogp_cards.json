@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "canvas": {
+    "background": "#07111e",
+    "textPrimary": "#f8f5ee",
+    "textSecondary": "#dbe4f0",
+    "trustColor": "#cbd5e1"
+  },
+  "cards": [
+    {
+      "id": "ogp-lp",
+      "output": "ogp-lp-20261123.png",
+      "width": 1200,
+      "height": 630,
+      "artwork": "assets/landing_journey/03-prioritized.webp",
+      "artPosition": "86% 50%",
+      "accentPrimary": "#38bdf8",
+      "accentSecondary": "#f59e0b",
+      "headlineAccent": "#f5d08a",
+      "badge": "自分株式会社",
+      "headline": [
+        "散らばる毎日を、",
+        "今日やる1件へ。"
+      ],
+      "subcopy": [
+        "予定・メモ・お金・学習を1つに整理し、",
+        "登録なしで AI の次の一手を体験。"
+      ],
+      "trust": [
+        "無料コア",
+        "カード不要",
+        "いつでも停止"
+      ],
+      "alt": "自分株式会社 - 散らばる毎日を今日やる1件へ整理するAIライフマネジメント"
+    },
+    {
+      "id": "ogp-ai-university",
+      "output": "ogp-ai-university-20261123.png",
+      "width": 1200,
+      "height": 630,
+      "artwork": "assets/landing_journey/02-unified.webp",
+      "artPosition": "84% 50%",
+      "accentPrimary": "#818cf8",
+      "accentSecondary": "#38bdf8",
+      "headlineAccent": "#7dd3fc",
+      "badge": "自分株式会社  |  AI大学",
+      "headline": [
+        "主要AIを、",
+        "無料で体系学習。"
+      ],
+      "subcopy": [
+        "200社以上のAIツールと実務活用を、",
+        "クイズ・ランキング・音声学習で定着。"
+      ],
+      "trust": [
+        "無料で学べる",
+        "200社以上を網羅",
+        "クイズ対応"
+      ],
+      "alt": "AI大学 - 主要AIツールと実務活用を無料で体系的に学ぶ"
+    },
+    {
+      "id": "ogp-competitors",
+      "output": "ogp-competitors-20261123.png",
+      "width": 1200,
+      "height": 630,
+      "artwork": "assets/landing_journey/01-scattered.webp",
+      "artPosition": "86% 50%",
+      "accentPrimary": "#38bdf8",
+      "accentSecondary": "#fbbf24",
+      "headlineAccent": "#fcd34d",
+      "badge": "自分株式会社  |  競合比較",
+      "headline": [
+        "複数アプリを、",
+        "1つの生活OSへ。"
+      ],
+      "subcopy": [
+        "Notion・MoneyForward・Slackなど174社以上と",
+        "ノート・資産・タスク統合を横断比較。"
+      ],
+      "trust": [
+        "174社以上と比較",
+        "無料コアあり",
+        "データ移行対応"
+      ],
+      "alt": "自分株式会社 競合比較 - 174社以上のSaaSと統合ライフOSを比較"
+    },
+    {
+      "id": "ogp-philosophy",
+      "output": "ogp-philosophy-20261123.png",
+      "width": 1200,
+      "height": 630,
+      "artwork": "assets/landing_journey/04-action.webp",
+      "artPosition": "84% 50%",
+      "accentPrimary": "#34d399",
+      "accentSecondary": "#38bdf8",
+      "headlineAccent": "#6ee7b7",
+      "badge": "自分株式会社とは",
+      "headline": [
+        "自分の人生を、",
+        "CEOとして経営。"
+      ],
+      "subcopy": [
+        "時間・お金・健康・スキルを9原則と",
+        "個人P/L・B/S・30日サイクルで設計。"
+      ],
+      "trust": [
+        "9原則ガイド",
+        "個人P/L・B/S",
+        "無料で実践"
+      ],
+      "alt": "自分株式会社とは - 人生を経営する9原則と個人P/L・B/Sガイド"
+    },
+    {
+      "id": "ogp-referral",
+      "output": "ogp-referral-20261123.png",
+      "width": 1200,
+      "height": 630,
+      "artwork": "assets/landing_journey/02-unified.webp",
+      "artPosition": "84% 50%",
+      "accentPrimary": "#f59e0b",
+      "accentSecondary": "#38bdf8",
+      "headlineAccent": "#fcd34d",
+      "badge": "自分株式会社  |  紹介プログラム",
+      "headline": [
+        "招待リンクから、",
+        "無料で始める。"
+      ],
+      "subcopy": [
+        "予定・メモ・家計・AI学習を1アプリで整理。",
+        "紹介コードの共有と実績確認をシンプルに。"
+      ],
+      "trust": [
+        "無料コア",
+        "登録30秒",
+        "いつでも停止"
+      ],
+      "alt": "自分株式会社 紹介プログラム - 招待リンクと紹介コードで無料で始める"
+    },
+    {
+      "id": "ogp-pricing",
+      "output": "ogp-pricing-20261123.png",
+      "width": 1200,
+      "height": 630,
+      "artwork": "assets/landing_journey/03-prioritized.webp",
+      "artPosition": "86% 50%",
+      "accentPrimary": "#34d399",
+      "accentSecondary": "#f59e0b",
+      "headlineAccent": "#6ee7b7",
+      "badge": "自分株式会社  |  プランと応援",
+      "headline": [
+        "基本機能は無料、",
+        "必要時だけProへ。"
+      ],
+      "subcopy": [
+        "まずは無料コアで日常の整理を体験。",
+        "上限緩和と開発応援のプランを明快に公開。"
+      ],
+      "trust": [
+        "無料コア",
+        "カード不要で体験",
+        "いつでも解約"
+      ],
+      "alt": "自分株式会社 プランと応援 - 無料コアから始められる料金プラン"
+    },
+    {
+      "id": "x-card-launch",
+      "output": "x-card-launch-20261123.png",
+      "width": 1600,
+      "height": 900,
+      "artwork": "assets/landing_journey/03-prioritized.webp",
+      "artPosition": "92% 50%",
+      "accentPrimary": "#38bdf8",
+      "accentSecondary": "#f59e0b",
+      "headlineAccent": "#f5d08a",
+      "badge": "自分株式会社  |  登録なしで1回体験",
+      "headline": [
+        "迷う毎日から、",
+        "今日やる1件へ。"
+      ],
+      "subcopy": [
+        "予定・メモ・お金・学習が散らばっていても、",
+        "今の悩みを1行入れるだけでAIが次の一手を整理。"
+      ],
+      "trust": [
+        "無料コア",
+        "クレジットカード不要",
+        "30秒で保存"
+      ],
+      "alt": "自分株式会社 X投稿用16:9カード - 悩みを1行入れるとAIが今日やる1件を提案"
+    }
+  ]
+}
