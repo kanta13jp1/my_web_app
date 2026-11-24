@@ -33,8 +33,8 @@ create index if not exists idx_ai_reasoning_depth_jobs_user_status_updated
 
 alter table public.ai_reasoning_depth_jobs enable row level security;
 
-revoke all on table public.ai_reasoning_depth_jobs from public, anon;
-grant select, insert, update, delete on table public.ai_reasoning_depth_jobs to authenticated;
+revoke all on table public.ai_reasoning_depth_jobs from public, anon, authenticated;
+grant select, insert, update on table public.ai_reasoning_depth_jobs to authenticated;
 grant all on table public.ai_reasoning_depth_jobs to service_role;
 
 drop policy if exists "ai_reasoning_depth_jobs_select_own"
@@ -62,19 +62,15 @@ create policy "ai_reasoning_depth_jobs_update_own"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+-- Users cannot delete cost/execution job records; cancellation uses job_status='cancelled'.
 drop policy if exists "ai_reasoning_depth_jobs_delete_own"
   on public.ai_reasoning_depth_jobs;
-create policy "ai_reasoning_depth_jobs_delete_own"
-  on public.ai_reasoning_depth_jobs
-  for delete
-  to authenticated
-  using (auth.uid() = user_id);
 
 create or replace function public.guard_ai_reasoning_depth_job_fields()
 returns trigger
 language plpgsql
 security invoker
-set search_path = public
+set search_path = public, auth, pg_catalog, pg_temp
 as $guard$
 declare
   jwt_role text;
@@ -90,12 +86,33 @@ begin
        session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
        and jwt_role = ''
      ) then
+    if tg_op = 'DELETE' then
+      return old;
+    end if;
+    if tg_op = 'INSERT' then
+      new.created_at := coalesce(new.created_at, timezone('utc', now()));
+    end if;
+    new.updated_at := timezone('utc', now());
     return new;
   end if;
 
   if tg_op = 'INSERT' then
     if auth.uid() is null or new.user_id is distinct from auth.uid() then
       raise exception 'Authenticated owner user_id is required on insert'
+        using errcode = '42501';
+    end if;
+    if new.tool_calls_completed > new.max_tool_calls then
+      raise exception 'tool_calls_completed cannot exceed max_tool_calls'
+        using errcode = '42501';
+    end if;
+    if new.reasoning_mode in ('deep_research', 'background')
+       and (new.job_status is distinct from 'queued' or new.tool_calls_completed <> 0) then
+      raise exception 'Async reasoning depth jobs must start queued with 0 completed tool calls'
+        using errcode = '42501';
+    end if;
+    if new.reasoning_mode = 'standard'
+       and new.job_status not in ('queued', 'completed') then
+      raise exception 'Standard reasoning jobs must start queued or completed'
         using errcode = '42501';
     end if;
     new.created_at := timezone('utc', now());
@@ -114,8 +131,35 @@ begin
       raise exception 'Immutable identity and timestamp fields cannot be modified'
         using errcode = '42501';
     end if;
+    if new.reasoning_mode is distinct from old.reasoning_mode
+       or new.prompt_summary is distinct from old.prompt_summary
+       or new.max_tool_calls is distinct from old.max_tool_calls
+       or new.timeout_seconds is distinct from old.timeout_seconds
+       or new.estimated_cost_usd is distinct from old.estimated_cost_usd
+       or new.estimated_latency_ms is distinct from old.estimated_latency_ms then
+      raise exception 'Reasoning depth specification and cost fields are immutable on update'
+        using errcode = '42501';
+    end if;
+    if old.job_status in ('completed', 'failed', 'cancelled') then
+      raise exception 'Terminal reasoning depth jobs cannot be modified'
+        using errcode = '42501';
+    end if;
+    if old.job_status = 'running' and new.job_status = 'queued' then
+      raise exception 'Running reasoning depth job cannot revert to queued'
+        using errcode = '42501';
+    end if;
+    if new.tool_calls_completed < old.tool_calls_completed
+       or new.tool_calls_completed > old.max_tool_calls then
+      raise exception 'tool_calls_completed must remain monotonic within max_tool_calls'
+        using errcode = '42501';
+    end if;
     new.updated_at := timezone('utc', now());
     return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    raise exception 'Reasoning depth job records cannot be deleted directly'
+      using errcode = '42501';
   end if;
 
   return new;
@@ -125,7 +169,7 @@ $guard$;
 drop trigger if exists guard_ai_reasoning_depth_job_fields
   on public.ai_reasoning_depth_jobs;
 create trigger guard_ai_reasoning_depth_job_fields
-  before insert or update on public.ai_reasoning_depth_jobs
+  before insert or update or delete on public.ai_reasoning_depth_jobs
   for each row
   execute function public.guard_ai_reasoning_depth_job_fields();
 
