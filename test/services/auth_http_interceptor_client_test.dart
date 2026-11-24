@@ -54,7 +54,7 @@ void main() {
         final seenHeaders = <String?>[];
         final gateway = _FakeAuthSessionGateway(
           initialSession: AuthSessionSnapshot(
-            accessToken: 'token-v1',
+            accessToken: 'tok-1',
             expiresAt: DateTime.utc(2026, 11, 24, 12),
           ),
         );
@@ -72,12 +72,12 @@ void main() {
 
         await client.get(Uri.parse('https://api.example.com/v1/profile'));
         gateway.session = AuthSessionSnapshot(
-          accessToken: 'token-v2',
+          accessToken: 'tok-2',
           expiresAt: DateTime.utc(2026, 11, 24, 13),
         );
         await client.get(Uri.parse('https://api.example.com/v1/profile'));
 
-        expect(seenHeaders, <String?>['Bearer token-v1', 'Bearer token-v2']);
+        expect(seenHeaders, <String?>['Bearer tok-1', 'Bearer tok-2']);
         expect(gateway.refreshCallCount, 0);
         client.close();
       },
@@ -89,11 +89,11 @@ void main() {
         final seenHeaders = <String?>[];
         final gateway = _FakeAuthSessionGateway(
           initialSession: AuthSessionSnapshot(
-            accessToken: 'expiring-token',
+            accessToken: 'exp-1',
             expiresAt: DateTime.utc(2026, 11, 24, 10, 0, 20),
           ),
           nextRefreshedSession: AuthSessionSnapshot(
-            accessToken: 'fresh-token',
+            accessToken: 'new-1',
             expiresAt: DateTime.utc(2026, 11, 24, 11),
           ),
           refreshDelay: const Duration(milliseconds: 20),
@@ -120,11 +120,7 @@ void main() {
         expect(gateway.refreshCallCount, 1);
         expect(
           seenHeaders,
-          <String?>[
-            'Bearer fresh-token',
-            'Bearer fresh-token',
-            'Bearer fresh-token',
-          ],
+          <String?>['Bearer new-1', 'Bearer new-1', 'Bearer new-1'],
         );
         client.close();
       },
@@ -133,15 +129,15 @@ void main() {
     test(
       'refreshes once and replays POST payload when server responds 401',
       () async {
-        final seenTokens = <String?>[];
+        final seenAuthHeaders = <String?>[];
         final seenBodies = <String>[];
         final gateway = _FakeAuthSessionGateway(
           initialSession: AuthSessionSnapshot(
-            accessToken: 'stale-token',
+            accessToken: 'old-1',
             expiresAt: DateTime.utc(2026, 11, 24, 12),
           ),
           nextRefreshedSession: AuthSessionSnapshot(
-            accessToken: 'recovered-token',
+            accessToken: 'rec-1',
             expiresAt: DateTime.utc(2026, 11, 24, 13),
           ),
         );
@@ -152,9 +148,9 @@ void main() {
             allowedAuthOrigins: <String>{'https://api.example.com'},
           ),
           innerClient: MockClient((http.Request req) async {
-            seenTokens.add(req.headers['Authorization']);
+            seenAuthHeaders.add(req.headers['Authorization']);
             seenBodies.add(req.body);
-            if (req.headers['Authorization'] == 'Bearer stale-token') {
+            if (req.headers['Authorization'] == 'Bearer old-1') {
               return http.Response('{"error":"expired"}', 401);
             }
             return http.Response('{"saved":true,"id":"item-1"}', 200);
@@ -174,8 +170,8 @@ void main() {
         expect(gateway.refreshCallCount, 1);
         expect(gateway.clearCallCount, 0);
         expect(
-          seenTokens,
-          <String?>['Bearer stale-token', 'Bearer recovered-token'],
+          seenAuthHeaders,
+          <String?>['Bearer old-1', 'Bearer rec-1'],
         );
         expect(seenBodies, <String>[
           jsonEncode(const <String, dynamic>{'name': 'alpha'}),
@@ -207,7 +203,7 @@ void main() {
 
         final gateway = _FakeAuthSessionGateway(
           initialSession: AuthSessionSnapshot(
-            accessToken: 'revoked-token',
+            accessToken: 'rev-1',
             expiresAt: DateTime.utc(2026, 11, 24, 12),
           ),
           failRefresh: true,
@@ -248,7 +244,7 @@ void main() {
         final capturedHeaders = <String, String?>{};
         final gateway = _FakeAuthSessionGateway(
           initialSession: AuthSessionSnapshot(
-            accessToken: 'secret-jwt',
+            accessToken: 'sec-1',
             expiresAt: DateTime.utc(2026, 11, 24, 12),
           ),
         );
@@ -276,7 +272,7 @@ void main() {
 
         expect(
           capturedHeaders['https://api.example.com/v1/ok'],
-          'Bearer secret-jwt',
+          'Bearer sec-1',
         );
         expect(
           capturedHeaders['https://api.example.com.evil.com/leak'],

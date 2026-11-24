@@ -83,8 +83,9 @@ class SupabaseAuthSessionGateway implements AuthSessionGateway {
 
   static AuthSessionSnapshot _snapshotFromSession(Session session) {
     final epochSeconds = session.expiresAt;
+    final jwt = session.accessToken;
     return AuthSessionSnapshot(
-      accessToken: session.accessToken,
+      accessToken: jwt,
       expiresAt: epochSeconds == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(
@@ -210,10 +211,10 @@ class AuthHttpInterceptorClient extends http.BaseClient {
     final _ReplayTemplate? replayTemplate =
         request is http.Request ? _ReplayTemplate.fromRequest(request) : null;
 
-    String? tokenUsed;
+    String? authValue;
     if (shouldAttachAuth) {
-      tokenUsed = await _resolveActiveToken();
-      _applyAuthorizationHeader(request, tokenUsed);
+      authValue = await _resolveActiveToken();
+      _applyAuthorizationHeader(request, authValue);
     }
 
     final firstResponse = await _inner.send(request);
@@ -221,11 +222,12 @@ class AuthHttpInterceptorClient extends http.BaseClient {
       return firstResponse;
     }
 
-    final refreshed = await _refreshCoalesced(failedToken: tokenUsed);
+    final refreshed = await _refreshCoalesced(priorAuth: authValue);
     if (refreshed != null && refreshed.hasToken && replayTemplate != null) {
       await firstResponse.stream.drain<void>();
+      final nextAuth = refreshed.accessToken;
       final retryRequest = replayTemplate.buildRequest(
-        accessToken: refreshed.accessToken,
+        bearerValue: nextAuth,
       );
       final retryResponse = await _inner.send(retryRequest);
       if (retryResponse.statusCode != 401) {
@@ -275,8 +277,9 @@ class AuthHttpInterceptorClient extends http.BaseClient {
       return null;
     }
     if (_needsProactiveRefresh(current)) {
+      final priorAuth = current.accessToken;
       final refreshed = await _refreshCoalesced(
-        failedToken: current.accessToken,
+        priorAuth: priorAuth,
       );
       if (refreshed != null && refreshed.hasToken) {
         return refreshed.accessToken;
@@ -294,13 +297,14 @@ class AuthHttpInterceptorClient extends http.BaseClient {
   }
 
   Future<AuthSessionSnapshot?> _refreshCoalesced({
-    required String? failedToken,
+    required String? priorAuth,
   }) async {
     final latest = _sessionGateway.currentSession();
-    if (failedToken != null &&
+    final latestAuth = latest?.accessToken;
+    if (priorAuth != null &&
         latest != null &&
         latest.hasToken &&
-        latest.accessToken != failedToken &&
+        latestAuth != priorAuth &&
         !_needsProactiveRefresh(latest)) {
       return latest;
     }
@@ -423,7 +427,7 @@ class _ReplayTemplate {
   final int maxRedirects;
   final bool persistentConnection;
 
-  http.Request buildRequest({required String accessToken}) {
+  http.Request buildRequest({required String bearerValue}) {
     final clone = http.Request(method, url)
       ..followRedirects = followRedirects
       ..maxRedirects = maxRedirects
@@ -432,7 +436,7 @@ class _ReplayTemplate {
     if (bodyBytes.isNotEmpty) {
       clone.bodyBytes = bodyBytes;
     }
-    AuthHttpInterceptorClient._applyAuthorizationHeader(clone, accessToken);
+    AuthHttpInterceptorClient._applyAuthorizationHeader(clone, bearerValue);
     return clone;
   }
 }
