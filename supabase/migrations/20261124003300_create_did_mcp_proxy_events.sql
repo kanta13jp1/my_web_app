@@ -101,12 +101,26 @@ security invoker
 set search_path = public, auth, pg_catalog, pg_temp
 as $guard$
 declare
-  v_jwt_role text := coalesce(
+  v_raw_claims text := nullif(current_setting('request.jwt.claims', true), '');
+  v_claims jsonb;
+  v_jwt_role text;
+  v_is_service boolean;
+begin
+  if v_raw_claims is not null then
+    begin
+      v_claims := v_raw_claims::jsonb;
+    exception
+      when others then
+        v_claims := null;
+    end;
+  end if;
+  v_jwt_role := coalesce(
     nullif(auth.jwt() ->> 'role', ''),
+    nullif(v_claims ->> 'role', ''),
     nullif(current_setting('request.jwt.claim.role', true), ''),
     ''
   );
-  v_is_service boolean := (v_jwt_role = 'service_role')
+  v_is_service := (v_jwt_role = 'service_role')
     or (
       v_jwt_role = ''
       and session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
@@ -136,6 +150,8 @@ begin
 end;
 $guard$;
 
+revoke all on function public.guard_did_mcp_proxy_events() from public, anon, authenticated;
+
 drop trigger if exists guard_did_mcp_proxy_events
   on public.did_mcp_proxy_events;
 create trigger guard_did_mcp_proxy_events
@@ -150,19 +166,32 @@ security invoker
 set search_path = public, auth, pg_catalog, pg_temp
 as $guard$
 declare
-  v_jwt_role text := coalesce(
+  v_raw_claims text := nullif(current_setting('request.jwt.claims', true), '');
+  v_claims jsonb;
+  v_jwt_role text;
+  v_is_service boolean;
+  v_ack_rpc_active boolean :=
+    coalesce(current_setting('app.did_mcp_alert_ack_rpc', true), '') = 'on';
+begin
+  if v_raw_claims is not null then
+    begin
+      v_claims := v_raw_claims::jsonb;
+    exception
+      when others then
+        v_claims := null;
+    end;
+  end if;
+  v_jwt_role := coalesce(
     nullif(auth.jwt() ->> 'role', ''),
+    nullif(v_claims ->> 'role', ''),
     nullif(current_setting('request.jwt.claim.role', true), ''),
     ''
   );
-  v_is_service boolean := (v_jwt_role = 'service_role')
+  v_is_service := (v_jwt_role = 'service_role')
     or (
       v_jwt_role = ''
       and session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
     );
-  v_ack_rpc_active boolean :=
-    coalesce(current_setting('app.did_mcp_alert_ack_rpc', true), '') = 'on';
-begin
   if TG_OP = 'DELETE' or TG_OP = 'INSERT' then
     if not v_is_service then
       raise exception 'did_mcp_alerts inserts and deletes require service_role'
@@ -197,6 +226,8 @@ begin
   return new;
 end;
 $guard$;
+
+revoke all on function public.guard_did_mcp_alerts() from public, anon, authenticated;
 
 drop trigger if exists guard_did_mcp_alerts
   on public.did_mcp_alerts;
@@ -234,14 +265,22 @@ begin
       using errcode = '42501';
   end if;
 
-  perform set_config('app.did_mcp_alert_ack_rpc', 'on', true);
+  begin
+    perform set_config('app.did_mcp_alert_ack_rpc', 'on', true);
 
-  update public.did_mcp_alerts
-  set acknowledged = true,
-      acknowledged_by = v_uid,
-      acknowledged_at = coalesce(acknowledged_at, timezone('utc', now()))
-  where id = p_alert_id
-  returning * into v_updated;
+    update public.did_mcp_alerts
+    set acknowledged = true,
+        acknowledged_by = v_uid,
+        acknowledged_at = coalesce(acknowledged_at, timezone('utc', now()))
+    where id = p_alert_id
+    returning * into v_updated;
+
+    perform set_config('app.did_mcp_alert_ack_rpc', 'off', true);
+  exception
+    when others then
+      perform set_config('app.did_mcp_alert_ack_rpc', 'off', true);
+      raise;
+  end;
 
   if v_updated.id is null then
     raise exception 'Alert not found: %', p_alert_id
