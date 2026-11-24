@@ -47,7 +47,7 @@ CREATE POLICY "quota_pause_admin_update"
     EXISTS (
       SELECT 1
       FROM public.user_profiles up
-      WHERE up.user_id = (SELECT auth.uid())
+      WHERE up.user_id = auth.uid()
         AND up.is_admin = true
     )
   )
@@ -55,7 +55,7 @@ CREATE POLICY "quota_pause_admin_update"
     EXISTS (
       SELECT 1
       FROM public.user_profiles up
-      WHERE up.user_id = (SELECT auth.uid())
+      WHERE up.user_id = auth.uid()
         AND up.is_admin = true
     )
   );
