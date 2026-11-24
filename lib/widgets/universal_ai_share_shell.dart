@@ -103,7 +103,35 @@ const double kAiShareFabTopOffset = kToolbarHeight + 20;
 const double kAiShareFabDefaultBottomOffset = 20;
 const double kAiShareFabLandingBottomOffset = 88;
 const double kAiShareFabMusubiBottomOffset = 88;
+
+/// Material 3 NavigationBar の既定高さ (80px) + 余白 (16px)。
+/// Bottom NavigationBar を持つセンター画面で「Inboxへメモ」「AIシェア」
+/// オーバーレイが下部タブ (例: XP・バッジ / 従来の目標 / AI要約・履歴) を
+/// 覆わないように上方向へ退避する。
+const double kAiShareFabBottomNavigationBarOffset = 96;
 const double kAiShareFabMinScreenWidth = 600;
+
+const Set<String> _kBottomNavigationBarRoutePaths = <String>{
+  '/daily-habits',
+  '/habit-gamification',
+  '/life-goals',
+  '/goal-tracker',
+  '/ai-writing-assistant',
+  '/ai-summarizer',
+};
+
+const Set<String> _kBottomRightFabCenterRoutePaths = <String>{
+  '/life-goals',
+  '/goal-tracker',
+};
+
+String _normalizeFabRoutePath(String routePath) {
+  final trimmed = routePath.trim();
+  if (trimmed.length > 1 && trimmed.endsWith('/')) {
+    return trimmed.substring(0, trimmed.length - 1);
+  }
+  return trimmed;
+}
 
 bool shouldShowUniversalAiShareFab({
   required String routePath,
@@ -114,16 +142,19 @@ bool shouldShowUniversalAiShareFab({
       (routePath != '/' || isLoggedIn);
 }
 
-/// Keep the mobile asset page's right-hand chat action tappable.
+/// Keep the mobile asset page's and goal-center FAB pages' right-hand
+/// actions tappable.
 /// This is a route-local placement override, not a saved preference change.
 AiShareButtonPosition resolveAiShareFabPosition({
   required AiShareButtonPosition preferred,
   required String routePath,
   required double screenWidth,
 }) {
-  if (routePath == '/asset-management' &&
-      screenWidth < kAiShareFabMinScreenWidth &&
-      preferred == AiShareButtonPosition.bottomRight) {
+  final normalizedPath = _normalizeFabRoutePath(routePath);
+  if (preferred == AiShareButtonPosition.bottomRight &&
+      ((normalizedPath == '/asset-management' &&
+              screenWidth < kAiShareFabMinScreenWidth) ||
+          _kBottomRightFabCenterRoutePaths.contains(normalizedPath))) {
     return AiShareButtonPosition.bottomLeft;
   }
   return preferred;
@@ -133,17 +164,23 @@ double resolveAiShareFabBottomOffset({
   required String routePath,
   required double screenWidth,
 }) {
-  final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
+  final normalizedPath = _normalizeFabRoutePath(routePath);
+  if (_kBottomNavigationBarRoutePaths.contains(normalizedPath)) {
+    return kAiShareFabBottomNavigationBarOffset;
+  }
+
+  final isMusubi =
+      normalizedPath == '/musubi' || normalizedPath == '/social-feed';
   if (isMusubi) return kAiShareFabMusubiBottomOffset;
 
   // デスクトップ幅の /asset-management では右下に「資産AIに相談」FABが常駐するため、
   // 上方向へ退避して重なりを防ぐ。
-  if (routePath == '/asset-management' &&
+  if (normalizedPath == '/asset-management' &&
       screenWidth >= kAiShareFabMinScreenWidth) {
     return kAiShareFabMusubiBottomOffset;
   }
 
-  final isLandingMobile = routePath == '/' && screenWidth < 720;
+  final isLandingMobile = normalizedPath == '/' && screenWidth < 720;
   return isLandingMobile
       ? kAiShareFabLandingBottomOffset
       : kAiShareFabDefaultBottomOffset;

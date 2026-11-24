@@ -107,4 +107,37 @@ void main() {
       isTrue,
     );
   });
+
+  test('NavigationBar を持つセンター画面では下部タブの上に退避する', () {
+    expect(
+      kAiShareFabBottomNavigationBarOffset,
+      greaterThanOrEqualTo(88.0),
+    );
+    expect(
+      kAiShareFabBottomNavigationBarOffset,
+      greaterThan(kAiShareFabDefaultBottomOffset),
+    );
+
+    const navBarRoutes = <String>[
+      '/daily-habits',
+      '/habit-gamification',
+      '/life-goals',
+      '/goal-tracker',
+      '/ai-writing-assistant',
+      '/ai-summarizer',
+      '/daily-habits/',
+    ];
+    for (final routePath in navBarRoutes) {
+      for (final width in <double>[390.0, 1280.0]) {
+        expect(
+          resolveAiShareFabBottomOffset(
+            routePath: routePath,
+            screenWidth: width,
+          ),
+          kAiShareFabBottomNavigationBarOffset,
+          reason: '$routePath ($width px) must clear the 80px NavigationBar',
+        );
+      }
+    }
+  });
 }
