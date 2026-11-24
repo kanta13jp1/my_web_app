@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/asset_chat.dart';
+import 'chat_replay_page.dart';
 import '../services/asset_chat_history_repository.dart';
 import '../view_models/asset_chat_history_view_model.dart';
 import '../widgets/critical_action_dialog.dart';
@@ -178,6 +179,41 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
               ),
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  '並び順:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                ChoiceChip(
+                  key: const Key('asset_chat_history_sort_updated_at'),
+                  label: const Text('更新日時順'),
+                  selected:
+                      _viewModel.sortBy == AssetChatThreadSortBy.updatedAt,
+                  onSelected: (_) => unawaited(
+                    _viewModel.setSortBy(AssetChatThreadSortBy.updatedAt),
+                  ),
+                ),
+                ChoiceChip(
+                  key: const Key('asset_chat_history_sort_created_at'),
+                  label: const Text('作成日時順'),
+                  selected:
+                      _viewModel.sortBy == AssetChatThreadSortBy.createdAt,
+                  onSelected: (_) => unawaited(
+                    _viewModel.setSortBy(AssetChatThreadSortBy.createdAt),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         Expanded(child: _buildThreadList()),
       ],
     );
@@ -250,7 +286,9 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            subtitle: Text('最終更新 ${_formatDateTime(thread.lastMessageAt)}'),
+            subtitle: Text(
+              '最終更新 ${_formatDateTime(thread.lastMessageAt)} ・ 作成 ${_formatDateTime(thread.createdAt)}',
+            ),
             trailing: IconButton(
               key: Key('asset_chat_delete_${thread.id}'),
               tooltip: 'このチャットを削除',
@@ -300,6 +338,34 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
                   _viewModel.isDeleting ? null : () => _confirmDelete(thread),
               icon: const Icon(Icons.delete_outline),
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: OutlinedButton.icon(
+            key: const Key('asset_chat_history_present'),
+            onPressed: _viewModel.isLoadingMessages ||
+                    _viewModel.isDeleting ||
+                    _viewModel.messages.isEmpty
+                ? null
+                : () {
+                    final replay = ChatReplayPage(
+                      messages: _viewModel.messages,
+                      hasOlderMessages: _viewModel.hasOlderMessages,
+                    );
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute(
+                        builder: (_) => replay,
+                        // Reload returns to history; never serialize a transcript
+                        // into the URL or reveal it automatically.
+                        settings: const RouteSettings(
+                          name: '/asset-chat-history?view=presentation',
+                        ),
+                      ),
+                    );
+                  },
+            icon: const Icon(Icons.slideshow),
+            label: const Text('読み込み済みの会話を発表'),
           ),
         ),
         const Divider(height: 1),

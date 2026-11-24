@@ -2,9 +2,13 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'attachment_service.dart';
+import 'direct_storage_upload_service.dart';
 import 'evernote_enex_parser.dart';
 import 'gamification_service.dart';
+import 'notion_export_zip_service.dart';
 import 'office_document_parser.dart';
+import 'storage_quota_service.dart';
 
 class ImportedNoteDraft {
   final String title;
@@ -122,8 +126,12 @@ class ImportPreviewResult {
 
   bool get usedEdgeFunction => previewMode == 'edge-function';
 
-  String get previewModeLabel =>
-      usedEdgeFunction ? 'Edge Function preview' : 'Local fallback preview';
+  String get previewModeLabel => switch (previewMode) {
+        'edge-function' => 'Edge Function preview',
+        'local-streaming' => 'Memory-bounded streaming preview',
+        'local-notion-zip' => 'Notion ZIP archive preview',
+        _ => 'Local fallback preview',
+      };
 
   bool get canCommit => commitBlockedReason == null;
 
@@ -144,16 +152,28 @@ class ImportPreviewResult {
 
 class ImportExecutionResult {
   final int insertedCount;
+  final int skippedDuplicateCount;
+  final int uploadedAttachmentCount;
+  final int skippedAttachmentCount;
   final String importMode;
 
   const ImportExecutionResult({
     required this.insertedCount,
+    this.skippedDuplicateCount = 0,
+    this.uploadedAttachmentCount = 0,
+    this.skippedAttachmentCount = 0,
     this.importMode = 'edge-function',
   });
 
   factory ImportExecutionResult.fromJson(Map<String, dynamic> json) {
     return ImportExecutionResult(
       insertedCount: ImportService._toIntValue(json['insertedCount']),
+      skippedDuplicateCount:
+          ImportService._toIntValue(json['skippedDuplicateCount']),
+      uploadedAttachmentCount:
+          ImportService._toIntValue(json['uploadedAttachmentCount']),
+      skippedAttachmentCount:
+          ImportService._toIntValue(json['skippedAttachmentCount']),
       importMode: json['importMode']?.toString() ?? 'edge-function',
     );
   }
@@ -163,6 +183,7 @@ class ImportExecutionResult {
   String get importModeLabel => switch (importMode) {
         'edge-function' => 'Edge Function import',
         'evernote-lossless' => 'Lossless Evernote import + verification',
+        'notion-zip-lossless' => 'Notion ZIP archive import + attachments',
         _ => 'Local fallback import',
       };
 }
@@ -178,11 +199,52 @@ class ImportService {
 
   SupabaseClient get _client => _clientOverride ?? Supabase.instance.client;
 
+  static const NotionExportZipService _notionZipParser =
+      NotionExportZipService();
+
+  NotionZipParsedBundle parseNotionZipBytes({
+    required String fileName,
+    required Uint8List bytes,
+  }) {
+    return _notionZipParser.parseZipBytes(
+      fileName: fileName,
+      bytes: bytes,
+    );
+  }
+
+  ImportPreviewResult buildNotionZipPreviewFromBundle(
+    NotionZipParsedBundle bundle,
+  ) {
+    return ImportPreviewResult(
+      sourceType: 'notion_zip',
+      sourceLabel: 'Notion (ZIP)',
+      fileName: bundle.fileName,
+      notes: bundle.notes,
+      warnings: <String>[
+        'Notion ZIP からページ ${bundle.pageCount} 件・データベース '
+            '${bundle.databaseCount} 件・添付 ${bundle.attachmentCount} 件 '
+            '(${formatStorageBytes(bundle.totalAttachmentBytes)}) を解析しました。',
+        ...bundle.warnings,
+      ],
+      previewMode: 'local-notion-zip',
+      sourceExportSha256: bundle.archiveSha256,
+      resourceCount: bundle.attachmentCount,
+    );
+  }
+
   Future<ImportPreviewResult> buildPreview({
     required String sourceType,
     required String fileName,
     required Uint8List bytes,
   }) async {
+    if (sourceType == 'notion_zip' ||
+        (sourceType == 'notion' && fileName.toLowerCase().endsWith('.zip'))) {
+      final bundle = parseNotionZipBytes(
+        fileName: fileName,
+        bytes: bytes,
+      );
+      return buildNotionZipPreviewFromBundle(bundle);
+    }
     // XLSX/DOCX はバイナリ (ZIP) のため、テキスト前提の Edge Function を経由せず
     // クライアントで直接解析する (無駄な base64 アップロードを避ける)。
     if (sourceType == 'evernote' ||
@@ -211,6 +273,53 @@ class ImportService {
             'Edge Function preview is unavailable right now, so a local preview was used.',
       );
     }
+  }
+
+  Future<ImportPreviewResult> buildEvernoteStreamingPreview({
+    required String fileName,
+    required Stream<List<int>> source,
+    int? totalBytes,
+    void Function(int processedBytes, int? totalBytes)? onProgress,
+  }) async {
+    final notes = <ImportedNoteDraft>[];
+    var hasEmptyResource = false;
+    final summary = await _evernoteEnexParser.parseStream(
+      source,
+      totalBytes: totalBytes,
+      onProgress: onProgress,
+      onNote: (note) {
+        if (note.resources.any((resource) => resource.data.isEmpty)) {
+          hasEmptyResource = true;
+        }
+        notes.add(
+          _toStreamingEvernotePreviewDraft(
+            note,
+            includeContentSample: notes.length < 12,
+          ),
+        );
+      },
+    );
+    final commitBlockedReason = summary.warnings.isNotEmpty || hasEmptyResource
+        ? 'Evernote commit remains paused because at least one attachment '
+            'could not be decoded without warnings.'
+        : null;
+
+    return ImportPreviewResult(
+      sourceType: 'evernote',
+      sourceLabel: 'Evernote',
+      fileName: fileName,
+      notes: List<ImportedNoteDraft>.unmodifiable(notes),
+      warnings: <String>[
+        'Memory-bounded streaming preview parsed ${summary.noteCount} note(s).',
+        'Only the first 12 note previews retain up to 2,000 characters; all note ids and hashes remain available for verification.',
+        '${summary.resourceCount} attachment resource(s) were detected.',
+        ...summary.warnings,
+      ],
+      previewMode: 'local-streaming',
+      sourceExportSha256: summary.exportSha256,
+      resourceCount: summary.resourceCount,
+      commitBlockedReason: commitBlockedReason,
+    );
   }
 
   /// Notion API トークンを使って直接ページ一覧をプレビュー取得する。
@@ -267,6 +376,10 @@ class ImportService {
     String? fallbackWarning,
   }) {
     switch (sourceType) {
+      case 'notion_zip':
+        return buildNotionZipPreviewFromBundle(
+          parseNotionZipBytes(fileName: fileName, bytes: bytes),
+        );
       case 'notion':
         return ImportPreviewResult(
           sourceType: 'notion',
@@ -438,7 +551,7 @@ class ImportService {
   ImportedNoteDraft _toImportedEvernoteDraft(EvernoteEnexNote note) {
     return ImportedNoteDraft(
       title: note.title,
-      content: note.plainText,
+      content: note.markdownText,
       source: 'evernote',
       tags: note.tags,
       sourceId: note.sourceId,
@@ -447,6 +560,31 @@ class ImportService {
       sourceContentSha256: note.contentSha256,
       sourceResourceCount: note.resources.length,
       sourceMetadata: note.toImportMetadata(),
+    );
+  }
+
+  ImportedNoteDraft _toStreamingEvernotePreviewDraft(
+    EvernoteEnexNote note, {
+    required bool includeContentSample,
+  }) {
+    final contentSample = includeContentSample
+        ? String.fromCharCodes(note.markdownText.runes.take(2000))
+        : '';
+    return ImportedNoteDraft(
+      title: note.title,
+      content: contentSample,
+      source: 'evernote',
+      tags: note.tags,
+      sourceId: note.sourceId,
+      sourceCreatedAt: note.createdAt,
+      sourceUpdatedAt: note.updatedAt,
+      sourceContentSha256: note.contentSha256,
+      sourceResourceCount: note.resources.length,
+      sourceMetadata: <String, dynamic>{
+        'streaming_preview': true,
+        'preview_sample': includeContentSample,
+        'preview_content_truncated': contentSample != note.markdownText,
+      },
     );
   }
 
@@ -621,10 +759,59 @@ class ImportService {
     if (data['success'] != true) {
       throw Exception(data['error']?.toString() ?? 'Import commit failed.');
     }
+    if (!data.containsKey('insertedCount')) {
+      throw StateError(
+        'Edge Function import.commit did not confirm inserted rows.',
+      );
+    }
 
     final result = ImportExecutionResult.fromJson(data);
+    if (notes.isNotEmpty && result.insertedCount <= 0) {
+      throw StateError(
+        'Edge Function import.commit reported 0 inserted rows.',
+      );
+    }
     await _awardImportPoints(result.insertedCount);
     return result;
+  }
+
+  Future<Set<String>> _loadExistingSourceKeys({
+    required String userId,
+    required Iterable<ImportedNoteDraft> notes,
+  }) async {
+    final keys = notes
+        .map((note) => note.sourceId?.trim() ?? '')
+        .where((key) => key.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (keys.isEmpty) {
+      return const <String>{};
+    }
+
+    final existing = <String>{};
+    const chunkSize = 50;
+    try {
+      for (var i = 0; i < keys.length; i += chunkSize) {
+        final chunk = keys.sublist(
+          i,
+          i + chunkSize > keys.length ? keys.length : i + chunkSize,
+        );
+        final rows = await _client
+            .from('notes')
+            .select('source_key')
+            .eq('user_id', userId)
+            .inFilter('source_key', chunk);
+        for (final row in rows) {
+          final key = row['source_key']?.toString().trim() ?? '';
+          if (key.isNotEmpty) {
+            existing.add(key);
+          }
+        }
+      }
+    } catch (error) {
+      debugPrint('Skipping source_key preflight dedup: $error');
+    }
+    return existing;
   }
 
   Future<ImportExecutionResult> _importNotesLocally({
@@ -638,17 +825,42 @@ class ImportService {
       );
     }
 
-    final rows = notes
-        .map(
-          (note) => <String, dynamic>{
-            'user_id': userId,
-            'title': note.title.trim(),
-            'content': note.content.trim(),
-            'is_archived': false,
-            'is_pinned': false,
-          },
-        )
-        .toList();
+    final existingKeys = await _loadExistingSourceKeys(
+      userId: userId,
+      notes: notes,
+    );
+    final filtered = <ImportedNoteDraft>[];
+    var skippedDuplicates = 0;
+    for (final note in notes) {
+      final sourceKey = note.sourceId?.trim() ?? '';
+      if (sourceKey.isNotEmpty && existingKeys.contains(sourceKey)) {
+        skippedDuplicates += 1;
+        continue;
+      }
+      filtered.add(note);
+    }
+    if (filtered.isEmpty) {
+      return ImportExecutionResult(
+        insertedCount: 0,
+        skippedDuplicateCount: skippedDuplicates,
+        importMode: 'local-fallback',
+      );
+    }
+
+    final rows = filtered.map((note) {
+      final sourceKey = note.sourceId?.trim();
+      return <String, dynamic>{
+        'user_id': userId,
+        'created_by': userId,
+        'title': note.title.trim(),
+        'content': note.content.trim(),
+        'tags': note.tags,
+        'capture_source': note.source,
+        'is_archived': false,
+        'is_pinned': false,
+        if (sourceKey != null && sourceKey.isNotEmpty) 'source_key': sourceKey,
+      };
+    }).toList();
 
     const chunkSize = 50;
     var inserted = 0;
@@ -657,15 +869,280 @@ class ImportService {
         i,
         i + chunkSize > rows.length ? rows.length : i + chunkSize,
       );
-      await _client.from('notes').insert(chunk);
-      inserted += chunk.length;
+      final withKey = chunk
+          .where((row) => row.containsKey('source_key'))
+          .toList(growable: false);
+      final withoutKey = chunk
+          .where((row) => !row.containsKey('source_key'))
+          .toList(growable: false);
+      if (withKey.isNotEmpty) {
+        final insertedWithKey = await _client
+            .from('notes')
+            .upsert(
+              withKey,
+              onConflict: 'user_id,source_key',
+              ignoreDuplicates: true,
+            )
+            .select('id');
+        inserted += insertedWithKey.length;
+        skippedDuplicates += withKey.length - insertedWithKey.length;
+      }
+      if (withoutKey.isNotEmpty) {
+        await _client.from('notes').insert(withoutKey);
+        inserted += withoutKey.length;
+      }
     }
 
     await _awardImportPoints(inserted);
 
     return ImportExecutionResult(
       insertedCount: inserted,
+      skippedDuplicateCount: skippedDuplicates,
       importMode: 'local-fallback',
+    );
+  }
+
+  Future<ImportExecutionResult> importNotionZipBundle({
+    required String userId,
+    required NotionZipParsedBundle bundle,
+    bool uploadAttachments = true,
+    bool skipAttachmentsOnQuotaExceeded = false,
+    StorageQuotaService? quotaService,
+    DirectStorageUploadService? uploadService,
+  }) async {
+    if (bundle.notes.isEmpty) {
+      return const ImportExecutionResult(
+        insertedCount: 0,
+        importMode: 'notion-zip-lossless',
+      );
+    }
+
+    final existingKeys = await _loadExistingSourceKeys(
+      userId: userId,
+      notes: bundle.notes,
+    );
+    final notesToInsert = <ImportedNoteDraft>[];
+    var skippedDuplicates = 0;
+    for (final note in bundle.notes) {
+      final sourceKey = note.sourceId?.trim() ?? '';
+      if (sourceKey.isNotEmpty && existingKeys.contains(sourceKey)) {
+        skippedDuplicates += 1;
+        continue;
+      }
+      notesToInsert.add(note);
+    }
+    if (notesToInsert.isEmpty) {
+      return ImportExecutionResult(
+        insertedCount: 0,
+        skippedDuplicateCount: skippedDuplicates,
+        importMode: 'notion-zip-lossless',
+      );
+    }
+
+    final referencedAttachments = bundle.attachmentsForNotes(notesToInsert);
+    var shouldUploadAttachments =
+        uploadAttachments && referencedAttachments.isNotEmpty;
+    var skippedAttachments =
+        !uploadAttachments ? referencedAttachments.length : 0;
+
+    if (shouldUploadAttachments) {
+      final resolvedQuotaService =
+          quotaService ?? StorageQuotaService.supabase(_client);
+      var totalBytes = 0;
+      var maxFileBytes = 0;
+      for (final attachment in referencedAttachments) {
+        if (attachment.sizeBytes <= 0) {
+          continue;
+        }
+        totalBytes += attachment.sizeBytes;
+        if (attachment.sizeBytes > maxFileBytes) {
+          maxFileBytes = attachment.sizeBytes;
+        }
+      }
+      if (totalBytes > 0) {
+        final evaluation = await resolvedQuotaService.evaluateUpload(
+          userId: userId,
+          incomingBytes: totalBytes,
+          singleFileBytes: maxFileBytes,
+        );
+        if (!evaluation.allowed) {
+          if (skipAttachmentsOnQuotaExceeded) {
+            shouldUploadAttachments = false;
+            skippedAttachments = referencedAttachments.length;
+          } else {
+            throw StorageQuotaException(
+              evaluation.reason,
+              evaluation: evaluation,
+            );
+          }
+        }
+      }
+    }
+
+    final collections = _NotionCollectionResolver(client: _client);
+    await collections.preload(userId);
+
+    final resolvedUploadService =
+        uploadService ?? DirectStorageUploadService.supabase(_client);
+
+    const chunkSize = 50;
+    var insertedCount = 0;
+    var uploadedAttachmentCount = 0;
+
+    for (var i = 0; i < notesToInsert.length; i += chunkSize) {
+      final draftChunk = notesToInsert.sublist(
+        i,
+        i + chunkSize > notesToInsert.length
+            ? notesToInsert.length
+            : i + chunkSize,
+      );
+      final rows = <Map<String, dynamic>>[];
+      for (final draft in draftChunk) {
+        final collectionIds = await collections.resolveForDraft(
+          userId: userId,
+          draft: draft,
+        );
+        final sourceKey = draft.sourceId?.trim();
+        rows.add(<String, dynamic>{
+          'user_id': userId,
+          'created_by': userId,
+          'title': draft.title.trim(),
+          'content': draft.content.trim(),
+          'tags': draft.tags,
+          'capture_source': draft.source,
+          'is_archived': false,
+          'is_pinned': false,
+          if (sourceKey != null && sourceKey.isNotEmpty)
+            'source_key': sourceKey,
+          if (collectionIds.spaceId != null)
+            'space_collection_id': collectionIds.spaceId,
+          if (collectionIds.notebookId != null)
+            'notebook_collection_id': collectionIds.notebookId,
+        });
+      }
+
+      final insertedRows = await _client
+          .from('notes')
+          .upsert(
+            rows,
+            onConflict: 'user_id,source_key',
+            ignoreDuplicates: true,
+          )
+          .select('id, source_key');
+      final idBySourceKey = <String, int>{};
+      for (final row in insertedRows) {
+        final id = _toIntValue(row['id']);
+        final key = row['source_key']?.toString().trim() ?? '';
+        if (key.isNotEmpty && id > 0) {
+          idBySourceKey[key] = id;
+        }
+      }
+      insertedCount += insertedRows.length;
+      if (draftChunk.length > insertedRows.length) {
+        skippedDuplicates += draftChunk.length - insertedRows.length;
+      }
+
+      if (!shouldUploadAttachments) {
+        continue;
+      }
+
+      for (var j = 0; j < draftChunk.length; j += 1) {
+        final draft = draftChunk[j];
+        final sourceKey = draft.sourceId?.trim() ?? '';
+        final noteId = idBySourceKey[sourceKey];
+        if (noteId == null || noteId <= 0 || sourceKey.isEmpty) {
+          continue;
+        }
+        final links = bundle.noteAttachmentLinks[sourceKey] ??
+            const <NotionZipAttachmentLink>[];
+        if (links.isEmpty) {
+          continue;
+        }
+
+        var updatedContent = draft.content.trim();
+        var contentChanged = false;
+        final uploadedByAttachmentKey = <String, String>{};
+
+        for (final link in links) {
+          final attachment = bundle.attachments[link.attachmentKey];
+          if (attachment == null) {
+            continue;
+          }
+          if (attachment.bytes.isEmpty) {
+            skippedAttachments += 1;
+            continue;
+          }
+
+          var storagePath = uploadedByAttachmentKey[attachment.normalizedKey];
+          if (storagePath == null) {
+            final uploadResult =
+                await resolvedUploadService.uploadAndInsertMetadata(
+              bucketId: 'attachments',
+              tableName: 'attachments',
+              userId: userId,
+              bytes: attachment.bytes,
+              originalFileName: attachment.fileName,
+              contentType: attachment.mimeType,
+              ownerPathSegments: <String>[noteId.toString()],
+              metadataBuilder: (final object) {
+                return <String, dynamic>{
+                  'note_id': noteId,
+                  'user_id': object.userId,
+                  'file_name': attachment.fileName,
+                  'file_path': object.storagePath,
+                  'file_size': object.sizeBytes,
+                  'file_type': attachment.fileType,
+                  'mime_type': object.contentType,
+                  'content_sha256': attachment.contentSha256,
+                  'source_system': 'notion',
+                  'source_metadata': <String, dynamic>{
+                    'notion_relative_path': attachment.relativePath,
+                    'source_key': sourceKey,
+                  },
+                };
+              },
+            );
+            storagePath = uploadResult.storagePath;
+            uploadedByAttachmentKey[attachment.normalizedKey] = storagePath;
+            uploadedAttachmentCount += 1;
+          }
+
+          final replacementUrl = AttachmentService.getMarkdownUrl(storagePath);
+          final escapedTarget = RegExp.escape(link.rawTarget);
+          final linkPattern = RegExp(
+            '(!?\\[[^\\]]*\\])\\((?:<$escapedTarget>|$escapedTarget)(?:\\s+"[^"]*")?\\)',
+          );
+          final nextContent = updatedContent.replaceAllMapped(
+            linkPattern,
+            (final match) {
+              final prefix = match.group(1) ?? '';
+              return '$prefix($replacementUrl)';
+            },
+          );
+          if (nextContent != updatedContent) {
+            updatedContent = nextContent;
+            contentChanged = true;
+          }
+        }
+
+        if (contentChanged) {
+          await _client
+              .from('notes')
+              .update(<String, dynamic>{'content': updatedContent})
+              .eq('id', noteId)
+              .eq('user_id', userId);
+        }
+      }
+    }
+
+    await _awardImportPoints(insertedCount);
+
+    return ImportExecutionResult(
+      insertedCount: insertedCount,
+      skippedDuplicateCount: skippedDuplicates,
+      uploadedAttachmentCount: uploadedAttachmentCount,
+      skippedAttachmentCount: skippedAttachments,
+      importMode: 'notion-zip-lossless',
     );
   }
 
@@ -788,3 +1265,129 @@ class ImportService {
 }
 
 const EvernoteEnexParser _evernoteEnexParser = EvernoteEnexParser();
+
+class _NotionCollectionResolver {
+  _NotionCollectionResolver({
+    required SupabaseClient client,
+  }) : _client = client;
+
+  final SupabaseClient _client;
+  final Map<String, int> _spaceIds = <String, int>{};
+  final Map<String, int> _notebookIds = <String, int>{};
+
+  Future<void> preload(final String userId) async {
+    try {
+      final rows = await _client
+          .from('note_collections')
+          .select('id, collection_type, parent_id, name')
+          .eq('user_id', userId);
+      for (final row in rows) {
+        final id = ImportService._toIntValue(row['id']);
+        if (id <= 0) {
+          continue;
+        }
+        final type = row['collection_type']?.toString() ?? '';
+        final name = (row['name']?.toString() ?? '').trim().toLowerCase();
+        if (name.isEmpty) {
+          continue;
+        }
+        if (type == 'space') {
+          _spaceIds[name] = id;
+        } else if (type == 'notebook') {
+          final parentId = ImportService._toIntValue(row['parent_id']);
+          _notebookIds['$parentId::$name'] = id;
+        }
+      }
+    } catch (error) {
+      debugPrint('Skipping note_collections preload: $error');
+    }
+  }
+
+  Future<({int? spaceId, int? notebookId})> resolveForDraft({
+    required final String userId,
+    required final ImportedNoteDraft draft,
+  }) async {
+    final spaceName = _clampName(
+      draft.sourceMetadata['space_name']?.toString(),
+      fallback: 'Notion',
+    );
+    final notebookName = _clampName(
+      draft.sourceMetadata['notebook_name']?.toString(),
+      fallback: 'Notion Import',
+    );
+    final spaceId = await _ensureCollection(
+      userId: userId,
+      type: 'space',
+      name: spaceName,
+      parentId: null,
+    );
+    final notebookId = await _ensureCollection(
+      userId: userId,
+      type: 'notebook',
+      name: notebookName,
+      parentId: spaceId,
+    );
+    return (spaceId: spaceId, notebookId: notebookId);
+  }
+
+  Future<int?> _ensureCollection({
+    required final String userId,
+    required final String type,
+    required final String name,
+    required final int? parentId,
+  }) async {
+    final normalizedKey = name.toLowerCase();
+    if (type == 'space') {
+      final cached = _spaceIds[normalizedKey];
+      if (cached != null) {
+        return cached;
+      }
+    } else {
+      final key = '${parentId ?? 0}::$normalizedKey';
+      final cached = _notebookIds[key];
+      if (cached != null) {
+        return cached;
+      }
+    }
+
+    try {
+      final inserted = await _client
+          .from('note_collections')
+          .insert(<String, dynamic>{
+            'user_id': userId,
+            'collection_type': type,
+            'parent_id': parentId,
+            'name': name,
+            'source_system': 'native',
+          })
+          .select('id')
+          .single();
+      final id = ImportService._toIntValue(inserted['id']);
+      if (id > 0) {
+        if (type == 'space') {
+          _spaceIds[normalizedKey] = id;
+        } else {
+          _notebookIds['${parentId ?? 0}::$normalizedKey'] = id;
+        }
+        return id;
+      }
+    } catch (error) {
+      debugPrint('Collection ensure skipped ($type/$name): $error');
+    }
+    return null;
+  }
+
+  String _clampName(
+    final String? raw, {
+    required final String fallback,
+  }) {
+    final trimmed = (raw ?? '').trim();
+    if (trimmed.isEmpty) {
+      return fallback;
+    }
+    if (trimmed.length > 200) {
+      return trimmed.substring(0, 200);
+    }
+    return trimmed;
+  }
+}

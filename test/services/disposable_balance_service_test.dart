@@ -137,6 +137,24 @@ void main() {
       },
     );
 
+    test('前の給与明細の手取りを登録確認の金額効果に使わない', () {
+      final result = service.build(
+        asOfDate: DateTime(2026, 5, 26),
+        payslips: [
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 4, 25),
+            netAmount: 12345,
+          ),
+        ],
+      );
+      final action = result.requiredActions.singleWhere(
+        (action) => action.actionKey == 'upload_current_payslip',
+      );
+      expect(result.income, 12345);
+      expect(action.amountImpact, 0);
+      expect(action.estimatedSeconds, isNull);
+    });
+
     test('detects duplicate music subscriptions', () {
       final result = service.build(
         asOfDate: DateTime(2026, 5, 25),
@@ -155,6 +173,44 @@ void main() {
       expect(
         result.requiredActions.map((action) => action.actionKey),
         contains('cancel_duplicate_music'),
+      );
+    });
+
+    test('excludes future pay_date payslips from cycle and fallback income',
+        () {
+      const service = DisposableBalanceService();
+      final resultWithPastFallback = service.build(
+        asOfDate: DateTime(2026, 11, 23),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 25),
+            netAmount: 491120,
+          ),
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 24),
+            netAmount: 491120,
+          ),
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 10, 23),
+            netAmount: 421286,
+          ),
+        ],
+      );
+      expect(resultWithPastFallback.income, 421286);
+
+      final resultOnlyFuture = service.build(
+        asOfDate: DateTime(2026, 11, 23),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 24),
+            netAmount: 491120,
+          ),
+        ],
+      );
+      expect(resultOnlyFuture.income, 0);
+      expect(
+        resultOnlyFuture.requiredActions.map((a) => a.actionKey),
+        contains('upload_current_payslip'),
       );
     });
   });

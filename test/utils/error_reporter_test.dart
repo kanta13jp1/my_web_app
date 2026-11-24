@@ -62,4 +62,30 @@ at RenderFlex.performLayout (main.dart.js:3:1)
       isFalse,
     );
   });
+
+  test('validates Sentry DSN format and rejects malformed commands', () {
+    expect(
+      ErrorReporter.isValidSentryDsn(
+        'https://abc123@o456.ingest.us.sentry.io/789',
+      ),
+      isTrue,
+    );
+    expect(ErrorReporter.isValidSentryDsn(''), isFalse);
+    expect(
+      ErrorReporter.isValidSentryDsn(
+        'gh secret set SENTRY_AUTH_TOKEN --repo kanta13jp1/my_web_app',
+      ),
+      isFalse,
+    );
+    expect(
+      ErrorReporter.isValidSentryDsn('https://sentry.io/123'),
+      isFalse,
+    );
+  });
+
+  test('buildSentryUser includes only opaque user ID and omits email PII', () {
+    final user = ErrorReporter.buildSentryUser('synthetic-user-id');
+    expect(user.id, 'synthetic-user-id');
+    expect(user.email, isNull);
+  });
 }

@@ -1,7 +1,8 @@
+-- Repair unapplied schema typo; target stable provider/category, preserving newer revisions.
 -- Issue #5227: Aider モデル選択 & コスト最適化コースのエビデンス契約・評価基準・更新日付の強化
-UPDATE ai_university_contents
+UPDATE public.ai_university_content
 SET
-  description = $md$
+  content = $md$
 ## 推奨モデルと使い分け (2026年最新ベンチマーク)
 
 | モデル | コスト | コーディング品質 | 推奨用途 | トークン単価 (入力/出力 1Mあたり) |
@@ -42,4 +43,5 @@ aider --model ollama/qwen2.5-coder:7b
 $md$,
   source_url = 'https://aider.chat/docs/config/options.html',
   published_at = '2026-09-02'
-WHERE provider_id = 'aider' AND (title LIKE '%Aider モデル選択%' OR id = '256fce47-54de-4716-ad2c-478bc2e9613b');
+WHERE provider = 'aider' AND category = 'models'
+  AND (published_at IS NULL OR published_at <= DATE '2026-09-02');

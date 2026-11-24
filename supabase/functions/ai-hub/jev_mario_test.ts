@@ -46,3 +46,19 @@ Deno.test('upstream failures, invented actions, NaN, missing scores and invalid 
   }
   await rejects({ ...options(), fetcher: (() => Promise.resolve(new Response('secret should not escape', { status: 500 }))) as typeof fetch }, 502);
 });
+
+Deno.test('opt-in numeric predictions reach provider, arbitrary fields are stripped, malformed data never calls provider', async () => {
+  const prediction = { horizon_ms: 1000, jump_pressed: false, run_pressed: true, gap_ahead: false, wall_ahead: false,
+    enemy_gap: 119.02, enemy_vx: -0.5, contact_ms: 967.64, run_contact_ms: 639.89, projected_gap: -3.98, prompt: 'discard me' };
+  let calls = 0;
+  const o = { ...options(), body: { consent: true, state: { ...state(), prediction } }, fetcher: ((_url, init) => {
+    calls++; const data = JSON.parse(String(init?.body)); assert(data.state.prediction.simulation_hz === 60);
+    assert(!('prompt' in data.state.prediction)); assert(data.questions.controller.instructions.includes('constant-velocity'));
+    return Promise.resolve(new Response(JSON.stringify({ answers: { controller: answer() } })));
+  }) as typeof fetch };
+  const result = await decideMario(o); assert(result.input_profile === 'prediction_v1' && calls === 1);
+  for (const bad of [{ ...prediction, horizon_ms: Infinity }, { ...prediction, run_pressed: 'true' }, { ...prediction, contact_ms: -1 }]) {
+    await rejects({ ...o, body: { consent: true, state: { ...state(), prediction: bad } } }, 400);
+  }
+  assert(calls === 1); assert(!('prediction' in telemetry(state())));
+});

@@ -229,6 +229,79 @@ void main() {
   });
 
   group('AssetRecurringFixedCostStore', () {
+    test('rejects a false save result and permits an explicit retry', () async {
+      final prefs = _ControlledFixedCostPreferences();
+      const store = AssetRecurringFixedCostStore();
+      const cost = AssetRecurringFixedCost(
+        id: 'synthetic_fixed_cost',
+        name: 'Synthetic fixed cost',
+        amount: 100,
+        paymentDay: 15,
+      );
+
+      await expectLater(
+        store.save(const [cost], prefs: prefs),
+        throwsA(isA<StateError>()),
+      );
+      expect(prefs.writeCount, 1);
+      expect(prefs.lastKey, AssetRecurringFixedCostStore.prefsKey);
+
+      prefs.accept = true;
+      await store.save(const [cost], prefs: prefs);
+      expect(prefs.writeCount, 2);
+      expect(prefs.lastValue, contains('synthetic_fixed_cost'));
+    });
+
+    test('rejects a false removal result and permits an explicit retry',
+        () async {
+      final prefs = _ControlledFixedCostPreferences();
+      const store = AssetRecurringFixedCostStore();
+
+      await expectLater(
+        store.save(const [], prefs: prefs),
+        throwsA(isA<StateError>()),
+      );
+      expect(prefs.removeCount, 1);
+      expect(prefs.lastKey, AssetRecurringFixedCostStore.prefsKey);
+      expect(prefs.writeCount, 0);
+
+      prefs.accept = true;
+      await store.save(const [], prefs: prefs);
+      expect(prefs.removeCount, 2);
+    });
+
+    test('propagates a thrown save failure without retrying', () async {
+      final failure = StateError('synthetic storage failure');
+      final prefs = _ControlledFixedCostPreferences(failure: failure);
+      const store = AssetRecurringFixedCostStore();
+      const cost = AssetRecurringFixedCost(
+        id: 'synthetic_fixed_cost',
+        name: 'Synthetic fixed cost',
+        amount: 100,
+        paymentDay: 15,
+      );
+
+      await expectLater(
+        store.save(const [cost], prefs: prefs),
+        throwsA(same(failure)),
+      );
+      expect(prefs.writeCount, 1);
+      expect(prefs.removeCount, 0);
+    });
+
+    test('propagates a thrown removal failure without retrying', () async {
+      final failure = StateError('synthetic storage failure');
+      final prefs = _ControlledFixedCostPreferences(failure: failure);
+      const store = AssetRecurringFixedCostStore();
+
+      await expectLater(
+        store.save(const [], prefs: prefs),
+        throwsA(same(failure)),
+      );
+      expect(prefs.removeCount, 1);
+      expect(prefs.writeCount, 0);
+    });
+
     const store = AssetRecurringFixedCostStore();
 
     test('round-trips a list through SharedPreferences sorted by day',
@@ -265,6 +338,26 @@ void main() {
         loaded[0].cadence,
         AssetRecurringFixedCostCadence.bimonthlyEvenMonth,
       );
+    });
+
+    test('save and load retain evidence-based Claude amount, day and source',
+        () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final prefs = await SharedPreferences.getInstance();
+      const cost = AssetRecurringFixedCost(
+        id: 'fc_1781980533253000',
+        name: 'Claude',
+        amount: 3574,
+        paymentDay: 3,
+        sourceAccountId: 'custom_ab350028',
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      await store.save(const [cost], prefs: prefs);
+      final loaded = (await store.load(prefs: prefs)).single;
+      expect(loaded.name, 'Claude');
+      expect(loaded.amount, 3574);
+      expect(loaded.paymentDay, 3);
+      expect(loaded.sourceAccountId, 'custom_ab350028');
     });
 
     test('returns empty list when nothing stored', () async {
@@ -331,9 +424,7 @@ void main() {
       expect(decoded.map((c) => c.id), ['fc_denki']);
     });
 
-    test(
-        'normalizeCost migrates legacy Claude subscription to Claude Pro 3,000 yen',
-        () {
+    test('normalizeCost preserves user-entered Claude billing details', () {
       const legacy = AssetRecurringFixedCost(
         id: 'card_statement_claude_ai_subscription',
         name: 'Claude AI SUBSCRIPTION',
@@ -342,8 +433,8 @@ void main() {
         category: AssetRecurringFixedCostCategory.subscription,
       );
       final normalized = AssetRecurringFixedCostStore.normalizeCost(legacy);
-      expect(normalized.name, 'Claude Pro');
-      expect(normalized.amount, 3000);
+      expect(normalized.name, 'Claude AI SUBSCRIPTION');
+      expect(normalized.amount, 36418);
       expect(normalized.currency, AssetRecurringFixedCostCurrency.jpy);
       expect(normalized.usdAmount, isNull);
       expect(normalized.category, AssetRecurringFixedCostCategory.subscription);
@@ -363,8 +454,7 @@ void main() {
       expect(chatGptNormalized.amount, 30000);
     });
 
-    test('decodeMirrorValue automatically migrates legacy Claude subscription',
-        () {
+    test('decodeMirrorValue preserves Claude billing evidence', () {
       final decoded =
           AssetRecurringFixedCostStore.decodeMirrorValue(<String, dynamic>{
         'claude_sub': <String, dynamic>{
@@ -382,8 +472,8 @@ void main() {
       });
       expect(decoded.length, 2);
       final claude = decoded.firstWhere((c) => c.id == 'claude_sub');
-      expect(claude.name, 'Claude Pro');
-      expect(claude.amount, 3000);
+      expect(claude.name, 'Claude AI SUBSCRIPTION');
+      expect(claude.amount, 36418);
       expect(claude.currency, AssetRecurringFixedCostCurrency.jpy);
 
       final gcp = decoded.firstWhere((c) => c.id == 'google_cloud');
@@ -400,4 +490,33 @@ Map<String, dynamic> _validJson() {
     'paymentDay': 27,
     'cadence': 'monthly',
   };
+}
+
+class _ControlledFixedCostPreferences extends Fake
+    implements SharedPreferences {
+  _ControlledFixedCostPreferences({this.failure});
+
+  final Error? failure;
+  bool accept = false;
+  int writeCount = 0;
+  int removeCount = 0;
+  String? lastKey;
+  String? lastValue;
+
+  @override
+  Future<bool> setString(String key, String value) async {
+    writeCount += 1;
+    lastKey = key;
+    lastValue = value;
+    if (failure != null) throw failure!;
+    return accept;
+  }
+
+  @override
+  Future<bool> remove(String key) async {
+    removeCount += 1;
+    lastKey = key;
+    if (failure != null) throw failure!;
+    return accept;
+  }
 }

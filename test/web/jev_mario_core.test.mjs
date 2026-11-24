@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { DecisionLoop, readState, summarize, validateRom } from '../../web/jev-mario-lab/core.mjs';
+import { DecisionLoop, readState, summarize, validateRom } from '../../web/labs/jev-mario/core.mjs';
 const require = createRequire(import.meta.url);
-const jsnes = require('../../web/jev-mario-lab/vendor/jsnes.min.js');
+const jsnes = require('../../web/labs/jev-mario/vendor/jsnes.min.js');
 const flush = () => new Promise(r => setImmediate(r));
 const reply = { choice: 'right', confidence: .8, upstream_http_ms: 23 };
 test('median/p95 preserve first sample; failed values excluded', () => {
@@ -43,4 +43,26 @@ test('stale replies release buttons, cap completes and failure stops', async () 
   assert.equal(records[0].stale, true); assert(!actions.includes('right'));
   loop.request = async () => { throw new Error('quota'); };
   loop.start(); await flush(); assert.equal(loop.active, false); assert.equal(records.length, 2);
+});
+
+
+test('configured response age accepts 1s decisions but still rejects expired replies', async () => {
+  let now = 0, delay = 1000; const actions = [], records = [];
+  const loop = new DecisionLoop({ request: async () => { now += delay; return reply; }, state: () => ({}),
+    apply: a => actions.push(a), record: r => records.push(r), done: () => {}, clock: () => now });
+  loop.start({ count: 1, maxAge: 1500 }); await flush();
+  assert.equal(records[0].applied, true); assert.equal(records[0].rtt_ms, 1000);
+  assert(actions.includes('right'));
+  actions.length = 0; delay = 1501;
+  loop.start({ count: 1, maxAge: 1500 }); await flush();
+  assert.equal(records[1].stale, true); assert(!actions.includes('right'));
+});
+
+test('records immutable observation and arrival including held buttons',async()=>{
+ let now=0;const obj={player:{x:32}},records=[];const loop=new DecisionLoop({
+ state:()=>obj,observe:()=>({held:'right'}),request:async()=>{obj.player.x=120;now=1000;return reply;},
+ apply:()=>{},record:r=>records.push(r),done:()=>{},clock:()=>now});
+ loop.start({count:1,maxAge:1500});await flush();
+ assert.equal(records[0].observation.state.player.x,32);assert.equal(records[0].arrival.state.player.x,120);
+ assert.equal(records[0].arrival.context.held,'right');obj.player.x=200;assert.equal(records[0].arrival.state.player.x,120);
 });

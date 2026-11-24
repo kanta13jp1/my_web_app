@@ -3241,6 +3241,8 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, AI_UNIVERSITY_MIGRATION, artifacts_dir)
             ai_university = check_ai_university_migration(conn)
+            from course_migration_smoke import check_course_migration_repair
+            check_course_migration_repair(conn, ROOT)
             apply_sql_fixture(conn, AGENTLESS_COURSE_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, AGENTLESS_COURSE_MIGRATION, artifacts_dir)
             agentless_course = check_agentless_course_migration(conn)

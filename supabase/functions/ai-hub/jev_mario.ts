@@ -16,12 +16,24 @@ function number(value: unknown, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) invalid();
   return value;
 }
+function prediction(value: unknown) {
+  const p = object(value);
+  for (const k of ['jump_pressed', 'run_pressed', 'gap_ahead', 'wall_ahead']) if (typeof p[k] !== 'boolean') invalid();
+  const nullable = (v: unknown, min: number, max: number) => v === null ? null : number(v, min, max);
+  return { simulation_hz: 60, velocity_units: 'pixels_per_frame',
+    horizon_ms: number(p.horizon_ms, 0, 3000), jump_pressed: p.jump_pressed, run_pressed: p.run_pressed,
+    gap_ahead: p.gap_ahead, wall_ahead: p.wall_ahead,
+    enemy_gap: nullable(p.enemy_gap, -65535, 65535), enemy_vx: nullable(p.enemy_vx, -128, 127),
+    contact_ms: nullable(p.contact_ms, 0, 10000), run_contact_ms: nullable(p.run_contact_ms, 0, 10000),
+    projected_gap: nullable(p.projected_gap, -65535, 65535) };
+}
 export function telemetry(value: unknown) {
   const s = object(value);
   const p = object(s.player);
   if (typeof p.grounded !== 'boolean' || !Array.isArray(s.enemies) || s.enemies.length > 5 ||
     !Array.isArray(s.tiles) || s.tiles.length !== 117) invalid();
   return {
+    ...(s.prediction === undefined ? {} : { prediction: prediction(s.prediction) }),
     player: { x: number(p.x, 0, 65535), y: number(p.y, 0, 511),
       vx: number(p.vx, -128, 127), vy: number(p.vy, -128, 127), grounded: p.grounded },
     enemies: s.enemies.map((value) => {
@@ -67,12 +79,12 @@ export async function decideMario(o: {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${o.apiKey}` },
       body: JSON.stringify({ model: 'jev-latest', state, questions: { controller: {
         type: 'choice', criteria: MARIO_ACTIONS,
-        instructions: 'Play original Super Mario Bros. Move right toward the flag and avoid enemies and gaps. y increases downward; velocities are signed engine units. tiles are row-major 13x9, starting at y=32, columns from floor(player.x/16)-2. 0 means empty, positive bytes are terrain, -1 unknown. Grounded means player state 0. Simulation continues during request latency. Choose a controller action; do not invent a button. Jump must be released between jumps.',
+        instructions: 'Play original Super Mario Bros. Move right toward the flag and avoid enemies and gaps. y increases downward; velocities are signed engine units. tiles are row-major 13x9, starting at y=32, columns from floor(player.x/16)-2. 0 means empty, positive bytes are terrain, -1 unknown. Grounded means player state 0. Simulation continues during request latency. Choose a controller action; do not invent a button. Jump must be released between jumps.' + (state.prediction ? ' This is an independent 60Hz recreation. Prediction velocities are pixels per frame. horizon_ms is the previous browser round trip (1000ms initially), not a guaranteed future delay. contact_ms uses current velocity, run_contact_ms assumes running at 2.6 px/frame. projected_gap is a constant-velocity estimate at reply arrival; negative means possible contact before the reply. Estimates ignore acceleration, terrain and enemy activation. Consider whether running would cause contact before the next answer; jump timing and releasing a held jump matter. null means unavailable, not safe.' : ''),
       } } }),
     });
     if (!r.ok) throw new MarioError(502, 'provider_unavailable');
     const data = await r.json();
-    return { ...marioAnswer(data?.answers?.controller),
+    return { ...marioAnswer(data?.answers?.controller), input_profile: state.prediction ? 'prediction_v1' : 'baseline',
       upstream_http_ms: Math.max(0, now() - started),
       model: typeof data.model === 'string' && data.model.length < 100 ? data.model : 'jev-latest' };
   } catch (e) {

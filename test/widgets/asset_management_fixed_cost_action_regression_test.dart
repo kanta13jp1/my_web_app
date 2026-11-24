@@ -29,7 +29,7 @@ void main() {
   });
 
   testWidgets(
-    'recurring costs feed the fixed-cost card, closing, and daily summary',
+    'recurring costs feed summaries without completing the full cost review',
     (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_management_display_mode_v1':
@@ -72,7 +72,16 @@ void main() {
           '③ 今月の固定費をすべて記録して把握',
         ),
       );
-      expect(fixedCostCheck.value, isTrue);
+      expect(fixedCostCheck.value, isFalse);
+      expect(
+        find.text('チェックを保存するにはログインしてください。'),
+        findsOneWidget,
+      );
+
+      expect(
+        find.textContaining('本人が確認してチェックしてください。既存チェックは保持します。'),
+        findsNothing,
+      );
 
       String? clipboardText;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -150,6 +159,13 @@ void main() {
                   'title': 'stale fixed-cost action',
                 },
                 <String, dynamic>{
+                  'action_key': 'upload_current_payslip',
+                  'title': '古い給与提案',
+                  'instruction': 'アップロードして反映（約10秒）',
+                  'estimated_seconds': 10,
+                  'amount_impact': 300000,
+                },
+                <String, dynamic>{
                   'action_key': 'cancel_duplicate_music',
                   'title': 'music saving',
                   'amount_impact': 1080,
@@ -162,7 +178,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('今月の給与明細が未登録です'), findsOneWidget);
+      expect(find.text('今月の給与明細'), findsOneWidget);
+      expect(find.text('給与明細と給与収入の登録状況を確認してください。'), findsOneWidget);
+      expect(find.textContaining('約10秒'), findsNothing);
+      expect(find.text('効果目安: ¥300,000'), findsNothing);
+      expect(find.text('効果目安: ¥1,080'), findsOneWidget);
       expect(find.text('固定費が未登録です'), findsNothing);
       expect(find.text('音楽サブスクが重複しています'), findsOneWidget);
       expect(
