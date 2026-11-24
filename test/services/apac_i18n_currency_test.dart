@@ -145,7 +145,8 @@ void main() {
     test(
       'RegionalDocumentMetadata round-trips JSON and enforces FX checks',
       () {
-        final parsed = RegionalDocumentMetadata.fromJson(<String, dynamic>{
+        final parsed =
+            RegionalDocumentMetadata.fromJson(const <String, dynamic>{
           'id': 'doc-42',
           'user_id': 'user-99',
           'title': 'タイ拠点評価レポート',
@@ -173,14 +174,18 @@ void main() {
         expect(jsonOut['fx_requires_verification'], isTrue);
 
         final notePayload = parsed.toNoteMetadataPayload();
-        expect(notePayload.keys, <String>[
-          'target_region',
-          'content_locale',
-          'base_currency_code',
-          'fx_requires_verification',
-        ]);
+        expect(
+          notePayload.keys,
+          const <String>[
+            'target_region',
+            'content_locale',
+            'base_currency_code',
+            'fx_requires_verification',
+          ],
+        );
 
-        final fallback = RegionalDocumentMetadata.fromJson(<String, dynamic>{
+        final fallback =
+            RegionalDocumentMetadata.fromJson(const <String, dynamic>{
           'id': 'doc-fallback',
           'user_id': 'user-1',
           'title': '未定義地域テスト',
