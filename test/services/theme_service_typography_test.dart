@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,5 +49,48 @@ void main() {
         containsAll(<String>['NotoSansJP', 'NotoSans', 'NotoColorEmoji']),
       );
     });
+
+    testWidgets(
+      'AppBar foregroundColor overrides theme title color in light and dark themes',
+      (WidgetTester tester) async {
+        final service = ThemeService();
+        for (final theme in <ThemeData>[
+          service.getLightTheme(),
+          service.getDarkTheme(),
+        ]) {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: theme,
+              home: Scaffold(
+                appBar: AppBar(
+                  backgroundColor: const Color(0xFF102B43),
+                  foregroundColor: Colors.white,
+                  title: const Text('経営コックピット'),
+                ),
+              ),
+            ),
+          );
+
+          final context = tester.element(find.text('経営コックピット'));
+          expect(DefaultTextStyle.of(context).style.color, Colors.white);
+
+          await tester.pumpWidget(
+            MaterialApp(
+              key: ValueKey<Brightness>(theme.brightness),
+              theme: theme,
+              home: Scaffold(
+                appBar: AppBar(title: const Text('通常タイトル')),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final defaultContext = tester.element(find.text('通常タイトル'));
+          expect(
+            DefaultTextStyle.of(defaultContext).style.color,
+            theme.appBarTheme.foregroundColor,
+          );
+        }
+      },
+    );
   });
 }

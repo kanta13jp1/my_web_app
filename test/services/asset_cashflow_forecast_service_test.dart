@@ -3,6 +3,66 @@ import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 
 void main() {
   group('AssetCashflowForecastService.project', () {
+    test('anchor income is conditional, while later recurring income remains',
+        () {
+      final scenarios = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 25),
+        startingBalance: 100,
+        horizonMonths: 2,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200),
+        ],
+        oneTimeIncome: [
+          AssetCashflowDatedEntry(date: DateTime(2026, 6, 25), amount: 30),
+        ],
+        oneTimeOutflow: [
+          AssetCashflowDatedEntry(date: DateTime(2026, 6, 26), amount: 180),
+        ],
+      );
+      expect(scenarios.hasAnchorDayIncome, isTrue);
+      expect(scenarios.advisoryForecast, isNull);
+      expect(scenarios.alreadyReflected.months.first.closingBalance, -80);
+      expect(
+        scenarios.alreadyReflected.firstShortfallDate,
+        DateTime(2026, 6, 26),
+      );
+      expect(scenarios.notYetReflected.months.first.closingBalance, 150);
+      expect(scenarios.notYetReflected.firstShortfallDate, isNull);
+      expect(scenarios.alreadyReflected.months.last.closingBalance, 120);
+      expect(scenarios.notYetReflected.months.last.closingBalance, 350);
+    });
+
+    test('month-end clamping only suppresses the anchor occurrence', () {
+      final scenarios = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2028, 2, 29),
+        startingBalance: 100,
+        horizonMonths: 2,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 31, amount: 50),
+        ],
+      );
+      expect(scenarios.hasAnchorDayIncome, isTrue);
+      expect(scenarios.alreadyReflected.months.first.closingBalance, 100);
+      expect(scenarios.notYetReflected.months.first.closingBalance, 150);
+      expect(scenarios.alreadyReflected.months.last.closingBalance, 150);
+      expect(scenarios.notYetReflected.months.last.closingBalance, 200);
+    });
+
+    test('without anchor income both paths preserve the normal forecast', () {
+      final scenarios = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 24),
+        startingBalance: 100,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 50),
+        ],
+      );
+      expect(scenarios.hasAnchorDayIncome, isFalse);
+      expect(scenarios.advisoryForecast, same(scenarios.notYetReflected));
+      expect(scenarios.alreadyReflected.months.single.closingBalance, 150);
+      expect(scenarios.notYetReflected.months.single.closingBalance, 150);
+    });
+
     test(
         'paid salary cycle crosses calendar months without suppressing next bill',
         () {

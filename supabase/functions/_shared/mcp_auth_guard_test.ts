@@ -1,9 +1,11 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildOAuthProtectedResourceMetadata,
+  buildWwwAuthenticateHeader,
   isOAuthProtectedResourceMetadataRequest,
   logMcpInvocation,
   type McpAuthContext,
+  protectedResourceUrl,
   requireScope,
   toolResourceUrn,
 } from "./mcp_auth_guard.ts";
@@ -96,4 +98,27 @@ Deno.test("logMcpInvocation falls back safely without Supabase env", async () =>
   });
 
   await logMcpInvocation(ctx, "memory.search", { q: "audit" }, 200, req);
+});
+Deno.test("Supabase internal URLs normalize to https /functions/v1 and support /mcp path insertion", () => {
+  const req = new Request(
+    "http://smmkxxavexumewbfaqpy.supabase.co/tools-hub/.well-known/oauth-protected-resource/mcp",
+  );
+  assertEquals(isOAuthProtectedResourceMetadataRequest(req), true);
+  assertEquals(
+    protectedResourceUrl(req.url),
+    "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub/mcp",
+  );
+  assertEquals(
+    protectedResourceUrl(
+      "http://smmkxxavexumewbfaqpy.supabase.co/tools-hub/.well-known/oauth-protected-resource",
+    ),
+    "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub",
+  );
+  assertEquals(
+    buildWwwAuthenticateHeader(
+      "http://smmkxxavexumewbfaqpy.supabase.co/tools-hub/mcp",
+      "notes.list",
+    ),
+    'Bearer resource_metadata="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub/.well-known/oauth-protected-resource", resource="urn:jibun:tool:notes.list"',
+  );
 });

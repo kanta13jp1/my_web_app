@@ -32,6 +32,7 @@ jobs:
       deployment: false
     permissions:
       contents: write
+      issues: write
     name: Discover Trending Competitors
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -76,7 +77,9 @@ jobs:
             --max-per-cat="$MAX_PER_CAT" \
             --existing=/tmp/existing_competitors.json \
             --output=/tmp/all_candidates.json \
-            --output-count="$GITHUB_OUTPUT"
+            --output-count="$GITHUB_OUTPUT" \
+            --log-output=/tmp/discovery_log.json \
+            --discovery-week="$WEEK"
 
       # ── Step 3: 既存競合と重複除去 + Supabase staging ────────────────────
       - name: Step 3 - 重複除去 + competitor_candidates に INSERT
@@ -85,8 +88,36 @@ jobs:
           # competitor_candidates はservice-role write限定。read-only discovery
           # stepには渡さず、この書込みstepだけへ限定する。
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCOVERY_LOG_PATH: /tmp/discovery_log.json
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           python3 .github/scripts/competitor_stage.py
+
+      # ── Step 3b: 0件候補アラート通知 ────────────────────────────────────
+      - name: Step 3b - 0件候補アラート通知
+        if: steps.stage.outputs.zero_result_alert == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALERT_SUMMARY: ${{ steps.stage.outputs.alert_summary }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          DISCOVERY_WEEK="$(date +'%Y-%V')"
+          echo "::warning::Competitor discovery returned 0 candidates ($ALERT_SUMMARY)"
+          {
+            echo "### Competitor Discovery 0件候補アラート"
+            echo "- Week: $DISCOVERY_WEEK"
+            echo "- Summary: $ALERT_SUMMARY"
+            echo "- Run: $RUN_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
+          ALERT_TITLE="[Alert] Competitor discovery returned 0 candidates ($DISCOVERY_WEEK)"
+          ALERT_BODY="$(printf 'Competitor discovery returned 0 candidates.\n\n- Week: %s\n- Summary: %s\n- Run: %s\n' "$DISCOVERY_WEEK" "$ALERT_SUMMARY" "$RUN_URL")"
+          existing_issue="$(gh issue list --repo "$REPO" --state open --search "in:title \"$ALERT_TITLE\"" --limit 1 --json number --jq '.[0].number' 2>/dev/null || true)"
+          if [ -z "$existing_issue" ]; then
+            gh issue create --repo "$REPO" --title "$ALERT_TITLE" --body "$ALERT_BODY" || true
+          else
+            gh issue comment "$existing_issue" --repo "$REPO" --body "Repeat zero-result discovery in week ${DISCOVERY_WEEK}: ${ALERT_SUMMARY} (${RUN_URL})" || true
+          fi
 
       # ── Step 4: サマリーレポート生成 ──────────────────────────────────────
       - name: Step 4 - サマリーレポート生成

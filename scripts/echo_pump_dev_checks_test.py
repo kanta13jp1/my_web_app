@@ -22,7 +22,7 @@ class DevChecksTest(unittest.TestCase):
             self.assertEqual(set(actual), expected)
             self.assertEqual(len(actual), len(set(actual)))
         self.assertEqual(grouped.count(checks.AUDIO), 1)
-        self.assertEqual(len(grouped[-1][2:]), 14)
+        self.assertEqual(len(grouped[-1][2:]), 15)
 
     def test_missing_check_categories_and_unknown_commands_are_rejected(self):
         for commands in ([], [checks.AUDIO], [['echo', 'skipped']],

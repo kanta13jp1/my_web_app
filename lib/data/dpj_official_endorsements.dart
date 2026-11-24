@@ -6,30 +6,30 @@ import '../models/election_intelligence.dart';
 
 const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
-const String dpjOfficialEndorsementSourceAsOf = '2026-10-28';
+const String dpjOfficialEndorsementSourceAsOf = '2026-11-18';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    '09feecb87d2cdf31b28efe7d9f3091416a922208e05e3e91583c30f4f9586d99';
-const int dpjOfficialRecommendationEntryCount = 14;
+    'cf5caad9b1faa9df6bb3c1b2aa6ed25799c0a3818c1c8b06831229a8dc6bad7a';
+const int dpjOfficialRecommendationEntryCount = 23;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     <OfficialEndorsementPrefecture>[
   OfficialEndorsementPrefecture(
     prefecture: '北海道',
-    totalCount: 7,
+    totalCount: 11,
     incumbentCount: 2,
-    newcomerCount: 5,
-    formerCount: 0,
-    prefecturalCount: 0,
-    municipalCount: 7,
+    newcomerCount: 8,
+    formerCount: 1,
+    prefecturalCount: 1,
+    municipalCount: 10,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '青森',
-    totalCount: 6,
-    incumbentCount: 2,
-    newcomerCount: 3,
+    totalCount: 4,
+    incumbentCount: 1,
+    newcomerCount: 2,
     formerCount: 1,
     prefecturalCount: 2,
-    municipalCount: 4,
+    municipalCount: 2,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '秋田',
@@ -46,6 +46,15 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     incumbentCount: 5,
     newcomerCount: 0,
     formerCount: 0,
+    prefecturalCount: 2,
+    municipalCount: 3,
+  ),
+  OfficialEndorsementPrefecture(
+    prefecture: '福島',
+    totalCount: 5,
+    incumbentCount: 2,
+    newcomerCount: 2,
+    formerCount: 1,
     prefecturalCount: 2,
     municipalCount: 3,
   ),
@@ -69,48 +78,48 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '群馬',
-    totalCount: 3,
+    totalCount: 4,
     incumbentCount: 2,
-    newcomerCount: 1,
+    newcomerCount: 2,
     formerCount: 0,
     prefecturalCount: 1,
-    municipalCount: 2,
+    municipalCount: 3,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '埼玉',
-    totalCount: 3,
-    incumbentCount: 2,
-    newcomerCount: 0,
+    totalCount: 17,
+    incumbentCount: 6,
+    newcomerCount: 10,
     formerCount: 1,
-    prefecturalCount: 1,
-    municipalCount: 2,
+    prefecturalCount: 5,
+    municipalCount: 12,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '千葉',
-    totalCount: 26,
+    totalCount: 24,
     incumbentCount: 2,
     newcomerCount: 22,
-    formerCount: 2,
+    formerCount: 0,
     prefecturalCount: 6,
-    municipalCount: 20,
+    municipalCount: 18,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '東京',
-    totalCount: 44,
-    incumbentCount: 30,
-    newcomerCount: 12,
+    totalCount: 53,
+    incumbentCount: 31,
+    newcomerCount: 20,
     formerCount: 2,
     prefecturalCount: 0,
-    municipalCount: 44,
+    municipalCount: 53,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '神奈川',
-    totalCount: 39,
+    totalCount: 43,
     incumbentCount: 11,
-    newcomerCount: 28,
+    newcomerCount: 32,
     formerCount: 0,
-    prefecturalCount: 11,
-    municipalCount: 28,
+    prefecturalCount: 13,
+    municipalCount: 30,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '新潟',
@@ -132,21 +141,21 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '石川',
-    totalCount: 4,
+    totalCount: 5,
     incumbentCount: 1,
-    newcomerCount: 3,
+    newcomerCount: 4,
     formerCount: 0,
-    prefecturalCount: 1,
+    prefecturalCount: 2,
     municipalCount: 3,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '福井',
-    totalCount: 6,
+    totalCount: 7,
     incumbentCount: 4,
-    newcomerCount: 2,
+    newcomerCount: 3,
     formerCount: 0,
     prefecturalCount: 1,
-    municipalCount: 5,
+    municipalCount: 6,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '山梨',
@@ -168,12 +177,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '岐阜',
-    totalCount: 13,
+    totalCount: 15,
     incumbentCount: 3,
-    newcomerCount: 10,
-    formerCount: 0,
+    newcomerCount: 11,
+    formerCount: 1,
     prefecturalCount: 6,
-    municipalCount: 7,
+    municipalCount: 9,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '静岡',
@@ -195,12 +204,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '三重',
-    totalCount: 6,
+    totalCount: 5,
     incumbentCount: 3,
-    newcomerCount: 3,
+    newcomerCount: 2,
     formerCount: 0,
     prefecturalCount: 4,
-    municipalCount: 2,
+    municipalCount: 1,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '滋賀',
@@ -222,21 +231,21 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '大阪',
-    totalCount: 19,
+    totalCount: 20,
     incumbentCount: 9,
-    newcomerCount: 10,
+    newcomerCount: 11,
     formerCount: 0,
     prefecturalCount: 0,
-    municipalCount: 19,
+    municipalCount: 20,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '兵庫',
-    totalCount: 13,
+    totalCount: 16,
     incumbentCount: 1,
-    newcomerCount: 10,
+    newcomerCount: 13,
     formerCount: 2,
-    prefecturalCount: 1,
-    municipalCount: 12,
+    prefecturalCount: 2,
+    municipalCount: 14,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '奈良',
@@ -266,6 +275,15 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     municipalCount: 1,
   ),
   OfficialEndorsementPrefecture(
+    prefecture: '島根',
+    totalCount: 1,
+    incumbentCount: 1,
+    newcomerCount: 0,
+    formerCount: 0,
+    prefecturalCount: 1,
+    municipalCount: 0,
+  ),
+  OfficialEndorsementPrefecture(
     prefecture: '岡山',
     totalCount: 4,
     incumbentCount: 2,
@@ -293,13 +311,22 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     municipalCount: 1,
   ),
   OfficialEndorsementPrefecture(
+    prefecture: '徳島',
+    totalCount: 2,
+    incumbentCount: 0,
+    newcomerCount: 2,
+    formerCount: 0,
+    prefecturalCount: 2,
+    municipalCount: 0,
+  ),
+  OfficialEndorsementPrefecture(
     prefecture: '香川',
     totalCount: 26,
     incumbentCount: 14,
     newcomerCount: 12,
     formerCount: 0,
-    prefecturalCount: 8,
-    municipalCount: 18,
+    prefecturalCount: 9,
+    municipalCount: 17,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '愛媛',
@@ -321,12 +348,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '福岡',
-    totalCount: 21,
+    totalCount: 23,
     incumbentCount: 2,
-    newcomerCount: 19,
+    newcomerCount: 21,
     formerCount: 0,
-    prefecturalCount: 8,
-    municipalCount: 13,
+    prefecturalCount: 9,
+    municipalCount: 14,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '佐賀',
@@ -339,12 +366,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '長崎',
-    totalCount: 9,
-    incumbentCount: 4,
+    totalCount: 10,
+    incumbentCount: 5,
     newcomerCount: 5,
     formerCount: 0,
     prefecturalCount: 3,
-    municipalCount: 6,
+    municipalCount: 7,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '熊本',
@@ -384,13 +411,13 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
 ];
 
-const int dpjOfficialEndorsementTotal = 416;
-const int dpjOfficialEndorsementIncumbentTotal = 175;
-const int dpjOfficialEndorsementNewcomerTotal = 230;
-const int dpjOfficialEndorsementFormerTotal = 11;
-const int dpjOfficialEndorsementPrefectureCount = 41;
-const int dpjOfficialEndorsementPrefecturalTotal = 113;
-const int dpjOfficialEndorsementMunicipalTotal = 303;
+const int dpjOfficialEndorsementTotal = 462;
+const int dpjOfficialEndorsementIncumbentTotal = 183;
+const int dpjOfficialEndorsementNewcomerTotal = 267;
+const int dpjOfficialEndorsementFormerTotal = 12;
+const int dpjOfficialEndorsementPrefectureCount = 44;
+const int dpjOfficialEndorsementPrefecturalTotal = 129;
+const int dpjOfficialEndorsementMunicipalTotal = 333;
 
 OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
   String prefecture,

@@ -1,0 +1,66 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY. The reviewed runner verifies service identity, token, and all placeholders.
+begin;
+grant all privileges on table public.asset_pref_mirror to anon, authenticated, service_role;
+-- MATRIX_PROFILE_SETUP
+create temp table codex_matrix_expected_missing(role_name text, privilege_name text) on commit drop;
+insert into codex_matrix_expected_missing values
+-- MATRIX_EXPECTED_MISSING
+;
+create temp table codex_matrix_before(snapshot jsonb) on commit drop;
+create function pg_temp.codex_matrix_snapshot() returns jsonb language sql as $snapshot$
+ select pg_catalog.jsonb_build_object(
+  'owner',c.relowner,'rls',c.relrowsecurity,'force',c.relforcerowsecurity,
+  'rows',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(t) order by t.user_id,t.pref_key),'[]'::jsonb)
+          from only public.asset_pref_mirror t),
+  'policy',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(p) order by p.policyname),'[]'::jsonb)
+            from pg_catalog.pg_policies p where p.schemaname='public' and p.tablename='asset_pref_mirror'),
+  'other_acl',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_array(x.grantor,x.grantee,x.privilege_type,x.is_grantable)
+                      order by x.grantor,x.grantee,x.privilege_type,x.is_grantable),'[]'::jsonb)
+      from pg_catalog.aclexplode(coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) x
+      where not (x.grantee in ('anon'::regrole::oid,'authenticated'::regrole::oid) and x.privilege_type='TRUNCATE')),
+  'other_effective',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_array(r.role_name,p.privilege_name,
+                          pg_catalog.has_table_privilege(r.role_name,c.oid,p.privilege_name)) order by r.role_name,p.privilege_name),'[]'::jsonb)
+      from (values ('anon'),('authenticated'),('service_role')) r(role_name)
+      cross join (values ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')) p(privilege_name)),
+  'columns',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_array(a.attname,a.attacl::text) order by a.attnum),'[]'::jsonb)
+             from pg_catalog.pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped),
+  'memberships',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(m) order by m.roleid,m.member,m.grantor),'[]'::jsonb)
+                 from pg_catalog.pg_auth_members m),
+  'role_attributes',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_array(r.oid,r.rolname,r.rolsuper,r.rolinherit,r.rolbypassrls) order by r.oid),'[]'::jsonb)
+                     from pg_catalog.pg_roles r where r.rolname in ('anon','authenticated','service_role')),
+  'hierarchy',(select coalesce(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_array(i.inhparent,i.inhrelid) order by i.inhrelid),'[]'::jsonb)
+               from pg_catalog.pg_inherits i where i.inhparent=c.oid or i.inhrelid=c.oid),
+  'service',pg_catalog.has_table_privilege('service_role',c.oid,'TRUNCATE'))
+ from pg_catalog.pg_class c where c.oid='public.asset_pref_mirror'::regclass;
+$snapshot$;
+insert into codex_matrix_before select pg_temp.codex_matrix_snapshot();
+do $matrix_before$
+begin
+ if (select count(*) from codex_matrix_before) <> 1 then raise exception 'matrix snapshot missing'; end if;
+ if exists (
+  select 1 from (values ('anon'),('authenticated'),('service_role')) r(role_name)
+  cross join (values ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')) p(privilege_name)
+  where pg_catalog.has_table_privilege(r.role_name,'public.asset_pref_mirror',p.privilege_name)
+    is distinct from (not exists (select 1 from codex_matrix_expected_missing e
+                                  where e.role_name=r.role_name and e.privilege_name=p.privilege_name))
+ ) then raise exception 'matrix baseline privilege mismatch'; end if;
+ if pg_catalog.has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE') is distinct from
+    -- MATRIX_EXPECTED_ANON_TRUNCATE
+    or not pg_catalog.has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE')
+    or not pg_catalog.has_table_privilege('service_role','public.asset_pref_mirror','TRUNCATE')
+ then raise exception 'matrix baseline truncate mismatch'; end if;
+end $matrix_before$;
+-- MATRIX_CURRENT_PR_MIGRATION
+do $matrix_after$
+begin
+ if pg_catalog.has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE') is distinct from false
+    or pg_catalog.has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE') is distinct from false
+ then raise exception 'matrix target truncate remains'; end if;
+ if pg_temp.codex_matrix_snapshot() is distinct from (select snapshot from codex_matrix_before)
+ then raise exception 'matrix unrelated state changed'; end if;
+end $matrix_after$;
+-- MATRIX_ORACLE_NEGATIVE
+rollback;
+\echo SYNTHETIC_NON_TARGET_MATRIX_VERIFIED
