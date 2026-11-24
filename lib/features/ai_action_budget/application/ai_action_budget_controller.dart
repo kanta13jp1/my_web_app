@@ -156,12 +156,10 @@ class AiActionBudgetController extends ChangeNotifier {
       );
       return;
     }
-    if (_state.config.isPaused &&
-        !_state.callerIsAdmin &&
-        parsed > _state.config.monthlyUsdCap) {
+    if (_state.config.isPaused && !_state.callerIsAdmin) {
       _setState(
         _state.copyWith(
-          errorMessage: '自動停止中の月次上限引き上げは管理者権限 (is_admin) が必要です。',
+          errorMessage: '自動停止中の月次上限変更は管理者権限 (is_admin) が必要です。',
         ),
       );
       return;

@@ -55,10 +55,8 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
   Future<AiActionBudgetConfig> updateMonthlyCap({
     required double monthlyUsdCap,
   }) async {
-    if (_config.isPaused &&
-        !callerIsAdmin &&
-        monthlyUsdCap > _config.monthlyUsdCap) {
-      throw StateError('Only admins may raise cap while paused');
+    if (_config.isPaused && !callerIsAdmin) {
+      throw StateError('Only admins may modify cap while paused');
     }
     _config = _config.copyWith(
       monthlyUsdCap: monthlyUsdCap,
@@ -168,6 +166,11 @@ void main() {
               AiActionBudgetController(repository: nonAdminRepo);
           await nonAdminController.loadSnapshot();
           expect(nonAdminController.state.callerIsAdmin, isFalse);
+          await nonAdminController.updateMonthlyCap(rawCapUsd: '5.0');
+          expect(
+            nonAdminController.state.errorMessage,
+            contains('管理者権限'),
+          );
           await nonAdminController.resumeBudget();
           expect(
             nonAdminController.state.errorMessage,

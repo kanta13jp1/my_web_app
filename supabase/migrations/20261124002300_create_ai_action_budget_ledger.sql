@@ -46,12 +46,12 @@ alter table public.ai_action_budget_configs enable row level security;
 alter table public.ai_action_budget_ledger enable row level security;
 
 revoke all on table public.ai_action_budget_configs from public, anon;
-revoke all on table public.ai_action_budget_ledger from public, anon;
+revoke all on table public.ai_action_budget_ledger from public, anon, authenticated;
 
 grant select, insert, update, delete on table public.ai_action_budget_configs to authenticated;
 grant all on table public.ai_action_budget_configs to service_role;
 
-grant select, insert, delete on table public.ai_action_budget_ledger to authenticated;
+grant select on table public.ai_action_budget_ledger to authenticated;
 grant all on table public.ai_action_budget_ledger to service_role;
 
 drop policy if exists "ai_action_budget_configs_select_own_or_admin"
@@ -105,13 +105,14 @@ create policy "ai_action_budget_configs_update_own_or_admin"
 
 drop policy if exists "ai_action_budget_configs_delete_own_or_admin"
   on public.ai_action_budget_configs;
-create policy "ai_action_budget_configs_delete_own_or_admin"
+drop policy if exists "ai_action_budget_configs_delete_admin"
+  on public.ai_action_budget_configs;
+create policy "ai_action_budget_configs_delete_admin"
   on public.ai_action_budget_configs
   for delete
   to authenticated
   using (
-    auth.uid() = user_id
-    or exists (
+    exists (
       select 1
       from public.user_profiles as up
       where up.user_id = auth.uid()
@@ -135,38 +136,24 @@ create policy "ai_action_budget_ledger_select_own_or_admin"
     )
   );
 
+-- Direct client INSERT/DELETE on ai_action_budget_ledger are revoked from authenticated;
+-- all budget ledger inserts must go through record_ai_action_usage_atomic().
 drop policy if exists "ai_action_budget_ledger_insert_own"
   on public.ai_action_budget_ledger;
-create policy "ai_action_budget_ledger_insert_own"
-  on public.ai_action_budget_ledger
-  for insert
-  to authenticated
-  with check (auth.uid() = user_id);
-
 drop policy if exists "ai_action_budget_ledger_delete_own_or_admin"
   on public.ai_action_budget_ledger;
-create policy "ai_action_budget_ledger_delete_own_or_admin"
-  on public.ai_action_budget_ledger
-  for delete
-  to authenticated
-  using (
-    auth.uid() = user_id
-    or exists (
-      select 1
-      from public.user_profiles as up
-      where up.user_id = auth.uid()
-        and up.is_admin = true
-    )
-  );
 
 create or replace function public.guard_ai_action_budget_config_fields()
 returns trigger
 language plpgsql
 security invoker
-set search_path = public
+set search_path = public, auth, pg_catalog, pg_temp
 as $guard$
 declare
   jwt_role text;
+  v_rpc_owner name;
+  v_is_service boolean;
+  v_is_atomic_rpc boolean;
   caller_is_admin boolean;
 begin
   jwt_role := coalesce(
@@ -175,11 +162,29 @@ begin
     ''
   );
 
-  if jwt_role = 'service_role'
-     or (
-       session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
-       and jwt_role = ''
-     ) then
+  select pg_catalog.pg_get_userbyid(proc.proowner)
+    into v_rpc_owner
+    from pg_catalog.pg_proc as proc
+   where proc.oid = pg_catalog.to_regprocedure(
+     'public.record_ai_action_usage_atomic(text,text,integer,integer,numeric,text)'
+   );
+
+  v_is_service := (
+    jwt_role = 'service_role'
+    or (
+      session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
+      and jwt_role = ''
+    )
+  );
+  v_is_atomic_rpc := (
+    coalesce(current_setting('app.ai_action_budget_atomic_rpc', true), '') = 'on'
+    and (
+      current_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
+      or (v_rpc_owner is not null and current_user = v_rpc_owner)
+    )
+  );
+
+  if v_is_service or v_is_atomic_rpc then
     if tg_op = 'INSERT' then
       new.created_at := coalesce(new.created_at, timezone('utc', now()));
     end if;
@@ -223,12 +228,14 @@ begin
         raise exception 'Only owner or admin may update budget config'
           using errcode = '42501';
       end if;
-      if old.is_paused = true and new.is_paused is distinct from true then
-        raise exception 'Only admins may clear auto-pause state'
+      if new.is_paused is distinct from old.is_paused
+         or new.paused_at is distinct from old.paused_at then
+        raise exception 'Only admins may modify auto-pause state or timestamp'
           using errcode = '42501';
       end if;
-      if old.is_paused = true and new.monthly_usd_cap > old.monthly_usd_cap then
-        raise exception 'Only admins may raise monthly_usd_cap while paused'
+      if new.warning_threshold_pct is distinct from old.warning_threshold_pct
+         or new.hard_stop_pct is distinct from old.hard_stop_pct then
+        raise exception 'Only admins may modify warning or hard-stop threshold percentages'
           using errcode = '42501';
       end if;
       if new.resumed_by is distinct from old.resumed_by
@@ -236,14 +243,19 @@ begin
         raise exception 'Only admins may set resume audit fields'
           using errcode = '42501';
       end if;
+      if old.is_paused = true
+         and new.monthly_usd_cap is distinct from old.monthly_usd_cap then
+        raise exception 'Only admins may modify monthly_usd_cap while paused'
+          using errcode = '42501';
+      end if;
     else
       if old.is_paused = true and new.is_paused = false then
         new.resumed_by := coalesce(new.resumed_by, auth.uid());
         new.resumed_at := coalesce(new.resumed_at, timezone('utc', now()));
       end if;
-    end if;
-    if old.is_paused = false and new.is_paused = true and new.paused_at is null then
-      new.paused_at := timezone('utc', now());
+      if old.is_paused = false and new.is_paused = true and new.paused_at is null then
+        new.paused_at := timezone('utc', now());
+      end if;
     end if;
     new.updated_at := timezone('utc', now());
   end if;
@@ -263,10 +275,13 @@ create or replace function public.guard_ai_action_budget_ledger_fields()
 returns trigger
 language plpgsql
 security invoker
-set search_path = public
+set search_path = public, auth, pg_catalog, pg_temp
 as $guard$
 declare
   jwt_role text;
+  v_rpc_owner name;
+  v_is_service boolean;
+  v_is_atomic_rpc boolean;
   config_paused boolean;
 begin
   jwt_role := coalesce(
@@ -275,18 +290,44 @@ begin
     ''
   );
 
-  if jwt_role = 'service_role'
-     or (
-       session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
-       and jwt_role = ''
-     ) then
+  select pg_catalog.pg_get_userbyid(proc.proowner)
+    into v_rpc_owner
+    from pg_catalog.pg_proc as proc
+   where proc.oid = pg_catalog.to_regprocedure(
+     'public.record_ai_action_usage_atomic(text,text,integer,integer,numeric,text)'
+   );
+
+  v_is_service := (
+    jwt_role = 'service_role'
+    or (
+      session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
+      and jwt_role = ''
+    )
+  );
+  v_is_atomic_rpc := (
+    coalesce(current_setting('app.ai_action_budget_atomic_rpc', true), '') = 'on'
+    and (
+      current_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
+      or (v_rpc_owner is not null and current_user = v_rpc_owner)
+    )
+  );
+
+  if v_is_service then
     if tg_op = 'INSERT' then
       new.created_at := coalesce(new.created_at, timezone('utc', now()));
+      return new;
+    end if;
+    if tg_op = 'DELETE' then
+      return old;
     end if;
     return new;
   end if;
 
   if tg_op = 'INSERT' then
+    if not v_is_atomic_rpc then
+      raise exception 'Direct inserts into ai_action_budget_ledger are disabled; use record_ai_action_usage_atomic'
+        using errcode = '42501';
+    end if;
     if auth.uid() is null or new.user_id is distinct from auth.uid() then
       raise exception 'Authenticated owner user_id is required on ledger insert'
         using errcode = '42501';
@@ -309,6 +350,11 @@ begin
       using errcode = '42501';
   end if;
 
+  if tg_op = 'DELETE' then
+    raise exception 'AI action budget ledger entries cannot be deleted directly'
+      using errcode = '42501';
+  end if;
+
   return new;
 end;
 $guard$;
@@ -316,7 +362,7 @@ $guard$;
 drop trigger if exists guard_ai_action_budget_ledger_fields
   on public.ai_action_budget_ledger;
 create trigger guard_ai_action_budget_ledger_fields
-  before insert or update on public.ai_action_budget_ledger
+  before insert or update or delete on public.ai_action_budget_ledger
   for each row
   execute function public.guard_ai_action_budget_ledger_fields();
 
@@ -331,10 +377,11 @@ create or replace function public.record_ai_action_usage_atomic(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth, pg_temp
+set search_path = public, auth, pg_catalog, pg_temp
 as $fn$
 declare
   v_uid uuid;
+  v_previous_guard text;
   v_cfg public.ai_action_budget_configs%rowtype;
   v_entry public.ai_action_budget_ledger%rowtype;
   v_total_usd numeric(12, 6);
@@ -347,62 +394,81 @@ begin
       using errcode = '42501';
   end if;
 
-  insert into public.ai_action_budget_configs (user_id, monthly_usd_cap)
-  values (v_uid, 50.0000)
-  on conflict (user_id) do nothing;
+  v_previous_guard := current_setting('app.ai_action_budget_atomic_rpc', true);
+  perform set_config('app.ai_action_budget_atomic_rpc', 'on', true);
 
-  select *
-    into v_cfg
-    from public.ai_action_budget_configs
-    where user_id = v_uid
-    for update;
+  begin
+    insert into public.ai_action_budget_configs (user_id, monthly_usd_cap)
+    values (v_uid, 50.0000)
+    on conflict (user_id) do nothing;
 
-  if v_cfg.is_paused then
-    raise exception 'Monthly AI budget is paused; action execution blocked'
-      using errcode = '42501';
-  end if;
+    select *
+      into v_cfg
+      from public.ai_action_budget_configs
+      where user_id = v_uid
+      for update;
 
-  insert into public.ai_action_budget_ledger (
-    user_id,
-    action_name,
-    model_id,
-    input_tokens,
-    output_tokens,
-    estimated_usd,
-    billing_month
-  )
-  values (
-    v_uid,
-    p_action_name,
-    p_model_id,
-    p_input_tokens,
-    p_output_tokens,
-    p_estimated_usd,
-    p_billing_month
-  )
-  returning * into v_entry;
+    if v_cfg.is_paused then
+      raise exception 'Monthly AI budget is paused; action execution blocked'
+        using errcode = '42501';
+    end if;
 
-  select coalesce(sum(estimated_usd), 0)::numeric(12, 6)
-    into v_total_usd
-    from public.ai_action_budget_ledger
-    where user_id = v_uid
-      and billing_month = p_billing_month;
+    insert into public.ai_action_budget_ledger (
+      user_id,
+      action_name,
+      model_id,
+      input_tokens,
+      output_tokens,
+      estimated_usd,
+      billing_month
+    )
+    values (
+      v_uid,
+      p_action_name,
+      p_model_id,
+      p_input_tokens,
+      p_output_tokens,
+      p_estimated_usd,
+      p_billing_month
+    )
+    returning * into v_entry;
 
-  v_usage_pct := case
-    when v_cfg.monthly_usd_cap > 0 then
-      (v_total_usd / v_cfg.monthly_usd_cap) * 100.0
-    else 100.0
+    select coalesce(sum(estimated_usd), 0)::numeric(12, 6)
+      into v_total_usd
+      from public.ai_action_budget_ledger
+      where user_id = v_uid
+        and billing_month = p_billing_month;
+
+    v_usage_pct := case
+      when v_cfg.monthly_usd_cap > 0 then
+        (v_total_usd / v_cfg.monthly_usd_cap) * 100.0
+      else 100.0
+    end;
+    v_should_pause := (v_usage_pct >= v_cfg.hard_stop_pct);
+
+    if v_should_pause then
+      update public.ai_action_budget_configs
+         set is_paused = true,
+             paused_at = coalesce(paused_at, timezone('utc', now())),
+             updated_at = timezone('utc', now())
+       where id = v_cfg.id
+       returning * into v_cfg;
+    end if;
+  exception
+    when others then
+      perform set_config(
+        'app.ai_action_budget_atomic_rpc',
+        coalesce(v_previous_guard, ''),
+        true
+      );
+      raise;
   end;
-  v_should_pause := (v_usage_pct >= v_cfg.hard_stop_pct);
 
-  if v_should_pause then
-    update public.ai_action_budget_configs
-       set is_paused = true,
-           paused_at = coalesce(paused_at, timezone('utc', now())),
-           updated_at = timezone('utc', now())
-     where id = v_cfg.id
-     returning * into v_cfg;
-  end if;
+  perform set_config(
+    'app.ai_action_budget_atomic_rpc',
+    coalesce(v_previous_guard, ''),
+    true
+  );
 
   return jsonb_build_object(
     'entry', to_jsonb(v_entry),
@@ -418,4 +484,4 @@ grant execute on function public.record_ai_action_usage_atomic(text, text, integ
 comment on table public.ai_action_budget_configs is
   'Per-user monthly USD AI budget threshold and auto-pause configuration (#2609).';
 comment on table public.ai_action_budget_ledger is
-  'Append-only per-action AI token and estimated USD cost ledger blocked when auto-paused (#2609).';
+  'Append-only per-action AI token and estimated USD cost ledger written exclusively via record_ai_action_usage_atomic() (#2609).';

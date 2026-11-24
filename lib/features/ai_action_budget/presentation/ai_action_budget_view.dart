@@ -376,7 +376,7 @@ class AiActionBudgetView extends StatelessWidget {
                   border: Border.all(color: palette.warnBorder),
                 ),
                 child: Text(
-                  '自動停止中のため、一時停止解除および上限引き上げには管理者 (is_admin) の承認が必要です。',
+                  '自動停止中のため、一時停止解除および月次上限の変更には管理者 (is_admin) の承認が必要です。',
                   style: TextStyle(
                     color: palette.warnInk,
                     fontSize: 12,
