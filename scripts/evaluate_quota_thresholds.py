@@ -255,13 +255,27 @@ def _http_json(
 
 def load_payloads_from_env() -> list[dict[str, object]]:
     items: list[dict[str, object]] = []
+    seen_tools: set[str] = set()
+    bundled_raw = os.environ.get("QUOTA_PAYLOAD_JSON", "").strip()
+    if bundled_raw and bundled_raw not in ("{}", "[]"):
+        bundled = json.loads(bundled_raw)
+        candidates = bundled if isinstance(bundled, list) else [bundled]
+        for parsed in candidates:
+            if isinstance(parsed, dict) and parsed.get("tool"):
+                tool_key = str(parsed["tool"]).strip().lower()
+                if tool_key and tool_key not in seen_tools:
+                    seen_tools.add(tool_key)
+                    items.append(parsed)
     for key in DEFAULT_USAGE_ENV_KEYS:
         raw = os.environ.get(key, "").strip()
         if not raw or raw == "{}":
             continue
         parsed = json.loads(raw)
         if isinstance(parsed, dict) and parsed.get("tool"):
-            items.append(parsed)
+            tool_key = str(parsed["tool"]).strip().lower()
+            if tool_key and tool_key not in seen_tools:
+                seen_tools.add(tool_key)
+                items.append(parsed)
     return items
 
 
@@ -458,6 +472,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--create-issues", action="store_true", help="Open admin GitHub Issue on 100% pause")
     parser.add_argument("--summary-out", default="", help="Optional markdown summary output file")
     parser.add_argument("--json-out", default="", help="Optional JSON evaluation output file")
+    parser.add_argument(
+        "--export-github-output",
+        default="",
+        help="Append compact single-line quota_payload_json output to GITHUB_OUTPUT and exit",
+    )
     return parser
 
 
@@ -484,6 +503,15 @@ def main(argv: list[str] | None = None) -> int:
             raw_payloads.append(loaded)
     if args.from_env:
         raw_payloads.extend(load_payloads_from_env())
+    if args.export_github_output:
+        compact_payload = json.dumps(
+            raw_payloads,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+        with open(args.export_github_output, "a", encoding="utf-8", newline="\n") as fh:
+            fh.write(f"quota_payload_json={compact_payload}\n")
+        return 0
 
     existing_states: dict[str, dict[str, object]] = {}
     rest_base_url = os.environ.get("SUPABASE_REST_BASE_URL", DEFAULT_REST_BASE_URL)

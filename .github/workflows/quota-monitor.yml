@@ -27,13 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      # Each check step below writes usage_json to GITHUB_OUTPUT on ok/api_error/error/skipped.
-      anthropic_usage: ${{ steps.anthropic.outputs.usage_json }}
-      openai_usage: ${{ steps.openai.outputs.usage_json }}
-      copilot_usage: ${{ steps.copilot.outputs.usage_json }}
-      actions_minutes: ${{ steps.actions_minutes.outputs.usage_json }}
-      gemini_usage: ${{ steps.gemini.outputs.usage_json }}
-      hedra_usage: ${{ steps.hedra.outputs.usage_json }}
+      quota_payload_json: ${{ steps.export_quota_payload.outputs.quota_payload_json }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -537,6 +531,18 @@ jobs:
               f.write(report)
           EOF
 
+      - name: Export validated quota payload JSON
+        id: export_quota_payload
+        if: always()
+        env:
+          ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json || '{}' }}
+          OPENAI_USAGE: ${{ steps.openai.outputs.usage_json || '{}' }}
+          COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json || '{}' }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json || '{}' }}
+          GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json || '{}' }}
+          HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json || '{}' }}
+        run: python3 scripts/evaluate_quota_thresholds.py --from-env --export-github-output "$GITHUB_OUTPUT"
+
   enforce-quota-thresholds:
     needs: check-quotas
     if: always() && (needs.check-quotas.result == 'success' || needs.check-quotas.result == 'failure')
@@ -551,12 +557,7 @@ jobs:
     timeout-minutes: 10
     env:
       DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-      ANTHROPIC_USAGE: ${{ needs.check-quotas.outputs.anthropic_usage }}
-      OPENAI_USAGE: ${{ needs.check-quotas.outputs.openai_usage }}
-      COPILOT_USAGE: ${{ needs.check-quotas.outputs.copilot_usage }}
-      ACTIONS_MINUTES: ${{ needs.check-quotas.outputs.actions_minutes }}
-      GEMINI_USAGE: ${{ needs.check-quotas.outputs.gemini_usage }}
-      HEDRA_USAGE: ${{ needs.check-quotas.outputs.hedra_usage }}
+      QUOTA_PAYLOAD_JSON: ${{ needs.check-quotas.outputs.quota_payload_json || '[]' }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

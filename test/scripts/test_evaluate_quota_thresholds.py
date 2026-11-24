@@ -223,6 +223,40 @@ class EvaluateQuotaThresholdsTest(unittest.TestCase):
             self.assertEqual(posted_rows[0]["warning_80_sent_at"], "2026-11-23T00:00:00Z")
             self.assertTrue(posted_rows[0]["auto_paused"])
 
+    def test_export_github_output_and_quota_payload_json_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gh_out = Path(tmpdir) / "github_output.txt"
+            with patch.dict(
+                os.environ,
+                {
+                    "ANTHROPIC_USAGE": json.dumps({"tool": "anthropic", "cost_usd": 42.0}),
+                    "OPENAI_USAGE": json.dumps({"tool": "openai", "cost_usd": 19.0}),
+                    "COPILOT_USAGE": "{}",
+                },
+                clear=True,
+            ):
+                rc = main(["--from-env", "--export-github-output", str(gh_out)])
+            self.assertEqual(rc, 0)
+            lines = gh_out.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(lines), 1)
+            self.assertTrue(lines[0].startswith("quota_payload_json="))
+            exported_json = lines[0].split("=", 1)[1]
+            parsed = json.loads(exported_json)
+            self.assertEqual(len(parsed), 2)
+
+            out_eval = Path(tmpdir) / "bundled_eval.json"
+            with patch.dict(
+                os.environ,
+                {"QUOTA_PAYLOAD_JSON": exported_json},
+                clear=True,
+            ):
+                rc2 = main(["--from-env", "--dry-run", "--json-out", str(out_eval)])
+            self.assertEqual(rc2, 0)
+            results = json.loads(out_eval.read_text(encoding="utf-8"))
+            self.assertEqual([r["tool"] for r in results], ["anthropic", "openai"])
+            self.assertEqual(results[0]["tier"], "warning_80")
+            self.assertEqual(results[1]["tier"], "warning_80")
+
 
 if __name__ == "__main__":
     unittest.main()
