@@ -19,14 +19,14 @@ function createFakeStore(options: {
   const history = [...(options.history ?? [])];
 
   return {
-    async getAdminProfile(userId: string) {
+    getAdminProfile(userId: string) {
       const data: StageGateAdminProfile = {
         is_admin: adminSet.has(userId),
         role: adminSet.has(userId) ? "admin" : "member",
       };
-      return { data, error: null };
+      return Promise.resolve({ data, error: null });
     },
-    async listReviews({ submittedBy, statusFilter, limit }) {
+    listReviews({ submittedBy, statusFilter, limit }) {
       const filtered = reviews.filter((r) => {
         if (submittedBy !== null && r.submitted_by !== submittedBy) {
           return false;
@@ -34,16 +34,16 @@ function createFakeStore(options: {
         if (statusFilter !== null && r.status !== statusFilter) return false;
         return true;
       }).slice(0, limit);
-      return { data: filtered, error: null };
+      return Promise.resolve({ data: filtered, error: null });
     },
-    async listHistory(reviewIds, limit) {
+    listHistory(reviewIds, limit) {
       const idSet = new Set(reviewIds);
-      return {
+      return Promise.resolve({
         data: history.filter((h) => idSet.has(h.review_id)).slice(0, limit),
         error: null,
-      };
+      });
     },
-    async insertReview(row) {
+    insertReview(row) {
       const created: StageGateReviewRow = {
         id: `rev-${reviews.length + 1}`,
         source_type: row.source_type as StageGateReviewRow["source_type"],
@@ -62,24 +62,26 @@ function createFakeStore(options: {
         decided_at: null,
       };
       reviews.unshift(created);
-      return { data: created, error: null };
+      return Promise.resolve({ data: created, error: null });
     },
-    async getReview(reviewId) {
-      return {
+    getReview(reviewId) {
+      return Promise.resolve({
         data: reviews.find((r) => r.id === reviewId) ?? null,
         error: null,
-      };
+      });
     },
-    async updateReview(reviewId, updates) {
+    updateReview(reviewId, updates) {
       const idx = reviews.findIndex((r) => r.id === reviewId);
-      if (idx < 0) return { data: null, error: { message: "not found" } };
+      if (idx < 0) {
+        return Promise.resolve({ data: null, error: { message: "not found" } });
+      }
       reviews[idx] = {
         ...reviews[idx],
         ...updates,
       } as StageGateReviewRow;
-      return { data: reviews[idx], error: null };
+      return Promise.resolve({ data: reviews[idx], error: null });
     },
-    async appendHistory(row) {
+    appendHistory(row) {
       const entry: StageGateHistoryRow = {
         id: `hist-${history.length + 1}`,
         review_id: String(row.review_id),
@@ -91,7 +93,7 @@ function createFakeStore(options: {
         created_at: String(row.created_at),
       };
       history.unshift(entry);
-      return { data: entry, error: null };
+      return Promise.resolve({ data: entry, error: null });
     },
   };
 }
