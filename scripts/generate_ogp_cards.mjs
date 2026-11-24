@@ -131,6 +131,18 @@ export function detectChromeExecutable(explicitPath = null) {
 }
 
 /**
+ * Build Chrome launch flags without disabling sandboxing outside CI unless explicitly opted in.
+ * @param {NodeJS.ProcessEnv} env
+ */
+export function buildChromeArgs(env = process.env) {
+  const args = [];
+  if (env.CI === "true" || env.OGP_CHROME_NO_SANDBOX === "1") {
+    args.push("--no-sandbox", "--disable-dev-shm-usage");
+  }
+  return args;
+}
+
+/**
  * Escape HTML special characters.
  * @param {string} value
  */
@@ -452,11 +464,10 @@ async function renderWithChromeCli(chromeBin, htmlDir, outDir, manifest, cardsWi
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
       const winW = card.width + 200;
       const winH = card.height + 170;
-      const isCi = process.env.CI === "true" || process.env.CI === "1";
       execFileSync(chromeBin, [
         "--headless=new",
         "--disable-gpu",
-        ...(isCi ? ["--no-sandbox"] : []),
+        ...buildChromeArgs(),
         "--hide-scrollbars",
         `--user-data-dir=${profileDir}`,
         `--window-size=${winW},${winH}`,
@@ -468,7 +479,6 @@ async function renderWithChromeCli(chromeBin, htmlDir, outDir, manifest, cardsWi
     }
   } finally {
     server.close();
-    fs.rmSync(profileDir, { recursive: true, force: true });
   }
 }
 
@@ -514,13 +524,13 @@ async function renderWithPlaywright(repoRoot, outDir, manifest, cardsWithArt, ch
     );
   }
 
-  const isCi = process.env.CI === "true" || process.env.CI === "1";
   const executablePath = detectChromeExecutable(chromeBin);
+  const chromeArgs = buildChromeArgs();
   const launchOptions = executablePath
     ? {
         executablePath,
         headless: true,
-        args: isCi ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
+        ...(chromeArgs.length > 0 ? { args: chromeArgs } : {}),
       }
     : { headless: true };
   if (executablePath) {

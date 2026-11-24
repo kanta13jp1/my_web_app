@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
+  buildChromeArgs,
   detectChromeExecutable,
   listenLoopback,
   renderCardHtml,
@@ -138,4 +139,17 @@ test("listenLoopback resolves ephemeral address and rejects on bind error", asyn
       new Promise((resolve) => server2.close(() => resolve())),
     ]);
   }
+});
+
+test("buildChromeArgs keeps sandbox enabled outside CI unless explicitly opted in", () => {
+  assert.deepEqual(buildChromeArgs({}), []);
+  assert.deepEqual(buildChromeArgs({ CI: "false" }), []);
+  assert.deepEqual(buildChromeArgs({ CI: "true" }), [
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+  ]);
+  assert.deepEqual(buildChromeArgs({ OGP_CHROME_NO_SANDBOX: "1" }), [
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+  ]);
 });
