@@ -9,13 +9,12 @@ import 'package:my_web_app/features/prompt_templates/prompt_templates_container.
 
 class _InMemoryPromptTemplateRepository implements PromptTemplateRepository {
   _InMemoryPromptTemplateRepository({
-    this.userId = 'usr-owner-1',
     final List<PromptTemplate>? initialTemplates,
   }) : _templates = List<PromptTemplate>.from(
           initialTemplates ?? <PromptTemplate>[],
         );
 
-  final String? userId;
+  final String? userId = 'usr-owner-1';
   final List<PromptTemplate> _templates;
 
   Completer<List<PromptTemplate>>? pendingLoad;
@@ -215,7 +214,7 @@ void main() {
     test(
         'parses Supabase row into PromptTemplate and generates insert/update payloads',
         () {
-      final parsed = PromptTemplate.fromSupabaseRow(<String, Object?>{
+      final parsed = PromptTemplate.fromSupabaseRow(const <String, Object?>{
         'id': 'tpl-100',
         'user_id': 'usr-1',
         'title': '要約レビュー',
@@ -316,8 +315,6 @@ void main() {
     Future<void> pumpPromptFeature(
       final WidgetTester tester, {
       required final _InMemoryPromptTemplateRepository repo,
-      final Future<void> Function(String text)? clipboardWriter,
-      final Future<String> Function(String compiledPrompt)? onSendPrompt,
       final Brightness brightness = Brightness.light,
       final Size? viewport,
       final double textScale = 1.0,
@@ -338,8 +335,6 @@ void main() {
                 child: Scaffold(
                   body: PromptTemplatesContainer(
                     repository: repo,
-                    clipboardWriter: clipboardWriter,
-                    onSendPrompt: onSendPrompt,
                   ),
                 ),
               );
@@ -374,39 +369,41 @@ void main() {
       expect(repo.saveCalls, 0);
 
       // Enter all 5 elements independently and save shared template.
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-title-input')),
-        '新規5要素ナレッジ',
+      for (final entry in const <MapEntry<String, String>>[
+        MapEntry<String, String>('prompt-template-title-input', '新規5要素ナレッジ'),
+        MapEntry<String, String>('prompt-template-role-input', 'セキュリティ監査官'),
+        MapEntry<String, String>(
+          'prompt-template-context-input',
+          'Supabase Migration PR',
+        ),
+        MapEntry<String, String>(
+          'prompt-template-deliverable-input',
+          'Pass/Fail チェック表',
+        ),
+        MapEntry<String, String>(
+          'prompt-template-constraints-input',
+          'RLS 抜け漏れを許容しない',
+        ),
+        MapEntry<String, String>(
+          'prompt-template-thinking-input',
+          'テーブル権限 -> RLS -> トリガーの順に検証する',
+        ),
+      ]) {
+        final field = find.byKey(ValueKey<String>(entry.key));
+        await tester.ensureVisible(field);
+        await tester.pumpAndSettle();
+        await tester.enterText(field, entry.value);
+      }
+      final sharedSwitch = find.byKey(
+        const ValueKey<String>('prompt-template-shared-switch'),
       );
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-role-input')),
-        'セキュリティ監査官',
-      );
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-context-input')),
-        'Supabase Migration PR',
-      );
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-deliverable-input')),
-        'Pass/Fail チェック表',
-      );
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-constraints-input')),
-        'RLS 抜け漏れを許容しない',
-      );
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-thinking-input')),
-        'テーブル権限 -> RLS -> トリガーの順に検証する',
-      );
-      await tester.ensureVisible(
-        find.byKey(const ValueKey<String>('prompt-template-shared-switch')),
-      );
-      await tester.tap(
-        find.byKey(const ValueKey<String>('prompt-template-shared-switch')),
-      );
+      await tester.ensureVisible(sharedSwitch);
+      await tester.pumpAndSettle();
+      await tester.tap(sharedSwitch);
       await tester.pumpAndSettle();
 
       await tester.ensureVisible(saveButton);
+      await tester.pumpAndSettle();
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
@@ -418,6 +415,7 @@ void main() {
         const ValueKey<String>('prompt-template-filter-select'),
       );
       await tester.ensureVisible(filterSelect);
+      await tester.pumpAndSettle();
       await tester.tap(filterSelect);
       await tester.pumpAndSettle();
       await tester.tap(find.text('チーム共有').last);
@@ -432,10 +430,12 @@ void main() {
         findsNothing,
       );
 
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-search-input')),
-        'シニアアーキテクト',
+      final searchInput = find.byKey(
+        const ValueKey<String>('prompt-template-search-input'),
       );
+      await tester.ensureVisible(searchInput);
+      await tester.pumpAndSettle();
+      await tester.enterText(searchInput, 'シニアアーキテクト');
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey<String>('prompt-template-card-tpl-shared-1')),
@@ -447,6 +447,7 @@ void main() {
         const ValueKey<String>('prompt-template-reuse-tpl-shared-1'),
       );
       await tester.ensureVisible(reuseButton);
+      await tester.pumpAndSettle();
       await tester.tap(reuseButton);
       await tester.pumpAndSettle();
 
@@ -455,11 +456,11 @@ void main() {
       expect(find.textContaining('利用回数: 5'), findsOneWidget);
 
       // Clear search & filter back to all, then delete newly owned template.
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-search-input')),
-        '',
-      );
+      await tester.ensureVisible(searchInput);
+      await tester.pumpAndSettle();
+      await tester.enterText(searchInput, '');
       await tester.ensureVisible(filterSelect);
+      await tester.pumpAndSettle();
       await tester.tap(filterSelect);
       await tester.pumpAndSettle();
       await tester.tap(find.text('すべて').last);
@@ -469,6 +470,7 @@ void main() {
         const ValueKey<String>('prompt-template-delete-tpl-1'),
       );
       await tester.ensureVisible(deleteOwnButton);
+      await tester.pumpAndSettle();
       await tester.tap(deleteOwnButton);
       await tester.pumpAndSettle();
       expect(
@@ -481,15 +483,19 @@ void main() {
         const ValueKey<String>('prompt-template-edit-tpl-mine-2'),
       );
       await tester.ensureVisible(editOwnButton);
+      await tester.pumpAndSettle();
       await tester.tap(editOwnButton);
       await tester.pumpAndSettle();
       expect(find.text('テンプレートを更新'), findsOneWidget);
 
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('prompt-template-title-input')),
-        '日次バックログ優先度整理 v2',
+      final titleInput = find.byKey(
+        const ValueKey<String>('prompt-template-title-input'),
       );
+      await tester.ensureVisible(titleInput);
+      await tester.pumpAndSettle();
+      await tester.enterText(titleInput, '日次バックログ優先度整理 v2');
       await tester.ensureVisible(saveButton);
+      await tester.pumpAndSettle();
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
       expect(find.textContaining('日次バックログ優先度整理 v2'), findsWidgets);
