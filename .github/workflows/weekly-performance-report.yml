@@ -64,7 +64,7 @@ jobs:
           if [ -n "${PERIOD_END_INPUT}" ]; then
             args+=("--period-end" "${PERIOD_END_INPUT}")
           fi
-          if [ "${EVENT_NAME}" = "schedule" ] || [ "${DRY_RUN_INPUT}" != "false" ] || [ -z "${GEMINI_API_KEY}" ]; then
+          if [ "${EVENT_NAME}" = "schedule" ] || [ "${EVENT_NAME}" != "workflow_dispatch" ] || [ "${DRY_RUN_INPUT}" != "false" ] || [ -z "${GEMINI_API_KEY}" ]; then
             args+=("--dry-run")
           elif [ -n "${RESEND_API_KEY}" ] && [ -n "${REPORT_FROM_EMAIL}" ] && [ -n "${REPORT_TO_EMAIL}" ]; then
             args+=("--send-email")

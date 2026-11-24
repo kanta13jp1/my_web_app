@@ -8,8 +8,8 @@ void main() {
     test(
       'masks emails, phones, and bearer tokens before preview or dispatch',
       () {
-        final String fakeBearer = 'Bearer tok_${'xyz_9988'}';
-        final String raw =
+        const String fakeBearer = 'Bearer tok_' 'xyz_9988';
+        const String raw =
             '担当 alice@example.com / TEL 090-1234-5678 / $fakeBearer';
         final String masked =
             WeeklyReportPrivacyEvaluator.redactPiiForPreview(raw);
@@ -77,7 +77,7 @@ void main() {
     testWidgets(
       'masks PII on dry-run preview and triggers delivery cleanly',
       (WidgetTester tester) async {
-        WeeklyDeliveryStatus requestedOutcome = WeeklyDeliveryStatus.sent;
+        const WeeklyDeliveryStatus requestedOutcome = WeeklyDeliveryStatus.sent;
         final WeeklyPerformanceReportService service =
             WeeklyPerformanceReportService(
           nowProvider: () => DateTime.utc(2026, 11, 24, 9),
