@@ -23,7 +23,7 @@ class SupabaseImageModerationRepository implements ImageModerationRepository {
   Future<List<ModeratedImageAsset>> fetchAssets() async {
     final client = _resolvedClient;
     final userId = _requireUserId(client);
-    final Object? response = await client
+    final Object response = await client
         .from('moderated_image_assets')
         .select()
         .eq('user_id', userId)
@@ -55,7 +55,7 @@ class SupabaseImageModerationRepository implements ImageModerationRepository {
   ) async {
     final client = _resolvedClient;
     final userId = _requireUserId(client);
-    final Object? inserted = await client
+    final Object inserted = await client
         .from('moderated_image_assets')
         .insert(draft.toInsertPayload(userId: userId))
         .select()
