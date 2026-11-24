@@ -10,6 +10,10 @@ on:
         description: 'Evaluate RLHF bad-feedback queue without creating GitHub issues (true/false)'
         required: false
         default: 'true'
+      records_json:
+        description: 'Optional JSON array of pending RLHF feedback records to evaluate'
+        required: false
+        default: '[]'
 
 concurrency:
   group: rlhf-bad-feedback-issue-${{ github.ref }}
@@ -38,21 +42,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Fetch pending RLHF bad-feedback records
+      - name: Prepare pending RLHF bad-feedback records input
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RECORDS_JSON: ${{ github.event.inputs.records_json || '[]' }}
         run: |
           set -euo pipefail
-          if [ -n "${SUPABASE_URL}" ] && [ -n "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
-            curl --fail --silent --show-error \
-              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
-              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
-              "${SUPABASE_URL%/}/rest/v1/ai_rlhf_feedback?dispatch_status=eq.pending&github_issue_number=is.null&select=*&limit=50" \
-              -o rlhf_pending_records.json
-          else
-            printf '[]\n' > rlhf_pending_records.json
-          fi
+          python3 -B -c 'import json, os, pathlib; data = json.loads(os.environ.get("RECORDS_JSON") or "[]"); assert isinstance(data, list); pathlib.Path("rlhf_pending_records.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")'
 
       - name: Run RLHF issue dispatcher tests and queue evaluation
         id: dispatch
