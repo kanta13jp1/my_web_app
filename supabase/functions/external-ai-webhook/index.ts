@@ -29,7 +29,7 @@ const UUID_RE =
 export const webhookCorsHeaders: Record<string, string> = {
   ...corsHeaders,
   "Access-Control-Allow-Headers":
-    `${corsHeaders["Access-Control-Allow-Headers"]}, x-webhook-api-key`,
+    `${corsHeaders["Access-Control-Allow-Headers"]}, x-webhook-api-key, traceparent, tracestate, baggage, sentry-trace`,
 };
 
 export interface WebhookApiKeyRecord {
