@@ -1,0 +1,155 @@
+name: Monthly System Capacity Report
+
+on:
+  schedule:
+    # Run on the 1st of every month at 00:20 UTC (09:20 JST) for the previous month.
+    - cron: "20 0 1 * *"
+  workflow_dispatch:
+    inputs:
+      report_month:
+        description: "Target report month (YYYY-MM). Defaults to previous JST month."
+        required: false
+        default: ""
+        type: string
+      notify:
+        description: "Send monthly notification after aggregation (true/false)."
+        required: false
+        default: "true"
+        type: string
+      dry_run:
+        description: "Run notification in dry-run mode (true/false)."
+        required: false
+        default: "false"
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: monthly-capacity-report
+  cancel-in-progress: false
+
+jobs:
+  capacity-report:
+    name: Aggregate and notify monthly capacity report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD || secrets.SUPABASE_ANON_KEY }}
+      CAPACITY_REPORT_ADMIN_JWT: ${{ secrets.CAPACITY_REPORT_ADMIN_JWT }}
+      EVENT_NAME: ${{ github.event_name }}
+      INPUT_REPORT_MONTH: ${{ inputs.report_month || '' }}
+      INPUT_NOTIFY: ${{ inputs.notify || 'true' }}
+      INPUT_DRY_RUN: ${{ inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Aggregate and notify via admin-hub
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timedelta, timezone
+
+          default_url = "https://smmkxxavexumewbfaqpy.supabase.co"
+          supabase_url = (os.environ.get("SUPABASE_URL") or default_url).strip().rstrip("/")
+          anon = (os.environ.get("SUPABASE_ANON_KEY") or "").strip()
+          jwt = (os.environ.get("CAPACITY_REPORT_ADMIN_JWT") or "").strip()
+          raw_month = (os.environ.get("INPUT_REPORT_MONTH") or "").strip()
+          notify_enabled = (os.environ.get("INPUT_NOTIFY") or "true").strip().lower() == "true"
+          dry_run = (os.environ.get("INPUT_DRY_RUN") or "false").strip().lower() == "true"
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY") or ""
+
+          if not raw_month:
+              now_jst = datetime.now(timezone.utc) + timedelta(hours=9)
+              year = now_jst.year
+              month = now_jst.month - 1
+              if month == 0:
+                  year -= 1
+                  month = 12
+              target_month = f"{year:04d}-{month:02d}"
+          else:
+              if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", raw_month):
+                  print(f"::error::Invalid report_month format: {raw_month}")
+                  sys.exit(1)
+              target_month = raw_month
+
+          def write_summary(lines: list[str]) -> None:
+              if not summary_path:
+                  return
+              with open(summary_path, "a", encoding="utf-8", newline="\n") as fh:
+                  fh.write("\n".join(lines) + "\n")
+
+          if not jwt or not anon:
+              print("::notice::CAPACITY_REPORT_ADMIN_JWT or SUPABASE_ANON_KEY is not configured; skipping remote call.")
+              write_summary([
+                  "## Monthly Capacity Report",
+                  "",
+                  f"- Target month: `{target_month}`",
+                  "- Status: `skipped` (`CAPACITY_REPORT_ADMIN_JWT` or `SUPABASE_ANON_KEY` missing)",
+              ])
+              sys.exit(0)
+
+          endpoint = f"{supabase_url}/functions/v1/admin-hub"
+          headers = {
+              "apikey": anon,
+              "Authorization": f"Bearer {jwt}",
+              "Content-Type": "application/json",
+              "User-Agent": "my-web-app-monthly-capacity-report/1.0",
+          }
+
+          def call_admin_hub(payload: dict[str, object]) -> dict[str, object]:
+              data = json.dumps(payload).encode("utf-8")
+              req = urllib.request.Request(endpoint, data=data, headers=headers, method="POST")
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  body = resp.read().decode("utf-8", errors="replace")
+                  parsed = json.loads(body) if body.strip() else {}
+                  if not isinstance(parsed, dict) or parsed.get("success") is not True:
+                      raise RuntimeError(f"Unexpected admin-hub response: HTTP {resp.status}")
+                  return parsed
+
+          try:
+              action = "capacity_report.notify" if notify_enabled else "capacity_report.aggregate"
+              payload: dict[str, object] = {
+                  "action": action,
+                  "report_month": target_month,
+              }
+              if notify_enabled:
+                  payload["dry_run"] = dry_run
+              result = call_admin_hub(payload)
+          except urllib.error.HTTPError as exc:
+              print(f"::error::admin-hub call failed with HTTP {exc.code}")
+              sys.exit(1)
+          except Exception as exc:
+              print(f"::error::admin-hub call failed: {exc}")
+              sys.exit(1)
+
+          report = result.get("report")
+          if not isinstance(report, dict):
+              report = {}
+          write_summary([
+              "## Monthly Capacity Report",
+              "",
+              f"- Target month: `{target_month}`",
+              f"- Action: `{action}`",
+              f"- Dry run: `{str(dry_run).lower()}`",
+              f"- User access count: `{report.get('user_access_count', 'unknown')}`",
+              f"- Batch job count: `{report.get('batch_job_count', 'unknown')}`",
+              f"- Error count: `{report.get('error_count', 'unknown')}`",
+              f"- Error rate (%): `{report.get('error_rate_percent', 'unknown')}`",
+          ])
+          print(f"Monthly capacity report completed for {target_month}.")
+          PY
