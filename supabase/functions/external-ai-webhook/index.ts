@@ -2,7 +2,11 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { asRecord, asString, corsHeaders } from "../_shared/edge.ts";
 import { sha256Hex } from "../_shared/internal_hmac.ts";
-import { maskLogString, maskLogValue } from "../_shared/sensitive_log_masker.ts";
+import {
+  MASK_PLACEHOLDER,
+  maskLogString,
+  maskLogValue,
+} from "../_shared/sensitive_log_masker.ts";
 
 export const VALID_SOURCE_TOOLS = new Set([
   "n8n",
@@ -99,6 +103,16 @@ export function constantTimeEqual(left: string, right: string): boolean {
     diff |= left.charCodeAt(i) ^ right.charCodeAt(i);
   }
   return diff === 0;
+}
+
+const TOKEN_SECRET_RE =
+  /\b(?:ghp|gho|ghu|ghs|ghr|github_pat|sk|eaw)[_-][A-Za-z0-9_-]{8,}\b/g;
+
+function maskWebhookString(input: string): string {
+  return maskLogString(input, EXTRA_SENSITIVE_KEYS).replace(
+    TOKEN_SECRET_RE,
+    MASK_PLACEHOLDER,
+  );
 }
 
 export function sanitizeWebhookPayload(
@@ -260,9 +274,8 @@ export function createHandler(deps: ExternalWebhookDependencies) {
       try {
         keyRecord = await deps.lookupCredentialByHash(keyHash);
       } catch (error) {
-        const message = maskLogString(
+        const message = maskWebhookString(
           error instanceof Error ? error.message : "Key lookup failed",
-          EXTRA_SENSITIVE_KEYS,
         );
         return webhookJson({ error: "auth_backend_error", message }, 502);
       }
@@ -295,9 +308,8 @@ export function createHandler(deps: ExternalWebhookDependencies) {
         try {
           jwtUser = await deps.verifyJwtUser(bearerValue);
         } catch (error) {
-          const message = maskLogString(
+          const message = maskWebhookString(
             error instanceof Error ? error.message : "JWT verification error",
-            EXTRA_SENSITIVE_KEYS,
           );
           return webhookJson({ error: "auth_backend_error", message }, 502);
         }
@@ -353,9 +365,8 @@ export function createHandler(deps: ExternalWebhookDependencies) {
       return webhookJson({ error: "invalid_processing_status" }, 400);
     }
     const processingStatus = rawStatus as "received" | "processed" | "failed";
-    const errorMessage = maskLogString(
+    const errorMessage = maskWebhookString(
       asString(bodyObj.error_message),
-      EXTRA_SENSITIVE_KEYS,
     ).slice(0, 1000);
 
     const dryRun = bodyObj.dry_run === true;
@@ -399,9 +410,8 @@ export function createHandler(deps: ExternalWebhookDependencies) {
         201,
       );
     } catch (error) {
-      const message = maskLogString(
+      const message = maskWebhookString(
         error instanceof Error ? error.message : "Failed to save webhook event",
-        EXTRA_SENSITIVE_KEYS,
       );
       return webhookJson({ error: "webhook_persist_failed", message }, 502);
     }
