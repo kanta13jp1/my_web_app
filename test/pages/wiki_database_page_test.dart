@@ -119,61 +119,67 @@ void main() {
   testWidgets('detail failure recovers on retry at 320px with large text',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    tester.view.physicalSize = const Size(320, 568);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    try {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    var getAttempts = 0;
-    final repository = WikiRepository((body) async {
-      if (body['action'] == 'wiki.list') {
+      var getAttempts = 0;
+      final repository = WikiRepository((body) async {
+        if (body['action'] == 'wiki.list') {
+          return {
+            'success': true,
+            'pages': [
+              {
+                'id': 'page-1',
+                'metadata': {'title': 'ナロー画面ページ'},
+              },
+            ],
+            'next_offset': null,
+          };
+        }
+        if (++getAttempts == 1) throw StateError('offline');
         return {
           'success': true,
-          'pages': [
-            {
-              'id': 'page-1',
-              'metadata': {'title': 'ナロー画面ページ'},
-            },
-          ],
-          'next_offset': null,
+          'page': {
+            'id': 'page-1',
+            'metadata': {'title': 'ナロー画面ページ', 'content': '復旧後の本文'},
+          },
+          'children': <dynamic>[],
+          'table_rows': <dynamic>[],
         };
-      }
-      if (++getAttempts == 1) throw StateError('offline');
-      return {
-        'success': true,
-        'page': {
-          'id': 'page-1',
-          'metadata': {'title': 'ナロー画面ページ', 'content': '復旧後の本文'},
-        },
-        'children': <dynamic>[],
-        'table_rows': <dynamic>[],
-      };
-    });
+      });
 
-    await tester.pumpWidget(
-      MaterialApp(
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: const TextScaler.linear(2)),
-          child: child!,
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: WikiDatabasePage(
+            wikiRepository: repository,
+            isAuthenticatedOverride: true,
+          ),
         ),
-        home: WikiDatabasePage(
-          wikiRepository: repository,
-          isAuthenticatedOverride: true,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('ナロー画面ページ'));
-    await tester.pumpAndSettle();
-    expect(find.text('ページ詳細を取得できませんでした。ページを選び直してください。'), findsOneWidget);
+      await tester.tap(find.text('ナロー画面ページ'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('ページ詳細を取得できませんでした。ページを選び直してください。'),
+        findsOneWidget,
+      );
 
-    await tester.tap(find.text('再試行'));
-    await tester.pumpAndSettle();
-    expect(find.text('復旧後の本文'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      await tester.tap(find.text('再試行'));
+      await tester.pumpAndSettle();
+      expect(find.text('復旧後の本文'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 }

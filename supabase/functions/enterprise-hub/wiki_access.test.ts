@@ -55,7 +55,6 @@ function database(fail: boolean | number = false, concurrent = false) {
     {
       id: "a",
       source: "wiki_page",
-      created_at: "2026-01-01T00:00:00Z",
       metadata: {
         user_id: "alice",
         title: "Shared words",
@@ -68,13 +67,11 @@ function database(fail: boolean | number = false, concurrent = false) {
     {
       id: "b",
       source: "wiki_page",
-      created_at: "2026-01-01T00:00:00Z",
       metadata: { user_id: "bob", title: "Shared words" },
     },
     {
       id: "c",
       source: "sheet_row",
-      created_at: "2026-01-01T00:00:00Z",
       metadata: { user_id: "alice", title: "Shared words" },
     },
   ];
