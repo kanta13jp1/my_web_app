@@ -122,7 +122,9 @@ async function selectStar(page: Page, rating: number) {
   });
   await expect(star).toHaveCount(1);
   await click(page, star);
-  await expect(page.getByText(`選択中：星${rating} / 5`, { exact: true })).toBeVisible();
+  await expect(
+    page.locator('flt-semantics-host').getByText(`選択中：星${rating} / 5`, { exact: true }),
+  ).toBeVisible();
 }
 
 function reviewBodyInput(page: Page) {

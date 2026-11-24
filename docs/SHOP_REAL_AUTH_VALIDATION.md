@@ -118,7 +118,9 @@ On 2026-11-24, two Flutter 3.38.10 Web semantics mechanics observed in run
   `Icon.semanticLabel`, which `computeDomSemanticsLabel()` concatenates with a
   newline (`label_and_value.dart`). Star selection now asserts the open dialog
   title, narrows to `^星Nを選択(?:\s+星Nを選択)?$` (`count === 1`), verifies the
-  live selection status, and scopes the review body locator to `textarea`.
+  live selection status scoped to `flt-semantics-host` (excluding Flutter Web's
+  offscreen `flt-announcement-polite` duplicate per `live_region.dart`), and
+  scopes the review body locator to `textarea`.
 Application code (`lib/`), SQL migrations, acceptance criteria, and isolation
 boundaries remain unchanged.
 
