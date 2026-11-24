@@ -70,7 +70,7 @@ class AiRlhfFeedbackController extends ChangeNotifier {
   bool get isDisposed => _isDisposed;
 
   void _setState(AiRlhfFeedbackState next) {
-    if (_isDisposed || _state.isSubmitting) {
+    if (_isDisposed) {
       return;
     }
     _state = next;
@@ -85,7 +85,7 @@ class AiRlhfFeedbackController extends ChangeNotifier {
   }
 
   Future<void> loadFeedback() async {
-    if (_isDisposed || _state.isSubmitting) {
+    if (_isDisposed) {
       return;
     }
     _setState(_state.copyWith(isLoading: true, clearError: true));
