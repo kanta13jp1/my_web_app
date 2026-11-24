@@ -95,6 +95,10 @@ Sources: 実 `.github/workflows/*.yml` (監視 cron 群) / claude.ai Routines (c
 
 [`PHILOSOPHY.md`](PHILOSOPHY.md) 9 原則で **7+/9 ✅**: 原則 1 (夜間 SEV1 のみ人=CEO へ) · 原則 3-4 (mentor / チェックリストで負荷軽減 / 本社=運用即応性) · 原則 6 (時間 = 自動監視で人の確認時間を最小化) · 原則 7 (安定運用 = 資産 / 監視の過剰増殖 = 負債) · 原則 8 (KPI = 健全率・検知遅延を昨日の自分基準で改善) · 原則 9 (夜間の人的負荷を抑制)。[`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) (circuit-breaker / DLQ / trace_id) + [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) (5 正本 / 通知規律) に整合。
 
+## Supabase capacity review
+
+週次および大規模 release/import 前後に、plan/compute、DB容量・増加率、physical disk、CPU/memory、connection、disk I/O を確認する。判断と承認手順は [Supabase capacity plan](SUPABASE_CAPACITY_PLAN.md) を参照する。
+
 ## 8. 運用 (Living Document) / Links
 
 - 監視を足す/減らすたびに §1 表を更新 (薄く保つ)。Sentry 連携が深化したら §1/§3 を更新。
