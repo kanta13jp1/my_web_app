@@ -5,6 +5,7 @@ import {
   GENERATED_UI_SANDBOX_ACTOR_ROLE,
   getDefaultAgentRoleScopes,
   normalizeAgentToolScopes,
+  parseAgentToolRequestedScopes,
   requiresCeoApproval,
 } from "./agent_tool_policy.ts";
 
@@ -142,4 +143,50 @@ Deno.test("generated UI sandbox cannot be widened by approval metadata", () => {
   assertEquals(decision.blockedReason, "missing_scope");
   assertEquals(decision.missingScopes, ["send", "external_share"]);
   assertEquals(decision.highRiskScopes, ["send", "external_share"]);
+});
+
+Deno.test("mixed known and unknown requested operations are rejected", () => {
+  for (const requestedScopes of [["read", "unknown"], ["unknown"], ["read", ""]]) {
+    const result = evaluateAgentToolPolicy({
+      actorRole: "ceo",
+      toolName: "preview.only",
+      requestedScopes,
+    });
+    assertEquals(result.allowed, false);
+    assertEquals(result.blockedReason, "invalid_requested_scope");
+  }
+});
+
+Deno.test("malformed requested scope values return a rejection", () => {
+  for (const value of [null, "read", ["read", 42], ["read", {}]]) {
+    const result = evaluateAgentToolPolicy({
+      toolName: "preview.only",
+      requestedScopes: value as unknown as readonly string[],
+    });
+    assertEquals(result.allowed, false);
+    assertEquals(result.blockedReason, "invalid_requested_scope");
+  }
+});
+
+Deno.test("known scope normalization and empty requests retain behavior", () => {
+  const allowed = evaluateAgentToolPolicy({toolName: "preview.only", requestedScopes: [" READ ", "read"]});
+  assertEquals(allowed.allowed, true);
+  assertEquals(allowed.auditPayload.requested_scopes, ["read"]);
+  const empty = evaluateAgentToolPolicy({toolName: "preview.only", requestedScopes: []});
+  assertEquals(empty.allowed, false);
+  assertEquals(empty.blockedReason, "empty_requested_scope");
+});
+
+Deno.test("API scope parsing preserves invalid requests for rejection", () => {
+  for (const value of [["read", 42], ["read", {}], ["read", ["send"]], ["read", ""], ["read", "unknown"]]) {
+    const decision = evaluateAgentToolPolicy({
+      actorRole: "ceo",
+      toolName: "preview.only",
+      requestedScopes: parseAgentToolRequestedScopes(value),
+    });
+    assertEquals(decision.allowed, false);
+    assertEquals(decision.blockedReason, "invalid_requested_scope");
+  }
+  assertEquals(parseAgentToolRequestedScopes("read, suggest"), ["read", "suggest"]);
+  assertEquals(parseAgentToolRequestedScopes(undefined), []);
 });
