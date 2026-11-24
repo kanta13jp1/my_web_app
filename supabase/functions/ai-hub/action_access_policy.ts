@@ -117,6 +117,8 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "english_reading.generate_lesson",
   "home.recommend",
   "quota.daily_status",
+  "data_sources.status",
+  "data_sources.register",
 ]);
 
 // Paid LLM gateways: callable by a signed-in user, or by other Edge Functions
