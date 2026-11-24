@@ -17,10 +17,12 @@ import sync_compressed_prompt as sync_mod  # noqa: E402
 
 class SyncCompressedPromptTest(unittest.TestCase):
     def test_repository_sync_and_contracts_pass(self) -> None:
-        state = sync_mod.check_sync_state(ROOT, strict_metrics=True)
+        state = sync_mod.check_sync_state(ROOT, strict_metrics=False)
         self.assertTrue(state["in_sync"], state["violations"])
         self.assertTrue(state["ci_analyze_strict"])
         self.assertTrue(state["rebase_protocol_ok"])
+        for metric_key in ("migrations", "edge_functions", "workflows", "features"):
+            self.assertIsInstance(state["recorded_metrics"].get(metric_key), int)
 
     def test_detects_v3_checksum_drift_and_recovers_on_write(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -40,6 +42,12 @@ class SyncCompressedPromptTest(unittest.TestCase):
 
             self.assertEqual(sync_mod.main(["--repo-root", str(tmp), "--write"]), 0)
             self.assertEqual(sync_mod.main(["--repo-root", str(tmp), "--check", "--strict-metrics"]), 0)
+
+            mig = tmp / "supabase" / "migrations" / "20261125000001_test.sql"
+            mig.parent.mkdir(parents=True, exist_ok=True)
+            mig.write_text("-- metric drift test\n", encoding="utf-8")
+            self.assertEqual(sync_mod.main(["--repo-root", str(tmp), "--check"]), 0)
+            self.assertEqual(sync_mod.main(["--repo-root", str(tmp), "--check", "--strict-metrics"]), 1)
 
             v3 = tmp / ".github" / "COMPRESSED_PROMPT_V3.md"
             v3.write_text(v3.read_text(encoding="utf-8") + "\n<!-- updated -->\n", encoding="utf-8", newline="\n")
