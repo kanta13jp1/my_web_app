@@ -120,13 +120,17 @@ def evaluate_tool_payload(
     upstream_paused = payload.get("upstream_paused")
 
     if usage_pct >= PAUSE_THRESHOLD_PCT:
+        should_auto_pause = not resumed_by_admin
+        should_create_admin_issue = not resumed_by_admin
         silent_mismatch = False
-        if upstream_paused is False:
-            silent_mismatch = True
-        elif existing_state is not None and not prior_paused and not resumed_by_admin:
-            silent_mismatch = True
+        if not resumed_by_admin:
+            if upstream_paused is False:
+                silent_mismatch = True
+            elif existing_state is not None and not prior_paused:
+                silent_mismatch = True
         reason = (
-            f"{tool}: {usage_pct:.2f}% >= 100% (auto-pause triggered"
+            f"{tool}: {usage_pct:.2f}% >= 100% ("
+            + ("resumed by admin; pause override active" if resumed_by_admin else "auto-pause triggered")
             + ("; silent_pause_detected" if silent_mismatch else "")
             + ")"
         )
@@ -135,8 +139,8 @@ def evaluate_tool_payload(
             usage_pct=usage_pct,
             tier="paused_100",
             should_warn_80=True,
-            should_auto_pause=True,
-            should_create_admin_issue=True,
+            should_auto_pause=should_auto_pause,
+            should_create_admin_issue=should_create_admin_issue,
             silent_pause_detected=silent_mismatch,
             reason=reason,
             evaluated_at=timestamp,
@@ -267,20 +271,25 @@ def build_summary_markdown(evaluations: list[ThresholdEvaluation], dry_run: bool
     return "\n".join(lines) + "\n"
 
 
-def _apply_supabase_state(
-    evaluations: list[ThresholdEvaluation],
-    *,
-    service_credential: str,
-    rest_base_url: str,
-) -> dict[str, dict[str, object]]:
+def _supabase_headers(service_credential: str) -> dict[str, str]:
     headers = {
         "Authorization": f"Bearer {service_credential}",
         "Content-Type": "application/json",
         "Prefer": "resolution=merge-duplicates",
     }
     headers["api" + "key"] = service_credential
+    return headers
+
+
+def _fetch_existing_states(
+    *,
+    service_credential: str,
+    rest_base_url: str,
+) -> dict[str, dict[str, object]]:
+    headers = _supabase_headers(service_credential)
     _, existing_raw = _http_json(
-        f"{rest_base_url.rstrip('/')}/ai_quota_pause_state?select=tool,auto_paused,resumed_by_admin,warning_80_sent",
+        f"{rest_base_url.rstrip('/')}/ai_quota_pause_state"
+        "?select=tool,auto_paused,paused_at,resumed_by_admin,warning_80_sent,warning_80_sent_at,admin_issue_number",
         method="GET",
         headers=headers,
     )
@@ -289,21 +298,95 @@ def _apply_supabase_state(
         for row in existing_raw:
             if isinstance(row, dict) and row.get("tool"):
                 existing_map[str(row["tool"]).lower()] = row
+    return existing_map
 
-    for ev in evaluations:
-        prior = existing_map.get(ev.tool, {})
-        resumed = bool(prior.get("resumed_by_admin"))
-        row_payload = {
+
+def build_state_row_payload(
+    ev: ThresholdEvaluation,
+    *,
+    prior_state: dict[str, object] | None = None,
+    created_issue_number: int | None = None,
+) -> dict[str, object]:
+    """Build ai_quota_pause_state upsert row with cycle reset and timestamp preservation."""
+    prior = prior_state or {}
+    if ev.tier == "normal":
+        return {
             "tool": ev.tool,
             "usage_pct": ev.usage_pct,
-            "warning_80_sent": ev.should_warn_80 or bool(prior.get("warning_80_sent")),
-            "warning_80_sent_at": ev.evaluated_at if ev.should_warn_80 else None,
-            "auto_paused": ev.should_auto_pause and not resumed,
-            "paused_at": ev.evaluated_at if (ev.should_auto_pause and not resumed) else None,
-            "silent_pause_detected": ev.silent_pause_detected,
+            "warning_80_sent": False,
+            "warning_80_sent_at": None,
+            "auto_paused": False,
+            "paused_at": None,
+            "silent_pause_detected": False,
+            "resumed_by_admin": False,
+            "resumed_by": None,
+            "resumed_at": None,
+            "admin_issue_number": None,
+            "admin_note": "",
             "metadata": {"tier": ev.tier, "reason": ev.reason},
             "updated_at": ev.evaluated_at,
         }
+
+    resumed = bool(prior.get("resumed_by_admin"))
+    warning_sent = ev.should_warn_80 or bool(prior.get("warning_80_sent"))
+    prior_warning_at = prior.get("warning_80_sent_at")
+    warning_sent_at = (
+        prior_warning_at
+        if prior_warning_at
+        else (ev.evaluated_at if warning_sent else None)
+    )
+    auto_paused = ev.should_auto_pause and not resumed
+    prior_paused_at = prior.get("paused_at")
+    paused_at = (
+        (prior_paused_at or ev.evaluated_at)
+        if auto_paused
+        else (prior_paused_at if resumed else None)
+    )
+    issue_number = (
+        created_issue_number
+        if created_issue_number is not None
+        else prior.get("admin_issue_number")
+    )
+    return {
+        "tool": ev.tool,
+        "usage_pct": ev.usage_pct,
+        "warning_80_sent": warning_sent,
+        "warning_80_sent_at": warning_sent_at,
+        "auto_paused": auto_paused,
+        "paused_at": paused_at,
+        "silent_pause_detected": ev.silent_pause_detected,
+        "resumed_by_admin": resumed,
+        "admin_issue_number": issue_number,
+        "metadata": {"tier": ev.tier, "reason": ev.reason},
+        "updated_at": ev.evaluated_at,
+    }
+
+
+def _apply_supabase_state(
+    evaluations: list[ThresholdEvaluation],
+    *,
+    service_credential: str,
+    rest_base_url: str,
+    existing_states: dict[str, dict[str, object]] | None = None,
+    created_issues_by_tool: dict[str, int] | None = None,
+) -> dict[str, dict[str, object]]:
+    headers = _supabase_headers(service_credential)
+    existing_map = (
+        existing_states
+        if existing_states is not None
+        else _fetch_existing_states(
+            service_credential=service_credential,
+            rest_base_url=rest_base_url,
+        )
+    )
+    created_map = created_issues_by_tool or {}
+
+    for ev in evaluations:
+        row_payload = build_state_row_payload(
+            ev,
+            prior_state=existing_map.get(ev.tool),
+            created_issue_number=created_map.get(ev.tool),
+        )
         _http_json(
             f"{rest_base_url.rstrip('/')}/ai_quota_pause_state",
             method="POST",
@@ -318,7 +401,7 @@ def _create_github_issues(
     *,
     gh_auth: str,
     repository: str,
-) -> list[int]:
+) -> dict[str, int]:
     if not repository or "/" not in repository:
         raise ValueError(f"Invalid GitHub repository slug: {repository}")
     headers = {
@@ -328,7 +411,7 @@ def _create_github_issues(
         "Content-Type": "application/json",
         "User-Agent": "my-web-app-quota-threshold/1.0",
     }
-    created: list[int] = []
+    created: dict[str, int] = {}
     if not any(ev.should_create_admin_issue for ev in evaluations):
         return created
     _, open_issues_raw = _http_json(
@@ -348,7 +431,7 @@ def _create_github_issues(
             payload=issue_payload,
         )
         if isinstance(resp_obj, dict) and isinstance(resp_obj.get("number"), int):
-            created.append(resp_obj["number"])
+            created[ev.tool] = resp_obj["number"]
     return created
 
 
@@ -391,18 +474,41 @@ def main(argv: list[str] | None = None) -> int:
     if args.from_env:
         raw_payloads.extend(load_payloads_from_env())
 
+    existing_states: dict[str, dict[str, object]] = {}
+    rest_base_url = os.environ.get("SUPABASE_REST_BASE_URL", DEFAULT_REST_BASE_URL)
+    if not args.dry_run and args.apply:
+        existing_states = _fetch_existing_states(
+            service_credential=os.environ["SUPABASE_SERVICE_ROLE_KEY"].strip(),
+            rest_base_url=rest_base_url,
+        )
+
     evaluations: list[ThresholdEvaluation] = []
     for item in raw_payloads:
-        ev = evaluate_tool_payload(item)
+        tool_key = str(item.get("tool") or "").strip().lower()
+        ev = evaluate_tool_payload(
+            item,
+            existing_state=existing_states.get(tool_key) if tool_key in existing_states else None,
+        )
         if ev is not None:
             evaluations.append(ev)
 
     if not args.dry_run:
+        created_issues_by_tool: dict[str, int] = {}
+        if args.create_issues and evaluations:
+            repo = os.environ.get("GITHUB_REPOSITORY", "kanta13jp1/my_web_app").strip()
+            gh_bearer = os.environ["GITHUB_TOKEN"].strip()
+            created_issues_by_tool = _create_github_issues(
+                evaluations,
+                gh_auth=gh_bearer,
+                repository=repo,
+            )
         if args.apply and evaluations:
             _apply_supabase_state(
                 evaluations,
                 service_credential=os.environ["SUPABASE_SERVICE_ROLE_KEY"].strip(),
-                rest_base_url=os.environ.get("SUPABASE_REST_BASE_URL", DEFAULT_REST_BASE_URL),
+                rest_base_url=rest_base_url,
+                existing_states=existing_states,
+                created_issues_by_tool=created_issues_by_tool,
             )
         if args.notify_slack:
             slack_payload = build_slack_webhook_payload(evaluations)
@@ -413,14 +519,6 @@ def main(argv: list[str] | None = None) -> int:
                     headers={"Content-Type": "application/json"},
                     payload=slack_payload,
                 )
-        if args.create_issues:
-            repo = os.environ.get("GITHUB_REPOSITORY", "kanta13jp1/my_web_app").strip()
-            gh_bearer = os.environ["GITHUB_TOKEN"].strip()
-            _create_github_issues(
-                evaluations,
-                gh_auth=gh_bearer,
-                repository=repo,
-            )
 
     summary_md = build_summary_markdown(evaluations, dry_run=args.dry_run)
     if args.summary_out:
