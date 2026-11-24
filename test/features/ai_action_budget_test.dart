@@ -160,6 +160,8 @@ void main() {
           // Non-admin controller must refuse resumeBudget cleanly before hitting DB
           final nonAdminRepo = _FakeAiActionBudgetRepository(
             callerIsAdmin: false,
+            initialConfig: _FakeAiActionBudgetRepository._defaultConfig()
+                .copyWith(isPaused: true),
             initialEntries: _sampleEntries(firstUsd: 11.0),
           );
           final nonAdminController =
