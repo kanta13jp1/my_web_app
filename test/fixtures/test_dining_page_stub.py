@@ -146,6 +146,9 @@ class SyntheticBackendTest(unittest.TestCase):
                  '/rest/v1/rpc/synthetic_secret?token=synthetic_secret': 'rest_rpc_other',
                  '/rest/v1/synthetic_secret?token=synthetic_secret': 'rest_table_other',
                  '/functions/v1/synthetic_secret?token=synthetic_secret': 'functions_other',
+                 '/functions/v1/core-hub?token=synthetic_secret': 'functions_core_hub',
+                 '/functions/v1/ai-hub?token=synthetic_secret': 'functions_ai_hub',
+                 '/functions/v1/growth-hub?token=synthetic_secret': 'functions_growth_hub',
                  '/storage/v1/synthetic_secret?token=synthetic_secret': 'storage_other',
                  '/realtime/synthetic_secret?token=synthetic_secret': 'realtime_other',
                  '/private/synthetic_secret?token=synthetic_secret': 'other'}

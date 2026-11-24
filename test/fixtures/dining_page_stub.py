@@ -51,6 +51,9 @@ _DIAGNOSTIC_ROUTES = {
     '/rest/v1/asset_payroll_accounts': 'asset_payroll_accounts',
     '/rest/v1/rpc/asset_management_recent_cfo_assets': 'recent_cfo_assets_rpc',
     '/auth/v1/token': 'auth_token',
+    '/functions/v1/core-hub': 'functions_core_hub',
+    '/functions/v1/ai-hub': 'functions_ai_hub',
+    '/functions/v1/growth-hub': 'functions_growth_hub',
 }
 _DIAGNOSTIC_METHODS = {'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'}
 
