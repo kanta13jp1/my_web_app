@@ -133,8 +133,15 @@ DECLARE
   v_uid uuid := auth.uid();
   v_is_admin boolean := false;
 BEGIN
-  IF auth.role() = 'service_role'
-     OR current_user IN ('postgres', 'supabase_admin', 'supabase_auth_admin') THEN
+  IF COALESCE(NULLIF(auth.role(), ''), NULLIF(current_setting('request.jwt.claim.role', true), ''), '') = 'service_role'
+     OR (
+       session_user IN ('postgres', 'supabase_admin', 'supabase_auth_admin')
+       AND COALESCE(
+         NULLIF(auth.role(), ''),
+         NULLIF(current_setting('request.jwt.claim.role', true), ''),
+         ''
+       ) NOT IN ('anon', 'authenticated')
+     ) THEN
     RETURN NEW;
   END IF;
 
