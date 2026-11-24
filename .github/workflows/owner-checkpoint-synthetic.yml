@@ -1,0 +1,72 @@
+name: Owner checkpoint RPC diagnostic (synthetic Postgres only)
+on:
+  pull_request:
+    paths:
+      - 'test/synthetic_owner_checkpoint/**'
+      - '.github/workflows/owner-checkpoint-synthetic.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: owner-checkpoint-synthetic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    services:
+      db:
+        image: postgres:17.6@sha256:00bc86618629af00d2937fdc5a5d63db3ff8450acf52f0636ec813c7f4902929
+        env:
+          POSTGRES_DB: owner_sync_lab
+          POSTGRES_PASSWORD: synthetic-only
+        options: >-
+          --health-cmd "pg_isready -U postgres -d owner_sync_lab"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify disposable service
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SYNTHETIC_DB_CONTAINER" =~ ^[0-9a-f]{64}$ ]]
+          test "$(docker inspect --format '{{.Config.Image}}' "$SYNTHETIC_DB_CONTAINER")" = 'postgres:17.6@sha256:00bc86618629af00d2937fdc5a5d63db3ff8450acf52f0636ec813c7f4902929'
+          test "$(docker inspect --format '{{len .HostConfig.PortBindings}}' "$SYNTHETIC_DB_CONTAINER")" = '0'
+      - name: Create fake-auth fixture in disposable service
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 60s docker exec -i -e PGCONNECT_TIMEOUT=5 -e 'PGOPTIONS=-c statement_timeout=40s -c lock_timeout=25s' -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -X -v ON_ERROR_STOP=1 < test/synthetic_owner_checkpoint/fixture.sql
+      - name: Verify owner routing, rollback, corruption and immutability
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 60s docker exec -i -e PGCONNECT_TIMEOUT=5 -e 'PGOPTIONS=-c statement_timeout=40s -c lock_timeout=25s' -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -X -v ON_ERROR_STOP=1 < test/synthetic_owner_checkpoint/sequential.sql
+      - name: Verify two connection serialization
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: timeout 90s bash test/synthetic_owner_checkpoint/concurrency.sh
+      - name: Verify checked read during concurrent commit
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: timeout 90s bash test/synthetic_owner_checkpoint/snapshot_concurrency.sh
+      - name: Verify synthetic prior anchor and rollback comparison
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 60s docker exec -i -e PGCONNECT_TIMEOUT=5 -e 'PGOPTIONS=-c statement_timeout=40s -c lock_timeout=25s' -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -X -v ON_ERROR_STOP=1 < test/synthetic_owner_checkpoint/anchor_checked.sql
