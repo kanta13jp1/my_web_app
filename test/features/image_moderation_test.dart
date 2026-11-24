@@ -190,7 +190,13 @@ void main() {
           await tester.tap(submitBtn);
           await tester.pumpAndSettle();
 
-          expect(find.text('food_bento_lunch.png'), findsOneWidget);
+          expect(
+            find.descendant(
+              of: find.byKey(const ValueKey<String>('asset_card_img-1')),
+              matching: find.text('food_bento_lunch.png'),
+            ),
+            findsOneWidget,
+          );
           expect(
             repo._assets.first.externalTransferConsented,
             isTrue,
