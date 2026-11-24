@@ -236,10 +236,21 @@ def _http_json(
 ) -> tuple[int, object]:
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        raw = resp.read().decode("utf-8", errors="replace")
-        parsed = json.loads(raw) if raw.strip() else {}
-        return resp.status, parsed
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            status = getattr(resp, "status", 200)
+            raw = resp.read().decode("utf-8", errors="replace")
+            if status < 200 or status >= 300:
+                raise RuntimeError(
+                    f"HTTP {status} from {method} {url}: {raw[:300]}"
+                )
+            parsed = json.loads(raw) if raw.strip() else {}
+            return status, parsed
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+        raise RuntimeError(
+            f"HTTP {exc.code} from {method} {url}: {body[:300]}"
+        ) from exc
 
 
 def load_payloads_from_env() -> list[dict[str, object]]:
