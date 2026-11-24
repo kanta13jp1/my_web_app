@@ -692,8 +692,9 @@ jobs:
           deploy_function viral-video-ad-generator --no-verify-jwt
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
+          deploy_function did-mcp-proxy --no-verify-jwt
 
-          # Total: 34 functions deployed (ハードキャップ50本に対し34本 — 余裕16本)
+          # Total: 35 functions deployed (ハードキャップ50本に対し35本 — 余裕15本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
