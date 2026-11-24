@@ -313,9 +313,7 @@ void main() {
               isFalse,
             );
             expect(
-              tester
-                  .getRect(find.byTooltip('AIシェアボタン設定'))
-                  .overlaps(navBarRect),
+              tester.getRect(find.byTooltip('AIシェアボタン設定')).overlaps(navBarRect),
               isFalse,
             );
           }
