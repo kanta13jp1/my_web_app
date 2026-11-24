@@ -125,7 +125,6 @@ begin
       v_jwt_role = ''
       and session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin')
     );
-begin
   if not v_is_service then
     raise exception 'did_mcp_proxy_events can only be mutated by service_role'
       using errcode = '42501';

@@ -228,6 +228,7 @@ void main() {
             const ValueKey<String>('did-mcp-execute-button'),
           );
           await tester.ensureVisible(executeBtn);
+          await tester.pumpAndSettle();
           await tester.tap(executeBtn);
           await tester.pumpAndSettle();
 
@@ -235,12 +236,14 @@ void main() {
             const ValueKey<String>('did-mcp-result-banner'),
           );
           await tester.ensureVisible(resultBanner);
+          await tester.pumpAndSettle();
           expect(resultBanner, findsOneWidget);
 
           final Finder ackBtn = find.byKey(
             const ValueKey<String>('did-mcp-ack-button-alt-429-1'),
           );
           await tester.ensureVisible(ackBtn);
+          await tester.pumpAndSettle();
           await tester.tap(ackBtn);
           await tester.pumpAndSettle();
           expect(controller.state.unacknowledgedAlertCount, 0);

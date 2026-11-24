@@ -101,6 +101,9 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
         timeout: float = 10.0,
     ) -> None:
         context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.check_hostname = True
         super().__init__(hostname, port=port, timeout=timeout, context=context)
         self._pinned_ip = pinned_ip
         self._sni_host = hostname
