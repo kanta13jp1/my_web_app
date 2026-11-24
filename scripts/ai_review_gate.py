@@ -267,6 +267,12 @@ def review(directory):
                 'Actually inspect both updated landing page Playwright visual regression screenshots (desktop and mobile) '
                 'for dark hero sample preview harmonization, text/button contrast readability, layout integrity, and alignment with the Flutter code diff. '
             )
+        elif state['pr'] == 6273:
+            image_guidance = (
+                'Actually inspect both updated landing page Playwright visual regression screenshots (desktop and mobile) '
+                'for removal of the 5-question guided-intake copy, clean hero headline phrase wrapping without mid-word breaks, '
+                'WCAG 1.4.11 input border contrast, layout integrity, and alignment with the Flutter code diff. '
+            )
         else:
             image_guidance = 'Actually inspect all three character cells, transparency, visual content and code integration. '
         rules += (

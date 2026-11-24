@@ -145,7 +145,7 @@ class SupabaseAiActionBudgetRepository implements AiActionBudgetRepository {
     rpcParams[outParam] = draft.completionCount;
 
     final rawResponse = await client.rpc(
-      'record_ai_action_usage_atomic',
+      'record_ai_action_usage_tx',
       params: rpcParams,
     );
     final payload = _normalizeRow(rawResponse);
