@@ -38,6 +38,22 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Fetch pending RLHF bad-feedback records
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SUPABASE_URL}" ] && [ -n "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
+            curl --fail --silent --show-error \
+              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+              "${SUPABASE_URL%/}/rest/v1/ai_rlhf_feedback?dispatch_status=eq.pending&github_issue_number=is.null&select=*&limit=50" \
+              -o rlhf_pending_records.json
+          else
+            printf '[]\n' > rlhf_pending_records.json
+          fi
+
       - name: Run RLHF issue dispatcher tests and queue evaluation
         id: dispatch
         env:
@@ -51,6 +67,7 @@ jobs:
           python3 -B scripts/dispatch_rlhf_github_issue.py --self-test
           if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ]; then
             python3 -B scripts/dispatch_rlhf_github_issue.py \
+              --input "rlhf_pending_records.json" \
               --repo "${GITHUB_REPOSITORY}" \
               --json-out "rlhf_feedback_dispatch_report.json" \
               --markdown-out "rlhf_feedback_dispatch_report.md" \
@@ -58,6 +75,7 @@ jobs:
               --live
           else
             python3 -B scripts/dispatch_rlhf_github_issue.py \
+              --input "rlhf_pending_records.json" \
               --repo "${GITHUB_REPOSITORY}" \
               --json-out "rlhf_feedback_dispatch_report.json" \
               --markdown-out "rlhf_feedback_dispatch_report.md" \
