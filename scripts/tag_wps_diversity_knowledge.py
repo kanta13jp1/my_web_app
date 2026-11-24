@@ -9,8 +9,7 @@ Primary-source references only:
   (https://www.un.org/womenwatch/osagi/wps/).
 - Ministry of Foreign Affairs of Japan: 3rd National Action Plan on Women,
   Peace and Security (2023-2028)
-  (https://www.mofa.go.jp/mofaj/fp/pc/page1w_000128.html /
-  https://www.mofa.go.jp/files/100488960.pdf).
+  (https://www.mofa.go.jp/mofaj/fp/pc/page1w_000128.html).
 """
 
 from __future__ import annotations
