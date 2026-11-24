@@ -440,17 +440,23 @@ class _UniversalAiShareFab extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showInbox)
-            IconButton(
-              key: const Key('universal_inbox_capture_button'),
-              tooltip: 'Inboxへメモ',
-              onPressed: _openInboxDialog,
-              icon: const Icon(Icons.inbox_outlined),
-              color: foregroundColor,
-              constraints: const BoxConstraints.tightFor(
-                width: 48,
-                height: 48,
+            Tooltip(
+              message: 'Inboxへメモ',
+              excludeFromSemantics: true,
+              child: IconButton(
+                key: const Key('universal_inbox_capture_button'),
+                onPressed: _openInboxDialog,
+                icon: const Icon(
+                  Icons.inbox_outlined,
+                  semanticLabel: 'Inboxへメモ',
+                ),
+                color: foregroundColor,
+                constraints: const BoxConstraints.tightFor(
+                  width: 48,
+                  height: 48,
+                ),
+                padding: EdgeInsets.zero,
               ),
-              padding: EdgeInsets.zero,
             ),
           if (showInbox && showShareAction)
             Container(
@@ -487,16 +493,22 @@ class _UniversalAiShareFab extends StatelessWidget {
               height: 28,
               color: colorScheme.outlineVariant.withValues(alpha: 0.78),
             ),
-            IconButton(
-              tooltip: 'AIシェアボタン設定',
-              onPressed: _openSettingsSheet,
-              icon: const Icon(Icons.tune),
-              color: foregroundColor,
-              constraints: const BoxConstraints.tightFor(
-                width: 44,
-                height: 48,
+            Tooltip(
+              message: 'AIシェアボタン設定',
+              excludeFromSemantics: true,
+              child: IconButton(
+                onPressed: _openSettingsSheet,
+                icon: const Icon(
+                  Icons.tune,
+                  semanticLabel: '共有設定',
+                ),
+                color: foregroundColor,
+                constraints: const BoxConstraints.tightFor(
+                  width: 44,
+                  height: 48,
+                ),
+                padding: EdgeInsets.zero,
               ),
-              padding: EdgeInsets.zero,
             ),
           ],
         ],
