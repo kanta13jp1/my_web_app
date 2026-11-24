@@ -214,9 +214,11 @@ void main() {
         );
 
         // Filter by WPS tag
-        await tester.tap(
-          find.byKey(const ValueKey<String>('wps_filter_chip_WPS')),
-        );
+        final wpsChip =
+            find.byKey(const ValueKey<String>('wps_filter_chip_WPS'));
+        await tester.ensureVisible(wpsChip);
+        await tester.pumpAndSettle();
+        await tester.tap(wpsChip);
         await tester.pumpAndSettle();
         expect(
           find.byKey(const ValueKey<String>('wps_policy_item_wps-1')),
@@ -228,9 +230,11 @@ void main() {
         );
 
         // Open official access link
-        await tester.tap(
-          find.byKey(const ValueKey<String>('wps_open_link_wps-1')),
-        );
+        final openLinkBtn =
+            find.byKey(const ValueKey<String>('wps_open_link_wps-1'));
+        await tester.ensureVisible(openLinkBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(openLinkBtn);
         await tester.pumpAndSettle();
         expect(
           openedUrls.single.toString(),
@@ -238,13 +242,19 @@ void main() {
         );
 
         // Enter admin review note and request revision
+        final noteInput =
+            find.byKey(const ValueKey<String>('wps_review_note_input'));
+        await tester.ensureVisible(noteInput);
+        await tester.pumpAndSettle();
         await tester.enterText(
-          find.byKey(const ValueKey<String>('wps_review_note_input')),
+          noteInput,
           '一次資料URLを確認の上、記述を明確化してください',
         );
-        await tester.tap(
-          find.byKey(const ValueKey<String>('wps_revise_wps-1')),
-        );
+        final reviseBtn =
+            find.byKey(const ValueKey<String>('wps_revise_wps-1'));
+        await tester.ensureVisible(reviseBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(reviseBtn);
         await tester.pumpAndSettle();
         expect(
           repo.items.first.reviewStatus,
@@ -256,17 +266,21 @@ void main() {
         );
 
         // Approve wps-1
-        await tester.tap(
-          find.byKey(const ValueKey<String>('wps_approve_wps-1')),
-        );
+        final approveBtn =
+            find.byKey(const ValueKey<String>('wps_approve_wps-1'));
+        await tester.ensureVisible(approveBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(approveBtn);
         await tester.pumpAndSettle();
         expect(repo.items.first.reviewStatus, WpsPolicyReviewStatus.approved);
 
         // Error banner when refresh fails
         repo.shouldThrowOnList = true;
-        await tester.tap(
-          find.byKey(const ValueKey<String>('wps_refresh_btn')),
-        );
+        final refreshBtn =
+            find.byKey(const ValueKey<String>('wps_refresh_btn'));
+        await tester.ensureVisible(refreshBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(refreshBtn);
         await tester.pumpAndSettle();
         expect(
           find.byKey(const ValueKey<String>('wps_error_banner')),

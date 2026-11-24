@@ -88,7 +88,7 @@ class WpsDiversityKnowledgeTagger {
 
   static const String unscr1325Url = 'https://www.un.org/womenwatch/osagi/wps/';
   static const String mofaWpsNap3Url =
-      'https://www.mofa.go.jp/mofaj/fp/hr_hr/page22_001965.html';
+      'https://www.mofa.go.jp/mofaj/fp/pc/page1w_000128.html';
 
   static const String unscr1325Reference =
       'UNSCR 1325 (S/RES/1325, 2000-10-31): equal participation in prevention, '

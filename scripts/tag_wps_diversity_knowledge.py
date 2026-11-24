@@ -9,7 +9,8 @@ Primary-source references only:
   (https://www.un.org/womenwatch/osagi/wps/).
 - Ministry of Foreign Affairs of Japan: 3rd National Action Plan on Women,
   Peace and Security (2023-2028)
-  (https://www.mofa.go.jp/mofaj/fp/hr_hr/page22_001965.html).
+  (https://www.mofa.go.jp/mofaj/fp/pc/page1w_000128.html /
+  https://www.mofa.go.jp/files/100488960.pdf).
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ import sys
 from urllib.parse import urlparse
 
 UNSCR_1325_URL = "https://www.un.org/womenwatch/osagi/wps/"
-MOFA_WPS_NAP3_URL = "https://www.mofa.go.jp/mofaj/fp/hr_hr/page22_001965.html"
+MOFA_WPS_NAP3_URL = "https://www.mofa.go.jp/mofaj/fp/pc/page1w_000128.html"
 
 UNSCR_1325_REF = (
     "UNSCR 1325 (S/RES/1325, 2000-10-31): equal participation in prevention, "
