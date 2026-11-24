@@ -1,0 +1,204 @@
+"""Build a detached page with synthetic-only seams; never ship this copy."""
+from pathlib import Path
+import hashlib
+
+root = Path(__file__).resolve().parent
+page = (root / 'asset_management_page_candidate.dart').read_text(encoding='utf-8')
+
+def one(text, old, new):
+    if text.count(old) != 1:
+        raise RuntimeError('unexpected occurrence: ' + repr(old[:80]))
+    return text.replace(old, new, 1)
+
+
+def one_of(text, alternatives, new):
+    present = [old for old in alternatives if text.count(old)]
+    if len(present) != 1 or text.count(present[0]) != 1:
+        raise RuntimeError('missing or ambiguous formatting-compatible anchor')
+    return text.replace(present[0], new, 1)
+
+page = one(page, 'class AssetManagementPage extends StatefulWidget {\n',
+    '''class AssetManagementPage extends StatefulWidget {
+  @visibleForTesting
+  final Future<List<Map<String, dynamic>>> Function(String)? debugDebtRead;
+  @visibleForTesting
+  final Future<void> Function(Map<String, int>)? debugDebtWrite;
+  @visibleForTesting
+  final String? Function()? debugDebtOwner;
+  @visibleForTesting
+  final String? Function()? debugDebtToken;
+  @visibleForTesting
+  final Stream<AuthState>? debugDebtAuthEvents;
+  @visibleForTesting
+  final bool debugDisableDebtBoot;
+''')
+page = one(page, '  const AssetManagementPage({\n    super.key,\n',
+    '''  const AssetManagementPage({
+    super.key,
+    this.debugDebtRead,
+    this.debugDebtWrite,
+    this.debugDebtOwner,
+    this.debugDebtToken,
+    this.debugDebtAuthEvents,
+    this.debugDisableDebtBoot = false,
+''')
+page = one(page, 'class _AssetManagementPageState extends State<AssetManagementPage> {\n',
+    '''class _AssetManagementPageState extends State<AssetManagementPage> {
+  @visibleForTesting
+  Future<void> debugRestoreDebtForTest() => _restoreDebtPaymentDayOverridesFromMirror();
+  @visibleForTesting
+  void debugSetDebtForTest(Map<String, int> value) => _debtPaymentDayOverrides = Map.of(value);
+  @visibleForTesting
+  Map<String, int> debugDebtValuesForTest() => Map.of(_debtPaymentDayOverrides);
+  Future<void>? _debugDebtBackfill;
+  Future<void>? _debugDebtSave;
+  Future<void>? _debugDebtWrite;
+  Future<void> _trackDebtBackfill(Future<void> future) => _debugDebtBackfill = future;
+  Future<void> _trackDebtSave(Future<void> future) => _debugDebtSave = future;
+  Future<void> _trackDebtWrite(Future<void> future) => _debugDebtWrite = future;
+  @visibleForTesting
+  Future<void> debugWaitDebtBackfillsForTest() async {
+    final future = _debugDebtBackfill;
+    if (future != null) await future;
+  }
+  @visibleForTesting
+  Future<void> debugWaitDebtSavesForTest() async {
+    final future = _debugDebtSave;
+    if (future != null) await future;
+  }
+  @visibleForTesting
+  Future<void> debugWaitDebtWritesForTest() async {
+    final future = _debugDebtWrite;
+    if (future != null) await future;
+  }
+  String? get _debugDebtOwner => widget.debugDebtOwner != null
+      ? widget.debugDebtOwner!() : _supabase.auth.currentUser?.id;
+  String? get _debugDebtToken => widget.debugDebtToken != null
+      ? widget.debugDebtToken!() : _supabase.auth.currentSession?.accessToken;
+''')
+page = one(page, '    _debtRestoreOwnerAtPageStart = _supabase.auth.currentUser?.id;\n',
+    '    _debtRestoreOwnerAtPageStart = _debugDebtOwner;\n')
+page = one(page, '    _debtRestoreTokenAtPageStart = _supabase.auth.currentSession?.accessToken;\n',
+    '    _debtRestoreTokenAtPageStart = _debugDebtToken;\n')
+page = one_of(page,
+    ('    _debtRestoreAuthSubscription = _supabase.auth.onAuthStateChange.listen((event) {\n',
+     '    _debtRestoreAuthSubscription =\n        _supabase.auth.onAuthStateChange.listen((event) {\n'),
+    '    _debtRestoreAuthSubscription = (widget.debugDebtAuthEvents ?? _supabase.auth.onAuthStateChange).listen((event) {\n')
+page = one(page, '      unawaited(_restoreDebtPaymentDayOverridesFromMirror());\n',
+    '      if (!widget.debugDisableDebtBoot) unawaited(_restoreDebtPaymentDayOverridesFromMirror());\n')
+page = one(page,
+    '        _debtPaymentDayOverrides = Map<String, int>.from(\n'
+    '          debtPaymentDayOverrides,\n        );\n',
+    '        if (!widget.debugDisableDebtBoot) {\n'
+    '          _debtPaymentDayOverrides = Map<String, int>.from(\n'
+    '            debtPaymentDayOverrides,\n          );\n        }\n')
+
+start = page.index('  Future<List<Map<String, dynamic>>> _readDebtOverrideMirrorFresh(')
+end = page.index('  Future<void> _backfillPrefIfServerMissing(', start)
+part = page[start:end]
+part = one_of(part,
+    ('    final auth = _supabase.auth;\n    final session = auth.currentSession;\n'
+     '    if (session == null || session.user.id != expectedOwner ||\n',
+     '    final auth = _supabase.auth;\n    final session = auth.currentSession;\n'
+     '    if (session == null ||\n        session.user.id != expectedOwner ||\n'),
+    '    final sessionOwner = widget.debugDebtOwner != null\n'
+    '        ? _debugDebtOwner : _supabase.auth.currentSession?.user.id;\n'
+    '    final sessionToken = _debugDebtToken;\n'
+    '    if (sessionOwner == null || sessionToken == null || sessionOwner != expectedOwner ||\n')
+part = one(part,
+    "    final result = await _supabase\n        .from('asset_pref_mirror')\n"
+    "        .select('user_id,pref_key,value,updated_at')\n"
+    "        .eq('user_id', expectedOwner)\n"
+    "        .eq('pref_key', 'debt_payment_day_overrides');\n",
+    "    final fake = widget.debugDebtRead;\n"
+    "    final result = fake != null ? await fake(expectedOwner) : await _supabase\n"
+    "        .from('asset_pref_mirror')\n"
+    "        .select('user_id,pref_key,value,updated_at')\n"
+    "        .eq('user_id', expectedOwner)\n"
+    "        .eq('pref_key', 'debt_payment_day_overrides');\n")
+part = one(part,
+    '        auth.currentUser?.id != expectedOwner ||\n'
+    '        auth.currentSession?.accessToken != session.accessToken) {\n',
+    '        _debugDebtOwner != expectedOwner ||\n'
+    '        _debugDebtToken != sessionToken) {\n')
+page = page[:start] + part + page[end:]
+start = page.index('  Future<void> _backfillPrefIfServerMissing(')
+end = page.index('  /// 当該ユーザーの `asset_pref_mirror`', start)
+part = page[start:end].replace('_supabase.auth.currentUser?.id', '_debugDebtOwner').replace(
+    '_supabase.auth.currentSession?.accessToken', '_debugDebtToken')
+page = page[:start] + part + page[end:]
+start = page.index('  Future<void> _mirrorDebtPaymentDayOverrides(')
+end = page.index('  Future<void> _restoreDebtPaymentDayOverridesFromMirror()', start)
+part = page[start:end].replace('_supabase.auth.currentUser?.id', '_debugDebtOwner')
+part = one(part,
+    "      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{\n"
+    "        'user_id': userId,\n        'pref_key': 'debt_payment_day_overrides',\n"
+    "        'value': overrides,\n        'updated_at': DateTime.now().toUtc().toIso8601String(),\n      });\n",
+    "      final fake = widget.debugDebtWrite;\n"
+    "      if (fake != null) {\n        await fake(Map<String, int>.from(overrides));\n"
+    "      } else {\n        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{\n"
+    "          'user_id': userId,\n          'pref_key': 'debt_payment_day_overrides',\n"
+    "          'value': overrides,\n          'updated_at': DateTime.now().toUtc().toIso8601String(),\n        });\n      }\n")
+page = page[:start] + part + page[end:]
+start = page.index('  Future<void> _restoreDebtPaymentDayOverridesFromMirror()')
+end = page.index('  /// 入金予定のミラー取り込みプレビュー', start)
+part = page[start:end].replace('_supabase.auth.currentUser?.id', '_debugDebtOwner').replace(
+    '_supabase.auth.currentSession?.accessToken', '_debugDebtToken').replace(
+    '_supabase.auth.currentUser == null', '_debugDebtOwner == null')
+part = one(part,
+    "        _backfillPrefIfServerMissing(\n          'debt_payment_day_overrides',\n"
+    "          () => _mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides),\n        ),\n",
+    "        _trackDebtBackfill(_backfillPrefIfServerMissing(\n          'debt_payment_day_overrides',\n"
+    "          () => _mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides),\n        )),\n")
+part = part.replace(
+    'unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));',
+    'unawaited(_trackDebtBackfill(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides)));')
+part = one(part,
+    "          _saveDebtPaymentDayOverrides(\n            expectedOwner: debugMirror == null ? restoreOwner : null,\n"
+    "            expectedToken: debugMirror == null ? restoreToken : null,\n          ),\n",
+    "          _trackDebtSave(_saveDebtPaymentDayOverrides(\n            expectedOwner: debugMirror == null ? restoreOwner : null,\n"
+    "            expectedToken: debugMirror == null ? restoreToken : null,\n          )),\n")
+page = page[:start] + part + page[end:]
+start = page.index('  Future<void> _saveDebtPaymentDayOverrides(')
+end = page.index('  Widget _buildDebtPaymentDayInput(', start)
+part = page[start:end].replace('_supabase.auth.currentUser?.id', '_debugDebtOwner').replace(
+    '_supabase.auth.currentSession?.accessToken', '_debugDebtToken')
+part = one(part,
+    '      _mirrorDebtPaymentDayOverrides(\n        Map<String, int>.from(_debtPaymentDayOverrides),\n      ),\n',
+    '      _trackDebtWrite(_mirrorDebtPaymentDayOverrides(\n'
+    '        Map<String, int>.from(_debtPaymentDayOverrides),\n      )),\n')
+page = page[:start] + part + page[end:]
+page = one(page, 'class AssetManagementPage extends StatefulWidget {\n',
+    '''class AssetManagementPage extends StatefulWidget {
+  @visibleForTesting
+  final Future<List<Map<String, dynamic>>> Function(String)? debugDebtDeletedRead;
+''')
+page = one(page, '  const AssetManagementPage({\n    super.key,\n',
+    '  const AssetManagementPage({\n    super.key,\n    this.debugDebtDeletedRead,\n')
+page = one(page, 'class _AssetManagementPageState extends State<AssetManagementPage> {\n',
+    '''class _AssetManagementPageState extends State<AssetManagementPage> {
+  @visibleForTesting
+  Future<void> debugPullDebtDeletedForTest() => _pullDebtOverrideDeleted();
+''')
+page = one(page, '    unawaited(_pullDebtOverrideDeleted());\n',
+    '    if (!widget.debugDisableDebtBoot) unawaited(_pullDebtOverrideDeleted());\n')
+start = page.index('  Future<void> _pullDebtOverrideDeleted()')
+end = page.index('  Future<void> _saveDebtPaymentDayOverrides(', start)
+part = page[start:end].replace('_supabase.auth.currentUser?.id', '_debugDebtOwner').replace(
+    '_supabase.auth.currentSession?.accessToken', '_debugDebtToken')
+part = one(part,
+    "        final rows = await _bootSelectPrefMirror(\n          'debt_payment_day_override_deleted',\n        );\n",
+    "        final fake = widget.debugDebtDeletedRead;\n"
+    "        final rows = fake != null ? await fake(owner!) : await _bootSelectPrefMirror(\n"
+    "          'debt_payment_day_override_deleted',\n        );\n")
+part = one(part,
+    '        _saveDebtPaymentDayOverrides(\n'
+    '          expectedOwner: debugMirror == null ? owner : null,\n'
+    '          expectedToken: debugMirror == null ? token : null,\n        ),\n',
+    '        _trackDebtSave(_saveDebtPaymentDayOverrides(\n'
+    '          expectedOwner: debugMirror == null ? owner : null,\n'
+    '          expectedToken: debugMirror == null ? token : null,\n        )),\n')
+page = page[:start] + part + page[end:]
+
+(root / 'instrumented_page.dart').write_text(page, encoding='utf-8', newline='\n')
+print('instrumented sha256', hashlib.sha256(page.encode()).hexdigest())
