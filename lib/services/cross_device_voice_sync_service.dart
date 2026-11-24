@@ -404,7 +404,7 @@ class CrossDeviceVoiceSyncService extends ChangeNotifier {
 
   static VoiceSpeechCapability _defaultCapabilityProbe() {
     return evaluateVoiceEnvironment(
-      VoiceCapabilityProbeInput(
+      const VoiceCapabilityProbeInput(
         platform: kIsWeb
             ? VoiceDevicePlatform.desktopWeb
             : VoiceDevicePlatform.unknown,
