@@ -124,59 +124,71 @@ BEGIN
   v_end_ts := (v_end_date::timestamp AT TIME ZONE 'Asia/Tokyo');
 
   IF to_regclass('public.app_analytics') IS NOT NULL THEN
-    EXECUTE
+    EXECUTE format(
       'SELECT COALESCE(SUM(landing_views), 0)::integer, COALESCE(SUM(conversions), 0)::integer
        FROM public.app_analytics
-       WHERE date >= $1 AND date < $2'
-      INTO v_landing_views, v_conversions
-      USING v_start_date, v_end_date;
+       WHERE date >= %L::date AND date < %L::date',
+      v_start_date,
+      v_end_date
+    )
+      INTO v_landing_views, v_conversions;
   END IF;
 
   IF to_regclass('public.ai_hub_chat_logs') IS NOT NULL THEN
-    EXECUTE
+    EXECUTE format(
       'SELECT COUNT(*)::integer, COUNT(*) FILTER (WHERE success = false)::integer
        FROM public.ai_hub_chat_logs
-       WHERE created_at >= $1 AND created_at < $2'
-      INTO v_ai_requests, v_ai_errors
-      USING v_start_ts, v_end_ts;
+       WHERE created_at >= %L::timestamptz AND created_at < %L::timestamptz',
+      v_start_ts,
+      v_end_ts
+    )
+      INTO v_ai_requests, v_ai_errors;
   END IF;
 
   IF to_regclass('public.schedule_task_runs') IS NOT NULL THEN
-    EXECUTE
+    EXECUTE format(
       'SELECT COUNT(*)::integer, COUNT(*) FILTER (WHERE status = ''error'')::integer
        FROM public.schedule_task_runs
-       WHERE started_at >= $1 AND started_at < $2'
-      INTO v_schedule_runs, v_schedule_errors
-      USING v_start_ts, v_end_ts;
+       WHERE started_at >= %L::timestamptz AND started_at < %L::timestamptz',
+      v_start_ts,
+      v_end_ts
+    )
+      INTO v_schedule_runs, v_schedule_errors;
   END IF;
 
   IF to_regclass('public.async_jobs') IS NOT NULL THEN
-    EXECUTE
+    EXECUTE format(
       'SELECT COUNT(*)::integer, COUNT(*) FILTER (WHERE status = ''failed'')::integer
        FROM public.async_jobs
-       WHERE created_at >= $1 AND created_at < $2'
-      INTO v_async_jobs, v_async_errors
-      USING v_start_ts, v_end_ts;
+       WHERE created_at >= %L::timestamptz AND created_at < %L::timestamptz',
+      v_start_ts,
+      v_end_ts
+    )
+      INTO v_async_jobs, v_async_errors;
   END IF;
 
   IF to_regclass('public.edge_function_runtime_invocations') IS NOT NULL THEN
-    EXECUTE
+    EXECUTE format(
       'SELECT COUNT(*)::integer, COUNT(*) FILTER (WHERE response_status >= 500)::integer
        FROM public.edge_function_runtime_invocations
-       WHERE invoked_at >= $1 AND invoked_at < $2'
-      INTO v_ef_invocations, v_ef_errors
-      USING v_start_ts, v_end_ts;
+       WHERE invoked_at >= %L::timestamptz AND invoked_at < %L::timestamptz',
+      v_start_ts,
+      v_end_ts
+    )
+      INTO v_ef_invocations, v_ef_errors;
   END IF;
 
   IF to_regclass('public.hub_data') IS NOT NULL THEN
-    EXECUTE
+    EXECUTE format(
       'SELECT COUNT(*)::integer
        FROM public.hub_data
        WHERE source = ''user_feedback''
          AND metadata->>''source'' = ''auto_error_report''
-         AND created_at >= $1 AND created_at < $2'
-      INTO v_auto_error_reports
-      USING v_start_ts, v_end_ts;
+         AND created_at >= %L::timestamptz AND created_at < %L::timestamptz',
+      v_start_ts,
+      v_end_ts
+    )
+      INTO v_auto_error_reports;
   END IF;
 
   v_user_access_count := GREATEST(v_landing_views, 0) + GREATEST(v_ai_requests, 0);

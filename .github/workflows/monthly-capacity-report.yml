@@ -93,15 +93,24 @@ jobs:
               with open(summary_path, "a", encoding="utf-8", newline="\n") as fh:
                   fh.write("\n".join(lines) + "\n")
 
-          if not jwt or not anon:
-              print("::notice::CAPACITY_REPORT_ADMIN_JWT or SUPABASE_ANON_KEY is not configured; skipping remote call.")
+          missing_secrets = []
+          if not jwt:
+              missing_secrets.append("CAPACITY_REPORT_ADMIN_JWT")
+          if not anon:
+              missing_secrets.append("SUPABASE_ANON_KEY")
+          if missing_secrets:
+              missing_list = ", ".join(missing_secrets)
+              print(
+                  f"::error::Missing required GitHub secret(s): {missing_list}",
+                  file=sys.stderr,
+              )
               write_summary([
                   "## Monthly Capacity Report",
                   "",
                   f"- Target month: `{target_month}`",
-                  "- Status: `skipped` (`CAPACITY_REPORT_ADMIN_JWT` or `SUPABASE_ANON_KEY` missing)",
+                  f"- Status: `failed` (missing required secrets: `{missing_list}`)",
               ])
-              sys.exit(0)
+              sys.exit(1)
 
           endpoint = f"{supabase_url}/functions/v1/admin-hub"
           headers = {
