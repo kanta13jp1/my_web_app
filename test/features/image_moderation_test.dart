@@ -141,7 +141,9 @@ void main() {
           expect(find.text('receipt_tax_2026.png'), findsOneWidget);
           expect(find.text('landscape_fuji.jpg'), findsOneWidget);
           expect(
-              find.textContaining('flagged_unsafe_upload.png'), findsNothing);
+            find.textContaining('flagged_unsafe_upload.png'),
+            findsNothing,
+          );
 
           final receiptChip = find.byKey(
             const ValueKey<String>('tag_filter_receipt'),
