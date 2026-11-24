@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -37,6 +38,8 @@ Future<void> showPage(WidgetTester tester, DateTime today) async {
         debugNow: today,
         debugCalendarNow: today,
         debugInitialAssetData: const {},
+        // Keep unrelated automatic AI generation out of this calendar test.
+        aiSummaryService: AssetManagementAiSummaryService(aiEnabled: false),
       ),
     ),
   );
