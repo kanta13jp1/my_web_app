@@ -175,6 +175,44 @@ void main() {
         contains('cancel_duplicate_music'),
       );
     });
+
+    test('excludes future pay_date payslips from cycle and fallback income',
+        () {
+      const service = DisposableBalanceService();
+      final resultWithPastFallback = service.build(
+        asOfDate: DateTime(2026, 11, 23),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 25),
+            netAmount: 491120,
+          ),
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 24),
+            netAmount: 491120,
+          ),
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 10, 23),
+            netAmount: 421286,
+          ),
+        ],
+      );
+      expect(resultWithPastFallback.income, 421286);
+
+      final resultOnlyFuture = service.build(
+        asOfDate: DateTime(2026, 11, 23),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 24),
+            netAmount: 491120,
+          ),
+        ],
+      );
+      expect(resultOnlyFuture.income, 0);
+      expect(
+        resultOnlyFuture.requiredActions.map((a) => a.actionKey),
+        contains('upload_current_payslip'),
+      );
+    });
   });
 
   group('DisposableBalanceActionMergeService', () {

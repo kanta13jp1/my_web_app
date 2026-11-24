@@ -3,12 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../../../data/repositories/guitar_course_repository.dart';
 import '../../../data/repositories/guitar_tab_repository.dart';
+import '../../../data/services/chord_lyrics_catalog_service.dart';
 import '../../../data/services/guitar_course_progress_service.dart';
 import '../../../data/services/guitar_daily_course_catalog_service.dart';
 import '../../../data/services/guitar_lesson_link_service.dart';
+import '../../../data/services/guitar_metronome_audio_service.dart';
 import '../../../data/services/guitar_tab_catalog_service.dart';
 import '../../../data/services/structured_tab_catalog_service.dart';
 import '../../../data/services/structured_tab_pdf_service.dart';
+import '../../../data/services/user_chord_lyrics_storage_service.dart';
 import '../../../data/services/user_structured_tab_storage_service.dart';
 import '../../../domain/use_cases/build_guitar_course_snapshot_use_case.dart';
 import 'view_models/beatles_guitar_tabs_view_model.dart';
@@ -23,6 +26,9 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
     this.structuredCatalogService,
     this.userTabStorageService,
     this.pdfService,
+    this.metronomeAudioService,
+    this.chordLyricsCatalogService,
+    this.userChordLyricsStorageService,
   });
 
   final GuitarTabRepository? repository;
@@ -31,6 +37,9 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
   final StructuredTabCatalogService? structuredCatalogService;
   final UserStructuredTabStorageService? userTabStorageService;
   final StructuredTabPdfService? pdfService;
+  final GuitarMetronomeAudioService? metronomeAudioService;
+  final ChordLyricsCatalogService? chordLyricsCatalogService;
+  final UserChordLyricsStorageService? userChordLyricsStorageService;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +66,9 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
         structuredCatalogService: structuredCatalogService,
         userTabStorageService: userTabStorageService,
         pdfService: pdfService,
+        metronomeAudioService: metronomeAudioService,
+        chordLyricsCatalogService: chordLyricsCatalogService,
+        userChordLyricsStorageService: userChordLyricsStorageService,
       ),
     );
   }

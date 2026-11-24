@@ -14,6 +14,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   buildOAuthProtectedResourceMetadata,
+  buildWwwAuthenticateHeader,
   isOAuthProtectedResourceMetadataRequest,
   logMcpInvocation,
   type McpAuthContext,
@@ -21,6 +22,14 @@ import {
   toolResourceUrn,
   validateBearer,
 } from "../_shared/mcp_auth_guard.ts";
+import {
+  formatMcpToolText,
+  handleMcpLifecycleRequest,
+  MCP_CORS_HEADERS,
+  mcpJsonRpcError,
+  negotiateMcpProtocolVersion,
+} from "../_shared/mcp_streamable_http.ts";
+import { scanMcpPayloadForSecuritySignals } from "../_shared/mcp_security_scan.ts";
 import {
   buildMcpClientRegistration,
 } from "../_shared/mcp_client_registration.ts";
@@ -42,9 +51,13 @@ import {
 } from "./eval_approval_automation.ts";
 import {
   buildMcpFeatureRequestPayload,
+  buildMcpNoteDeletePayload,
   buildMcpNotePayload,
+  buildMcpNoteUpdatePayload,
   buildMcpToolCatalog,
+  buildMcpWorkerInvokePayload,
   hasMcpWriteConfirmation,
+  jibunApiScopesToMcpPermissions,
   mcpActionToToolName,
   mcpConfirmationPhrase,
   type McpMyWebAppToolName,
@@ -65,8 +78,21 @@ import {
   fetchLocalBusinessReferences,
 } from "../_shared/local_business_reference.ts";
 import {
+  type ApiKeyRow,
+  authenticateJibunApiBearerForMcp,
   createSupabaseJibunApiStore,
+  fireWebhooks,
   handleJibunApiAction,
+  hmacSha256Hex,
+  JIBUN_API_KEY_PREFIX,
+  type JibunApiStore,
+  keyToSafeJson,
+  readBoundedBody,
+  requestIp,
+  resolveHostToPrivateError,
+  validateWorkerEndpoint,
+  WORKER_RESPONSE_MAX_BYTES,
+  workerToSafeJson,
 } from "./jibun_api.ts";
 import {
   dedupeWbsTasksById,
@@ -81,10 +107,7 @@ import {
 import { handleReading, ReadingError, readingActions } from "./reading.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
-  "Access-Control-Max-Age": "86400",
+  ...MCP_CORS_HEADERS,
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -890,9 +913,15 @@ function mcpProtocolToolCatalog(): Array<Record<string, unknown>> {
     description: tool.description,
     inputSchema: tool.input_schema,
     annotations: {
+      title: tool.title,
+      readOnlyHint: tool.read_only_hint,
+      destructiveHint: tool.destructive_hint,
+      idempotentHint: tool.idempotent_hint,
+      openWorldHint: tool.open_world_hint,
       requested_scopes: tool.requested_scopes,
       write_confirmation_required: tool.write_confirmation_required,
       invoke_action: tool.invoke_action,
+      jibun_api_scope: tool.jibun_api_scope,
     },
   }));
 }
@@ -906,6 +935,7 @@ function mcpToolResponse(
   payload: Record<string, unknown>,
   status = 200,
   extraHeaders: Record<string, string> = {},
+  req?: Request,
 ): Response {
   if (!isMcpJsonRpcRequest(body)) {
     return json(payload, status, extraHeaders);
@@ -915,6 +945,9 @@ function mcpToolResponse(
   const content = Array.isArray(payload.content)
     ? payload.content
     : mcpTextResult(String(payload.error ?? "MCP tool call failed."));
+  const protocolVersion = negotiateMcpProtocolVersion(
+    req?.headers.get("mcp-protocol-version"),
+  );
   return json(
     mcpJsonRpcResult(body, {
       content,
@@ -922,7 +955,71 @@ function mcpToolResponse(
       isError,
     }),
     status,
-    extraHeaders,
+    {
+      "MCP-Protocol-Version": protocolVersion,
+      ...extraHeaders,
+    },
+  );
+}
+
+type McpAuthSuccess = {
+  ctx: McpAuthContext;
+  jibunKey?: ApiKeyRow;
+  jibunStore?: JibunApiStore;
+};
+
+async function recordMcpAudit(
+  auth: McpAuthSuccess,
+  toolName: McpMyWebAppToolName,
+  args: Record<string, unknown>,
+  status: number,
+  req: Request,
+  workerId: string | null = null,
+): Promise<void> {
+  await logMcpInvocation(auth.ctx, toolName, args, status, req);
+  if (auth.jibunKey && auth.jibunStore) {
+    try {
+      await auth.jibunStore.insertAuditLog({
+        user_id: auth.jibunKey.user_id,
+        api_key_id: auth.jibunKey.id,
+        worker_id: workerId,
+        action: `mcp.${toolName}`,
+        status,
+        request_ip: requestIp(req),
+        duration_ms: null,
+        trace_id: null,
+        request_preview: JSON.stringify(args).slice(0, 200),
+      });
+      await auth.jibunStore.touchKeyLastUsed(auth.jibunKey.id);
+    } catch (err) {
+      console.warn("MCP jibun_api audit skipped", err);
+    }
+  }
+}
+
+async function requireMcpSubject(
+  auth: McpAuthSuccess,
+  toolName: McpMyWebAppToolName,
+  args: Record<string, unknown>,
+  body: Record<string, unknown>,
+  req: Request,
+): Promise<string | Response> {
+  const subject = (auth.ctx.subject ?? "").trim();
+  if (subject) return subject;
+  await recordMcpAudit(auth, toolName, args, 403, req);
+  return mcpToolResponse(
+    body,
+    {
+      success: false,
+      error: "mcp_subject_required",
+      tool: toolName,
+      content: mcpTextResult(
+        `User subject is required to call ${toolName}.`,
+      ),
+    },
+    403,
+    {},
+    req,
   );
 }
 
@@ -943,40 +1040,107 @@ async function authorizeMcpTool(
   toolName: McpMyWebAppToolName,
   args: Record<string, unknown>,
   body: Record<string, unknown>,
-): Promise<{ ctx: McpAuthContext } | { response: Response }> {
-  const ctx = await validateBearer(req);
-  if (!ctx) {
-    await logMcpInvocation(null, toolName, args, 401, req);
+  admin: SupabaseClient,
+): Promise<McpAuthSuccess | { response: Response }> {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const authMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+  const rawBearer = authMatch ? authMatch[1].trim() : "";
+
+  let ctx: McpAuthContext | null = null;
+  let jibunKey: ApiKeyRow | undefined;
+  let jibunStore: JibunApiStore | undefined;
+
+  if (rawBearer.startsWith(JIBUN_API_KEY_PREFIX)) {
+    jibunStore = createSupabaseJibunApiStore(admin);
+    const jibunAuth = await authenticateJibunApiBearerForMcp(
+      req,
+      jibunStore,
+      `mcp.${toolName}`,
+    );
+    if (!jibunAuth.ok) {
+      await logMcpInvocation(null, toolName, args, jibunAuth.status, req);
+      const extraHeaders: Record<string, string> = jibunAuth.status === 401
+        ? { "WWW-Authenticate": buildWwwAuthenticateHeader(req.url, toolName) }
+        : {};
+      return {
+        response: mcpToolResponse(
+          body,
+          {
+            success: false,
+            error: jibunAuth.error,
+            tool: toolName,
+            ...(jibunAuth.details ?? {}),
+          },
+          jibunAuth.status,
+          extraHeaders,
+          req,
+        ),
+      };
+    }
+    jibunKey = jibunAuth.key;
+    const perms = jibunApiScopesToMcpPermissions(jibunKey.scopes);
+    ctx = {
+      client_id: `jibun_api_key:${jibunKey.id}`,
+      scopes: perms.scopes,
+      aud: perms.aud,
+      subject: jibunKey.user_id,
+    };
+  } else {
+    ctx = await validateBearer(req);
+    if (!ctx) {
+      await logMcpInvocation(null, toolName, args, 401, req);
+      return {
+        response: mcpToolResponse(
+          body,
+          {
+            success: false,
+            error: "mcp_auth_required",
+            tool: toolName,
+          },
+          401,
+          {
+            "WWW-Authenticate": buildWwwAuthenticateHeader(req.url, toolName),
+          },
+          req,
+        ),
+      };
+    }
+  }
+
+  if (!mcpAllowsToolScope(ctx, toolName)) {
+    await recordMcpAudit({ ctx, jibunKey, jibunStore }, toolName, args, 403, req);
+    const toolDef = buildMcpToolCatalog().find((t) => t.name === toolName);
+    const requiredJibunScope = toolDef?.jibun_api_scope ?? null;
+    const denialMsg = jibunKey
+      ? (requiredJibunScope
+        ? `Permission denied for ${toolName}: API key lacks '${requiredJibunScope}' scope. Issue a key with '${requiredJibunScope}' at /jibun-api.`
+        : `Permission denied for ${toolName}: requires WorkOS AuthKit OAuth authentication (not available via jibun_sk_ keys).`)
+      : `Permission denied for ${toolName}: missing required scope or audience.`;
     return {
       response: mcpToolResponse(
         body,
         {
           success: false,
-          error: "mcp_auth_required",
+          error: "mcp_scope_denied",
           tool: toolName,
+          required_audience: toolResourceUrn(toolName),
+          accepted_scopes: ["all", toolName, ...mcpRequestedScopes(toolName)],
+          ...(jibunKey
+            ? {
+              required_jibun_api_scope: requiredJibunScope,
+              granted_jibun_api_scopes: jibunKey.scopes,
+            }
+            : {}),
+          content: mcpTextResult(denialMsg),
         },
-        401,
-        {
-          "WWW-Authenticate": `Bearer resource="${toolResourceUrn(toolName)}"`,
-        },
+        403,
+        {},
+        req,
       ),
     };
   }
 
-  if (!mcpAllowsToolScope(ctx, toolName)) {
-    await logMcpInvocation(ctx, toolName, args, 403, req);
-    return {
-      response: mcpToolResponse(body, {
-        success: false,
-        error: "mcp_scope_denied",
-        tool: toolName,
-        required_audience: toolResourceUrn(toolName),
-        accepted_scopes: ["all", toolName, ...mcpRequestedScopes(toolName)],
-      }, 403),
-    };
-  }
-
-  return { ctx };
+  return { ctx, jibunKey, jibunStore };
 }
 
 function isMcpClientRegistrationRequest(
@@ -1027,7 +1191,15 @@ async function handleMcpFacade(
 ): Promise<Response | null> {
   if (action === "mcp.tools.list") {
     if (isMcpJsonRpcRequest(body)) {
-      return json(mcpJsonRpcResult(body, { tools: mcpProtocolToolCatalog() }));
+      return json(
+        mcpJsonRpcResult(body, { tools: mcpProtocolToolCatalog() }),
+        200,
+        {
+          "MCP-Protocol-Version": negotiateMcpProtocolVersion(
+            req.headers.get("mcp-protocol-version"),
+          ),
+        },
+      );
     }
     return json({
       success: true,
@@ -1040,6 +1212,12 @@ async function handleMcpFacade(
           "mcp.public_businesses.reference_list",
           "mcp.notes.list",
           "mcp.notes.create",
+          "mcp.account.me",
+          "mcp.notes.update",
+          "mcp.notes.delete",
+          "mcp.achievements.list",
+          "mcp.workers.list",
+          "mcp.workers.invoke",
         ],
         generic_action: "mcp.tool.call",
         batch_action: "mcp.batch.call",
@@ -1064,10 +1242,27 @@ async function handleMcpFacade(
   }
 
   const toolName = mcpActionToToolName(action, body);
-  if (!toolName) return null;
+  if (!toolName) {
+    if (action === "mcp.tool.call" && isMcpJsonRpcRequest(body)) {
+      return json(
+        mcpJsonRpcError(
+          mcpJsonRpcId(body),
+          -32602,
+          "Invalid params: unknown or missing tool name",
+        ),
+        200,
+        {
+          "MCP-Protocol-Version": negotiateMcpProtocolVersion(
+            req.headers.get("mcp-protocol-version"),
+          ),
+        },
+      );
+    }
+    return null;
+  }
 
   const args = mcpArgsForAction(action, body);
-  const auth = await authorizeMcpTool(req, toolName, args, body);
+  const auth = await authorizeMcpTool(req, toolName, args, body, admin);
   if ("response" in auth) return auth.response;
 
   if (toolName === "wbs.tasks.list") {
@@ -1096,20 +1291,28 @@ async function handleMcpFacade(
       wbsTaskMatchesInstanceFilter(task, rawInstance)
     );
     const tasks = filtered.sort(compareWbsTasks).slice(0, limit);
-    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
-    return mcpToolResponse(body, {
-      success: true,
-      tool: toolName,
-      structuredContent: {
-        count: tasks.length,
-        total: filtered.length,
-        instance,
-        tasks,
+    const structuredContent = {
+      count: tasks.length,
+      total: filtered.length,
+      instance,
+      tasks,
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Found ${tasks.length} WBS task(s) for instance=${instance}.`,
+          structuredContent,
+        ),
       },
-      content: mcpTextResult(
-        `Found ${tasks.length} WBS task(s) for instance=${instance}.`,
-      ),
-    });
+      200,
+      {},
+      req,
+    );
   }
 
   if (toolName === "user_tasks.list") {
@@ -1162,74 +1365,103 @@ async function handleMcpFacade(
       ...task,
       latest_report: latestReports[String(task.id)] ?? null,
     }));
-    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
-    return mcpToolResponse(body, {
-      success: true,
-      tool: toolName,
-      structuredContent: {
-        count: enriched.length,
-        tasks: enriched,
+    const structuredContent = {
+      count: enriched.length,
+      tasks: enriched,
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Found ${enriched.length} user task(s).`,
+          structuredContent,
+        ),
       },
-      content: mcpTextResult(`Found ${enriched.length} user task(s).`),
-    });
+      200,
+      {},
+      req,
+    );
   }
 
   if (toolName === "public_businesses.reference_list") {
     const targetId = String(args.target_id ?? "fuchu-honmachi-1").trim();
     if (targetId !== "fuchu-honmachi-1") {
-      await logMcpInvocation(auth.ctx, toolName, args, 400, req);
-      return mcpToolResponse(body, {
-        success: false,
-        tool: toolName,
-        error: "unsupported_target",
-      }, 400);
+      await recordMcpAudit(auth, toolName, args, 400, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          tool: toolName,
+          error: "unsupported_target",
+        },
+        400,
+        {},
+        req,
+      );
     }
     try {
       const payload = await fetchLocalBusinessReferences({
         limit: args.limit ?? 30,
       });
-      await logMcpInvocation(auth.ctx, toolName, args, 200, req);
-      return mcpToolResponse(body, {
-        success: true,
-        tool: toolName,
-        structuredContent: payload,
-        content: mcpTextResult(
-          `Found ${payload.publicReference.count} public reference place(s). ` +
-            "Ownership type is unknown and the list does not identify the census aggregate.",
-        ),
-      });
+      await recordMcpAudit(auth, toolName, args, 200, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: true,
+          tool: toolName,
+          structuredContent: payload,
+          content: formatMcpToolText(
+            `Found ${payload.publicReference.count} public reference place(s). ` +
+              "Ownership type is unknown and the list does not identify the census aggregate.",
+            payload,
+          ),
+        },
+        200,
+        {},
+        req,
+      );
     } catch (error) {
       console.error("MCP public business reference failed", error);
-      await logMcpInvocation(auth.ctx, toolName, args, 502, req);
-      return mcpToolResponse(body, {
-        success: false,
-        tool: toolName,
-        error: "public_reference_unavailable",
-      }, 502);
+      await recordMcpAudit(auth, toolName, args, 502, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          tool: toolName,
+          error: "public_reference_unavailable",
+        },
+        502,
+        {},
+        req,
+      );
     }
   }
 
   if (toolName === "feature_request.create") {
     const payloadResult = buildMcpFeatureRequestPayload(args);
     if (!payloadResult.ok) {
-      await logMcpInvocation(
-        auth.ctx,
-        toolName,
-        args,
+      await recordMcpAudit(auth, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: payloadResult.error,
+          tool: toolName,
+        },
         payloadResult.status,
+        {},
         req,
       );
-      return mcpToolResponse(body, {
-        success: false,
-        error: payloadResult.error,
-        tool: toolName,
-      }, payloadResult.status);
     }
 
     if (!hasMcpWriteConfirmation(toolName, args)) {
       const phrase = mcpConfirmationPhrase(toolName);
-      await logMcpInvocation(
-        auth.ctx,
+      await recordMcpAudit(
+        auth,
         toolName,
         {
           ...args,
@@ -1238,19 +1470,25 @@ async function handleMcpFacade(
         409,
         req,
       );
-      return mcpToolResponse(body, {
-        success: false,
-        error: "confirmation_required",
-        tool: toolName,
-        confirmation: {
-          confirm: true,
-          confirmation_phrase: phrase,
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "confirmation_required",
+          tool: toolName,
+          confirmation: {
+            confirm: true,
+            confirmation_phrase: phrase,
+          },
+          proposed_task: payloadResult.payload,
+          content: mcpTextResult(
+            `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+          ),
         },
-        proposed_task: payloadResult.payload,
-        content: mcpTextResult(
-          `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
-        ),
-      }, 409);
+        409,
+        {},
+        req,
+      );
     }
 
     const payload = {
@@ -1268,23 +1506,63 @@ async function handleMcpFacade(
       .single();
     if (error) throw new Error(error.message);
 
-    await logMcpInvocation(auth.ctx, toolName, args, 201, req);
-    return mcpToolResponse(body, {
-      success: true,
-      tool: toolName,
-      structuredContent: { task: data },
-      content: mcpTextResult(`Created feature request WBS task: ${data.title}`),
-    }, 201);
+    const structuredContent = { task: data };
+    await recordMcpAudit(auth, toolName, args, 201, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Created feature request WBS task: ${data.title}`,
+          structuredContent,
+        ),
+      },
+      201,
+      {},
+      req,
+    );
+  }
+
+  // ── account.me (MCP) ─────────────────────────────────────────────────────
+  if (toolName === "account.me") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
+    const structuredContent = {
+      user_id: subject,
+      client_id: auth.ctx.client_id,
+      scopes: auth.ctx.scopes,
+      key: auth.jibunKey ? keyToSafeJson(auth.jibunKey) : null,
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Authenticated as user ${subject}.`,
+          structuredContent,
+        ),
+      },
+      200,
+      {},
+      req,
+    );
   }
 
   // ── notes.list (MCP) ─────────────────────────────────────────────────────
   if (toolName === "notes.list") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
     const limit = Math.min(Math.max(Number(args.limit ?? 20), 1), 50);
     const q = typeof args.q === "string" ? args.q.trim() : "";
     let query = admin
       .from("notes")
       .select("id, title, content, created_at, updated_at")
-      .eq("user_id", auth.ctx.subject)
+      .eq("user_id", subject)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (q !== "") {
@@ -1297,59 +1575,523 @@ async function handleMcpFacade(
     }
     const { data: notes, error: notesErr } = await query;
     if (notesErr) throw new Error(notesErr.message);
-    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
-    return mcpToolResponse(body, {
-      success: true,
-      tool: toolName,
-      structuredContent: { count: (notes ?? []).length, notes: notes ?? [] },
-      content: mcpTextResult(`Found ${(notes ?? []).length} note(s).`),
-    });
+    const structuredContent = {
+      count: (notes ?? []).length,
+      notes: notes ?? [],
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Found ${(notes ?? []).length} note(s).`,
+          structuredContent,
+        ),
+      },
+      200,
+      {},
+      req,
+    );
   }
 
   // ── notes.create (MCP) ───────────────────────────────────────────────────
   if (toolName === "notes.create") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
     const payloadResult = buildMcpNotePayload(args);
     if (!payloadResult.ok) {
-      await logMcpInvocation(
-        auth.ctx,
-        toolName,
-        args,
+      await recordMcpAudit(auth, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: payloadResult.error,
+          tool: toolName,
+        },
         payloadResult.status,
+        {},
         req,
       );
-      return mcpToolResponse(body, {
-        success: false,
-        error: payloadResult.error,
-        tool: toolName,
-      }, payloadResult.status);
     }
     if (!hasMcpWriteConfirmation(toolName, args)) {
       const phrase = mcpConfirmationPhrase(toolName);
-      await logMcpInvocation(auth.ctx, toolName, args, 409, req);
-      return mcpToolResponse(body, {
-        success: false,
-        error: "confirmation_required",
-        tool: toolName,
-        confirmation: { confirm: true, confirmation_phrase: phrase },
-        proposed_note: payloadResult.payload,
-        content: mcpTextResult(
-          `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
-        ),
-      }, 409);
+      await recordMcpAudit(auth, toolName, args, 409, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "confirmation_required",
+          tool: toolName,
+          confirmation: { confirm: true, confirmation_phrase: phrase },
+          proposed_note: payloadResult.payload,
+          content: mcpTextResult(
+            `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+          ),
+        },
+        409,
+        {},
+        req,
+      );
     }
     const { data: note, error: noteErr } = await admin
       .from("notes")
-      .insert({ user_id: auth.ctx.subject, ...payloadResult.payload })
+      .insert({ user_id: subject, ...payloadResult.payload })
       .select("id, title, content, created_at, updated_at")
       .single();
     if (noteErr) throw new Error(noteErr.message);
-    await logMcpInvocation(auth.ctx, toolName, args, 201, req);
-    return mcpToolResponse(body, {
-      success: true,
-      tool: toolName,
-      structuredContent: { note },
-      content: mcpTextResult(`Created note: ${note.title}`),
-    }, 201);
+    const store = auth.jibunStore ?? createSupabaseJibunApiStore(admin);
+    fireWebhooks(store, subject, "note.created", { note });
+    const structuredContent = { note };
+    await recordMcpAudit(auth, toolName, args, 201, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Created note: ${note.title}`,
+          structuredContent,
+        ),
+      },
+      201,
+      {},
+      req,
+    );
+  }
+
+  // ── notes.update (MCP) ───────────────────────────────────────────────────
+  if (toolName === "notes.update") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
+    const payloadResult = buildMcpNoteUpdatePayload(args);
+    if (!payloadResult.ok) {
+      await recordMcpAudit(auth, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: payloadResult.error,
+          tool: toolName,
+        },
+        payloadResult.status,
+        {},
+        req,
+      );
+    }
+    if (!hasMcpWriteConfirmation(toolName, args)) {
+      const phrase = mcpConfirmationPhrase(toolName);
+      await recordMcpAudit(auth, toolName, args, 409, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "confirmation_required",
+          tool: toolName,
+          confirmation: { confirm: true, confirmation_phrase: phrase },
+          proposed_update: payloadResult.payload,
+          content: mcpTextResult(
+            `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+          ),
+        },
+        409,
+        {},
+        req,
+      );
+    }
+    const store = auth.jibunStore ?? createSupabaseJibunApiStore(admin);
+    const updated = await store.updateNote(subject, payloadResult.payload.id, {
+      title: payloadResult.payload.title,
+      content: payloadResult.payload.content,
+    });
+    if (!updated) {
+      await recordMcpAudit(auth, toolName, args, 404, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "note not found",
+          tool: toolName,
+        },
+        404,
+        {},
+        req,
+      );
+    }
+    fireWebhooks(store, subject, "note.updated", { note: updated });
+    const structuredContent = { note: updated };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Updated note ${updated.id}: ${updated.title}`,
+          structuredContent,
+        ),
+      },
+      200,
+      {},
+      req,
+    );
+  }
+
+  // ── notes.delete (MCP) ───────────────────────────────────────────────────
+  if (toolName === "notes.delete") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
+    const payloadResult = buildMcpNoteDeletePayload(args);
+    if (!payloadResult.ok) {
+      await recordMcpAudit(auth, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: payloadResult.error,
+          tool: toolName,
+        },
+        payloadResult.status,
+        {},
+        req,
+      );
+    }
+    if (!hasMcpWriteConfirmation(toolName, args)) {
+      const phrase = mcpConfirmationPhrase(toolName);
+      await recordMcpAudit(auth, toolName, args, 409, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "confirmation_required",
+          tool: toolName,
+          confirmation: { confirm: true, confirmation_phrase: phrase },
+          proposed_delete: payloadResult.payload,
+          content: mcpTextResult(
+            `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+          ),
+        },
+        409,
+        {},
+        req,
+      );
+    }
+    const store = auth.jibunStore ?? createSupabaseJibunApiStore(admin);
+    const deleted = await store.deleteNote(subject, payloadResult.payload.id);
+    if (!deleted) {
+      await recordMcpAudit(auth, toolName, args, 404, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "note not found",
+          tool: toolName,
+        },
+        404,
+        {},
+        req,
+      );
+    }
+    fireWebhooks(store, subject, "note.deleted", {
+      note_id: payloadResult.payload.id,
+    });
+    const structuredContent = {
+      deleted: true,
+      note_id: payloadResult.payload.id,
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Deleted note ${payloadResult.payload.id}.`,
+          structuredContent,
+        ),
+      },
+      200,
+      {},
+      req,
+    );
+  }
+
+  // ── achievements.list (MCP) ──────────────────────────────────────────────
+  if (toolName === "achievements.list") {
+    const rawLimit = Number(args.limit ?? 20);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(Math.floor(rawLimit), 1), 100)
+      : 20;
+    const store = auth.jibunStore ?? createSupabaseJibunApiStore(admin);
+    const achievements = await store.listAchievements(limit);
+    const structuredContent = {
+      count: achievements.length,
+      achievements,
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Found ${achievements.length} achievement(s).`,
+          structuredContent,
+        ),
+      },
+      200,
+      {},
+      req,
+    );
+  }
+
+  // ── workers.list (MCP) ───────────────────────────────────────────────────
+  if (toolName === "workers.list") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
+    const store = auth.jibunStore ?? createSupabaseJibunApiStore(admin);
+    const workers = await store.listWorkers(subject);
+    const safeWorkers = workers.map(workerToSafeJson);
+    const structuredContent = {
+      count: safeWorkers.length,
+      workers: safeWorkers,
+    };
+    await recordMcpAudit(auth, toolName, args, 200, req);
+    return mcpToolResponse(
+      body,
+      {
+        success: true,
+        tool: toolName,
+        structuredContent,
+        content: formatMcpToolText(
+          `Found ${safeWorkers.length} worker(s).`,
+          structuredContent,
+        ),
+      },
+      200,
+      {},
+      req,
+    );
+  }
+
+  // ── workers.invoke (MCP) ─────────────────────────────────────────────────
+  if (toolName === "workers.invoke") {
+    const subject = await requireMcpSubject(auth, toolName, args, body, req);
+    if (subject instanceof Response) return subject;
+    const payloadResult = buildMcpWorkerInvokePayload(args);
+    if (!payloadResult.ok) {
+      await recordMcpAudit(auth, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: payloadResult.error,
+          tool: toolName,
+        },
+        payloadResult.status,
+        {},
+        req,
+      );
+    }
+    if (!hasMcpWriteConfirmation(toolName, args)) {
+      const phrase = mcpConfirmationPhrase(toolName);
+      await recordMcpAudit(auth, toolName, args, 409, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: "confirmation_required",
+          tool: toolName,
+          confirmation: { confirm: true, confirmation_phrase: phrase },
+          proposed_worker: payloadResult.payload,
+          content: mcpTextResult(
+            `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+          ),
+        },
+        409,
+        {},
+        req,
+      );
+    }
+    const store = auth.jibunStore ?? createSupabaseJibunApiStore(admin);
+    const worker = await store.findWorkerBySlug(
+      subject,
+      payloadResult.payload.slug,
+    );
+    if (!worker) {
+      await recordMcpAudit(auth, toolName, args, 404, req);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: `worker not found: ${payloadResult.payload.slug}`,
+          tool: toolName,
+        },
+        404,
+        {},
+        req,
+      );
+    }
+    if (!worker.enabled) {
+      await recordMcpAudit(auth, toolName, args, 403, req, worker.id);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: `worker is disabled: ${worker.slug}`,
+          tool: toolName,
+        },
+        403,
+        {},
+        req,
+      );
+    }
+    const endpointError = validateWorkerEndpoint(worker.endpoint_url);
+    if (endpointError) {
+      await recordMcpAudit(auth, toolName, args, 400, req, worker.id);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: `worker endpoint rejected: ${endpointError}`,
+          tool: toolName,
+        },
+        400,
+        {},
+        req,
+      );
+    }
+    const dnsError = await resolveHostToPrivateError(
+      new URL(worker.endpoint_url).hostname,
+    );
+    if (dnsError) {
+      await recordMcpAudit(auth, toolName, args, 400, req, worker.id);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: `worker endpoint rejected: ${dnsError}`,
+          tool: toolName,
+        },
+        400,
+        {},
+        req,
+      );
+    }
+    const traceId = crypto.randomUUID();
+    const invokedAt = new Date().toISOString();
+    const workerBody = JSON.stringify({
+      worker: worker.slug,
+      payload: payloadResult.payload.payload,
+      trace_id: traceId,
+      invoked_at: invokedAt,
+    });
+    const signature = await hmacSha256Hex(worker.signing_secret, workerBody);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      Math.min(Math.max(worker.timeout_ms, 1_000), 15_000),
+    );
+    try {
+      const workerResponse = await fetch(worker.endpoint_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Jibun-Signature": `sha256=${signature}`,
+          "X-Jibun-Timestamp": invokedAt,
+          "X-Jibun-Worker": worker.slug,
+          "User-Agent": "jibun-mcp-worker/1.0",
+        },
+        body: workerBody,
+        signal: controller.signal,
+        redirect: "error",
+      });
+      const { text, truncated } = await readBoundedBody(
+        workerResponse,
+        WORKER_RESPONSE_MAX_BYTES,
+      );
+      let parsed: unknown = text;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        // Keep raw text when response is not JSON.
+      }
+      await store.recordWorkerInvocation(worker.id);
+      const secScan = scanMcpPayloadForSecuritySignals(parsed);
+      if (!secScan.allowed) {
+        await recordMcpAudit(auth, toolName, args, 422, req, worker.id);
+        return mcpToolResponse(
+          body,
+          {
+            success: false,
+            error: "worker_output_blocked_by_security_scan",
+            tool: toolName,
+            worker: worker.slug,
+            findings: secScan.findings,
+            trace_id: traceId,
+            content: mcpTextResult(
+              "Worker output was blocked by the MCP security scanner due to suspicious instruction or secret-exfiltration patterns.",
+            ),
+          },
+          422,
+          {},
+          req,
+        );
+      }
+      const status = workerResponse.ok ? 200 : 502;
+      const structuredContent = {
+        worker: worker.slug,
+        worker_status: workerResponse.status,
+        result: parsed,
+        truncated,
+        trace_id: traceId,
+      };
+      await recordMcpAudit(auth, toolName, args, status, req, worker.id);
+      return mcpToolResponse(
+        body,
+        {
+          success: workerResponse.ok,
+          tool: toolName,
+          ...(workerResponse.ok
+            ? {}
+            : { error: `worker_returned_${workerResponse.status}` }),
+          structuredContent,
+          content: formatMcpToolText(
+            `Worker ${worker.slug} responded with HTTP ${workerResponse.status}.`,
+            structuredContent,
+          ),
+        },
+        status,
+        {},
+        req,
+      );
+    } catch (error) {
+      const aborted = controller.signal.aborted;
+      await recordMcpAudit(auth, toolName, args, 504, req, worker.id);
+      return mcpToolResponse(
+        body,
+        {
+          success: false,
+          error: aborted
+            ? `worker timed out after ${worker.timeout_ms}ms`
+            : `worker call failed: ${String(error).slice(0, 200)}`,
+          tool: toolName,
+          worker: worker.slug,
+          trace_id: traceId,
+        },
+        504,
+        {},
+        req,
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   return null;
@@ -2938,14 +3680,6 @@ const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
     family: "Gemini",
   },
   {
-    provider: "openai",
-    model: "gpt-4o-mini",
-    apiKeyEnv: "OPENAI_API_KEY",
-    estimatedCostUsd: 0.002,
-    tier: "base",
-    family: "GPT",
-  },
-  {
     provider: "anthropic",
     model: "claude-haiku-4-5-20251001",
     apiKeyEnv: "ANTHROPIC_API_KEY",
@@ -2969,6 +3703,14 @@ const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
     tier: "base",
     family: "DeepSeek",
   },
+  {
+    provider: "openai",
+    model: "gpt-4o-mini",
+    apiKeyEnv: "OPENAI_API_KEY",
+    estimatedCostUsd: 0.002,
+    tier: "base",
+    family: "GPT",
+  },
 ];
 
 const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
@@ -2989,14 +3731,6 @@ const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
     family: "Opus",
   },
   {
-    provider: "openai",
-    model: Deno.env.get("HORSE_OPENAI_PREMIUM_MODEL") ?? "gpt-4.1",
-    apiKeyEnv: "OPENAI_API_KEY",
-    estimatedCostUsd: 0.01,
-    tier: "premium",
-    family: "GPT",
-  },
-  {
     provider: "xai",
     model: Deno.env.get("HORSE_XAI_PREMIUM_MODEL") ?? "grok-4",
     apiKeyEnv: "XAI_API_KEY",
@@ -3012,6 +3746,14 @@ const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
     estimatedCostUsd: 0.006,
     tier: "premium",
     family: "DeepSeek",
+  },
+  {
+    provider: "openai",
+    model: Deno.env.get("HORSE_OPENAI_PREMIUM_MODEL") ?? "gpt-4.1",
+    apiKeyEnv: "OPENAI_API_KEY",
+    estimatedCostUsd: 0.01,
+    tier: "premium",
+    family: "GPT",
   },
 ];
 
@@ -5888,6 +6630,15 @@ serve(async (req) => {
         "wbs.tasks.list",
         "feature_request.create",
         "user_tasks.list",
+        "public_businesses.reference_list",
+        "notes.list",
+        "notes.create",
+        "account.me",
+        "notes.update",
+        "notes.delete",
+        "achievements.list",
+        "workers.list",
+        "workers.invoke",
         "read",
         "create",
       ]),
@@ -5896,13 +6647,36 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const body: Record<string, unknown> = req.method === "POST"
-      ? await req.json().catch(() => ({}))
+    let rawParseFailed = false;
+    let parsedBody: unknown = {};
+    if (req.method === "POST") {
+      const rawText = await req.text();
+      if (rawText.trim() !== "") {
+        try {
+          parsedBody = JSON.parse(rawText);
+        } catch {
+          rawParseFailed = true;
+          parsedBody = {};
+        }
+      }
+    }
+    const body: Record<string, unknown> = parsedBody !== null &&
+        typeof parsedBody === "object" &&
+        !Array.isArray(parsedBody)
+      ? parsedBody as Record<string, unknown>
       : {};
     const action = String(body.action ?? "").trim() ||
       mcpActionFromJsonRpc(body) ||
       url.searchParams.get("action") ||
       "";
+
+    const lifecycleResponse = handleMcpLifecycleRequest(req, parsedBody, {
+      rawParseFailed,
+      action,
+      toolCatalog: mcpProtocolToolCatalog(),
+    });
+    if (lifecycleResponse) return lifecycleResponse;
+
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
@@ -10901,6 +11675,12 @@ ${reportText ? `> ${reportText}` : ""}`,
             "mcp.public_businesses.reference_list",
             "mcp.notes.list",
             "mcp.notes.create",
+            "mcp.account.me",
+            "mcp.notes.update",
+            "mcp.notes.delete",
+            "mcp.achievements.list",
+            "mcp.workers.list",
+            "mcp.workers.invoke",
             "mcp_file.connectors",
             "mcp_file.search",
             "mcp_file.attach_context",

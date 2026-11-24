@@ -24,6 +24,18 @@ String? kokuminSourceVerifiedOn({
       reviewedPdfDigests.contains(sourceDocumentSha256)) {
     return '2026-11-12';
   }
+  // Representative X thread read directly in Chrome on 2026-11-22 JST:
+  // - status/2124504534995341736 (23:05 JST): 空白県解消・47都道府県達成 (鳥取市議選)
+  // - status/2124507662427856990 (23:17 JST): 現職 421名・新人、元職 292名 / 700名目標
+  const verifiedPosts20261122 = <String>{
+    'https://x.com/tamakiyuichiro/status/2124507662427856990',
+    'https://x.com/tamakiyuichiro/status/2124504534995341736',
+  };
+  if (verifiedPosts20261122.contains(sourceUrl) &&
+      sourceDate == '2026-11-22' &&
+      sourceDocumentSha256.isEmpty) {
+    return '2026-11-22';
+  }
   // Original post identity and facts read in the official-site embedded feed.
   // Source review date: 2026-11-12 JST; no direct X-post read is claimed.
   if (sourceUrl == 'https://x.com/tamakiyuichiro/status/2119639251365294529' &&
