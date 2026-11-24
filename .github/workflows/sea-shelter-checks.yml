@@ -25,6 +25,7 @@ jobs:
       - run: node --check web/labs/sea-shelter/app.mjs
       - run: npm ci --ignore-scripts
       - run: node scripts/build_sea_shelter_arena.mjs
+      - run: node --test build/sea-shelter-preview/labs/sea-shelter/arena/art-direction.test.mjs
       - run: node --test scripts/sea_shelter_arena_build.test.mjs
       - run: npx playwright install --with-deps chromium
       - name: Browser checks against candidate only

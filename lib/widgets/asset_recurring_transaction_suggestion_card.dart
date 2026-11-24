@@ -114,7 +114,7 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
         '${detected.typicalPaymentDay}日頃';
     final summary = '${detected.label}、$scheduleLabel、約'
         '${_yen(detected.typicalAmount)}、$confidenceLabel、'
-        '直近${detected.monthsObserved}ヶ月分を検出';
+        '${detected.monthsObserved}か月分の記録を検出';
     final ignore = onIgnore;
     return Padding(
       key: Key('${keyPrefix}_suggestion_$index'),
@@ -183,7 +183,7 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '直近${detected.monthsObserved}ヶ月分',
+                          '${detected.monthsObserved}か月分の記録',
                           style: const TextStyle(fontSize: 11, color: _muted),
                         ),
                       ),

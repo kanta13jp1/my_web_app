@@ -38,11 +38,19 @@ class AssetRecurringFixedCostStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     if (costs.isEmpty) {
-      await store.remove(prefsKey);
+      if (!await store.remove(prefsKey)) {
+        throw StateError('Recurring fixed cost removal was rejected');
+      }
       return;
     }
     final normalized = costs.map(normalizeCost).toList();
-    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(normalized)));
+    final saved = await store.setString(
+      prefsKey,
+      jsonEncode(encodeMirrorValue(normalized)),
+    );
+    if (!saved) {
+      throw StateError('Recurring fixed cost save was rejected');
+    }
   }
 
   /// Persist user-entered billing details without vendor-specific guesses.

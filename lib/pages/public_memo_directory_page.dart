@@ -22,6 +22,8 @@ class _PublicMemoDirectoryPageState extends State<PublicMemoDirectoryPage> {
   late final PublicMemoService _publicMemoService;
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
+  String? _errorMessage;
+  int _reloadVersion = 0;
   String? _selectedCategory;
   List<PublicMemo> _memos = const <PublicMemo>[];
   List<Map<String, dynamic>> _popularCategories =
@@ -42,17 +44,22 @@ class _PublicMemoDirectoryPageState extends State<PublicMemoDirectoryPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _isLoading = true);
+    final version = ++_reloadVersion;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       final results = await Future.wait<dynamic>([
         _publicMemoService.getPublicMemos(
           limit: 30,
           category: _selectedCategory,
           searchQuery: _searchController.text,
+          throwOnError: true,
         ),
         _publicMemoService.getPopularCategories(limit: 12),
       ]);
-      if (!mounted) {
+      if (!mounted || version != _reloadVersion) {
         return;
       }
       setState(() {
@@ -61,16 +68,27 @@ class _PublicMemoDirectoryPageState extends State<PublicMemoDirectoryPage> {
         _isLoading = false;
       });
     } catch (_) {
-      if (!mounted) {
+      if (!mounted || version != _reloadVersion) {
         return;
       }
-      setState(() => _isLoading = false);
+      setState(() {
+        _errorMessage = '公開メモの読み込みに失敗しました。通信状況を確認して再試行してください。';
+        _isLoading = false;
+      });
     }
+  }
+
+  void _resetFilters() {
+    _searchController.clear();
+    setState(() => _selectedCategory = null);
+    _reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final formatter = DateFormat('yyyy/MM/dd');
+    final hasQuery = _searchController.text.trim().isNotEmpty;
+    final hasActiveFilter = _selectedCategory != null || hasQuery;
     return Scaffold(
       appBar: AppBar(
         title: const Text('公開メモ'),
@@ -144,6 +162,44 @@ class _PublicMemoDirectoryPageState extends State<PublicMemoDirectoryPage> {
               const Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_errorMessage != null)
+              Card(
+                key: const Key('public_memos_error_state'),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_errorMessage!),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _reload,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('再試行'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_memos.isEmpty && hasActiveFilter)
+              Card(
+                key: const Key('public_memos_filtered_empty_state'),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('条件に一致する公開メモが見つかりませんでした。'),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _resetFilters,
+                        icon: const Icon(Icons.filter_alt_off),
+                        label: const Text('絞り込みをリセット'),
+                      ),
+                    ],
+                  ),
+                ),
               )
             else if (_memos.isEmpty)
               const Card(

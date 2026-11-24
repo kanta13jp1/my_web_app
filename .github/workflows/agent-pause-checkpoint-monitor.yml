@@ -1,0 +1,101 @@
+name: Agent Pause Checkpoint Monitor
+
+on:
+  schedule:
+    # 6時間おき毎時23分 UTC に実行（00:00 UTC 帯の集中を回避）
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without sending live Slack or GitHub alerts (true/false)'
+        required: false
+        default: 'true'
+      usage_ratio_pct:
+        description: 'Simulated or observed usage ratio percentage (0-1000)'
+        required: false
+        default: '0'
+      run_key:
+        description: 'Agent run key for manual evaluation'
+        required: false
+        default: 'manual-checkpoint-audit'
+
+concurrency:
+  group: agent-pause-checkpoint-monitor-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  checkpoint-monitor:
+    name: Evaluate agent checkpoints and 90% warning guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run agent pause state machine unit tests
+        run: python3 -B test/scripts/test_agent_pause_state_machine.py -v
+
+      - name: Run self-test and evaluate checkpoint state machine
+        id: evaluate_checkpoint
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.dry_run || 'true' }}
+          USAGE_RATIO_INPUT: ${{ github.event.inputs.usage_ratio_pct || '0' }}
+          RUN_KEY_INPUT: ${{ github.event.inputs.run_key || 'scheduled-checkpoint-audit' }}
+          QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL || '' }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 -B scripts/agent_pause_state_machine.py --self-test
+          args=(
+            "--run-key" "${RUN_KEY_INPUT}"
+            "--usage-pct" "${USAGE_RATIO_INPUT}"
+            "--json-out" "agent_checkpoint_report.json"
+            "--markdown-out" "agent_checkpoint_report.md"
+            "--github-output" "${GITHUB_OUTPUT}"
+          )
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ]; then
+            args+=("--live")
+          else
+            args+=("--dry-run")
+          fi
+          python3 -B scripts/agent_pause_state_machine.py "${args[@]}"
+
+      - name: Upload agent checkpoint evaluation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: agent-pause-checkpoint-report
+          path: |
+            agent_checkpoint_report.json
+            agent_checkpoint_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append step summary
+        if: always()
+        env:
+          PAUSE_STATUS: ${{ steps.evaluate_checkpoint.outputs.pause_status }}
+          CHECKPOINT_SEQ: ${{ steps.evaluate_checkpoint.outputs.checkpoint_seq }}
+          WARNING_90: ${{ steps.evaluate_checkpoint.outputs.warning_90_emitted }}
+          SILENT_PAUSE: ${{ steps.evaluate_checkpoint.outputs.silent_pause_emitted }}
+        run: |
+          {
+            echo "## Agent Pause Checkpoint Monitor"
+            echo "- Pause status: \`${PAUSE_STATUS}\` (seq \`${CHECKPOINT_SEQ}\`)"
+            echo "- Warning 90% emitted: \`${WARNING_90}\`"
+            echo "- Silent-pause alert emitted: \`${SILENT_PAUSE}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
