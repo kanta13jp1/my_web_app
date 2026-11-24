@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../application/multi_agent_analysis_controller.dart';
-import '../data/supabase_multi_agent_analysis_repository.dart';
-import '../domain/multi_agent_analysis_models.dart';
+import 'application/multi_agent_analysis_controller.dart';
+import 'data/supabase_multi_agent_analysis_repository.dart';
+import 'domain/multi_agent_analysis_models.dart';
 import 'presentation/multi_agent_analysis_view.dart';
 
 /// Controller と View・入力コントローラを接続しライフサイクルを管理する Container (#2641).

@@ -133,7 +133,7 @@ class MultiAgentAnalysisController extends ChangeNotifier {
           clearError: true,
         ),
       );
-    } on Exception catch (error) {
+    } catch (error) {
       _setState(
         _state.copyWith(
           isLoading: false,
@@ -180,7 +180,7 @@ class MultiAgentAnalysisController extends ChangeNotifier {
           clearError: true,
         ),
       );
-    } on Exception catch (error) {
+    } catch (error) {
       _setState(
         _state.copyWith(
           isSubmitting: false,
@@ -219,7 +219,7 @@ class MultiAgentAnalysisController extends ChangeNotifier {
           clearError: true,
         ),
       );
-    } on Exception catch (error) {
+    } catch (error) {
       _setState(
         _state.copyWith(
           isSubmitting: false,
