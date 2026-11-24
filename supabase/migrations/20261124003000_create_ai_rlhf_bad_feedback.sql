@@ -321,7 +321,7 @@ drop trigger if exists trg_notify_ai_rlhf_bad_feedback_webhook
 drop trigger if exists trg_20_notify_ai_rlhf_bad_feedback_webhook
   on public.ai_rlhf_feedback;
 create trigger trg_20_notify_ai_rlhf_bad_feedback_webhook
-  before insert or update of rating_status, dispatch_status on public.ai_rlhf_feedback
+  after insert or update of rating_status, dispatch_status on public.ai_rlhf_feedback
   for each row
   execute function public.notify_ai_rlhf_bad_feedback_webhook();
 

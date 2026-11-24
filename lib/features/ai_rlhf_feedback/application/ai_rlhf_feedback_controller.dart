@@ -70,7 +70,7 @@ class AiRlhfFeedbackController extends ChangeNotifier {
   bool get isDisposed => _isDisposed;
 
   void _setState(AiRlhfFeedbackState next) {
-    if (_isDisposed) {
+    if (_isDisposed || _state.isSubmitting) {
       return;
     }
     _state = next;
@@ -85,7 +85,7 @@ class AiRlhfFeedbackController extends ChangeNotifier {
   }
 
   Future<void> loadFeedback() async {
-    if (_isDisposed) {
+    if (_isDisposed || _state.isSubmitting) {
       return;
     }
     _setState(_state.copyWith(isLoading: true, clearError: true));
@@ -122,7 +122,7 @@ class AiRlhfFeedbackController extends ChangeNotifier {
     required String userComment,
     bool autoDispatchWebhook = true,
   }) async {
-    if (_isDisposed) {
+    if (_isDisposed || _state.isSubmitting) {
       return;
     }
     final cleanAction = actionName.trim();
@@ -210,7 +210,7 @@ class AiRlhfFeedbackController extends ChangeNotifier {
     required String feedbackId,
     bool dryRun = false,
   }) async {
-    if (_isDisposed) {
+    if (_isDisposed || _state.isSubmitting) {
       return;
     }
     _setState(_state.copyWith(isSubmitting: true, clearError: true));
