@@ -192,29 +192,6 @@ double _landingScrollOffset(WidgetTester tester) {
   return tester.state<ScrollableState>(pageScrollable).position.pixels;
 }
 
-Future<void> _completeGuidedTrialWithQuickAnswers(WidgetTester tester) async {
-  for (var step = 0; step < 5; step++) {
-    final quickAnswer = find.byKey(
-      const Key('landing_trial_guided_quick_answer'),
-    );
-    await Scrollable.ensureVisible(tester.element(quickAnswer), alignment: 0.6);
-    await tester.pump();
-    await tester.tap(quickAnswer);
-    await tester.pump();
-    final next = find.byKey(const Key('landing_trial_guided_next'));
-    await Scrollable.ensureVisible(tester.element(next), alignment: 0.7);
-    await tester.pump();
-    await tester.tap(next);
-    await tester.pumpAndSettle();
-  }
-  final submit = find.byKey(const Key('landing_trial_guided_submit'));
-  await Scrollable.ensureVisible(tester.element(submit), alignment: 0.7);
-  await tester.pump();
-  await tester.tap(submit);
-  await tester.pump();
-  await tester.pump();
-}
-
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -1297,14 +1274,7 @@ void main() {
           await tester.pump();
           await tester.tap(trialButton);
           await tester.pump();
-          if (size.width < 480) {
-            expect(
-              promptInput,
-              findsNothing,
-              reason: 'mobile should show only the active guided step',
-            );
-          }
-          await _completeGuidedTrialWithQuickAnswers(tester);
+          await tester.pump();
 
           final resultAction = find.byKey(
             const Key('landing_trial_result_action'),
@@ -1763,41 +1733,42 @@ void main() {
     );
   });
 
-  testWidgets('custom concern is deep-dived before one generated AI request', (
-    tester,
-  ) async {
-    final adapter = await pumpLanding(
-      tester,
-      assignment: _assignment('h01', LandingExperimentVariant.treatment),
-    );
+  testWidgets(
+    'custom concern triggers immediate AI suggestion without 5-question intake',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+      );
 
-    await tester.enterText(
-      find.byKey(const Key('landing_trial_prompt_input')),
-      'サブスクの支払いが多く、どれから見直すか決められない',
-    );
-    await tester.tap(find.byKey(const Key('landing_h03_inline_trial_action')));
-    await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('landing_trial_prompt_input')),
+        'サブスクの支払いが多く、どれから見直すか決められない',
+      );
+      await tester.tap(
+        find.byKey(const Key('landing_h03_inline_trial_action')),
+      );
+      await tester.pump();
+      await tester.pump();
 
-    expect(
-      find.byKey(const Key('landing_trial_guided_intake')),
-      findsOneWidget,
-    );
-    expect(find.text('質問 1 / 5'), findsOneWidget);
-    expect(adapter.trialRuns, 0);
-    expect(adapter.lastTrialPrompt, isNull);
-
-    await _completeGuidedTrialWithQuickAnswers(tester);
-
-    expect(adapter.trialRuns, 1);
-    expect(adapter.lastTrialPrompt, contains('相談:サブスクの支払いが多く'));
-    expect(adapter.lastTrialPrompt, contains('目標:まず動き出せればよい'));
-    expect(adapter.lastTrialPrompt, contains('回避:大きな変更は避けたい'));
-    expect(adapter.lastTrialPrompt!.runes.length, lessThanOrEqualTo(280));
-    expect(
-      find.byKey(const Key('landing_trial_result_action')),
-      findsOneWidget,
-    );
-  });
+      expect(
+        find.byKey(const Key('landing_trial_guided_intake')),
+        findsNothing,
+      );
+      expect(find.text('質問 1 / 5'), findsNothing);
+      expect(find.textContaining('5つの短い質問'), findsNothing);
+      expect(find.textContaining('5問'), findsNothing);
+      expect(adapter.trialRuns, 1);
+      expect(
+        adapter.lastTrialPrompt,
+        'サブスクの支払いが多く、どれから見直すか決められない',
+      );
+      expect(
+        find.byKey(const Key('landing_trial_result_action')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('trial provider failure never presents a fixed finance answer', (
     tester,
@@ -1814,7 +1785,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('landing_h03_inline_trial_action')));
     await tester.pump();
-    await _completeGuidedTrialWithQuickAnswers(tester);
+    await tester.pump();
 
     expect(find.byKey(const Key('landing_trial_result_action')), findsNothing);
     expect(find.text('先月の明細で最も高い固定費を1件特定'), findsNothing);
@@ -2546,6 +2517,39 @@ void main() {
         LandingOAuthCallbackFailure.takePendingStartupError(),
         isNull,
       );
+    },
+  );
+
+  testWidgets(
+    'hero headline uses atomic phrase chunks and WCAG-compliant input border',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+        size: const Size(393, 844),
+      );
+
+      final semantics = tester.getSemantics(
+        find.byKey(const Key('landing_h01_outcome_offer')),
+      );
+      expect(semantics.label, '仕事・学習・お金の「次の1件」を、AIと一緒に絞る');
+      expect(find.text('AIと一緒に絞る'), findsOneWidget);
+      expect(find.textContaining('5つの短い質問'), findsNothing);
+      expect(find.textContaining('5問'), findsNothing);
+
+      final darkTheme = tester.widget<Theme>(
+        find
+            .descendant(
+              of: find.byKey(const Key('landing_trial_section')),
+              matching: find.byType(Theme),
+            )
+            .first,
+      );
+      final border = darkTheme.data.inputDecorationTheme.enabledBorder;
+      expect(border, isA<OutlineInputBorder>());
+      if (border is OutlineInputBorder) {
+        expect(border.borderSide.color, const Color(0xFF6B7C8C));
+      }
     },
   );
 }
