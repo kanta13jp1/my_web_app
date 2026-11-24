@@ -181,7 +181,9 @@ void main() {
 
           expect(find.textContaining('承認済み'), findsOneWidget);
           expect(
-              find.textContaining('記録済みコメント: 計算根拠と閾値を確認し承認'), findsOneWidget);
+            find.textContaining('記録済みコメント: 計算根拠と閾値を確認し承認'),
+            findsOneWidget,
+          );
         },
       );
 

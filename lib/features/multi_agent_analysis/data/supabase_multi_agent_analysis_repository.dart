@@ -24,7 +24,7 @@ class SupabaseMultiAgentAnalysisRepository
   Future<List<MultiAgentAnalysisRun>> fetchRuns() async {
     final client = _resolvedClient;
     final userId = _requireUserId(client);
-    final Object? response = await client
+    final Object response = await client
         .from('multi_agent_analysis_runs')
         .select()
         .eq('user_id', userId)
@@ -55,7 +55,7 @@ class SupabaseMultiAgentAnalysisRepository
     final client = _resolvedClient;
     final userId = _requireUserId(client);
     final payload = draft.toInsertPayload(userId: userId);
-    final Object? inserted = await client
+    final Object inserted = await client
         .from('multi_agent_analysis_runs')
         .insert(payload)
         .select()
@@ -85,7 +85,7 @@ class SupabaseMultiAgentAnalysisRepository
     final userId = _requireUserId(client);
     final sanitizedNote =
         LocalSequentialAnalysisRunner.scrubSensitiveText(note);
-    final Object? updated = await client
+    final Object updated = await client
         .from('multi_agent_analysis_runs')
         .update(<String, Object?>{
           'human_review_status': status.wireValue,
