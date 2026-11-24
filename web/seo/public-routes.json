@@ -11,6 +11,8 @@
     },
     {
       "path": "/competitors",
+      "image": "/ogp-competitors-20261123.png",
+      "image_alt": "自分株式会社 競合比較 - 174社以上のSaaSと統合ライフOSを比較",
       "title": "競合比較 174社一覧 | 自分株式会社",
       "description": "Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のAI統合ライフOS。",
       "h1": "競合174社との比較",
@@ -18,8 +20,8 @@
     },
     {
       "path": "/ai-university",
-      "image": "/ogp-image-gen2-20260428.png",
-      "image_alt": "AI大学 - 主要AI企業と実務活用を体系的に学ぶ",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学 - 主要AIツールと実務活用を無料で体系的に学ぶ",
       "title": "AI大学 | 無料でAIツール・AIプロバイダーを学ぶ",
       "description": "AIツール・AIプロバイダー・実務ユースケースを学べる無料のAI大学。クイズ・ランキング・バッジで継続学習でき、200社以上のAIを体系的に習得できます。",
       "h1": "AI大学 — 無料でAIを体系的に学ぶ",
@@ -27,6 +29,8 @@
     },
     {
       "path": "/gemini-university",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学 - 主要AIツールと実務活用を無料で体系的に学ぶ",
       "title": "AI大学 {provider_count}社 | Google・OpenAI・Anthropicを学ぶ",
       "description": "Google / OpenAI / Anthropic など{provider_count}社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
       "h1": "AI大学 — {provider_count}社のAIを学ぶ",
@@ -65,6 +69,8 @@
     },
     {
       "path": "/referral",
+      "image": "/ogp-referral-20261123.png",
+      "image_alt": "自分株式会社 紹介プログラム - 招待リンクと紹介コードで無料で始める",
       "title": "友達紹介プログラム | 自分株式会社",
       "description": "自分株式会社の紹介プログラム。招待リンクから友達が登録してPro課金すると、招待した人と招待された人のStripe請求残高へPro月額1か月分のクレジットを付与します。登録だけでは付与されません。",
       "h1": "友達を招待",
@@ -82,6 +88,8 @@
     },
     {
       "path": "/subscription-billing",
+      "image": "/ogp-pricing-20261123.png",
+      "image_alt": "自分株式会社 プランと応援 - 無料コアから始められる料金プラン",
       "title": "プランと応援 | 自分株式会社",
       "description": "自分株式会社のFree、Pro、Teamプランと1回100円の応援を確認できます。Proは月額980円、Teamは1席あたり月額2,980円です。",
       "h1": "プランと応援",
@@ -160,6 +168,8 @@
     },
     {
       "path": "/philosophy",
+      "image": "/ogp-philosophy-20261123.png",
+      "image_alt": "自分株式会社とは - 人生を経営する9原則と個人P/L・B/Sガイド",
       "title": "自分株式会社とは？人生を経営する9原則と実践方法",
       "description": "自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。",
       "h1": "自分株式会社とは — 人生を会社として経営する方法",

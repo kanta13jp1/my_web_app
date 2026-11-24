@@ -1,0 +1,96 @@
+name: Weekly Performance Report
+
+on:
+  schedule:
+    # 毎週月曜 10:37 JST (01:37 UTC) に実行（他ジョブとの 00:00 UTC 集中を回避）
+    - cron: '37 1 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without live LLM or email delivery (true/false)'
+        required: false
+        default: 'true'
+      period_end:
+        description: 'Optional inclusive end date YYYY-MM-DD'
+        required: false
+        default: ''
+
+concurrency:
+  group: weekly-performance-report-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  generate-weekly-report:
+    name: Generate anonymized weekly performance report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run weekly performance report offline unit tests
+        run: python3 -B -m unittest -v scripts/generate_weekly_performance_report_test.py
+
+      - name: Generate anonymized weekly performance report
+        id: generate_report
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.dry_run || 'true' }}
+          PERIOD_END_INPUT: ${{ github.event.inputs.period_end || '' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || '' }}
+          REPORT_FROM_EMAIL: ${{ vars.WEEKLY_REPORT_FROM_EMAIL || '' }}
+          REPORT_TO_EMAIL: ${{ vars.WEEKLY_REPORT_TO_EMAIL || '' }}
+        run: |
+          set -euo pipefail
+          args=(
+            "--json-out" "weekly_performance_report.json"
+            "--html-out" "weekly_performance_report.html"
+            "--github-output" "${GITHUB_OUTPUT}"
+          )
+          if [ -n "${PERIOD_END_INPUT}" ]; then
+            args+=("--period-end" "${PERIOD_END_INPUT}")
+          fi
+          if [ "${EVENT_NAME}" = "schedule" ] || [ "${EVENT_NAME}" != "workflow_dispatch" ] || [ "${DRY_RUN_INPUT}" != "false" ] || [ -z "${GEMINI_API_KEY}" ]; then
+            args+=("--dry-run")
+          elif [ -n "${RESEND_API_KEY}" ] && [ -n "${REPORT_FROM_EMAIL}" ] && [ -n "${REPORT_TO_EMAIL}" ]; then
+            args+=("--send-email")
+          fi
+          python3 -B scripts/generate_weekly_performance_report.py "${args[@]}"
+
+      - name: Upload generated report preview artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: weekly-performance-report-preview
+          path: |
+            weekly_performance_report.json
+            weekly_performance_report.html
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append workflow summary
+        env:
+          DELIVERY_STATUS: ${{ steps.generate_report.outputs.delivery_status }}
+          ANOMALY_COUNT: ${{ steps.generate_report.outputs.anomaly_count }}
+          SUMMARY_JSON: ${{ steps.generate_report.outputs.report_summary_json }}
+        run: |
+          {
+            echo "## Weekly Performance Report"
+            echo "- Delivery status: \`${DELIVERY_STATUS}\`"
+            echo "- Detected anomalies: \`${ANOMALY_COUNT}\`"
+            echo "- Metrics summary: \`${SUMMARY_JSON}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

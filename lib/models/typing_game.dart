@@ -55,7 +55,13 @@ class TypingGame {
     TypingPrompt('仲間', 'なかま', ['nakama']),
     TypingPrompt('おはよう', 'おはよう', ['ohayou']),
     TypingPrompt('こんにちは', 'こんにちは', ['konnichiwa', 'konnitiwa']),
-    TypingPrompt('自転車', 'じてんしゃ', ['jitensha', 'zitensya']),
+    // Additive spelling fix within romaji36-v1; older scores had fewer options.
+    TypingPrompt('自転車', 'じてんしゃ', [
+      'jitensha',
+      'zitensya',
+      'jitensya',
+      'zitensha',
+    ]),
     TypingPrompt('お茶', 'おちゃ', ['ocha', 'otya']),
     TypingPrompt('船', 'ふね', ['fune', 'hune']),
     TypingPrompt('一緒に', 'いっしょに', ['isshoni', 'issyoni']),

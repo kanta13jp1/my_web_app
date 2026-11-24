@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/feature_route_labels.dart';
 import '../../utils/home_feature_actions.dart';
 import 'home_tier_styles.dart';
 
@@ -40,8 +41,18 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
       final seen = <String>{};
       final deduped = <Map<String, dynamic>>[];
       for (final row in rows) {
-        final route = row['feature_route'] as String? ?? '';
-        if (route.isNotEmpty && seen.add(route)) deduped.add(row);
+        final trimmed = (row['feature_route'] as String? ?? '').trim();
+        if (trimmed.isEmpty) continue;
+        final rawRoute = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+        final route = canonicalFeatureRoutePath(rawRoute);
+        if (seen.add(route)) {
+          final storedLabel = row['feature_label'] as String? ?? '';
+          deduped.add({
+            ...row,
+            'feature_route': route,
+            'feature_label': resolveRecentFeatureLabel(route, storedLabel),
+          });
+        }
         if (deduped.length >= 10) break;
       }
       if (mounted) {

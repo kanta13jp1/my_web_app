@@ -4,6 +4,106 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/typing_game.dart';
 
 void main() {
+  TypingGame focused(TypingPrompt prompt) => TypingGame(random: Random(7))
+    ..start(mode: TypingMode.practice, practicePrompts: [prompt]);
+
+  test('every curated prefix accepts exactly its valid next letters', () {
+    var cases = 0;
+    for (final prompt in TypingGame.prompts) {
+      final prefixes = <String>{
+        for (final spelling in prompt.spellings)
+          for (var i = 0; i < spelling.length; i++) spelling.substring(0, i),
+      };
+      for (final prefix in prefixes) {
+        for (var key = 0; key < 26; key++) {
+          final letter = String.fromCharCode(97 + key);
+          final next = prefix + letter;
+          final accepted = prompt.spellings.any((s) => s.startsWith(next));
+          final game = focused(prompt);
+          for (final character in prefix.split('')) {
+            expect(game.type(character), isTrue);
+          }
+          expect(game.guide.startsWith(prefix), isTrue);
+          expect(
+            game.type(letter.toUpperCase()),
+            accepted,
+            reason: '${prompt.japanese}: $next',
+          );
+          cases++;
+          if (accepted) {
+            final complete = prompt.spellings.contains(next);
+            expect(game.words, complete ? 1 : 0);
+            expect(game.score, next.length * 10 + (complete ? 50 : 0));
+            expect(game.prefix, complete ? '' : next);
+            expect(game.guide.startsWith(game.prefix), isTrue);
+          } else {
+            expect(game.prefix, prefix);
+            expect(game.mistakes, 1);
+            expect(game.score, prefix.length * 10);
+            // A wrong key never traps a valid prefix or changes the guide.
+            final remaining = game.guide.substring(prefix.length);
+            for (final character in remaining.split('')) {
+              expect(game.type(character), isTrue);
+            }
+            expect(game.words, 1);
+            expect(game.prefix, isEmpty);
+            expect(game.mistakes, 1);
+          }
+        }
+      }
+    }
+    expect(cases, greaterThan(7000));
+  });
+
+  test('all four bicycle combinations score 130 and update the guide', () {
+    final bicycle = TypingGame.prompts.singleWhere((p) => p.japanese == '自転車');
+    expect(bicycle.spellings, ['jitensha', 'zitensya', 'jitensya', 'zitensha']);
+    for (final spelling in bicycle.spellings) {
+      final game = focused(bicycle);
+      for (var i = 0; i < spelling.length; i++) {
+        expect(game.type(spelling[i]), isTrue);
+        if (i < spelling.length - 1) {
+          expect(game.guide.startsWith(spelling.substring(0, i + 1)), isTrue);
+        }
+      }
+      expect(game.correct, 8);
+      expect(game.words, 1);
+      expect(game.score, 130);
+      expect(game.mistakes, 0);
+    }
+  });
+
+  test('nonletter edits and existing nasal/double-consonant rules stay intact',
+      () {
+    final bicycle = TypingGame.prompts.singleWhere((p) => p.japanese == '自転車');
+    final game = focused(bicycle);
+    for (final invalid in ['', 'ji', '1', ' ', '-', 'じ', '🍣']) {
+      expect(game.type(invalid), isFalse);
+      expect(game.prefix, isEmpty);
+      expect(game.mistakes, 0);
+      expect(game.score, 0);
+    }
+    expect(
+      TypingGame.prompts.singleWhere((p) => p.japanese == 'こんにちは').spellings,
+      ['konnichiwa', 'konnitiwa'],
+    );
+    expect(
+      TypingGame.prompts.singleWhere((p) => p.japanese == '一緒に').spellings,
+      ['isshoni', 'issyoni'],
+    );
+    for (final example in {'こんにちは': 'koni', '一緒に': 'iso'}.entries) {
+      final target = TypingGame.prompts.singleWhere(
+        (p) => p.japanese == example.key,
+      );
+      final run = focused(target);
+      for (var i = 0; i < example.value.length - 1; i++) {
+        expect(run.type(example.value[i]), isTrue);
+      }
+      expect(run.type(example.value[example.value.length - 1]), isFalse);
+      expect(run.mistakes, 1);
+    }
+  });
+
   void completeWord(TypingGame game) {
     for (final letter in game.guide.split('')) {
       expect(game.type(letter), isTrue);

@@ -36,6 +36,22 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
   final _note = TextEditingController();
 
   @override
+  void didUpdateWidget(covariant AssetFutureCardBillCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentStateMonth != widget.currentStateMonth) {
+      final minMonth = DateTime(
+        widget.currentStateMonth.year,
+        widget.currentStateMonth.month + 1,
+      );
+      if (_month.isBefore(minMonth)) {
+        _month = minMonth;
+        _state = null;
+        _message = null;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _amount.dispose();
     _note.dispose();
@@ -171,6 +187,7 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
         widget.currentStateMonth.month + i + 1,
       ),
     );
+    final selectedMonth = months.contains(_month) ? _month : months.first;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -198,7 +215,8 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
                   ),
                 ),
             DropdownButtonFormField<DateTime>(
-              initialValue: _month,
+              key: ValueKey<DateTime>(selectedMonth),
+              initialValue: selectedMonth,
               decoration: const InputDecoration(labelText: '請求対象月'),
               items: months
                   .map(

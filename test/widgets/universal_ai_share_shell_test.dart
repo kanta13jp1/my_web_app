@@ -182,6 +182,18 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('/note-editor では左下 Inbox FAB を非表示にする', (tester) async {
+    universalAiShareRouteObserver.currentPage.value =
+        UniversalSharePageContext.fromRouteName('/note-editor');
+    await tester.pumpWidget(_buildShell(isLoggedInOverride: true));
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('universal_inbox_capture_button')),
+      findsNothing,
+    );
+  });
 }
 
 Widget _buildShell({

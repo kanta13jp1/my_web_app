@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/daily_journal_streak_service.dart';
+import '../widgets/daily_journal_streak_panel.dart';
+
 class AiUniversityStreaksPage extends StatefulWidget {
-  const AiUniversityStreaksPage({super.key});
+  const AiUniversityStreaksPage({
+    super.key,
+    this.skipRemoteFetch = false,
+    this.journalStreakService = const DailyJournalStreakService(),
+  });
+
+  final bool skipRemoteFetch;
+  final DailyJournalStreakService journalStreakService;
 
   @override
   State<AiUniversityStreaksPage> createState() =>
@@ -16,6 +26,9 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
   String? _error;
 
   Future<void> _fetch() async {
+    if (widget.skipRemoteFetch) {
+      return;
+    }
     if (Supabase.instance.client.auth.currentUser == null) {
       setState(() => _loading = false);
       return;
@@ -97,6 +110,10 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      DailyJournalStreakPanel(
+                        service: widget.journalStreakService,
+                      ),
+                      const SizedBox(height: 16),
                       if (_streak != null) ...[
                         Card(
                           child: Padding(
