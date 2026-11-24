@@ -294,8 +294,6 @@ abstract final class $safeClassName {
       brightness: $brightnessLiteral,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: surface0Color,
-      cardColor: surface1Color,
-      dividerColor: borderColor,
       cardTheme: CardThemeData(
         color: surface1Color,
         elevation: 0,

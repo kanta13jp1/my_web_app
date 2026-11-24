@@ -352,8 +352,6 @@ abstract final class {class_name} {{
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: palette.surface0,
-      cardColor: palette.surface1,
-      dividerColor: palette.border,
       cardTheme: CardThemeData(
         color: palette.surface1,
         elevation: 0,
