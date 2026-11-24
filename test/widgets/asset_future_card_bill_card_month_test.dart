@@ -55,53 +55,52 @@ class _OwnerSwitchRepository extends SharedPreferencesAssetLiabilityRepository {
 
 void main() {
   testWidgets(
-      'month rollover replaces an unavailable selection and discards its read',
-      (
-    tester,
-  ) async {
-    final repository = _DelayedRepository();
-    Future<void> showMonth(DateTime month) => tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: AssetFutureCardBillCard(
-                repository: repository,
-                accounts: const [],
-                subscriptionIds: const {},
-                currentStateMonth: month,
-              ),
+    'month rollover replaces an unavailable selection and discards its read',
+    (tester) async {
+      final repository = _DelayedRepository();
+      Future<void> showMonth(DateTime month) => tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AssetFutureCardBillCard(
+              repository: repository,
+              accounts: const [],
+              subscriptionIds: const {},
+              currentStateMonth: month,
             ),
           ),
-        );
+        ),
+      );
 
-    final dropdown = find.byType(DropdownButtonFormField<DateTime>);
-    final reload = find.widgetWithText(TextButton, '対象月を再読込');
-    await showMonth(DateTime(2026, 7));
-    expect(
-      tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
-      DateTime(2026, 8),
-    );
-    await tester.tap(reload);
-    await tester.pump();
-    expect(repository.loadedMonths, [DateTime(2026, 8)]);
+      final dropdown = find.byType(DropdownButtonFormField<DateTime>);
+      final reload = find.widgetWithText(TextButton, '対象月を再読込');
+      await showMonth(DateTime(2026, 7));
+      expect(
+        tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
+        DateTime(2026, 8),
+      );
+      await tester.tap(reload);
+      await tester.pump();
+      expect(repository.loadedMonths, [DateTime(2026, 8)]);
 
-    await showMonth(DateTime(2026, 8));
-    expect(tester.takeException(), isNull);
-    expect(
-      tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
-      DateTime(2026, 9),
-    );
+      await showMonth(DateTime(2026, 8));
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
+        DateTime(2026, 9),
+      );
 
-    repository.pending.complete(
-      const AssetLiabilityMonthlyState(
-        paymentDifferenceReasons: {
-          'old-bill': '${AssetFutureCardBill.notePrefix}old-month-result',
-        },
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.textContaining('old-month-result'), findsNothing);
-    expect(tester.widget<TextButton>(reload).onPressed, isNotNull);
-  });
+      repository.pending.complete(
+        const AssetLiabilityMonthlyState(
+          paymentDifferenceReasons: {
+            'old-bill': '${AssetFutureCardBill.notePrefix}old-month-result',
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('old-month-result'), findsNothing);
+      expect(tester.widget<TextButton>(reload).onPressed, isNotNull);
+    },
+  );
 
   testWidgets('利用者が変わった場合は請求予定を保存しない', (tester) async {
     final repository = _OwnerSwitchRepository();

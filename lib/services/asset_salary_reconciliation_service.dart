@@ -32,6 +32,7 @@ class AssetSalaryReconciliationService {
     final confirmedPayslips = _extractConfirmedPayslips(
       payslipRows: payslipRows,
       payslipSalaryIncomes: payslipSalaryIncomes,
+      baseDate: baseDate,
     );
 
     if (confirmedPayslips.isEmpty) {
@@ -140,22 +141,40 @@ class AssetSalaryReconciliationService {
   static List<_ConfirmedSalaryPayslip> _extractConfirmedPayslips({
     required List<Map<String, dynamic>> payslipRows,
     required List<Map<String, dynamic>> payslipSalaryIncomes,
+    DateTime? baseDate,
   }) {
     final list = <_ConfirmedSalaryPayslip>[];
     final seenDates = <String>{};
+    final maxPayDate = baseDate == null
+        ? null
+        : DateTime(baseDate.year, baseDate.month, baseDate.day);
+
+    bool isEligibleRow(Map<String, dynamic> row, DateTime? payDate) {
+      if (payDate == null) return false;
+      if (row['received'] == false || row['review_status'] == 'rejected') {
+        return false;
+      }
+      if (maxPayDate != null &&
+          DateTime(payDate.year, payDate.month, payDate.day)
+              .isAfter(maxPayDate)) {
+        return false;
+      }
+      return true;
+    }
 
     for (final row in payslipRows) {
       final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
       final rawAmount = row['net_amount'] ?? row['amount'];
       final amount = _num(rawAmount);
-      if (payDate == null || amount <= 0) continue;
-      final dateKey = _dateKey(payDate);
+      if (!isEligibleRow(row, payDate) || amount <= 0) continue;
+      final eligibleDate = payDate!;
+      final dateKey = _dateKey(eligibleDate);
       if (seenDates.contains(dateKey)) continue;
       seenDates.add(dateKey);
       final company = row['company_name']?.toString().trim() ?? '';
       list.add(
         _ConfirmedSalaryPayslip(
-          payDate: payDate,
+          payDate: eligibleDate,
           netAmount: amount,
           companyName: company,
         ),
@@ -165,14 +184,15 @@ class AssetSalaryReconciliationService {
     for (final row in payslipSalaryIncomes) {
       final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
       final amount = _num(row['amount']);
-      if (payDate == null || amount <= 0) continue;
-      final dateKey = _dateKey(payDate);
+      if (!isEligibleRow(row, payDate) || amount <= 0) continue;
+      final eligibleDate = payDate!;
+      final dateKey = _dateKey(eligibleDate);
       if (seenDates.contains(dateKey)) continue;
       seenDates.add(dateKey);
       final desc = row['description']?.toString().trim() ?? '';
       list.add(
         _ConfirmedSalaryPayslip(
-          payDate: payDate,
+          payDate: eligibleDate,
           netAmount: amount,
           companyName: desc,
         ),

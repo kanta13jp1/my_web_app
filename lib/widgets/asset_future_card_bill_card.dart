@@ -36,12 +36,12 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
   final _note = TextEditingController();
 
   List<DateTime> get _availableMonths => List.generate(
-        12,
-        (i) => DateTime(
-          widget.currentStateMonth.year,
-          widget.currentStateMonth.month + i + 1,
-        ),
-      );
+    12,
+    (i) => DateTime(
+      widget.currentStateMonth.year,
+      widget.currentStateMonth.month + i + 1,
+    ),
+  );
 
   @override
   void didUpdateWidget(covariant AssetFutureCardBillCard oldWidget) {
@@ -194,6 +194,7 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
         )
         .toList();
     final months = _availableMonths;
+    final selectedMonth = months.contains(_month) ? _month : months.first;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -207,8 +208,9 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
             const Text(
               '請求対象月の予定額だけを保存します。恒久月額・今月・カード請求総額・収支・残高を変更しません。カード請求に含むため別途引落として加算しません。支払日は確定しません。',
             ),
-            for (final entry in (_state?.paymentDifferenceReasons.entries ??
-                const <MapEntry<String, String>>[]))
+            for (final entry
+                in (_state?.paymentDifferenceReasons.entries ??
+                    const <MapEntry<String, String>>[]))
               if (entry.value.startsWith(AssetFutureCardBill.notePrefix))
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -221,8 +223,8 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
                   ),
                 ),
             DropdownButtonFormField<DateTime>(
-              key: ValueKey(_month),
-              initialValue: _month,
+              key: ValueKey<DateTime>(selectedMonth),
+              initialValue: selectedMonth,
               decoration: const InputDecoration(labelText: '請求対象月'),
               items: months
                   .map(
@@ -254,8 +256,8 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
               onChanged: _busy
                   ? null
                   : (id) => setState(() {
-                        _select(id);
-                      }),
+                      _select(id);
+                    }),
             ),
             DropdownButtonFormField<String>(
               key: ValueKey('$_accountId:$_cardId:${_month.month}'),
@@ -269,8 +271,8 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
               onChanged: _busy
                   ? null
                   : (id) => setState(() {
-                        _cardId = id;
-                      }),
+                      _cardId = id;
+                    }),
             ),
             TextField(
               controller: _amount,

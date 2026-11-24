@@ -1,6 +1,7 @@
 import 'package:my_web_app/pages/typing_game_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
+import 'package:my_web_app/pages/vibe_sim_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
@@ -20,6 +21,7 @@ import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
 import 'package:my_web_app/utils/route_document_title.dart';
+import 'package:my_web_app/services/spa_route_title_observer.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -51,6 +53,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
@@ -75,6 +78,7 @@ import 'package:my_web_app/pages/note_collections_page.dart';
 import 'package:my_web_app/pages/note_tags_page.dart';
 import 'package:my_web_app/pages/space_sharing_page.dart';
 import 'package:my_web_app/utils/note_route_parameters.dart';
+import 'package:my_web_app/utils/layout_safe_focus_traversal_policy.dart';
 import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/legal_document_page.dart';
@@ -397,6 +401,14 @@ Future<void> main() async {
     httpClient: SupabaseTracingHttpClient(),
   );
 
+  final authClient = Supabase.instance.client.auth;
+  final startupAuthErrorSubscription = authClient.onAuthStateChange.listen(
+    (_) {},
+    onError: (Object error, StackTrace _) {
+      LandingOAuthCallbackFailure.captureStartupError(error);
+    },
+  );
+
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
   AppLogger.setErrorReporter(
     (message, {error, stackTrace}) => ErrorReporter.instance.report(
@@ -419,6 +431,7 @@ Future<void> main() async {
       );
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(startupAuthErrorSubscription.cancel());
         unawaited(_configureStartupNotifications(notificationService));
       });
     },
@@ -563,6 +576,11 @@ Route<dynamic> generateAppRoute(
     case '/jwenv-lab':
       return MaterialPageRoute(
         builder: (_) => const JwenvLabPage(),
+        settings: settings,
+      );
+    case '/vibe-sim-lab':
+      return MaterialPageRoute(
+        builder: (_) => const VibeSimLabPage(),
         settings: settings,
       );
     case '/agi-fireworks':
@@ -2107,6 +2125,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _versionCheckService = VersionCheckService();
+  final _focusTraversalPolicy = LayoutSafeReadingOrderTraversalPolicy();
   bool _showUpdateBanner = false;
 
   @override
@@ -2140,7 +2159,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return ValueListenableBuilder(
       valueListenable: universalAiShareRouteObserver.currentPage,
       builder: (context, currentPage, _) => MaterialApp(
-        title: documentTitleForRoute(currentPage.routePath),
+        title: SpaRouteTitleResolver.resolve(currentPage.routePath),
         debugShowCheckedModeBanner: false,
         scaffoldMessengerKey: _scaffoldMessengerKey,
         navigatorKey: _navigatorKey,
@@ -2151,25 +2170,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ? ThemeMode.light
             : themeService.getFlutterThemeMode(),
         builder: (context, child) {
-          return GlobalHeaderClockShell(
-            navigatorKey: _navigatorKey,
-            // 時計とビルド番号はログイン後の業務用クロームに限定する。
-            // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
-            // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
-            showClockBar: supabase.auth.currentSession != null,
-            child: UniversalAiShareShell(
+          return FocusTraversalGroup(
+            policy: _focusTraversalPolicy,
+            child: GlobalHeaderClockShell(
               navigatorKey: _navigatorKey,
-              child: MaintenanceShell(
-                routeListenable: universalAiShareRouteObserver.currentPage,
-                child: Column(
-                  children: [
-                    if (_showUpdateBanner)
-                      UpdateBanner(
-                        onDismiss: () =>
-                            setState(() => _showUpdateBanner = false),
-                      ),
-                    Expanded(child: child ?? const SizedBox.shrink()),
-                  ],
+              // 時計とビルド番号はログイン後の業務用クロームに限定する。
+              // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
+              // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
+              showClockBar: supabase.auth.currentSession != null,
+              child: UniversalAiShareShell(
+                navigatorKey: _navigatorKey,
+                child: MaintenanceShell(
+                  routeListenable: universalAiShareRouteObserver.currentPage,
+                  child: Column(
+                    children: [
+                      if (_showUpdateBanner)
+                        UpdateBanner(
+                          onDismiss: () =>
+                              setState(() => _showUpdateBanner = false),
+                        ),
+                      Expanded(child: child ?? const SizedBox.shrink()),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -2185,6 +2207,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         navigatorObservers: <NavigatorObserver>[
           _growthPresenceObserver,
           universalAiShareRouteObserver,
+          spaRouteTitleObserver,
           // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
           // LP View 計測を可視化まで遅延させる (可視化ゲート)。
           deepLinkVisibilityRouteObserver,

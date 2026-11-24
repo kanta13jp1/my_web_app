@@ -1,9 +1,68 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:my_web_app/services/direct_storage_upload_service.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/import_service.dart';
+import 'package:my_web_app/services/storage_quota_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+Uint8List _zipBytes(
+  final Map<String, String> textFiles, {
+  final Map<String, List<int>> binaryFiles = const <String, List<int>>{},
+}) {
+  final archive = Archive();
+  textFiles.forEach((final name, final content) {
+    archive.addFile(ArchiveFile.string(name, content));
+  });
+  binaryFiles.forEach((final name, final bytes) {
+    archive.addFile(ArchiveFile.bytes(name, bytes));
+  });
+  return ZipEncoder().encodeBytes(archive);
+}
+
+class _StubQuotaRepo implements StorageQuotaRepository {
+  _StubQuotaRepo(this.status);
+
+  final StorageQuotaStatus status;
+
+  @override
+  Future<StorageQuotaStatus> loadStatus({required final String userId}) async {
+    return status;
+  }
+}
+
+class _RecordingUploadGateway implements DirectStorageUploadGateway {
+  final List<String> paths = <String>[];
+
+  @override
+  Future<void> uploadBinary({
+    required final String bucketId,
+    required final String storagePath,
+    required final Uint8List bytes,
+    required final String contentType,
+    required final bool upsert,
+  }) async {
+    paths.add('$bucketId/$storagePath');
+  }
+}
+
+class _RecordingMetadataStore implements DirectUploadMetadataStore {
+  final List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+
+  @override
+  Future<Map<String, dynamic>> insert({
+    required final String tableName,
+    required final Map<String, dynamic> values,
+  }) async {
+    rows.add(values);
+    return <String, dynamic>{'id': rows.length, ...values};
+  }
+}
 
 void main() {
   late ImportService service;
@@ -205,12 +264,289 @@ void main() {
     test('ImportExecutionResult.fromJson reads execution metadata', () {
       final result = ImportExecutionResult.fromJson(<String, dynamic>{
         'insertedCount': 24,
+        'skippedDuplicateCount': 2,
+        'uploadedAttachmentCount': 5,
         'importMode': 'edge-function',
       });
 
       expect(result.insertedCount, 24);
+      expect(result.skippedDuplicateCount, 2);
+      expect(result.uploadedAttachmentCount, 5);
       expect(result.usedEdgeFunction, isTrue);
       expect(result.importModeLabel, 'Edge Function import');
     });
+
+    test(
+      'buildPreview parses notion_zip and .zip files selected on notion card',
+      () async {
+        const pageId = '0123456789abcdef0123456789abcdef';
+        final zip = _zipBytes(
+          <String, String>{
+            'Workspace $pageId/Guide $pageId.md':
+                '# Migration Guide\n\n![](img.png)\n',
+          },
+          binaryFiles: <String, List<int>>{
+            'Workspace $pageId/img.png': const <int>[1, 2, 3],
+          },
+        );
+
+        final previewExplicit = await service.buildPreview(
+          sourceType: 'notion_zip',
+          fileName: 'export.zip',
+          bytes: zip,
+        );
+        expect(previewExplicit.sourceType, 'notion_zip');
+        expect(previewExplicit.previewMode, 'local-notion-zip');
+        expect(previewExplicit.usedEdgeFunction, isFalse);
+        expect(previewExplicit.notes, hasLength(1));
+        expect(previewExplicit.resourceCount, 1);
+        expect(previewExplicit.sourceExportSha256, hasLength(64));
+
+        final previewAuto = await service.buildPreview(
+          sourceType: 'notion',
+          fileName: 'export.zip',
+          bytes: zip,
+        );
+        expect(previewAuto.sourceType, 'notion_zip');
+        expect(previewAuto.previewMode, 'local-notion-zip');
+      },
+    );
+
+    test(
+      'importNotes falls back locally when edge import.commit omits insertedCount',
+      () async {
+        final noteInserts = <List<dynamic>>[];
+        final client = SupabaseClient(
+          'http://localhost:9999',
+          'synthetic-public-key',
+          accessToken: () async => 'synthetic-token',
+          authOptions: const AuthClientOptions(autoRefreshToken: false),
+          httpClient: MockClient((final request) async {
+            if (request.url.path.endsWith('/functions/v1/growth-hub')) {
+              return http.Response(
+                jsonEncode(<String, dynamic>{
+                  'success': true,
+                  'item': <String, dynamic>{'id': 99},
+                }),
+                200,
+                headers: const <String, String>{
+                  'content-type': 'application/json',
+                },
+                request: request,
+              );
+            }
+            if (request.url.path.endsWith('/rest/v1/notes') &&
+                request.method == 'POST') {
+              final decoded = jsonDecode(request.body);
+              if (decoded is List) {
+                noteInserts.add(decoded);
+              }
+              return http.Response(
+                '[]',
+                201,
+                headers: const <String, String>{
+                  'content-type': 'application/json',
+                },
+                request: request,
+              );
+            }
+            return http.Response(
+              '[]',
+              200,
+              headers: const <String, String>{
+                'content-type': 'application/json',
+              },
+              request: request,
+            );
+          }),
+        );
+        addTearDown(client.dispose);
+
+        final wiredService = ImportService(
+          GamificationService(),
+          clientOverride: client,
+        );
+        final result = await wiredService.importNotes(
+          userId: 'user-123',
+          notes: const <ImportedNoteDraft>[
+            ImportedNoteDraft(
+              title: 'Fallback Note',
+              content: 'Saved locally after stub edge response',
+              source: 'notion_page',
+              tags: <String>['notion'],
+            ),
+          ],
+        );
+
+        expect(result.insertedCount, 1);
+        expect(result.importMode, 'local-fallback');
+        expect(noteInserts, hasLength(1));
+        final firstInserted = Map<String, dynamic>.from(
+          noteInserts.single.single as Map,
+        );
+        expect(firstInserted['user_id'], 'user-123');
+        expect(firstInserted['created_by'], 'user-123');
+        expect(firstInserted['capture_source'], 'notion_page');
+        expect(firstInserted['tags'], const <String>['notion']);
+      },
+    );
+
+    test(
+      'importNotionZipBundle deduplicates source_key, creates collections, '
+      'uploads attachments, and rewrites markdown links',
+      () async {
+        const folderId = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1';
+        const pageId = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb2';
+        final zip = _zipBytes(
+          <String, String>{
+            'Wiki $folderId/Design $pageId.md':
+                '# Design Doc\n\nSee ![wireframe](wire%20%5B1%5D+a.png) and literal (wire%20%5B1%5D+a.png)\n',
+          },
+          binaryFiles: <String, List<int>>{
+            'Wiki $folderId/wire [1]+a.png': const <int>[1, 2, 3, 4],
+          },
+        );
+        final bundle = service.parseNotionZipBytes(
+          fileName: 'notion-wiki.zip',
+          bytes: zip,
+        );
+
+        var nextCollectionId = 10;
+        final updatedNoteContents = <String>[];
+        final notesPostRequests = <http.Request>[];
+        final client = SupabaseClient(
+          'http://localhost:9999',
+          'synthetic-public-key',
+          accessToken: () async => 'synthetic-token',
+          authOptions: const AuthClientOptions(autoRefreshToken: false),
+          httpClient: MockClient((final request) async {
+            if (request.url.path.endsWith('/rest/v1/note_collections')) {
+              if (request.method == 'POST') {
+                final createdId = nextCollectionId;
+                nextCollectionId += 1;
+                return http.Response(
+                  jsonEncode(<String, dynamic>{'id': createdId}),
+                  201,
+                  headers: const <String, String>{
+                    'content-type': 'application/json',
+                  },
+                  request: request,
+                );
+              }
+              return http.Response(
+                '[]',
+                200,
+                headers: const <String, String>{
+                  'content-type': 'application/json',
+                },
+                request: request,
+              );
+            }
+            if (request.url.path.endsWith('/rest/v1/notes')) {
+              if (request.method == 'POST') {
+                notesPostRequests.add(request);
+                final decoded = jsonDecode(request.body) as List<dynamic>;
+                final firstRow = Map<String, dynamic>.from(
+                  decoded.first as Map,
+                );
+                return http.Response(
+                  jsonEncode(<Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'id': 501,
+                      'source_key': firstRow['source_key'],
+                    },
+                  ]),
+                  201,
+                  headers: const <String, String>{
+                    'content-type': 'application/json',
+                  },
+                  request: request,
+                );
+              }
+              if (request.method == 'PATCH') {
+                final payload = Map<String, dynamic>.from(
+                  jsonDecode(request.body) as Map,
+                );
+                updatedNoteContents.add(payload['content']?.toString() ?? '');
+                return http.Response(
+                  '[]',
+                  200,
+                  headers: const <String, String>{
+                    'content-type': 'application/json',
+                  },
+                  request: request,
+                );
+              }
+              return http.Response(
+                '[]',
+                200,
+                headers: const <String, String>{
+                  'content-type': 'application/json',
+                },
+                request: request,
+              );
+            }
+            return http.Response(
+              '[]',
+              200,
+              headers: const <String, String>{
+                'content-type': 'application/json',
+              },
+              request: request,
+            );
+          }),
+        );
+        addTearDown(client.dispose);
+
+        final uploadGateway = _RecordingUploadGateway();
+        final metadataStore = _RecordingMetadataStore();
+        final wiredService = ImportService(
+          GamificationService(),
+          clientOverride: client,
+        );
+
+        final result = await wiredService.importNotionZipBundle(
+          userId: 'user-notion-1',
+          bundle: bundle,
+          quotaService: StorageQuotaService(
+            repository: _StubQuotaRepo(
+              const StorageQuotaStatus(
+                planId: 'free',
+                isAdmin: false,
+                usedBytes: 0,
+                quotaBytes: StorageQuotaPolicy.freeQuotaBytes,
+                maxSingleFileBytes: StorageQuotaPolicy.freeSingleFileMaxBytes,
+                attachmentCount: 0,
+              ),
+            ),
+          ),
+          uploadService: DirectStorageUploadService(
+            storage: uploadGateway,
+            metadataStore: metadataStore,
+          ),
+        );
+
+        expect(result.insertedCount, 1);
+        expect(result.uploadedAttachmentCount, 1);
+        expect(result.importMode, 'notion-zip-lossless');
+        expect(notesPostRequests, hasLength(1));
+        expect(
+          notesPostRequests.single.url.queryParameters['on_conflict'],
+          'user_id,source_key',
+        );
+        expect(uploadGateway.paths, hasLength(1));
+        expect(metadataStore.rows.single['note_id'], 501);
+        expect(metadataStore.rows.single['source_system'], 'notion');
+        expect(updatedNoteContents, hasLength(1));
+        expect(
+          updatedNoteContents.single,
+          contains('![wireframe](attachment:'),
+        );
+        expect(
+          updatedNoteContents.single,
+          contains('literal (wire%20%5B1%5D+a.png)'),
+        );
+      },
+    );
   });
 }
