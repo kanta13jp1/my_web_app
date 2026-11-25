@@ -84,8 +84,8 @@ export function buildUiCapabilities(role: WorkosOrgRole | "none"): {
   return {
     role,
     can_view_org: role !== "none",
-    can_execute_member_actions:
-      role === "owner" || role === "admin" || role === "member",
+    can_execute_member_actions: role === "owner" || role === "admin" ||
+      role === "member",
     can_manage_idp_mappings: role === "owner" || role === "admin",
     can_assign_owner_role: role === "owner",
   };
@@ -336,7 +336,10 @@ export async function handleOrgIdpMappingsUpsert(options: {
     };
   }
   if (!VALID_ORG_ROLES.has(mappedRole)) {
-    return { status: 400, body: { error: `Invalid mapped_role: ${mappedRole}` } };
+    return {
+      status: 400,
+      body: { error: `Invalid mapped_role: ${mappedRole}` },
+    };
   }
 
   const org = await options.store.getOrganization(workosOrgId);
@@ -428,6 +431,9 @@ export async function handleOrgSsoEvaluate(options: {
   caller: WorkosAdminCaller;
   body: Record<string, unknown>;
 }): Promise<OrgIdpAdminResponse> {
+  if (!options.caller.userId && !options.caller.isServiceRole) {
+    return { status: 401, body: { error: "Unauthorized" } };
+  }
   const workosOrgId = String(options.body.workos_org_id ?? "").trim();
   const idpProvider = String(options.body.idp_provider ?? "okta").trim();
   const requiredRoleRaw = String(options.body.required_role ?? "viewer")
@@ -484,9 +490,10 @@ export async function handleOrgSsoEvaluate(options: {
       options.caller.userId,
     )
     : null;
-  const scimRole = membership && VALID_ORG_ROLES.has(membership.role as WorkosOrgRole)
-    ? (membership.role as WorkosOrgRole)
-    : null;
+  const scimRole =
+    membership && VALID_ORG_ROLES.has(membership.role as WorkosOrgRole)
+      ? (membership.role as WorkosOrgRole)
+      : null;
 
   const evaluation = evaluateIdpGroupRbac({
     workosOrgId,
