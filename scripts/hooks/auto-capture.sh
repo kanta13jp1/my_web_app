@@ -23,22 +23,22 @@ DO_RECOVER=false
 DO_AUDIT=false
 
 while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --repo-root) REPO_ROOT="$2"; shift 2 ;;
-    --memory-file) MEMORY_FILE="$2"; shift 2 ;;
-    --agent) AGENT_NAME="$2"; shift 2 ;;
-    --decision) DECISION="$2"; shift 2 ;;
-    --tool) TOOL_NAME="$2"; shift 2 ;;
-    --outcome) OUTCOME="$2"; shift 2 ;;
-    --summary) SUMMARY="$2"; shift 2 ;;
-    --run-id) RUN_ID="$2"; shift 2 ;;
-    --changed-files) CHANGED_FILES="$2"; shift 2 ;;
+  case "${1:-}" in
+    --repo-root) REPO_ROOT="${2:?missing value for --repo-root}"; shift 2 ;;
+    --memory-file) MEMORY_FILE="${2:?missing value for --memory-file}"; shift 2 ;;
+    --agent) AGENT_NAME="${2:?missing value for --agent}"; shift 2 ;;
+    --decision) DECISION="${2:?missing value for --decision}"; shift 2 ;;
+    --tool) TOOL_NAME="${2:?missing value for --tool}"; shift 2 ;;
+    --outcome) OUTCOME="${2:?missing value for --outcome}"; shift 2 ;;
+    --summary) SUMMARY="${2:?missing value for --summary}"; shift 2 ;;
+    --run-id) RUN_ID="${2:?missing value for --run-id}"; shift 2 ;;
+    --changed-files) CHANGED_FILES="${2:?missing value for --changed-files}"; shift 2 ;;
     --commit) DO_COMMIT=true; shift ;;
     --push) DO_PUSH=true; shift ;;
     --recover) DO_RECOVER=true; shift ;;
     --audit-blame) DO_AUDIT=true; shift ;;
     *)
-      echo "Unknown argument: $1" >&2
+      echo "Unknown argument: ${1:-}" >&2
       exit 2
       ;;
   esac
