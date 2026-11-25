@@ -1718,15 +1718,22 @@ async function recordProviderUsageBestEffort(params: {
   usageContext?: UsageTelemetryContext;
 }): Promise<void> {
   if (!params.usageContext?.userId) return;
-  const usage = extractTokenUsage(params.provider, params.payload);
-  await recordApiUsageLog({
-    client: params.usageContext.client,
-    userId: params.usageContext.userId,
-    provider: params.provider,
-    model: params.model,
-    actionName: params.usageContext.actionName,
-    usage,
-  });
+  try {
+    const usage = extractTokenUsage(params.provider, params.payload);
+    await recordApiUsageLog({
+      client: params.usageContext.client,
+      userId: params.usageContext.userId,
+      provider: params.provider,
+      model: params.model,
+      actionName: params.usageContext.actionName,
+      usage,
+    });
+  } catch (err) {
+    console.warn(
+      "[ai-assistant] recordProviderUsageBestEffort failed:",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
 }
 
 async function callOpenAICompatible(

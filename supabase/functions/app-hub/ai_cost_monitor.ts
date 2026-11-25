@@ -158,7 +158,6 @@ function normalizeUsageRecord(row: HubUsageRecord): NormalizedUsageLog {
   const outUnits = parseOptionalNonNegInt(meta.output_units) ?? 0;
   const totalUnits = parseOptionalNonNegInt(meta.total_units) ??
     inUnits + outUnits;
-  const knownFlag = meta.known_pricing === true;
   const rawCost = parseRequiredNonNegFloat(meta.estimated_cost_usd);
   const fallbackEstimate = estimateModelCostUsd({
     model,
@@ -166,9 +165,9 @@ function normalizeUsageRecord(row: HubUsageRecord): NormalizedUsageLog {
     inputUnits: inUnits,
     outputUnits: outUnits,
   });
-  const knownPricing = meta.known_pricing === false
-    ? false
-    : knownFlag || fallbackEstimate.known_pricing;
+  const knownPricing = typeof meta.known_pricing === "boolean"
+    ? meta.known_pricing
+    : fallbackEstimate.known_pricing;
   const estimatedCost = knownPricing
     ? roundUsd(rawCost ?? fallbackEstimate.estimated_cost_usd ?? 0)
     : null;
