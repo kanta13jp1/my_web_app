@@ -7,11 +7,17 @@ import {
   maskLogString,
   maskLogValue,
 } from "../_shared/sensitive_log_masker.ts";
+import {
+  handlePrReviewQuotaRequest,
+  type PrReviewQuotaDecision,
+  type PrReviewQuotaStore,
+} from "./pr_review_quota.ts";
 
 export const VALID_SOURCE_TOOLS = new Set([
   "n8n",
   "zapier",
   "analytics",
+  "github_app",
   "custom",
 ]);
 export const VALID_PROCESSING_STATUSES = new Set([
@@ -82,6 +88,7 @@ export interface ExternalWebhookDependencies {
   ) => Promise<WebhookApiKeyRecord | null>;
   touchApiKeyLastUsed: (keyId: string, usedAtIso: string) => Promise<void>;
   insertEvent: (input: InsertWebhookEventInput) => Promise<StoredWebhookEvent>;
+  prReviewQuotaStore?: PrReviewQuotaStore;
 }
 
 function webhookJson(payload: unknown, status = 200): Response {
@@ -222,6 +229,74 @@ export function createDefaultDependencies(
         error_message: asString(row.error_message),
         created_at: asString(row.created_at),
       };
+    },
+    prReviewQuotaStore: {
+      async claimOrSkip(input) {
+        if (!admin) {
+          throw new Error("Supabase admin client is not configured");
+        }
+        const { data, error } = await admin.rpc(
+          "claim_or_skip_pr_review_quota",
+          {
+            p_owner_user_id: input.ownerUserId,
+            p_installation_key: input.installationKey,
+            p_repository: input.repository,
+            p_pr_number: input.prNumber,
+            p_head_sha: input.headSha,
+            p_delivery_id: input.deliveryId,
+            p_plan_tier: input.planTier,
+            p_daily_limit: input.dailyLimit,
+            p_estimated_model_calls: input.estimatedModelCalls,
+            p_dry_run: input.dryRun,
+          },
+        );
+        if (error || !data) {
+          throw new Error(
+            `claim_or_skip_pr_review_quota failed: ${error?.message ?? "empty"}`,
+          );
+        }
+        return data as PrReviewQuotaDecision;
+      },
+      async reconcileModelCalls(args) {
+        if (!admin) {
+          throw new Error("Supabase admin client is not configured");
+        }
+        const { data, error } = await admin.rpc(
+          "reconcile_pr_review_model_calls",
+          {
+            p_owner_user_id: args.ownerUserId,
+            p_installation_key: args.installationKey,
+            p_repository: args.repository,
+            p_pr_number: args.prNumber,
+            p_actual_model_calls: args.actualModelCalls,
+            p_estimated_model_calls: args.estimatedModelCalls,
+            p_head_sha: args.headSha,
+          },
+        );
+        if (error || !data) {
+          throw new Error(
+            `reconcile_pr_review_model_calls failed: ${error?.message ?? "empty"}`,
+          );
+        }
+        return asRecord(data);
+      },
+      async getStatus(args) {
+        if (!admin) {
+          throw new Error("Supabase admin client is not configured");
+        }
+        const today = new Date().toISOString().slice(0, 10);
+        const { data, error } = await admin
+          .from("pr_review_quota_buckets")
+          .select("*")
+          .eq("owner_user_id", args.ownerUserId)
+          .eq("installation_key", args.installationKey)
+          .eq("quota_date", today)
+          .maybeSingle();
+        if (error) {
+          throw new Error(`pr_review_quota_buckets status error: ${error.message}`);
+        }
+        return data ? asRecord(data) : null;
+      },
     },
   };
 }
@@ -370,6 +445,35 @@ export function createHandler(deps: ExternalWebhookDependencies) {
     ).slice(0, 1000);
 
     const dryRun = bodyObj.dry_run === true;
+
+    if (
+      (sourceTool === "github_app" ||
+        eventType.startsWith("github.pull_request") ||
+        eventType.startsWith("pr_review_quota.")) &&
+      deps.prReviewQuotaStore
+    ) {
+      try {
+        if (matchedKeyId) {
+          await deps.touchApiKeyLastUsed(matchedKeyId, new Date().toISOString());
+        }
+        const prResult = await handlePrReviewQuotaRequest({
+          action: eventType,
+          body: {
+            ...bodyObj,
+            payload: sanitizedPayload,
+          },
+          ownerUserId: userId,
+          store: deps.prReviewQuotaStore,
+        });
+        return webhookJson(prResult.body, prResult.status);
+      } catch (error) {
+        const message = maskWebhookString(
+          error instanceof Error ? error.message : "PR review quota error",
+        );
+        return webhookJson({ error: "pr_review_quota_failed", message }, 502);
+      }
+    }
+
     const eventInput: InsertWebhookEventInput = {
       user_id: userId,
       source_tool: sourceTool,
