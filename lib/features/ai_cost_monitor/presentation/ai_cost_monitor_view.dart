@@ -605,6 +605,7 @@ class AiCostMonitorView extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 280),
                 child: DropdownButtonFormField<String>(
                   key: const ValueKey<String>('ai_cost_model_dropdown'),
+                  isExpanded: true,
                   initialValue: state.draftModel,
                   decoration: InputDecoration(
                     labelText: '対象モデル',
@@ -617,7 +618,10 @@ class AiCostMonitorView extends StatelessWidget {
                       .map(
                         (final model) => DropdownMenuItem<String>(
                           value: model,
-                          child: Text(model),
+                          child: Text(
+                            model,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       )
                       .toList(),
