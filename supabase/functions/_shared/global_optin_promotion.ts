@@ -57,7 +57,10 @@ export function resolveOptInConfigFromEnv(
     ? rawMinTenants
     : DEFAULT_MIN_PROMOTION_TENANTS;
 
-  const rawThreshold = Number(envGet("OPTIN_PROMOTION_THRESHOLD") ?? "");
+  const rawThresholdStr = (envGet("OPTIN_PROMOTION_THRESHOLD") ?? "").trim();
+  const rawThreshold = rawThresholdStr === ""
+    ? Number.NaN
+    : Number(rawThresholdStr);
   const promotionThreshold = Number.isFinite(rawThreshold) &&
       rawThreshold >= 0 &&
       rawThreshold <= 1
@@ -145,12 +148,10 @@ export function runPromotionAndDemotionSweep(params: {
 
     const prev = prevByItem.get(itemId);
     const qualifies = qualifyingScores.length >= config.minQualifyingTenants;
-    const meanScore = qualifyingScores.length === 0
-      ? 0
-      : clampUnit(
-        qualifyingScores.reduce((acc, s) => acc + s, 0) /
-          qualifyingScores.length,
-      );
+    const meanScore = qualifyingScores.length === 0 ? 0 : clampUnit(
+      qualifyingScores.reduce((acc, s) => acc + s, 0) /
+        qualifyingScores.length,
+    );
 
     let status: PromotionStatus = "local_only";
     if (qualifies) {
