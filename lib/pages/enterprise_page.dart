@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
 import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
@@ -224,6 +225,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('AI監視ダッシュボード（Visionベンチマーク）'),
                     ),
                     body: const VisionBenchmarkContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: '農政改革タイムライン・ナレッジグラフ',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=agri-policy-timeline',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('農政改革タイムライン・ナレッジグラフ'),
+                    ),
+                    body: const AgriPolicyTimelineContainer(),
                   ),
                 ),
               );
