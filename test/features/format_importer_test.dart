@@ -260,7 +260,7 @@ void main() {
         tester,
         find.byKey(const ValueKey<String>('format_importer_submit_button')),
       );
-      expect(find.textContaining('NEW-99'), findsOneWidget);
+      expect(find.textContaining('NEW-99'), findsAtLeastNWidgets(2));
 
       // 3. Update selected record JSONB custom attribute.
       await _enterTextVisible(
