@@ -214,11 +214,12 @@ export function scoreSingleGpaTrace(input: GpaTraceInput): ScoredGpaTrace {
   if (baseEval.consistency_score < 3.0) weakAxes.push("consistency");
   if (efficiencyScore < 3.0) weakAxes.push("efficiency");
 
-  const summary =
-    `${baseEval.rationale_short} eff=${efficiencyScore.toFixed(1)}`.slice(
-      0,
-      500,
-    );
+  const summary = `${baseEval.rationale_short} eff=${
+    efficiencyScore.toFixed(1)
+  }`.slice(
+    0,
+    500,
+  );
 
   return {
     sourceType,
@@ -256,8 +257,8 @@ export function summarizeGpaVariance(
   const meanGpa = traces.reduce((acc, t) => acc + t.gpa, 0) / count;
   const meanConsistency =
     traces.reduce((acc, t) => acc + t.consistencyScore, 0) / count;
-  const meanEfficiency =
-    traces.reduce((acc, t) => acc + t.efficiencyScore, 0) / count;
+  const meanEfficiency = traces.reduce((acc, t) => acc + t.efficiencyScore, 0) /
+    count;
 
   const variance = traces.reduce(
     (acc, t) => acc + (t.gpa - meanGpa) ** 2,
@@ -406,13 +407,12 @@ export function createDeterministicReflectiveMutator(): PromptMutationBackend {
             title: `[GEPA Candidate] ${basePrompt.title}`.slice(0, 120),
             roleSetting: basePrompt.roleSetting,
             contextInfo: basePrompt.contextInfo,
-            deliverableDefinition:
-              `${basePrompt.deliverableDefinition}\n` +
+            deliverableDefinition: `${basePrompt.deliverableDefinition}\n` +
               "- Verify goal-plan-action alignment explicitly.",
-            constraintsText:
-              `${basePrompt.constraintsText}\n- ${directives.join("\n- ")}`,
-            thinkingProcess:
-              `${basePrompt.thinkingProcess}\n` +
+            constraintsText: `${basePrompt.constraintsText}\n- ${
+              directives.join("\n- ")
+            }`,
+            thinkingProcess: `${basePrompt.thinkingProcess}\n` +
               "1. Check goal scope.\n2. Verify constraints before output.",
           }),
         },
@@ -426,11 +426,9 @@ export function createDeterministicReflectiveMutator(): PromptMutationBackend {
             contextInfo:
               `${basePrompt.contextInfo}\nInclude verified tool preconditions.`,
             deliverableDefinition: basePrompt.deliverableDefinition,
-            constraintsText:
-              `${basePrompt.constraintsText}\n` +
+            constraintsText: `${basePrompt.constraintsText}\n` +
               "- Cite failing constraint before retrying.",
-            thinkingProcess:
-              "Step 1: State atomic goal.\n" +
+            thinkingProcess: "Step 1: State atomic goal.\n" +
               "Step 2: Emit ordered plan.\n" +
               `Step 3: Execute & audit.\n${basePrompt.thinkingProcess}`,
           }),
@@ -443,11 +441,9 @@ export function createDeterministicReflectiveMutator(): PromptMutationBackend {
             title: `[GEPA Compact] ${basePrompt.title}`.slice(0, 120),
             roleSetting: basePrompt.roleSetting,
             contextInfo: basePrompt.contextInfo,
-            deliverableDefinition:
-              `${basePrompt.deliverableDefinition}\n` +
+            deliverableDefinition: `${basePrompt.deliverableDefinition}\n` +
               "Respond concisely in <= 3 bounded steps.",
-            constraintsText:
-              `${basePrompt.constraintsText}\n` +
+            constraintsText: `${basePrompt.constraintsText}\n` +
               "- Never repeat failed tool invocations without state change.",
             thinkingProcess:
               "Minimize intermediate hops while keeping strict schema.\n" +
@@ -461,8 +457,8 @@ export function createDeterministicReflectiveMutator(): PromptMutationBackend {
         const draft = item.build();
         const safety = validateCandidateSafety(draft);
         const projectedGpa = roundScore(batch.meanGpa + item.gpaBoost, 2);
-        const projectedVarianceDrop =
-          Math.round(item.varianceDrop * 1000) / 1000;
+        const projectedVarianceDrop = Math.round(item.varianceDrop * 1000) /
+          1000;
         const fitnessScore = safety.valid
           ? Math.round(
             (projectedGpa * 0.65 + (projectedVarianceDrop * 2.5) * 0.35) * 1000,
@@ -587,8 +583,7 @@ export async function handlePromptEvolutionAction(params: {
           improvement_suggestions: s.weakAxes.map((axis) => ({
             type: axis === "efficiency" ? "rerun" : "prompt_edit",
             axis: axis === "efficiency" ? "consistency" : axis,
-            suggestion:
-              `Improve ${axis} alignment ` +
+            suggestion: `Improve ${axis} alignment ` +
               `(eff=${s.efficiencyScore.toFixed(1)}).`,
           })),
         });
@@ -612,18 +607,38 @@ export async function handlePromptEvolutionAction(params: {
         scoreSingleGpaTrace(item)
       )
       : (await params.db.listRecentEvaluations(params.userId, 20)).map(
-        (row) => ({
-          sourceType: asTrimmed(row.source_type) || "secretary_action",
-          sourceId: asTrimmed(row.source_id),
-          goalScore: Number(row.goal_score ?? 3),
-          planScore: Number(row.plan_score ?? 3),
-          actionScore: Number(row.action_score ?? 3),
-          consistencyScore: Number(row.consistency_score ?? 3),
-          efficiencyScore: 3.2,
-          gpa: Number(row.gpa ?? 3),
-          rationaleShort: asTrimmed(row.rationale_short),
-          weakAxes: Number(row.gpa ?? 3) < 3.0 ? ["plan", "consistency"] : [],
-        }),
+        (row) => {
+          const finiteScore = (value: unknown, fallback = 3): number => {
+            if (value === null || value === undefined || value === "") {
+              return fallback;
+            }
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : fallback;
+          };
+          const goalScore = finiteScore(row.goal_score);
+          const planScore = finiteScore(row.plan_score);
+          const actionScore = finiteScore(row.action_score);
+          const consistencyScore = finiteScore(row.consistency_score);
+          const gpa = finiteScore(
+            row.gpa,
+            Number(
+              ((goalScore + planScore + actionScore + consistencyScore) / 4)
+                .toFixed(2),
+            ),
+          );
+          return {
+            sourceType: asTrimmed(row.source_type) || "secretary_action",
+            sourceId: asTrimmed(row.source_id),
+            goalScore,
+            planScore,
+            actionScore,
+            consistencyScore,
+            efficiencyScore: 3.2,
+            gpa,
+            rationaleShort: asTrimmed(row.rationale_short),
+            weakAxes: gpa < 3.0 ? ["plan", "consistency"] : [],
+          };
+        },
       );
 
     const batch = summarizeGpaVariance(scored, varianceThreshold);
