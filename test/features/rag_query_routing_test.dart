@@ -81,11 +81,11 @@ class _FakeRagQueryRoutingRepository implements RagQueryRoutingRepository {
             'feedback': '専門検索クエリへ自動再定式化しました。',
             'report_source': reportText.isEmpty ? 'llm' : 'explicit',
           },
-          'stages': <String, Object?>{
+          'stages': const <String, Object?>{
             'bm25_candidates': 12,
             'vector_candidates': 4,
           },
-          'results': <Object?>[
+          'results': const <Object?>[
             <String, Object?>{
               'file_path': 'docs/rag/pleias_layers.md',
               'title': 'Pleias Open Data Layers Architecture',
@@ -112,11 +112,11 @@ class _FakeRagQueryRoutingRepository implements RagQueryRoutingRepository {
           'feedback': 'クエリが明確なため直接検索を実行しました。',
           'report_source': reportText.isEmpty ? 'heuristic' : 'explicit',
         },
-        'stages': <String, Object?>{
+        'stages': const <String, Object?>{
           'bm25_candidates': 5,
           'vector_candidates': 2,
         },
-        'results': <Object?>[
+        'results': const <Object?>[
           <String, Object?>{
             'file_path': 'docs/rag/citation_tokens.md',
             'title': 'Pleias Citation Tokens',
