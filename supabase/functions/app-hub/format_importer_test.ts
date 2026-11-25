@@ -26,7 +26,6 @@ class MockHubDb implements FormatImporterDb {
   private seq = 1;
 
   from(_table: string) {
-    const db = this;
     const state: {
       op: "select" | "insert" | "update";
       insertVal?: Record<string, unknown>;
@@ -41,16 +40,16 @@ class MockHubDb implements FormatImporterDb {
     const execute = () => {
       if (state.op === "insert" && state.insertVal) {
         const created = {
-          id: `rec-${db.seq++}`,
+          id: `rec-${this.seq++}`,
           source: String(state.insertVal.source ?? ""),
           metadata: (state.insertVal.metadata ?? {}) as Record<string, unknown>,
-          created_at: `2026-11-25T00:00:0${db.seq}Z`,
+          created_at: `2026-11-25T00:00:0${this.seq}Z`,
         };
-        db.rows.push(created);
+        this.rows.push(created);
         return { data: created, error: null };
       }
 
-      const matches = db.rows.filter((row) => {
+      const matches = this.rows.filter((row) => {
         for (const [col, val] of state.eqFilters) {
           if (col === "id" && row.id !== val) return false;
           if (col === "source" && row.source !== val) return false;
@@ -227,7 +226,7 @@ Deno.test(
       },
     });
 
-    const firstId = ((importPublic.records as HubDataRow[])[0]).id;
+    const firstId = (importPublic.records as HubDataRow[])[0].id;
     await handleFormatImporterAction({
       action: "format_importer.update_record_attributes",
       admin: db,
