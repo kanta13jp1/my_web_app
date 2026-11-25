@@ -235,3 +235,23 @@ Deno.test("prompt_cache.* and agent.safety_checkpoint.* allow signed-in and serv
     );
   }
 });
+
+Deno.test("agent.sandbox.* requires authenticated users and blocks anonymous callers", () => {
+  const sandboxActions = [
+    "agent.sandbox.evaluate",
+    "agent.sandbox.execute_isolated",
+    "agent.sandbox.audit_list",
+    "agent.sandbox.policy_upsert",
+  ];
+  for (const action of sandboxActions) {
+    assertEquals(aiHubActionAccess(action), "authenticated");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
+    );
+  }
+});
