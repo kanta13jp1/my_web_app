@@ -26,6 +26,15 @@ import {
   handleCapacityReportList,
   handleCapacityReportNotify,
 } from "./capacity_report.ts";
+import {
+  createSupabaseOrgAuditQuotaStore,
+  handleOrgAuditList,
+  handleOrgAuditRecord,
+  handleOrgQuotaAcknowledgeAlert,
+  handleOrgQuotaConsume,
+  handleOrgQuotaStatus,
+  handleOrgQuotaUpdateLimit,
+} from "./organization_audit_quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -943,6 +952,63 @@ serve(async (req: Request) => {
         }
         const res = await handleCapacityReportNotify(
           createSupabaseCapacityReportStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_audit.record": {
+        const res = await handleOrgAuditRecord(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_audit.list": {
+        const res = await handleOrgAuditList(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.consume": {
+        const res = await handleOrgQuotaConsume(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+          {
+            slackWebhookUrl: Deno.env.get("ADMIN_QUOTA_ALERT_WEBHOOK_URL") ?? "",
+          },
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.status": {
+        const res = await handleOrgQuotaStatus(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.update_limit": {
+        const res = await handleOrgQuotaUpdateLimit(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.acknowledge_alert": {
+        const res = await handleOrgQuotaAcknowledgeAlert(
+          createSupabaseOrgAuditQuotaStore(admin),
           { userId, isServiceRole },
           body,
         );
