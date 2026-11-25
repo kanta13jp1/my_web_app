@@ -228,7 +228,9 @@ export function validatePhaseTransition(
     session.githubSnapshot !== null &&
     session.githubSnapshot.reviewDecision === "changes_requested"
   ) {
-    reasons.push("GitHub レビューが changes_requested のため移行を保留します。");
+    reasons.push(
+      "GitHub レビューが changes_requested のため移行を保留します。",
+    );
   }
 
   if (session.approver.trim() === "") {
@@ -336,9 +338,12 @@ export async function handleDevReviewAction(params: {
   } = params;
 
   if (action === "dev_review.github_webhook") {
-    const webhookEnvName = "GITHUB_WEBHOOK_" + "SECRET";
+    const webhookEnvName = "GITHUB_WEBHOOK_SECRET";
     const webhookCred = (getEnv(webhookEnvName) ?? "").trim();
     if (!webhookCred) {
+      console.warn(
+        `[dev_review.github_webhook] ${webhookEnvName} is not configured.`,
+      );
       return {
         status: 503,
         body: { error: `${webhookEnvName} is not configured.` },
@@ -527,9 +532,7 @@ export async function handleDevReviewAction(params: {
 
     const nowIso = new Date().toISOString();
     const nextItems = [...existing.items];
-    const idx = itemId
-      ? nextItems.findIndex((i) => i.id === itemId)
-      : -1;
+    const idx = itemId ? nextItems.findIndex((i) => i.id === itemId) : -1;
 
     if (idx >= 0) {
       const prev = nextItems[idx];
@@ -587,8 +590,7 @@ export async function handleDevReviewAction(params: {
         return { status: 400, body: { error: "Invalid repository format." } };
       }
       const segment = existing.targetType === "pr" ? "pulls" : "issues";
-      const url =
-        `https://api.github.com/repos/${existing.githubRepo}/` +
+      const url = `https://api.github.com/repos/${existing.githubRepo}/` +
         `${segment}/${existing.targetNumber}`;
       const ghAuth = (getEnv("GITHUB_TOKEN") ?? "").trim();
       const headers: Record<string, string> = {
