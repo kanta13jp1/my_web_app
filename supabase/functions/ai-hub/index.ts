@@ -70,6 +70,11 @@ import {
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
+  createSupabaseVoiceCloneConsentStore,
+  guardClonedVoiceGeneration,
+  handleVoiceCloneConsentAction,
+} from "./voice_clone_consent.ts";
+import {
   buildGuardrailBlockedPayload,
   evaluateComplianceGuardrail,
   evaluateMessagesGuardrail,
@@ -102,6 +107,10 @@ import {
   handlePromptCacheAction,
   type PromptCacheDb,
 } from "./prompt_cache_1h.ts";
+import { handleTokenCacheMonitorAction } from "./token_cache_monitor.ts";
+import {
+  createSupabaseTokenCacheMonitorDb,
+} from "./token_cache_monitor_supabase.ts";
 import {
   handleSafetyCheckpointAction,
   type SafetyCheckpointDb,
@@ -5016,7 +5025,74 @@ serve(async (req: Request) => {
         return json(res.body, res.status);
       }
 
+      case "agent.sandbox.evaluate":
+      case "agent.sandbox.execute_isolated":
+      case "agent.sandbox.audit_list":
+      case "agent.sandbox.policy_upsert": {
+        const { handleSandboxSecurityAction } = await import(
+          "./sandbox_security.ts"
+        );
+        return await handleSandboxSecurityAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          admin,
+          json,
+        });
+      }
+
       case "agent.run": {
+        const {
+          evaluateAgentSandboxPreflight,
+          recordSandboxAuditEntry,
+        } = await import("./sandbox_security.ts");
+        const sandboxToolName = asString(
+          body.tool_name ?? body.toolName ?? body.target_tool,
+        ) || "agent.run";
+        const sandboxDecision = evaluateAgentSandboxPreflight({
+          userId: userId!,
+          sessionId: asString(body.session_id) || "agent-run",
+          sandboxId: asString(body.sandbox_id) || "isolated_worker",
+          actorRole: normalizeActorRole(body.actor_role ?? body.actorRole) ??
+            "generated_ui_sandbox",
+          toolName: sandboxToolName,
+          requestedScopes: parseAgentToolRequestedScopes(
+            body.requested_scopes ?? body.requestedScopes ?? body.scopes ??
+              ["read"],
+          ),
+          toolArgs: body.tool_args ?? body.toolArgs ?? {
+            task: body.task ?? "",
+          },
+          promptText: asString(body.task ?? body.prompt_text),
+          retryAttempt: Number(body.retry_attempt ?? 0),
+          recentAttemptCount: Number(body.recent_attempt_count ?? 0),
+          networkEgressTarget: asString(body.network_egress_target) || null,
+          enforceIsolatedToolAllowlist: body.sandbox_mode === true,
+          approval: parseAgentToolApproval(body),
+        });
+        if (!sandboxDecision.allowed) {
+          const audit = await recordSandboxAuditEntry(admin, {
+            userId: userId!,
+            sessionId: asString(body.session_id) || "agent-run",
+            sandboxId: asString(body.sandbox_id) || "isolated_worker",
+            actorRole: normalizeActorRole(body.actor_role ?? body.actorRole) ??
+              "generated_ui_sandbox",
+            toolName: sandboxToolName,
+            actionKind: "agent_run_preflight",
+            decision: sandboxDecision,
+            retryAttempt: Number(body.retry_attempt ?? 0),
+            networkEgressTarget: asString(body.network_egress_target) || null,
+            latencyMs: 0,
+          });
+          return json({
+            success: false,
+            error: "agent_sandbox_blocked",
+            decision: sandboxDecision,
+            audit_logged: audit.logged,
+          }, 403);
+        }
+
         const shouldEvaluateToolPolicy = body.tool_name !== undefined ||
           body.toolName !== undefined ||
           body.requested_scopes !== undefined ||
@@ -5072,6 +5148,19 @@ serve(async (req: Request) => {
           userId,
           isElevatedAutomation: isServiceRoleRequest(req),
           body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "ai_monitor.token_cache.summary":
+      case "ai_monitor.token_cache.diagnose_prefix":
+      case "ai_monitor.token_cache.record_tool_usage": {
+        const res = await handleTokenCacheMonitorAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          db: createSupabaseTokenCacheMonitorDb(admin),
         });
         return json(res.body, res.status);
       }
@@ -8674,6 +8763,15 @@ serve(async (req: Request) => {
 
       case "voice.tts": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const clonedTtsBlock = await guardClonedVoiceGeneration({
+          store: createSupabaseVoiceCloneConsentStore(admin),
+          userId,
+          body,
+          action: "voice.tts",
+        });
+        if (clonedTtsBlock) {
+          return json(clonedTtsBlock.body, clonedTtsBlock.status);
+        }
         const text = String(body.text ?? "").slice(0, 5000);
         const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
@@ -8859,6 +8957,15 @@ serve(async (req: Request) => {
 
       case "voice.dubbing.generate": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const clonedDubbingBlock = await guardClonedVoiceGeneration({
+          store: createSupabaseVoiceCloneConsentStore(admin),
+          userId,
+          body,
+          action: "voice.dubbing.generate",
+        });
+        if (clonedDubbingBlock) {
+          return json(clonedDubbingBlock.body, clonedDubbingBlock.status);
+        }
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
         if (!elevenKey) {
           return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
@@ -9245,6 +9352,36 @@ serve(async (req: Request) => {
           >)?.[0]?.alternatives as Array<{ transcript: string }>;
         const transcriptText = transcript?.[0]?.transcript ?? "";
         return json({ success: true, transcript: transcriptText });
+      }
+
+      case "voice.clone.consent.status":
+      case "voice.clone.consent.accept":
+      case "voice.clone.consent.submit_recording":
+      case "voice.clone.consent.revoke":
+      case "voice.clone.generate": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        try {
+          const result = await handleVoiceCloneConsentAction({
+            action,
+            store: createSupabaseVoiceCloneConsentStore(admin),
+            userId,
+            body,
+          });
+          return json(result.body, result.status);
+        } catch (err) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.clone action failed", {
+            errorId,
+            action,
+            detail: err instanceof Error
+              ? err.message.slice(0, 500)
+              : String(err).slice(0, 500),
+          });
+          return json({
+            error: "voice_clone_consent_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
       }
 
       case "home.recommend": {
