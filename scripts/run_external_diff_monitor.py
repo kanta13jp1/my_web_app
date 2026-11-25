@@ -367,7 +367,11 @@ def run_self_test() -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--self-test", action="store_true")
-    parser.add_argument("--dry-run", action="store_true", default=True)
+    parser.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--json-out", type=Path)
     return parser
@@ -392,7 +396,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     matches = evaluate_diff_rules([rule], "external_metrics", diffs, sample_curr)
 
-    is_live = bool(args.live)
+    is_live = bool(args.live) or (args.dry_run is False)
     service_cred = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
     if is_live and service_cred:
         dispatch = dispatch_batch_scan_http(
