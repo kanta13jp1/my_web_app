@@ -9,6 +9,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { handleMultimodalRagAction } from "./multimodal_rag.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -875,6 +876,20 @@ serve(async (req) => {
           params: body.params ?? {},
         });
         return json({ success: true, effect_applied: item });
+      }
+
+      case "multimodal_rag.ingest":
+      case "multimodal_rag.search":
+      case "multimodal_rag.list":
+      case "multimodal_rag.signed_url":
+      case "multimodal_rag.delete": {
+        return await handleMultimodalRagAction({
+          action,
+          body,
+          userId,
+          admin,
+          json,
+        });
       }
 
       default:
