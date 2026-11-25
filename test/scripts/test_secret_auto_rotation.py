@@ -280,6 +280,7 @@ class SecretAutoRotationTests(unittest.TestCase):
 
     def test_gh_environment_name_propagates_from_env_and_cli_arg(self) -> None:
         recorded_envs: list[str | None] = []
+        expected_env = "staging-security"
 
         def fake_transport(method: str, url: str, **kwargs: object) -> dict[str, object]:
             return {"status": "ok"}
@@ -297,11 +298,11 @@ class SecretAutoRotationTests(unittest.TestCase):
             ),
         ]
         env = {
-            "SUPABASE_MANAGEMENT_CREDENTIAL": "sbp_" + "valid_dummy_123456",
+            "SUPABASE_ACCESS_TOKEN": "stub-sb-val",
             "SUPABASE_PROJECT_REF_ID": "projabcd1234",
-            "GH_SECRETS_ADMIN_CREDENTIAL": "ghp_" + "valid_dummy_123456",
+            "GH_SECRETS_ADMIN_TOKEN": "stub-gh-val",
             "GITHUB_REPOSITORY_SLUG": "kanta13jp1/my_web_app",
-            "GH_SECRETS_ENVIRONMENT_NAME": "staging-security",
+            "GH_SECRETS_ENVIRONMENT_NAME": expected_env,
         }
         rot.execute_rotation_cycle(
             rules=self.rules,
@@ -328,7 +329,7 @@ class SecretAutoRotationTests(unittest.TestCase):
             transport=fake_transport,
             gh_updater=fake_gh_updater,
         )
-        self.assertEqual(recorded_envs, ["staging-security", "custom-prod-env"])
+        self.assertEqual(recorded_envs, [expected_env, "custom-prod-env"])
 
 
 if __name__ == "__main__":
