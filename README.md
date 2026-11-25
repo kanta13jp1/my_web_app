@@ -1,4 +1,4 @@
-﻿# AI開発コンテキスト設計書 (AI_DEV_HANDOVER)
+# AI開発コンテキスト設計書 (AI_DEV_HANDOVER)
 
 ## 1. プロジェクト概要
 
@@ -6,6 +6,62 @@
 * **コンセプト**: ユーザーはCEO。実務は全てAI（CXO）が担当する経営シミュレーション型生産性アプリ。
 * **技術スタック**: Flutter (Web), Supabase (Auth, DB, Edge Functions), AI (Gemini/OpenAI/Anthropic).
 * **AI tool update gate (2026-05-07 #1706)**: Claude/Codex/Gemini/Copilot changes must be verified against official sources, then routed through the two-instance flow in `docs/AI_FALLBACK_RUNBOOK.md`.
+
+## ローカル開発環境セットアップ（コマンド実行ベース / #2724）
+
+新規参画者・ローカル検証環境向けに、曖昧な手動設定を排し以下のコマンド順で
+Flutter Web + Supabase CLI ローカル環境を構築・起動できます（CI 固定バージョン `3.38.10` 準拠）。
+詳細なクラウド優先ルールは [docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md](docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md) を参照してください。
+
+### 1. Flutter SDK バージョン統一（`.fvm/fvm_config.json`）
+
+リポジトリ直下の [`.fvm/fvm_config.json`](.fvm/fvm_config.json) に Flutter SDK バージョン (`3.38.10`) を固定しています。
+
+```bash
+fvm install
+fvm use
+flutter --version
+```
+
+> FVM を使用しない環境でも `flutter --version` が `3.38.x` 系であることを確認し、設定検証を実行してください。
+
+### 2. ローカル環境変数テンプレート検証と `.env.development` 自動生成
+
+非機密のループバック標準設定は [`config/local_supabase_env_template.json`](config/local_supabase_env_template.json) に定義され、全変数の雛形は [`.env.example`](.env.example) に記載されています。
+
+```bash
+python scripts/setup_local_dev.py --check
+python scripts/setup_local_dev.py --write-env
+```
+
+Windows PowerShell で `.env.example` をベースにする場合もコマンドで完結します:
+
+```powershell
+Copy-Item .env.example .env.development
+python scripts/setup_local_dev.py --check
+```
+
+### 3. Supabase CLI ローカル起動・DB 反映・`.env.development` 同期
+
+[`supabase/config.toml`](supabase/config.toml) のポート定義（API `54321` / DB `54322` / Studio `54323` / Inbucket `54324`）に合わせて起動します。
+
+```bash
+# Linux / macOS / WSL2 一括実行（資格情報を引数へ出さず stdin 経由で同期）
+./scripts/setup_local_dev.sh --start-supabase --write-env --force
+
+# または個別コマンドで実行
+supabase start
+supabase db reset
+supabase status -o env | python scripts/setup_local_dev.py --write-env --force --status-stdin
+```
+
+### 4. Flutter Web 起動・オンボーディング検証
+
+```bash
+flutter pub get
+flutter run -d chrome --dart-define-from-file=.env.development
+python -m unittest discover -s test/scripts -p "test_local_dev_onboarding.py"
+```
 
 ## Windows 開発環境セットアップ
 
@@ -118,28 +174,18 @@ otes テーブルの特定タイトル形式([Health])で管理する簡易実�
         * EmergencyMeetingPage: AIレスポンスの型チェック (Map vs List) を強化し、実行時エラー (TypeError) を回避。
 ---
 
-## 次回Geminiへのプロンプト（Start Prompt）
+## 7. 標準開発コマンド & 参照ドキュメント (Standard Commands & References)
 
-次回の開発を始める際は、以下のプロンプトを使用してください。
+曖昧な手動判断を避け、検証・参照は次のコマンドと正本ドキュメントから開始します。
 
-> あなたは「自分株式会社」プロジェクトの専属シニアエンジニアです。
-> 現在の開発状況は以下の通りです。
->
-> **プロジェクト状況**:
-> Flutter(Web) + Supabase構成で、ユーザーをCEOとした経営シミュレーション型生産性アプリを開発中。
-> 直近のセッションで、組織構造（CEO, CSO, CKOなど）に基づいた「経営コックピット」へのUI刷新を行いました。
-> プロジェクトルートの `README.md` および `DETAILED_DESIGN.md` に最新の設計情報が記載されています。
->
-> **タスク**:
-> 前回の開発内容を踏まえ、次のステップ（緊急役員会議の実装や、未実装オフィスの開発）に進みたいと思います。
-> まずは現状のコードベースについて不明点があれば質問してください。なければ、具体的な実装タスクを指示します。
->
-## 7. 開発時の必須インプット (Required Inputs)
+```bash
+git config core.hooksPath .githooks
+python scripts/setup_local_dev.py --check
+python scripts/setup_local_dev.py --self-test
+python -m unittest discover -s test/scripts -p "test_local_dev_onboarding.py"
+```
 
-**Geminiへのコンテキスト提供ルール**:
-開発を開始する際は、**必ず以下の6個のファイルの内容**をプロンプトに含めてください。これにより、仕様、設計、DB構造、テスト状況、コード品質、ビルド状態、そしてユーザー操作手順を網羅的に把握できます。
-
-1. **README.md** (本書: プロジェクト概要、進捗、運用ルール)
+1. **README.md** (本書: コマンドベースの開発環境構築、プロジェクト概要、変更履歴)
 2. **project_tree.txt** (プロジェクト構成図: ファイル一覧)
 3. **TEST_COVERAGE.md** (テスト仕様書: 機能検証状況)
 4. **pubspec.yaml** (パッケージ依存関係定義)
