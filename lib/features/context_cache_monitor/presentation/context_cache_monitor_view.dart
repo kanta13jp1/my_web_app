@@ -100,6 +100,8 @@ class ContextCacheMonitorView extends StatelessWidget {
     required this.onToggleSimulateCacheHit,
     required this.onRecordSimulatedRequest,
     required this.onRetryLoad,
+    this.onSelectCacheTtl,
+    this.onEvaluateRecache,
   });
 
   final ContextCacheMonitorState state;
@@ -111,6 +113,8 @@ class ContextCacheMonitorView extends StatelessWidget {
   final ValueChanged<bool> onToggleSimulateCacheHit;
   final VoidCallback onRecordSimulatedRequest;
   final VoidCallback onRetryLoad;
+  final ValueChanged<PromptCacheTtl>? onSelectCacheTtl;
+  final VoidCallback? onEvaluateRecache;
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +230,18 @@ class ContextCacheMonitorView extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '1時間TTL適用: ${state.ttl1hCount} 件 / '
+            '平均レイテンシ削減: '
+            '${state.averageLatencyReductionPercent != null ? '${state.averageLatencyReductionPercent!.toStringAsFixed(1)}%' : '計測待ち'}',
+            key: const ValueKey<String>('cache_latency_summary_text'),
+            softWrap: true,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: palette.inkSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),
@@ -384,6 +400,21 @@ class ContextCacheMonitorView extends StatelessWidget {
             }).toList(),
           ),
           const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: PromptCacheTtl.values.map((ttl) {
+              return _buildFilterChip(
+                context: context,
+                palette: palette,
+                buttonKey: ValueKey<String>('cache_ttl_chip_${ttl.wireValue}'),
+                label: ttl.labelJa,
+                selected: state.selectedCacheTtl == ttl,
+                onTap: () => onSelectCacheTtl?.call(ttl),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
           TextField(
             key: const ValueKey<String>('cache_workflow_input'),
             controller: workflowInputController,
@@ -447,6 +478,46 @@ class ContextCacheMonitorView extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            child: OutlinedButton(
+              key: const ValueKey<String>('cache_recache_check_button'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: palette.ink,
+                backgroundColor: palette.surface,
+                side: BorderSide(color: palette.border),
+              ),
+              onPressed: onEvaluateRecache,
+              child: const Text(
+                '1時間超タスク再キャッシュ確認 (>60分)',
+                softWrap: true,
+              ),
+            ),
+          ),
+          if (state.lastRecachePlan != null) ...<Widget>[
+            const SizedBox(height: 8),
+            Container(
+              key: const ValueKey<String>('cache_recache_plan_card'),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: palette.accentSoft,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: palette.border),
+              ),
+              child: Text(
+                '再キャッシュ判定: ${state.lastRecachePlan!.status} '
+                '(seq ${state.lastRecachePlan!.recacheSeq} / '
+                'TTL=${state.lastRecachePlan!.cacheTtl.wireValue} / '
+                'digest=${state.lastRecachePlan!.handoffDigest})',
+                softWrap: true,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.accentSoftInk,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ],
         ],
       ),
     );
