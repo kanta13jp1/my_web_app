@@ -51,12 +51,12 @@ class InMemorySafetyCheckpointDb implements SafetyCheckpointDb {
         orderAscending = options?.ascending ?? true;
         return query;
       },
-      async limit(count: number) {
-        return { data: matchRows().slice(0, count), error: null };
+      limit(count: number) {
+        return Promise.resolve({ data: matchRows().slice(0, count), error: null });
       },
-      async maybeSingle() {
+      maybeSingle() {
         const matched = matchRows();
-        return { data: matched[0] ?? null, error: null };
+        return Promise.resolve({ data: matched[0] ?? null, error: null });
       },
       insert: (value: Record<string, unknown>) => {
         const record: Record<string, unknown> = {
@@ -70,22 +70,22 @@ class InMemorySafetyCheckpointDb implements SafetyCheckpointDb {
         this.rows.push(record);
         return {
           select: (_columns?: string) => ({
-            single: async () => ({ data: { ...record }, error: null }),
+            single: () => Promise.resolve({ data: { ...record }, error: null }),
           }),
         };
       },
       update: (value: Record<string, unknown>) => ({
         eq: (column: string, eqValue: unknown) => ({
           select: (_columns?: string) => ({
-            single: async () => {
+            single: () => {
               const target = this.rows.find((row) => row[column] === eqValue);
               if (!target) {
-                return { data: null, error: { message: "Not found" } };
+                return Promise.resolve({ data: null, error: { message: "Not found" } });
               }
               Object.assign(target, value, {
                 updated_at: "2026-11-25T10:05:00Z",
               });
-              return { data: { ...target }, error: null };
+              return Promise.resolve({ data: { ...target }, error: null });
             },
           }),
         }),
@@ -131,7 +131,7 @@ Deno.test("read-only MCP calls run directly while system-impact calls pause befo
       agent_name: "ops-worker",
       tool_name: "db.prune_stale_records",
       requested_scopes: ["delete"],
-      actor_role: "admin",
+      actor_role: "ceo",
       pending_step: "step_2_delete_rows",
       tool_payload: { table: "temp_logs", older_than_days: 30 },
       github_issue_number: 2712,
@@ -176,7 +176,7 @@ Deno.test("only admin approval via UI or verified GitHub Issue unblocks resumpti
       agent_name: "release-agent",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
       tool_payload: { fn: "ai-hub" },
     },
   });
@@ -209,7 +209,7 @@ Deno.test("only admin approval via UI or verified GitHub Issue unblocks resumpti
       agent_name: "release-agent",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
       tool_payload: { fn: "ai-hub" },
     },
   });
@@ -247,7 +247,7 @@ Deno.test("only admin approval via UI or verified GitHub Issue unblocks resumpti
       agent_name: "release-agent",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
       tool_payload: { fn: "ai-hub" },
     },
   });
@@ -266,7 +266,7 @@ Deno.test("only admin approval via UI or verified GitHub Issue unblocks resumpti
       agent_name: "release-agent",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
       tool_payload: { fn: "payments-hub" },
     },
   });
@@ -292,7 +292,7 @@ Deno.test("github_issue approval channel rejects unprivileged comments and allow
       agent_name: "fin-agent",
       tool_name: "billing.refund_invoice",
       requested_scopes: ["purchase"],
-      actor_role: "admin",
+      actor_role: "ceo",
       github_issue_number: 2712,
       github_repo: "kanta13jp1/my_web_app",
     },
@@ -320,7 +320,7 @@ Deno.test("github_issue approval channel rejects unprivileged comments and allow
       github_issue_number: 2712,
       github_repo: "kanta13jp1/my_web_app",
     },
-    fetchIssueComments: async () => untrustedComments,
+    fetchIssueComments: () => Promise.resolve(untrustedComments),
   });
   assertEquals(blockedRes.status, 403);
   assertEquals(db.rows[0].pause_status, "paused_lossless");
@@ -345,7 +345,7 @@ Deno.test("github_issue approval channel rejects unprivileged comments and allow
       github_issue_number: 2712,
       github_repo: "kanta13jp1/my_web_app",
     },
-    fetchIssueComments: async () => maintainerComments,
+    fetchIssueComments: () => Promise.resolve(maintainerComments),
   });
   assertEquals(okRes.status, 200);
   assertEquals(okRes.body.execution_allowed, true);
@@ -390,7 +390,7 @@ Deno.test("reject permanently blocks checkpoint and blocks missing-scope calls",
       run_key: "mcp-send-04",
       tool_name: "mail.send_broadcast",
       requested_scopes: ["send"],
-      actor_role: "admin",
+      actor_role: "ceo",
     },
   });
   const checkpointId = String(
@@ -421,7 +421,7 @@ Deno.test("reject permanently blocks checkpoint and blocks missing-scope calls",
       run_key: "mcp-send-04",
       tool_name: "mail.send_broadcast",
       requested_scopes: ["send"],
-      actor_role: "admin",
+      actor_role: "ceo",
     },
   });
   assertEquals(afterReject.body.decision, "rejected_blocked");
@@ -439,7 +439,7 @@ Deno.test("isolates safety checkpoints across tenants sharing run_key and tool_n
       run_key: "mcp-safety-check",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
       github_issue_number: 2712,
       github_repo: "kanta13jp1/my_web_app",
     },
@@ -453,7 +453,7 @@ Deno.test("isolates safety checkpoints across tenants sharing run_key and tool_n
       run_key: "mcp-safety-check",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
     },
   });
 
@@ -491,7 +491,7 @@ Deno.test("rejects tampered state_snapshot and mismatched pinned github_repo fai
       run_key: "mcp-pinned-01",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
       github_issue_number: 2712,
       github_repo: "kanta13jp1/my_web_app",
     },
@@ -512,7 +512,7 @@ Deno.test("rejects tampered state_snapshot and mismatched pinned github_repo fai
       github_issue_number: 2712,
       github_repo: "attacker/evil_repo",
     },
-    fetchIssueComments: async () => [],
+    fetchIssueComments: () => Promise.resolve([]),
   });
   assertEquals(mismatchedRepoRes.status, 403);
   assertEquals(db.rows[0].pause_status, "paused_lossless");
@@ -549,7 +549,7 @@ Deno.test("rejects tampered state_snapshot and mismatched pinned github_repo fai
       run_key: "mcp-pinned-01",
       tool_name: "deploy.edge_function",
       requested_scopes: ["update"],
-      actor_role: "admin",
+      actor_role: "ceo",
     },
   });
   assertEquals(tamperedEvalRes.body.decision, "blocked_tampered_snapshot");
