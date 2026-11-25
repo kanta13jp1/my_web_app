@@ -93,4 +93,17 @@ Deno.test("AI answers require at least one in-range citation marker", () => {
     hasOnlyValidCitationMarkers("有効 [1] と範囲外 [9]。", 2),
     false,
   );
+  assert(
+    hasOnlyValidCitationMarkers(
+      '<|answer_start|>根拠 <ref id="1">10万円</ref> [source:2]<|answer_end|>',
+      2,
+    ),
+  );
+  assertEquals(
+    hasOnlyValidCitationMarkers(
+      "<|source_start|>9<|source_end|>範囲外<|/source|>",
+      2,
+    ),
+    false,
+  );
 });
