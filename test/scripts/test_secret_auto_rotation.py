@@ -278,6 +278,58 @@ class SecretAutoRotationTests(unittest.TestCase):
         self.assertNotIn("secrets.SUPABASE_SERVICE_ROLE_KEY", wf_text)
         self.assertNotIn("deploy-prod.yml", wf_text)
 
+    def test_gh_environment_name_propagates_from_env_and_cli_arg(self) -> None:
+        recorded_envs: list[str | None] = []
+
+        def fake_transport(method: str, url: str, **kwargs: object) -> dict[str, object]:
+            return {"status": "ok"}
+
+        def fake_gh_updater(**kwargs: object) -> dict[str, str]:
+            recorded_envs.append(kwargs.get("environment_name") if isinstance(kwargs.get("environment_name"), str) else None)
+            return {"store": str(kwargs.get("store", "")), "status": "updated"}
+
+        snapshots = [
+            rot.MetadataSnapshot(
+                entry_name="INTERNAL_HMAC_SECRET",
+                store="supabase_edge_secrets",
+                updated_at=self.now - timedelta(days=95),
+                active_key_id="hmac_v1",
+            ),
+        ]
+        env = {
+            "SUPABASE_MANAGEMENT_CREDENTIAL": "sbp_" + "valid_dummy_123456",
+            "SUPABASE_PROJECT_REF_ID": "projabcd1234",
+            "GH_SECRETS_ADMIN_CREDENTIAL": "ghp_" + "valid_dummy_123456",
+            "GITHUB_REPOSITORY_SLUG": "kanta13jp1/my_web_app",
+            "GH_SECRETS_ENVIRONMENT_NAME": "staging-security",
+        }
+        rot.execute_rotation_cycle(
+            rules=self.rules,
+            snapshots=snapshots,
+            policy=self.policy,
+            environ=env,
+            now=self.now,
+            live=True,
+            confirm_rotate=True,
+            target_names={"INTERNAL_HMAC_SECRET"},
+            transport=fake_transport,
+            gh_updater=fake_gh_updater,
+        )
+        rot.execute_rotation_cycle(
+            rules=self.rules,
+            snapshots=snapshots,
+            policy=self.policy,
+            environ=env,
+            now=self.now,
+            live=True,
+            confirm_rotate=True,
+            target_names={"INTERNAL_HMAC_SECRET"},
+            gh_environment_name="custom-prod-env",
+            transport=fake_transport,
+            gh_updater=fake_gh_updater,
+        )
+        self.assertEqual(recorded_envs, ["staging-security", "custom-prod-env"])
+
 
 if __name__ == "__main__":
     unittest.main()

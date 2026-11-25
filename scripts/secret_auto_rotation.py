@@ -605,16 +605,22 @@ def update_github_actions_secret_via_cli(
     store: str,
     repository: str,
     gh_credential: str,
-    environment_name: str = "platform-security-production",
+    environment_name: str | None = None,
 ) -> dict[str, Any]:
     """Update a GitHub repository or environment secret via `gh secret set` stdin."""
     if not repository or "/" not in repository:
         raise ValueError("GITHUB_REPOSITORY must be owner/repo to update GitHub secrets")
     if not gh_credential:
         raise RuntimeError("Missing GH_SECRETS_ADMIN_CREDENTIAL for GitHub secret update")
+    resolved_env = (
+        (environment_name or "").strip()
+        or os.environ.get("GH_SECRETS_ENVIRONMENT_NAME", "").strip()
+        or os.environ.get("GITHUB_ENVIRONMENT_NAME", "").strip()
+        or "platform-security-production"
+    )
     cmd = ["gh", "secret", "set", entry_name, "--repo", repository]
     if store == "github_actions_env":
-        cmd.extend(["--env", environment_name])
+        cmd.extend(["--env", resolved_env])
 
     child_env = dict(os.environ)
     child_env[GH_CLI_ENV] = gh_credential
@@ -645,6 +651,7 @@ def _propagate_stores(
     allowed_hosts: tuple[str, ...],
     transport: Callable[..., dict[str, Any]],
     gh_updater: Callable[..., dict[str, Any]],
+    gh_environment_name: str = "",
 ) -> list[dict[str, str]]:
     """Propagate newly issued credential to configured stores prior to revocation."""
     store_results: list[dict[str, str]] = []
@@ -664,13 +671,16 @@ def _propagate_stores(
             )
             store_results.append({"store": store, "status": "updated"})
         elif store in (STORE_GH_ENV, STORE_GH_CREDS):
-            gh_updater(
-                entry_name=plan.entry_name,
-                new_material=new_material,
-                store=store,
-                repository=repository,
-                gh_credential=gh_cred,
-            )
+            updater_kwargs: dict[str, Any] = {
+                "entry_name": plan.entry_name,
+                "new_material": new_material,
+                "store": store,
+                "repository": repository,
+                "gh_credential": gh_cred,
+            }
+            if gh_environment_name:
+                updater_kwargs["environment_name"] = gh_environment_name
+            gh_updater(**updater_kwargs)
             store_results.append({"store": store, "status": "updated"})
         elif store == "supabase_vault":
             if not supabase_cred or not project_ref:
@@ -795,6 +805,7 @@ def execute_rotation_cycle(
     strict_overdue: bool = False,
     target_names: set[str] | None = None,
     force_due: bool = False,
+    gh_environment_name: str | None = None,
     transport: Callable[..., dict[str, Any]] = request_json_pinned_https,
     gh_updater: Callable[..., dict[str, Any]] = update_github_actions_secret_via_cli,
 ) -> dict[str, Any]:
@@ -842,6 +853,11 @@ def execute_rotation_cycle(
         or environ.get("GH_SECRETS_ADMIN_TOKEN", "").strip()
     )
     repository = environ.get("GITHUB_REPOSITORY_SLUG", "").strip() or environ.get("GITHUB_REPOSITORY", "").strip()
+    resolved_gh_env = (
+        (gh_environment_name or "").strip()
+        or environ.get("GH_SECRETS_ENVIRONMENT_NAME", "").strip()
+        or environ.get("GITHUB_ENVIRONMENT_NAME", "").strip()
+    )
 
     oidc_verified_live = False
     if effective_mode == "live" and oidc_status.configured and not missing_credentials:
@@ -924,6 +940,7 @@ def execute_rotation_cycle(
                         allowed_hosts=allowed_hosts,
                         transport=transport,
                         gh_updater=gh_updater,
+                        gh_environment_name=resolved_gh_env,
                     )
                     rotated_count += 1
                     rev_res = _revoke_previous_credential(
@@ -1226,6 +1243,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--require-oidc", action="store_true")
     parser.add_argument("--strict-overdue", action="store_true")
     parser.add_argument("--force-due", action="store_true")
+    parser.add_argument("--gh-environment-name", default="")
     parser.add_argument("--target", action="append", default=[])
     parser.add_argument("--webhook-url", default="")
     parser.add_argument("--notify-always", action="store_true")
@@ -1269,6 +1287,7 @@ def main(argv: list[str] | None = None) -> int:
         strict_overdue=args.strict_overdue,
         target_names=target_names,
         force_due=args.force_due,
+        gh_environment_name=args.gh_environment_name or None,
     )
 
     if args.json_out:
