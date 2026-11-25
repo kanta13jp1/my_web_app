@@ -26,6 +26,9 @@ export function isProviderPaymentRequired(
   responseText: string,
 ): boolean {
   const text = responseText.toLowerCase();
+  if (status === 422 || text.includes("guardrail_blocked")) {
+    return false;
+  }
   return status === 402 ||
     text.includes("paid_plan_required") ||
     text.includes("payment_required") ||
