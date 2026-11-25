@@ -232,8 +232,13 @@ create policy "workos_organizations_select_scoped"
   to authenticated
   using (
     owner_user_id = (select auth.uid())
-    or public.is_workos_org_admin(workos_org_id)
-    or public.check_workos_org_access(workos_org_id, 'viewer')
+    or exists (
+      select 1
+      from public.workos_directory_memberships as wdm
+      where wdm.organization_id = workos_organizations.id
+        and wdm.supabase_user_id = (select auth.uid())
+        and wdm.provisioning_status = 'active'
+    )
   );
 
 drop policy if exists "workos_organizations_insert_owner"
@@ -242,7 +247,10 @@ create policy "workos_organizations_insert_owner"
   on public.workos_organizations
   for insert
   to authenticated
-  with check (owner_user_id = (select auth.uid()));
+  with check (
+    owner_user_id is not null
+    and owner_user_id = (select auth.uid())
+  );
 
 drop policy if exists "workos_organizations_update_admin"
   on public.workos_organizations;

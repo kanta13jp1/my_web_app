@@ -108,7 +108,7 @@ export function sanitizeWorkosMetadata(
   if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
     return {};
   }
-  const masked = maskLogValue(payload, SENSITIVE_WORKOS_FIELDS);
+  const masked = maskLogValue(payload, { extraKeys: SENSITIVE_WORKOS_FIELDS });
   if (typeof masked !== "object" || masked === null || Array.isArray(masked)) {
     return {};
   }

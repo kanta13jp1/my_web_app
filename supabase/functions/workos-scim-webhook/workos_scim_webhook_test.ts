@@ -56,6 +56,8 @@ Deno.test("workos-scim-webhook handles CORS preflight with tracing headers and f
   assertEquals(preflight.status, 200);
   const allowHeaders = preflight.headers.get("Access-Control-Allow-Headers") ?? "";
   assertMatch(allowHeaders, /traceparent/);
+  assertMatch(allowHeaders, /tracestate/);
+  assertMatch(allowHeaders, /baggage/);
   assertMatch(allowHeaders, /sentry-trace/);
 
   const unauth = await handler(
