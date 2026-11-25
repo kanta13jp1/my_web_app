@@ -86,6 +86,12 @@ class _ContextCacheMonitorContainerState
     _controller.toggleSimulateCacheHit(value: value);
   }
 
+  void _handleEvaluateRecache() {
+    _controller.evaluateLongTaskRecache(
+      workflowKey: _workflowInputController.text,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -99,6 +105,8 @@ class _ContextCacheMonitorContainerState
           onWorkflowFilterSelected: _controller.setWorkflowFilter,
           onModelSelected: _controller.selectModel,
           onToggleSimulateCacheHit: _handleToggleHit,
+          onSelectCacheTtl: _controller.selectCacheTtl,
+          onEvaluateRecache: _handleEvaluateRecache,
           onRecordSimulatedRequest: _handleRecordSimulatedRequest,
           onRetryLoad: _loadInitial,
         );
