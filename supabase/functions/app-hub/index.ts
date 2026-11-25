@@ -1092,6 +1092,31 @@ serve(async (req: Request) => {
         return json({ success: true, ga_readiness: gaReadiness });
       }
 
+      // --- Generic Format Importer & JSONB Custom Attributes (#2741) ---
+      case "format_importer.list":
+      case "format_importer.preview":
+      case "format_importer.import":
+      case "format_importer.define_attribute":
+      case "format_importer.update_record_attributes":
+      case "format_importer.export": {
+        const { FormatImporterError, handleFormatImporterAction } =
+          await import("./format_importer.ts");
+        try {
+          const result = await handleFormatImporterAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof FormatImporterError) {
+            return json({ error: err.message }, err.status);
+          }
+          throw err;
+        }
+      }
+
       // --- Realtime Concurrent Lock & Conflict Detection (#2744) ---
       case "realtime_lock.list":
       case "realtime_lock.create":
