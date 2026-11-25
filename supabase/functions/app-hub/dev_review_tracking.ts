@@ -597,13 +597,17 @@ export async function handleDevReviewAction(params: {
     const url = `https://api.github.com/repos/${existing.githubRepo}/` +
       `${segment}/${existing.targetNumber}`;
     const ghAuth = (getEnv("GITHUB_TOKEN") ?? "").trim();
+    if (!ghAuth) {
+      return {
+        status: 503,
+        body: { error: "GITHUB_TOKEN is not configured." },
+      };
+    }
     const headers: Record<string, string> = {
       Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${ghAuth}`,
       "User-Agent": "my-web-app-dev-review-tracker",
     };
-    if (ghAuth) {
-      headers.Authorization = `Bearer ${ghAuth}`;
-    }
     const resp = await fetcher(url, { method: "GET", headers });
     if (!resp.ok) {
       return {
