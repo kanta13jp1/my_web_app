@@ -68,7 +68,7 @@ Deno.test("routes lightweight classification to flash-lite", () => {
 Deno.test("routes complex analysis to advanced claude-sonnet-4-6", () => {
   const decision = routeLlmTaskByComplexity({
     taskType: "analysis",
-    prompt: "Compare architecture tradeoffs and multi-step risk impacts.",
+    prompt: "Compare design tradeoffs and multi-step reasoning impacts.",
     requiresReasoning: true,
   });
   assertEquals(decision.tier, "complex");
