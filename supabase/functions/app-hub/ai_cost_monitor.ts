@@ -371,14 +371,14 @@ async function dispatchGithubBudgetAlert(params: {
   }
   const ghAuth = (
     params.getEnv("GITHUB_PAT") ??
-    params.getEnv("GITHUB_TOKEN") ??
-    params.getEnv("GH_TOKEN") ??
-    ""
+      params.getEnv("GITHUB_TOKEN") ??
+      params.getEnv("GH_TOKEN") ??
+      ""
   ).trim();
   const repo = (
     params.getEnv("GITHUB_REPO") ??
-    params.getEnv("GITHUB_REPOSITORY") ??
-    "kanta13jp1/my_web_app"
+      params.getEnv("GITHUB_REPOSITORY") ??
+      "kanta13jp1/my_web_app"
   ).trim();
 
   if (!ghAuth || !repo) {

@@ -163,7 +163,7 @@ Deno.test("check_budget logs alert and fails open on GitHub API", async () => {
     userId: "user-a",
     db,
     now: fixedNow,
-    getEnv: (key) {
+    getEnv: (key) => {
       if (key === "GITHUB_" + "TOKEN") return "gh-stub";
       return undefined;
     },
