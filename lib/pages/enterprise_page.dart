@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// B2B エンタープライズ向けランディングページ
@@ -70,6 +71,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
         foregroundColor: Colors.white,
         title: const Text('自分株式会社 for Teams'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            tooltip: 'テナント SSO / SCIM 管理 (WorkOS)',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=workos-scim',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('テナント SSO / SCIM 管理 (WorkOS)'),
+                    ),
+                    body: const WorkosScimContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
           TextButton(
             onPressed: () => Navigator.pushNamed(context, '/'),
             child: const Text(
