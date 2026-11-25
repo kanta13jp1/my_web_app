@@ -491,7 +491,10 @@ void main() {
         await tester.tap(uploadBtn);
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('重複アップロードをスキップ'), findsOneWidget);
+        expect(
+          find.textContaining('重複アップロードをスキップして再利用しました'),
+          findsOneWidget,
+        );
 
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pumpAndSettle();
