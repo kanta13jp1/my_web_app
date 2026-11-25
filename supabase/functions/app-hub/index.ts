@@ -20,6 +20,10 @@ import {
 } from "./ga_readiness.ts";
 import { handlePromptEvolutionAction } from "./prompt_evolution.ts";
 import { createSupabasePromptEvolutionDb } from "./prompt_evolution_supabase.ts";
+import {
+  createSupabaseVisionBenchmarkDb,
+  handleVisionBenchmarkAction,
+} from "./vision_benchmark.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1192,6 +1196,18 @@ serve(async (req: Request) => {
           status: statusText,
         });
         return json({ success: true, action, ...recorded });
+      }
+
+      // --- AI Vision Benchmark Monitoring (#2758) ---
+      case "vision_benchmark.list":
+      case "vision_benchmark.record": {
+        const result = await handleVisionBenchmarkAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseVisionBenchmarkDb(admin),
+        });
+        return json(result.body, result.status);
       }
 
       default:
