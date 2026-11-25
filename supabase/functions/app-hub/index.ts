@@ -18,6 +18,8 @@ import {
   GaReadinessActionError,
   handleGaReadinessAction,
 } from "./ga_readiness.ts";
+import { handlePromptEvolutionAction } from "./prompt_evolution.ts";
+import { createSupabasePromptEvolutionDb } from "./prompt_evolution_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1025,6 +1027,19 @@ serve(async (req: Request) => {
           userId,
         });
         return json({ success: true, ...result });
+      }
+
+      // --- Evolutionary Prompt Optimization Pipeline (#2723) ---
+      case "agent.evaluate_gpa_batch":
+      case "agent.evolve_prompts_from_gpa":
+      case "agent.list_prompt_evolutions": {
+        const result = await handlePromptEvolutionAction({
+          action,
+          body,
+          userId,
+          db: createSupabasePromptEvolutionDb(admin),
+        });
+        return json(result.body, result.status);
       }
 
       // --- GA Launch Readiness Gate (#1640) ---
