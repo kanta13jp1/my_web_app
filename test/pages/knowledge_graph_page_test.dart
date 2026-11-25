@@ -67,6 +67,10 @@ void main() {
     expect(find.byKey(const Key('knowledge-citation-link-2')), findsOneWidget);
     expect(find.textContaining('roadmap.md'), findsWidgets);
     expect(find.textContaining('budget.pdf'), findsWidgets);
+    expect(
+      find.byTooltip('roadmap.md\nline 2\n最優先は公開準備です。'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('knowledge-citation-link-2')));
     await tester.pumpAndSettle();

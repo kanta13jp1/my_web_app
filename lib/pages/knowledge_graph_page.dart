@@ -333,38 +333,101 @@ class _CitationAnswerText extends StatelessWidget {
   final KnowledgeGraphRagAnswer answer;
   final ValueChanged<KnowledgeGraphRagCitation> onCitationPressed;
 
+  String _tooltipMessage(KnowledgeGraphRagCitation citation) {
+    final excerpt = citation.highlightText.isNotEmpty
+        ? citation.highlightText
+        : citation.excerpt;
+    return <String>[
+      citation.fileName,
+      if (citation.position.label.isNotEmpty) citation.position.label,
+      if (excerpt.isNotEmpty) excerpt,
+    ].join('\n');
+  }
+
+  Widget _buildCitationWidget(
+    BuildContext context,
+    KnowledgeGraphAnswerSegment segment,
+    KnowledgeGraphRagCitation citation,
+    TextStyle baseStyle,
+  ) {
+    final tooltipMessage = _tooltipMessage(citation);
+    if (!segment.markerOnly) {
+      final colors = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Tooltip(
+          message: tooltipMessage,
+          waitDuration: const Duration(milliseconds: 250),
+          child: InkWell(
+            key: Key('knowledge-citation-link-${segment.citationId}'),
+            borderRadius: BorderRadius.circular(6),
+            onTap: () => onCitationPressed(citation),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.primaryContainer.withAlpha(110),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                child: Text(
+                  '${segment.text} [${citation.id}]',
+                  style: baseStyle.copyWith(
+                    color: colors.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Tooltip(
+        message: tooltipMessage,
+        waitDuration: const Duration(milliseconds: 250),
+        child: ActionChip(
+          key: Key('knowledge-citation-link-${segment.citationId}'),
+          avatar: const Icon(Icons.find_in_page_outlined, size: 16),
+          label: Text(
+            '${segment.text} '
+            '${citation.fileName} · '
+            '${citation.position.label}',
+          ),
+          onPressed: () => onCitationPressed(citation),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseStyle =
         Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55) ??
             const TextStyle(height: 1.55);
+    final segments = answer.parsedSegments.isNotEmpty
+        ? answer.parsedSegments
+        : parseKnowledgeGraphAnswer(answer.answer);
     return SelectionArea(
       child: Text.rich(
         key: const Key('knowledge-answer-text'),
         TextSpan(
           style: baseStyle,
           children: [
-            for (final segment in parseKnowledgeGraphAnswer(answer.answer))
+            for (final segment in segments)
               if (!segment.isCitation ||
                   answer.citationById(segment.citationId!) == null)
                 TextSpan(text: segment.text)
               else
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: ActionChip(
-                      key: Key('knowledge-citation-link-${segment.citationId}'),
-                      avatar: const Icon(Icons.find_in_page_outlined, size: 16),
-                      label: Text(
-                        '${segment.text} '
-                        '${answer.citationById(segment.citationId!)!.fileName} · '
-                        '${answer.citationById(segment.citationId!)!.position.label}',
-                      ),
-                      onPressed: () => onCitationPressed(
-                        answer.citationById(segment.citationId!)!,
-                      ),
-                    ),
+                  child: _buildCitationWidget(
+                    context,
+                    segment,
+                    answer.citationById(segment.citationId!)!,
+                    baseStyle,
                   ),
                 ),
           ],

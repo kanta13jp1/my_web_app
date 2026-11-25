@@ -1,3 +1,5 @@
+import '../services/local_rag_runtime_service.dart';
+
 class KnowledgeGraphCitationPosition {
   const KnowledgeGraphCitationPosition({
     required this.label,
@@ -13,7 +15,7 @@ class KnowledgeGraphCitationPosition {
   final int? startLine;
   final int? endLine;
 
-  factory KnowledgeGraphCitationPosition.fromJson(Map<String, dynamic> json) {
+  factory KnowledgeGraphCitationPosition.fromJson(Map<String, Object?> json) {
     final pageNumber = _integer(json['page_number']);
     final section = _nullableText(json['section']);
     final startLine = _integer(json['start_line']);
@@ -71,7 +73,7 @@ class KnowledgeGraphRagCitation {
   final DateTime? lastSyncedAt;
 
   factory KnowledgeGraphRagCitation.fromJson(
-    Map<String, dynamic> json, {
+    Map<String, Object?> json, {
     required int fallbackIndex,
   }) {
     final excerpt = _text(json['excerpt']);
@@ -115,6 +117,8 @@ class KnowledgeGraphRagAnswer {
     required this.status,
     required this.traceId,
     required this.citations,
+    this.parsedSegments = const <KnowledgeGraphAnswerSegment>[],
+    this.temperatureUsed,
   });
 
   final String query;
@@ -122,14 +126,35 @@ class KnowledgeGraphRagAnswer {
   final String status;
   final String traceId;
   final List<KnowledgeGraphRagCitation> citations;
+  final List<KnowledgeGraphAnswerSegment> parsedSegments;
+  final double? temperatureUsed;
 
-  factory KnowledgeGraphRagAnswer.fromJson(Map<String, dynamic> json) {
+  factory KnowledgeGraphRagAnswer.fromJson(Map<String, Object?> json) {
     final citations = _maps(json['citations']);
+    final parsedMap = _map(json['parsed_answer']);
+    final parsedSegmentsRaw = _maps(parsedMap['segments']);
+    final parsedSegments = parsedSegmentsRaw
+        .map(
+          (item) => KnowledgeGraphAnswerSegment(
+            text: item['text']?.toString() ?? '',
+            citationId: _nullableText(
+              item['reference_id'] ?? item['citation_id'] ?? item['source_id'],
+            ),
+            markerOnly: item['marker_only'] == true,
+          ),
+        )
+        .where((segment) => segment.text.isNotEmpty)
+        .toList(growable: false);
+    final rawAnswer = _text(json['answer']);
+    final fallbackPlain = _text(parsedMap['plain_text']);
+
     return KnowledgeGraphRagAnswer(
       query: _text(json['query']),
-      answer: _text(json['answer']),
+      answer: rawAnswer.isNotEmpty ? rawAnswer : fallbackPlain,
       status: _text(json['answer_status'], fallback: 'unknown'),
       traceId: _text(json['trace_id']),
+      parsedSegments: parsedSegments,
+      temperatureUsed: _number(json['temperature_used']),
       citations: <KnowledgeGraphRagCitation>[
         for (var index = 0; index < citations.length; index++)
           KnowledgeGraphRagCitation.fromJson(
@@ -141,85 +166,85 @@ class KnowledgeGraphRagAnswer {
   }
 
   KnowledgeGraphRagCitation? citationById(String id) {
+    final normalized = id.trim().toLowerCase();
     for (final citation in citations) {
-      if (citation.id == id) return citation;
+      if (citation.id.trim().toLowerCase() == normalized) return citation;
     }
-    final numeric = int.tryParse(id);
+    final numeric = int.tryParse(normalized);
     if (numeric != null && numeric > 0 && numeric <= citations.length) {
       return citations[numeric - 1];
+    }
+    for (final citation in citations) {
+      final candidate = citation.id.trim().toLowerCase();
+      if (candidate == 'doc-$normalized' ||
+          candidate == 'source-$normalized' ||
+          candidate.endsWith('-$normalized')) {
+        return citation;
+      }
     }
     return null;
   }
 }
 
 class KnowledgeGraphAnswerSegment {
-  const KnowledgeGraphAnswerSegment({required this.text, this.citationId});
+  const KnowledgeGraphAnswerSegment({
+    required this.text,
+    this.citationId,
+    this.markerOnly = true,
+  });
 
   final String text;
   final String? citationId;
+  final bool markerOnly;
 
   bool get isCitation => citationId != null;
 }
 
 List<KnowledgeGraphAnswerSegment> parseKnowledgeGraphAnswer(String answer) {
-  final matches = RegExp(r'\[(\d+)\]').allMatches(answer);
-  if (matches.isEmpty) {
+  final parsed = parsePleiasCitationText(answer);
+  if (parsed.segments.isEmpty) {
     return <KnowledgeGraphAnswerSegment>[
       KnowledgeGraphAnswerSegment(text: answer),
     ];
   }
-
-  final segments = <KnowledgeGraphAnswerSegment>[];
-  var offset = 0;
-  for (final match in matches) {
-    if (match.start > offset) {
-      segments.add(
-        KnowledgeGraphAnswerSegment(
-          text: answer.substring(offset, match.start),
+  return parsed.segments
+      .map(
+        (segment) => KnowledgeGraphAnswerSegment(
+          text: segment.text,
+          citationId: segment.sourceId,
+          markerOnly: segment.markerOnly,
         ),
-      );
-    }
-    segments.add(
-      KnowledgeGraphAnswerSegment(
-        text: match.group(0) ?? '',
-        citationId: match.group(1),
-      ),
-    );
-    offset = match.end;
-  }
-  if (offset < answer.length) {
-    segments.add(KnowledgeGraphAnswerSegment(text: answer.substring(offset)));
-  }
-  return segments;
+      )
+      .toList(growable: false);
 }
 
-Map<String, dynamic> _map(dynamic value) {
-  if (value is! Map) return <String, dynamic>{};
+Map<String, Object?> _map(Object? value) {
+  if (value is! Map) return <String, Object?>{};
   return value.map((key, item) => MapEntry(key.toString(), item));
 }
 
-List<Map<String, dynamic>> _maps(dynamic value) {
-  if (value is! List) return const <Map<String, dynamic>>[];
+List<Map<String, Object?>> _maps(Object? value) {
+  if (value is! List) return const <Map<String, Object?>>[];
   return value.whereType<Map>().map(_map).toList(growable: false);
 }
 
-String _text(dynamic value, {String fallback = ''}) {
+String _text(Object? value, {String fallback = ''}) {
   final normalized = value?.toString().trim() ?? '';
   return normalized.isEmpty ? fallback : normalized;
 }
 
-String? _nullableText(dynamic value) {
+String? _nullableText(Object? value) {
   final normalized = _text(value);
   return normalized.isEmpty ? null : normalized;
 }
 
-int? _integer(dynamic value) {
+int? _integer(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '');
 }
 
-double? _number(dynamic value) {
+double? _number(Object? value) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '');
 }
