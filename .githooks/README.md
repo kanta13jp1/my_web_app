@@ -26,3 +26,18 @@ git config core.hooksPath .githooks
 `scripts/sync_compressed_prompt.py --check` および `origin/main` との差分を検証し、
 共有メモリ (`COMPRESSED_PROMPT.md`) の同期漏れや `git pull --rebase origin main` 未実施のままの
 古いプッシュを事前にブロックする（緊急スキップ: `SKIP_PRE_PUSH_SYNC=1`）。
+
+## commit-msg (オプトイン導入)
+
+`scripts/check_commit_message.py` により、コミットメッセージにチケット番号参照
+（例: `refs #2727`, `Closes #2727`, `Related to #2727`, `feat: summary (#2727)`）が含まれるかを検証する。
+`Merge ...`, `Revert "..."`, `fixup!`, `squash!`, `amend!` で始まる自動生成コミットは免除される。
+
+```bash
+bash scripts/install_commit_msg_hook.sh
+```
+
+`git rev-parse --git-path hooks` を解決して該当リポジトリ／ワークツリーの `.git/hooks/commit-msg` に配置するため、
+既存の `lefthook.yml` や `.githooks/pre-push` の動作を妨げずに適用できる（確認のみ: `--dry-run`、上書き: `--force`）。
+コミットメッセージに `[skip ci]` または `[ci skip]` を含めた場合、GitHub Actions では必須ステータスチェック
+（`ci-complete` 等）を維持したまま重い非必須の Web ビルド／OGP 生成ステップだけを安全にスキップする。
