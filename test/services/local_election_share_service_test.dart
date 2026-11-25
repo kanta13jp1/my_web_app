@@ -8,6 +8,7 @@ import 'package:my_web_app/data/kokumin_representative_announcement.dart';
 import 'package:my_web_app/data/repositories/official_endorsement_repository.dart';
 import 'package:my_web_app/models/local_election_plan.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
+import 'package:my_web_app/models/public_memo.dart';
 import 'package:my_web_app/services/local_election_share_service.dart';
 import 'package:my_web_app/ui/features/election_victory/widgets/kokumin_representative_announcement_card.dart';
 import 'package:my_web_app/ui/features/election_victory/widgets/official_endorsement_scope_note.dart';
@@ -835,6 +836,68 @@ void main() {
     }
   });
 
+  testWidgets('2026-11-22代表cardは現職421人・新人元職292人・空白県解消と出典確認日を表示する', (
+    tester,
+  ) async {
+    const unknownLatestPost = KokuminRepresentativeAnnouncement(
+      publishedOn: '2026-11-22',
+      incumbentCount: 421,
+      newcomerNominationCount: 292,
+      nominationMetricLabel: '新人・元職',
+      nationwideMemberTarget: 700,
+      originalPostUrl: 'https://x.com/tamakiyuichiro/status/unknown',
+      officialSiteUrl: 'https://tamakinet.jp/',
+      milestoneSummary: '空白県解消・47都道府県達成（鳥取市議選 村尾まさひこ候補 当確）',
+      milestonePostUrl:
+          'https://x.com/tamakiyuichiro/status/2124504534995341736',
+    );
+    final openedUrls = <String>[];
+    for (final testCase in <({
+      KokuminRepresentativeAnnouncement announcement,
+      String expectedLabel,
+    })>[
+      (
+        announcement: kokuminRepresentativeAnnouncement20261122,
+        expectedLabel: '出典確認日: 2026/11/22',
+      ),
+      (
+        announcement: unknownLatestPost,
+        expectedLabel: '出典確認日: 未記録',
+      ),
+    ]) {
+      openedUrls.clear();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: KokuminRepresentativeAnnouncementCard(
+                announcement: testCase.announcement,
+                onOpenSource: openedUrls.add,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('党代表発表（2026/11/22）'), findsOneWidget);
+      expect(find.text('現職 421人'), findsOneWidget);
+      expect(find.text('新人・元職 292人'), findsOneWidget);
+      expect(
+        find.text('空白県解消・47都道府県達成（鳥取市議選 村尾まさひこ候補 当確）'),
+        findsOneWidget,
+      );
+      expect(find.text(testCase.expectedLabel), findsOneWidget);
+      expect(find.text('空白県解消の元投稿を開く'), findsOneWidget);
+      if (testCase.expectedLabel.endsWith('未記録')) {
+        expect(find.text('出典確認日: 2026/11/22'), findsNothing);
+      } else {
+        await tester.tap(find.text('空白県解消の元投稿を開く'));
+        expect(openedUrls, <String>[
+          'https://x.com/tamakiyuichiro/status/2124504534995341736',
+        ]);
+      }
+    }
+  });
+
   test('地力差ラベルは比較相手の党名を取り違えない', () {
     final plan = buildPlan();
     final draft = service.buildPlanDashboardDraft(
@@ -974,4 +1037,191 @@ void main() {
     expect(firstVote.difference(firstAnnouncement).inDays, 17);
     expect(secondVote.difference(secondAnnouncement).inDays, 7);
   });
+
+  test(
+    'buildDraft places roster diff between basic indicators and AI summary when previousMemo is provided',
+    () {
+      final snapshot = buildSnapshot();
+      final prevMemo = PublicMemo(
+        id: 50,
+        noteId: 500,
+        userId: 'user-a',
+        title: '国民民主党 地方議員集計 2026/03/21',
+        content: '',
+        category: LocalElectionShareService.publicCategory,
+        metadata: const <String, dynamic>{
+          'type': LocalElectionShareService.metadataType,
+          'source_key': 'local-election:90000020260321',
+          'snapshotDate': '2026/03/21',
+          'activePrefectureCount': 1,
+          'missingPrefectures': <String>[],
+          'rosterSnapshot': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'prefecture': '東京都',
+              'detailUrl': 'https://example.com/member/a',
+              'assemblyLabel': '区議会',
+              'constituency': '千代田区',
+              'municipality': '千代田区',
+              'name': '東京サンプル',
+              'kana': 'とうきょうさんぷる',
+              'electionCountLabel': '2期',
+            },
+          ],
+        },
+        likeCount: 0,
+        viewCount: 0,
+        isPublic: true,
+        publishedAt: DateTime.utc(2026, 3, 21),
+        createdAt: DateTime.utc(2026, 3, 21),
+        updatedAt: DateTime.utc(2026, 3, 21),
+      );
+
+      final draftWithDiff = service.buildDraft(
+        snapshot: snapshot,
+        members: snapshot.members,
+        previousMemo: prevMemo,
+      );
+      final idxBasic = draftWithDiff.content.indexOf('現職名簿件数:');
+      final idxDiff = draftWithDiff.content.indexOf('最新の増加履歴（2026年3月28日）');
+      final idxAi = draftWithDiff.content.indexOf('AI要約');
+      expect(idxBasic, greaterThan(0));
+      expect(idxDiff, greaterThan(idxBasic));
+      expect(idxAi, greaterThan(idxDiff));
+      expect(draftWithDiff.content, contains('1 → 2：+1（追加1人・名簿掲載なし0人）'));
+      expect(draftWithDiff.content, contains('・香川サンプル（香川県・高松市・市議会・1期）'));
+
+      final rosterSnapshot =
+          draftWithDiff.metadata['rosterSnapshot'] as List<dynamic>;
+      expect(rosterSnapshot, hasLength(2));
+      final prevComparison =
+          draftWithDiff.metadata['previousComparison'] as Map<String, dynamic>;
+      expect(prevComparison['previousDateLabel'], '2026/03/21');
+      expect(prevComparison['addedCount'], 1);
+
+      final draftWithoutPrev = service.buildDraft(
+        snapshot: snapshot,
+        members: snapshot.members,
+      );
+      expect(draftWithoutPrev.content, isNot(contains('最新の増加履歴')));
+      expect(
+        draftWithoutPrev.metadata.containsKey('previousComparison'),
+        isFalse,
+      );
+      expect(
+        draftWithoutPrev.metadata['rosterSnapshot'] as List<dynamic>,
+        hasLength(2),
+      );
+    },
+  );
+
+  test(
+    'publishSnapshot loads previous memo, includes diff, and warms buildXPostLongText cache',
+    () async {
+      final snapshot = buildSnapshot();
+      final prevMemo = PublicMemo(
+        id: 51,
+        noteId: 501,
+        userId: 'user-a',
+        title: '国民民主党 地方議員集計 2026/03/21',
+        content: '',
+        category: LocalElectionShareService.publicCategory,
+        metadata: const <String, dynamic>{
+          'type': LocalElectionShareService.metadataType,
+          'source_key': 'local-election:90000020260321',
+          'snapshotDate': '2026/03/21',
+          'rosterSnapshot': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'prefecture': '東京都',
+              'detailUrl': 'https://example.com/member/a',
+              'assemblyLabel': '区議会',
+              'constituency': '千代田区',
+              'municipality': '千代田区',
+              'name': '東京サンプル',
+              'kana': 'とうきょうさんぷる',
+              'electionCountLabel': '2期',
+            },
+          ],
+        },
+        likeCount: 0,
+        viewCount: 0,
+        isPublic: true,
+        publishedAt: DateTime.utc(2026, 3, 21),
+        createdAt: DateTime.utc(2026, 3, 21),
+        updatedAt: DateTime.utc(2026, 3, 21),
+      );
+
+      var loadCalls = 0;
+      String? publishedContent;
+      final authShareService = LocalElectionShareService(
+        _FakeSupabaseClient(),
+        loadPreviousMemo: ({
+          required String userId,
+          required int currentNoteId,
+          required String currentSnapshotDate,
+        }) async {
+          loadCalls++;
+          expect(userId, 'user-a');
+          expect(currentSnapshotDate, '2026/03/28');
+          return prevMemo;
+        },
+        publishMemo: ({
+          required int noteId,
+          required String userId,
+          required String title,
+          String? content,
+          String? category,
+          Map<String, dynamic> metadata = const <String, dynamic>{},
+        }) async {
+          publishedContent = content;
+          return PublicMemo(
+            id: 99,
+            noteId: noteId,
+            userId: userId,
+            title: title,
+            content: content,
+            category: category,
+            metadata: metadata,
+            likeCount: 0,
+            viewCount: 0,
+            isPublic: true,
+            publishedAt: DateTime.utc(2026, 3, 28),
+            createdAt: DateTime.utc(2026, 3, 28),
+            updatedAt: DateTime.utc(2026, 3, 28),
+          );
+        },
+      );
+
+      final published = await authShareService.publishSnapshot(
+        snapshot: snapshot,
+        members: snapshot.members,
+      );
+      expect(published?.id, 99);
+      expect(loadCalls, 1);
+      expect(publishedContent, contains('最新の増加履歴（2026年3月28日）'));
+      expect(publishedContent, contains('・香川サンプル（香川県・高松市・市議会・1期）'));
+
+      final xPost = authShareService.buildXPostLongText(
+        snapshot: snapshot,
+        members: snapshot.members,
+        publicUrl: 'https://example.com/public-memo?id=99',
+      );
+      expect(xPost, contains('最新の増加履歴（2026年3月28日）'));
+      expect(xPost, contains('・香川サンプル（香川県・高松市・市議会・1期）'));
+    },
+  );
+}
+
+class _FakeUser extends Fake implements User {
+  @override
+  String get id => 'user-a';
+}
+
+class _FakeAuth extends Fake implements GoTrueClient {
+  @override
+  User? get currentUser => _FakeUser();
+}
+
+class _FakeSupabaseClient extends Fake implements SupabaseClient {
+  @override
+  final GoTrueClient auth = _FakeAuth();
 }

@@ -1,0 +1,151 @@
+name: Deploy Concurrency Monitor
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-concurrency-monitor.yml"
+      - "scripts/deploy_concurrency_monitor.py"
+      - "test/scripts/test_deploy_concurrency_monitor.py"
+  schedule:
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Evaluate concurrency and deploy sync without failing advisory checks (true/false)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      require_synced:
+        description: "Fail the workflow if main head deploy is cancelled, failed, or unsynced (true/false)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: deploy-concurrency-monitor-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  validate:
+    if: github.event_name != 'schedule'
+    name: Validate deploy concurrency monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run unit tests and self-test
+        run: |
+          python3 -B test/scripts/test_deploy_concurrency_monitor.py -v
+          python3 -B scripts/deploy_concurrency_monitor.py --self-test
+
+  monitor:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Monitor production deploy concurrency and sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      EVENT_NAME: ${{ github.event_name }}
+      DRY_RUN_INPUT: ${{ github.event_name == 'schedule' && 'true' || inputs.dry_run || 'true' }}
+      REQUIRE_SYNCED_INPUT: ${{ inputs.require_synced || 'false' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Evaluate production deploy concurrency and sync
+        id: evaluate_deploy
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ]; then
+            if [ "${REQUIRE_SYNCED_INPUT}" = "true" ]; then
+              python3 -B scripts/deploy_concurrency_monitor.py \
+                --live \
+                --require-synced \
+                --json-out deploy_concurrency_report.json \
+                --markdown-out deploy_concurrency_report.md \
+                --github-output "${GITHUB_OUTPUT}"
+            else
+              python3 -B scripts/deploy_concurrency_monitor.py \
+                --live \
+                --json-out deploy_concurrency_report.json \
+                --markdown-out deploy_concurrency_report.md \
+                --github-output "${GITHUB_OUTPUT}"
+            fi
+          else
+            if [ "${REQUIRE_SYNCED_INPUT}" = "true" ]; then
+              python3 -B scripts/deploy_concurrency_monitor.py \
+                --fetch-gh \
+                --dry-run \
+                --require-synced \
+                --json-out deploy_concurrency_report.json \
+                --markdown-out deploy_concurrency_report.md \
+                --github-output "${GITHUB_OUTPUT}"
+            else
+              python3 -B scripts/deploy_concurrency_monitor.py \
+                --fetch-gh \
+                --dry-run \
+                --json-out deploy_concurrency_report.json \
+                --markdown-out deploy_concurrency_report.md \
+                --github-output "${GITHUB_OUTPUT}"
+            fi
+          fi
+
+      - name: Upload deploy concurrency report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: deploy-concurrency-report
+          path: |
+            deploy_concurrency_report.json
+            deploy_concurrency_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append step summary
+        if: always()
+        env:
+          DEPLOY_STATUS: ${{ steps.evaluate_deploy.outputs.status }}
+          DEPLOY_SYNCED: ${{ steps.evaluate_deploy.outputs.synced }}
+          RECOMMENDED_ACTION: ${{ steps.evaluate_deploy.outputs.recommended_action }}
+          CONTRACTS_OK: ${{ steps.evaluate_deploy.outputs.contracts_ok }}
+          CANCELLED_COUNT: ${{ steps.evaluate_deploy.outputs.cancelled_count }}
+          FAILED_COUNT: ${{ steps.evaluate_deploy.outputs.failed_count }}
+        run: |
+          {
+            echo "## Deploy Concurrency Monitor (#2678)"
+            echo "- Status: \`${DEPLOY_STATUS}\` | Synced: \`${DEPLOY_SYNCED}\`"
+            echo "- Contracts OK: \`${CONTRACTS_OK}\` | Recommended: \`${RECOMMENDED_ACTION}\`"
+            echo "- Cancelled runs: \`${CANCELLED_COUNT}\` | Failed runs: \`${FAILED_COUNT}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

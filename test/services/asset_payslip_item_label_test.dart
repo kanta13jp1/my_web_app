@@ -116,4 +116,40 @@ void main() {
       'その他（overtime_hours_legal）',
     );
   });
+  test(
+      'labels observed May Japanese and August English earning/attendance keys',
+      () {
+    const newEarnings = {
+      'base_salary_monthly': '月額基本給',
+      'overtime_allowance_non_statutory': '残業手当（法定外）',
+      'over_40h_week_allowance_scheduled_hours': '週40時間超の手当（所定労働時間）',
+      '食事手当': '食事手当',
+      '基本給(月給)': '基本給(月給)',
+      '時間外手当(法定外)': '時間外手当(法定外)',
+    };
+    for (final entry in newEarnings.entries) {
+      expect(
+        PayslipItemLabel.label(PayslipItemGroup.earning, entry.key),
+        entry.value,
+      );
+    }
+    const newAttendance = {
+      'paid_leave_taken': '有給休暇取得日数',
+      'overtime_hours_statutory': '残業時間（法定内）',
+      'overtime_hours_non_statutory': '残業時間（法定外）',
+      'actual_working_hours_statutory': '実働時間（法定内）',
+      '出勤日数': '出勤日数',
+      '実働時間(法定内)': '実働時間(法定内)',
+    };
+    for (final entry in newAttendance.entries) {
+      expect(
+        PayslipItemLabel.label(PayslipItemGroup.attendance, entry.key),
+        entry.value,
+      );
+    }
+    expect(
+      PayslipItemLabel.label(PayslipItemGroup.earning, 'paid_leave_taken'),
+      'その他（paid_leave_taken）',
+    );
+  });
 }

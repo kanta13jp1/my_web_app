@@ -82,6 +82,7 @@ class EvernoteMigrationItem {
     this.sourceNoteId,
     this.targetNoteId,
     this.noteTitle,
+    this.noteCreatedAt,
   });
 
   final int id;
@@ -104,6 +105,7 @@ class EvernoteMigrationItem {
   final bool sourceNoteReminderPresent;
   final bool noteReminderVerified;
   final String? noteTitle;
+  final DateTime? noteCreatedAt;
 
   bool get isImported => targetNoteId != null;
 
@@ -160,6 +162,8 @@ class EvernoteMigrationItem {
       sourceNoteReminderPresent: json['source_note_reminder_present'] == true,
       noteReminderVerified: json['note_reminder_verified'] == true,
       noteTitle: _emptyStringToNull(note['title']),
+      noteCreatedAt:
+          DateTime.tryParse(note['created_at']?.toString() ?? '')?.toUtc(),
     );
   }
 }
@@ -361,7 +365,7 @@ class EvernoteMigrationLedgerService {
           'verified_task_count,source_task_reminder_count,'
           'imported_task_reminder_count,verified_task_reminder_count,'
           'source_note_reminder_present,note_reminder_verified,'
-          'notes!evernote_migration_items_target_note_fkey(title)',
+          'notes!evernote_migration_items_target_note_fkey(title,created_at)',
       ownerId: ownerId,
       limit: limit?.clamp(1, 1000),
     );

@@ -68,7 +68,35 @@ def remove_homepage_faq_schema(html_text: str) -> str:
     )
 
 
-def build_route_html(template: str, route: dict, base_url: str) -> str:
+def _apply_social_image(
+    html_text: str,
+    image: str | None,
+    image_alt: str | None,
+    base_url: str,
+    fallback_alt: str,
+) -> str:
+    """Update og/twitter social image and alt attributes when `image` is configured."""
+    if not image:
+        return html_text
+    image_url = image if image.startswith("http") else f"{base_url}{image}"
+    alt_text = image_alt or fallback_alt
+    out = replace_attr_content(
+        html_text, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")', image_url)
+    out = replace_attr_content(
+        out, r'(<meta\s+property="twitter:image"\s+content=")([^"]*)(")', image_url)
+    out = replace_attr_content(
+        out, r'(<meta property="og:image:alt" content=")([^"]*)(")', alt_text)
+    return replace_attr_content(
+        out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")', alt_text)
+
+
+def build_route_html(
+    template: str,
+    route: dict,
+    base_url: str,
+    default_image: str | None = None,
+    default_image_alt: str | None = None,
+) -> str:
     slug = route["slug"]
     title = route["title"]
     desc = route["description"]
@@ -106,6 +134,13 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
         out, r'(<meta\s+property="twitter:description"\s+content=")([^"]*)(")', desc)
     out = replace_attr_content(
         out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
+    out = _apply_social_image(
+        out,
+        route.get("image") or default_image,
+        route.get("image_alt") or default_image_alt,
+        base_url,
+        f"{title} 比較",
+    )
 
     # ルート固有 JSON-LD (WebPage + BreadcrumbList + FAQPage) を </head> 直前に注入
     faq = [
@@ -223,22 +258,13 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     out = replace_attr_content(
         out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
 
-    image = route.get("image")
-    if image:
-        image_url = image if image.startswith("http") else f"{base_url}{image}"
-        image_alt = route.get("image_alt", title)
-        out = replace_attr_content(
-            out, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")',
-            image_url)
-        out = replace_attr_content(
-            out, r'(<meta\s+property="twitter:image"\s+content=")([^"]*)(")',
-            image_url)
-        out = replace_attr_content(
-            out, r'(<meta property="og:image:alt" content=")([^"]*)(")',
-            image_alt)
-        out = replace_attr_content(
-            out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")',
-            image_alt)
+    out = _apply_social_image(
+        out,
+        route.get("image"),
+        route.get("image_alt"),
+        base_url,
+        title,
+    )
 
     web_page = {
         "@context": "https://schema.org",
@@ -439,9 +465,17 @@ def main(argv: list[str]) -> int:
     base_url = (args.base_url or config["site"]).rstrip("/")
 
     outdir = Path(args.outdir)
+    default_comp_image = config.get("default_image")
+    default_comp_alt = config.get("default_image_alt")
     vs_written = 0
     for route in config["routes"]:
-        page = build_route_html(template, route, base_url)
+        page = build_route_html(
+            template,
+            route,
+            base_url,
+            default_image=default_comp_image,
+            default_image_alt=default_comp_alt,
+        )
         dest = outdir / f"vs-{route['slug']}" / "index.html"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(page, encoding="utf-8")

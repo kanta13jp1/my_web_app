@@ -16,6 +16,8 @@ import '../services/evernote_note_history_migration_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
+import '../services/notion_export_zip_service.dart';
+import '../services/storage_quota_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../widgets/evernote_cloud_migration_controls.dart';
 import '../widgets/evernote_history_review_panel.dart';
@@ -64,7 +66,13 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       const <EvernoteMigrationItem>[];
   int? _evernoteHistoryBusyItemId;
   EvernoteCloudStageProgress? _evernoteHistoryStageProgress;
+  bool _isBulkHistoryImporting = false;
+  String? _bulkHistoryImportStatus;
   ImportPreviewResult? _preview;
+  NotionZipParsedBundle? _notionZipBundle;
+  MigrationDiagnosticReport? _diagnosticReport;
+  StorageQuotaStatus? _storageQuotaStatus;
+  bool _skipNotionAttachmentsOnQuotaExceeded = false;
   final BusinessCsvImportService _businessCsvService =
       const BusinessCsvImportService();
   BusinessCsvDryRunResult? _businessCsvPreview;
@@ -127,8 +135,35 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       _migrationLedgerInitialized = true;
       _evernoteMigrationLedgerService = EvernoteMigrationLedgerService();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_loadEvernoteMigrationLedger());
+        if (mounted) {
+          unawaited(_loadEvernoteMigrationLedger());
+          unawaited(_loadStorageQuotaStatus());
+        }
       });
+    }
+  }
+
+  Future<void> _loadStorageQuotaStatus() async {
+    if (!mounted) {
+      return;
+    }
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      if (_storageQuotaStatus != null) {
+        setState(() => _storageQuotaStatus = null);
+      }
+      return;
+    }
+    try {
+      final status = await StorageQuotaService.supabase(
+        Supabase.instance.client,
+      ).loadStatus(userId: user.id);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _storageQuotaStatus = status);
+    } catch (error) {
+      debugPrint('Skipping storage quota load: $error');
     }
   }
 
@@ -303,6 +338,167 @@ class _ImportPageState extends State<_ImportOwnerPage> {
     }
   }
 
+  EvernoteMigrationItem? _matchHistoryTargetItem(
+    ImportedNoteDraft draft,
+    List<EvernoteMigrationItem> importedItems,
+  ) {
+    final createdAt = draft.sourceCreatedAt?.toUtc();
+    if (createdAt != null) {
+      final byCreated = importedItems
+          .where((item) => item.noteCreatedAt?.toUtc() == createdAt)
+          .toList(growable: false);
+      if (byCreated.length == 1) return byCreated.single;
+      if (byCreated.length > 1) {
+        final byCreatedAndTitle = byCreated
+            .where((item) => item.noteTitle?.trim() == draft.title.trim())
+            .toList(growable: false);
+        if (byCreatedAndTitle.length == 1) return byCreatedAndTitle.single;
+      }
+    }
+    final byTitle = importedItems
+        .where((item) => item.noteTitle?.trim() == draft.title.trim())
+        .toList(growable: false);
+    if (byTitle.length == 1) return byTitle.single;
+    return null;
+  }
+
+  Future<void> _bulkImportEvernoteHistoryRevisions() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      _showMessage('履歴を取り込む前にログインしてください。');
+      return;
+    }
+    final importedItems = _evernoteMigrationItems
+        .where((item) => item.isImported)
+        .toList(growable: false);
+    if (importedItems.isEmpty) {
+      _showMessage('先に通常のENEXノートを取り込んでください。');
+      return;
+    }
+
+    setState(() {
+      _isBulkHistoryImporting = true;
+      _evernoteHistoryStageProgress = null;
+      _bulkHistoryImportStatus = 'ファイル選択待ち...';
+      _migrationLedgerError = null;
+    });
+    try {
+      final selection = await FilePicker.pickFiles(
+        allowMultiple: true,
+        withData: false,
+        withReadStream: true,
+        type: FileType.custom,
+        allowedExtensions: const <String>['enex', 'xml'],
+      );
+      if (!isEvernoteOwnerActive(
+        mounted: mounted,
+        currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+        expectedOwnerId: user.id,
+      )) {
+        return;
+      }
+      if (selection == null || selection.files.isEmpty) {
+        setState(() => _bulkHistoryImportStatus = null);
+        return;
+      }
+
+      final files = selection.files;
+      final reviewedCounts = <int, int>{
+        for (final item in importedItems)
+          item.id: item.sourceHistoryVersionCount,
+      };
+      final importedCounts = <int, int>{
+        for (final item in importedItems)
+          item.id: item.importedHistoryVersionCount,
+      };
+      var successCount = 0;
+      var failCount = 0;
+      String? firstError;
+
+      for (var index = 0; index < files.length; index += 1) {
+        if (!isEvernoteOwnerActive(
+          mounted: mounted,
+          currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+          expectedOwnerId: user.id,
+        )) {
+          return;
+        }
+        final file = files[index];
+        if (mounted) {
+          setState(() {
+            _bulkHistoryImportStatus =
+                '${index + 1}/${files.length} 件目 (${file.name}) 処理中... '
+                '成功: $successCount / 失敗: $failCount';
+          });
+        }
+        try {
+          final source = file.readStream;
+          if (source == null) {
+            throw StateError('ストリームを開けませんでした。');
+          }
+          final staged = await _evernoteCloudStageService.stage(
+            userId: user.id,
+            fileName: file.name,
+            source: source,
+            totalBytes: file.size,
+            historyRevision: true,
+            onProgress: (progress) {
+              if (!mounted) return;
+              setState(() => _evernoteHistoryStageProgress = progress);
+            },
+          );
+          final archiveHash = staged.preview.sourceExportSha256;
+          if (archiveHash == null || staged.preview.notes.length != 1) {
+            throw StateError('単一ノートの履歴ENEXとして検証できませんでした。');
+          }
+          final item = _matchHistoryTargetItem(
+            staged.preview.notes.single,
+            importedItems,
+          );
+          if (item == null) {
+            throw StateError('対応する取り込み済みノートが見つかりませんでした。');
+          }
+          final neededCount = (importedCounts[item.id] ?? 0) + 1;
+          if ((reviewedCounts[item.id] ?? 0) < neededCount) {
+            await _evernoteNoteHistoryMigrationService.reviewInventory(
+              batchId: item.batchId,
+              sourceItemKey: item.sourceItemKey,
+              sourceVersionCount: neededCount,
+            );
+            reviewedCounts[item.id] = neededCount;
+          }
+          await _evernoteNoteHistoryMigrationService.migrateFromArchive(
+            userId: user.id,
+            batchId: item.batchId,
+            sourceItemKey: item.sourceItemKey,
+            archiveBytes: staged.totalBytes,
+            archiveSha256: archiveHash,
+          );
+          importedCounts[item.id] = neededCount;
+          successCount += 1;
+        } catch (error) {
+          failCount += 1;
+          firstError ??= '${file.name}: $error';
+        }
+      }
+
+      await _loadEvernoteMigrationLedger();
+      if (!mounted) return;
+      final summary = '一括取り込み完了: 成功 $successCount 件 / 失敗・スキップ $failCount 件'
+          '${firstError != null ? ' ($firstError)' : ''}';
+      setState(() => _bulkHistoryImportStatus = summary);
+      _showMessage(summary);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationLedgerError = error.toString());
+      _showMessage('履歴一括取り込みに失敗しました: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isBulkHistoryImporting = false);
+      }
+    }
+  }
+
   Future<void> _pickFile(String sourceType) async {
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (sourceType == 'evernote' && currentUser == null) {
@@ -313,6 +509,9 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       _isLoading = true;
       _selectedSource = sourceType;
       _preview = null;
+      _notionZipBundle = null;
+      _diagnosticReport = null;
+      _skipNotionAttachmentsOnQuotaExceeded = false;
       _businessCsvPreview = null;
       _lastBusinessCsvCommitResult = null;
       _lastImportResult = null;
@@ -356,6 +555,10 @@ class _ImportPageState extends State<_ImportOwnerPage> {
         setState(() {
           _preview = staged.preview;
           _evernoteCloudStageResult = staged;
+          _diagnosticReport = MigrationDiagnosticReport.fromImportPreview(
+            preview: staged.preview,
+            archiveSizeBytes: staged.totalBytes,
+          );
         });
         await _recordEvernotePreview(staged.preview);
         unawaited(_acquisitionService.recordImportPreview(sourceType));
@@ -365,6 +568,27 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       final bytes = file.bytes;
       if (bytes == null) {
         throw Exception('The selected file could not be read.');
+      }
+
+      if (sourceType == 'notion_zip') {
+        final bundle = _importService.parseNotionZipBytes(
+          fileName: file.name,
+          bytes: bytes,
+        );
+        final preview = _importService.buildNotionZipPreviewFromBundle(bundle);
+        final report = MigrationDiagnosticReport.fromNotionZipBundle(bundle);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _notionZipBundle = bundle;
+          _preview = preview;
+          _diagnosticReport = report;
+          _businessCsvPreview = null;
+          _lastBusinessCsvCommitResult = null;
+        });
+        unawaited(_acquisitionService.recordImportPreview(sourceType));
+        return;
       }
 
       if (sourceType == 'business_csv') {
@@ -532,6 +756,17 @@ class _ImportPageState extends State<_ImportOwnerPage> {
           importMode: 'evernote-lossless',
         );
         await _loadEvernoteMigrationLedger();
+      } else if (preview.sourceType == 'notion_zip') {
+        final bundle = _notionZipBundle;
+        if (bundle == null) {
+          throw StateError('Notion ZIP をもう一度選択してください。');
+        }
+        result = await _importService.importNotionZipBundle(
+          userId: user.id,
+          bundle: bundle,
+          skipAttachmentsOnQuotaExceeded: _skipNotionAttachmentsOnQuotaExceeded,
+        );
+        unawaited(_loadStorageQuotaStatus());
       } else {
         result = await _importService.importNotes(
           userId: user.id,
@@ -539,12 +774,25 @@ class _ImportPageState extends State<_ImportOwnerPage> {
         );
       }
       if (!mounted) return;
+      final detailParts = <String>[
+        if (result.uploadedAttachmentCount > 0)
+          '添付 ${result.uploadedAttachmentCount} 件',
+        if (result.skippedDuplicateCount > 0)
+          '重複スキップ ${result.skippedDuplicateCount} 件',
+        if (result.skippedAttachmentCount > 0)
+          '添付スキップ ${result.skippedAttachmentCount} 件',
+      ];
+      final detailSuffix =
+          detailParts.isEmpty ? '' : ' (${detailParts.join(' / ')})';
       _showMessage(
         'Imported ${result.insertedCount} notes via '
-        '${result.importModeLabel.toLowerCase()}.',
+        '${result.importModeLabel.toLowerCase()}$detailSuffix.',
       );
       setState(() {
         _preview = null;
+        _notionZipBundle = null;
+        _diagnosticReport = null;
+        _skipNotionAttachmentsOnQuotaExceeded = false;
         _evernoteCloudStageResult = null;
         _evernoteCloudStageProgress = null;
         _evernoteTransferProgress = null;
@@ -670,6 +918,8 @@ class _ImportPageState extends State<_ImportOwnerPage> {
 
   List<String> _extensionsFor(String sourceType) {
     switch (sourceType) {
+      case 'notion_zip':
+        return const <String>['zip'];
       case 'notion':
         return const <String>['csv'];
       case 'evernote':
@@ -760,6 +1010,22 @@ class _ImportPageState extends State<_ImportOwnerPage> {
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
+    final diagnosticReport = _diagnosticReport;
+    final quotaStatus = _storageQuotaStatus;
+    final notionBundle = _notionZipBundle;
+    final showQuotaSkipOption = preview != null &&
+        preview.sourceType == 'notion_zip' &&
+        notionBundle != null &&
+        notionBundle.attachmentCount > 0 &&
+        (notionBundle.oversizedAttachmentCount > 0 ||
+            (quotaStatus != null &&
+                !quotaStatus
+                    .evaluateUpload(
+                      incomingBytes: notionBundle.totalAttachmentBytes,
+                    )
+                    .allowed) ||
+            notionBundle.totalAttachmentBytes >
+                StorageQuotaPolicy.freeQuotaBytes);
     final businessCsvPreview = _businessCsvPreview;
     final currentUser = Supabase.instance.client.auth.currentUser;
 
@@ -796,12 +1062,22 @@ class _ImportPageState extends State<_ImportOwnerPage> {
             onRefresh: _loadEvernoteMigrationLedger,
             onReviewInventory: _reviewEvernoteHistoryInventory,
             onImportRevision: _pickEvernoteHistoryRevision,
+            onBulkImportRevisions: _bulkImportEvernoteHistoryRevisions,
+            isBulkImporting: _isBulkHistoryImporting,
+            bulkImportStatus: _bulkHistoryImportStatus,
           ),
           const SizedBox(height: 20),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
+              _sourceCard(
+                sourceType: 'notion_zip',
+                title: 'Notion (Export ZIP)',
+                subtitle:
+                    'NotionのExport ZIP（Markdown・CSV・添付・階層）を丸ごと診断＆一括移行。ログイン不要で事前診断可能。',
+                icon: Icons.folder_zip_outlined,
+              ),
               _notionApiCard(),
               _sourceCard(
                 sourceType: 'notion',
@@ -871,6 +1147,13 @@ class _ImportPageState extends State<_ImportOwnerPage> {
             _buildBusinessCsvPreviewCard(
               preview: businessCsvPreview,
               currentUser: currentUser,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (diagnosticReport != null) ...[
+            _buildMigrationDiagnosticCard(
+              report: diagnosticReport,
+              quotaStatus: quotaStatus,
             ),
             const SizedBox(height: 16),
           ],
@@ -990,6 +1273,26 @@ class _ImportPageState extends State<_ImportOwnerPage> {
                           progress: _evernoteTransferProgress!,
                         ),
                       ],
+                    ],
+                    if (showQuotaSkipOption) ...[
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        key: const Key('import-skip-attachments-quota'),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _skipNotionAttachmentsOnQuotaExceeded,
+                        onChanged: _isImporting
+                            ? null
+                            : (checked) {
+                                setState(() {
+                                  _skipNotionAttachmentsOnQuotaExceeded =
+                                      checked ?? false;
+                                });
+                              },
+                        title: const Text(
+                          '容量上限を超える場合は添付ファイルをスキップし、テキスト・表データのみ全件移行する',
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 16),
                     FilledButton.icon(
@@ -1747,13 +2050,124 @@ class _ImportPageState extends State<_ImportOwnerPage> {
     );
   }
 
+  Future<void> _copyDiagnosticSummary(MigrationDiagnosticReport report) async {
+    await Clipboard.setData(
+      ClipboardData(text: report.buildShareableSummaryText()),
+    );
+    if (!mounted) {
+      return;
+    }
+    _showMessage('個人情報を含まない診断サマリーをコピーしました。');
+  }
+
+  Widget _buildMigrationDiagnosticCard({
+    required MigrationDiagnosticReport report,
+    required StorageQuotaStatus? quotaStatus,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      key: const Key('migration-diagnostic-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(Icons.analytics_outlined),
+                const Text(
+                  '移行事前診断 ＆ 年間節約目安',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+                Chip(label: Text(report.sourceDisplayName)),
+                Chip(
+                  avatar: Icon(
+                    report.fitsFreeStorageQuota
+                        ? Icons.check_circle_outline
+                        : Icons.info_outline,
+                    size: 18,
+                    color: report.fitsFreeStorageQuota
+                        ? colorScheme.primary
+                        : colorScheme.error,
+                  ),
+                  label: Text(
+                    report.fitsFreeStorageQuota
+                        ? 'Free枠 (${formatStorageBytes(report.freeQuotaBytes)}) 収容OK'
+                        : '添付のみ上位枠/整理推奨',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                Text('ノート: ${report.noteCount} 件'),
+                Text('データベース: ${report.databaseCount} 件'),
+                Text('フォルダ階層: ${report.folderCount} 階層'),
+                Text(
+                  '添付ファイル: ${report.attachmentCount} 件 '
+                  '(${formatStorageBytes(report.totalAttachmentBytes)})',
+                ),
+                if (report.oversizedAttachmentCount > 0)
+                  Text(
+                    '10 MB 超過添付: ${report.oversizedAttachmentCount} 件',
+                    style: TextStyle(
+                      color: colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '年間見直し参考目安: ${report.estimatedAnnualSavingsLabel} '
+              '(公式料金比較・ご契約プランにより変動します)',
+              style: TextStyle(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            if (quotaStatus != null) ...[
+              const SizedBox(height: 12),
+              LinearProgressIndicator(value: quotaStatus.usageFraction),
+              const SizedBox(height: 6),
+              Text(
+                '現在の利用ストレージ (${quotaStatus.planId.toUpperCase()}): '
+                '${formatStorageBytes(quotaStatus.usedBytes)} / '
+                '${formatStorageBytes(quotaStatus.quotaBytes)}',
+              ),
+            ],
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const Key('copy-diagnostic-summary-button'),
+              onPressed: () => unawaited(_copyDiagnosticSummary(report)),
+              icon: const Icon(Icons.copy_outlined),
+              label: const Text('診断サマリーをコピー（個人情報なし）'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildImportSuccessOnboarding({
     required ImportExecutionResult result,
     required User? currentUser,
     String? sourceType,
   }) {
     final sourceName = switch (sourceType) {
-      'notion' || 'notion_api' => 'Notion',
+      'notion' || 'notion_zip' || 'notion_api' => 'Notion',
       'evernote' => 'Evernote',
       'markdown' => 'Markdown',
       'xlsx' => 'Excel',

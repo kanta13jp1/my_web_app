@@ -555,4 +555,198 @@ void main() {
     expect(result.dppCandidates.last.status, '次点');
     expect(result.dppCandidates.last.votes, 2122);
   });
+
+  test(
+      'hydrates multi-day server history for first-time visitor with empty local cache',
+      () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-22T07:17:16.000Z',
+      'officialCurrentLocalMembers': 421,
+      'actualNetIncreaseRequired': 279,
+      'history': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'fetchedAt': '2026-11-20T07:38:42.000Z',
+          'officialCurrentLocalMembers': 419,
+          'actualNetIncreaseRequired': 281,
+        },
+        <String, dynamic>{
+          'fetchedAt': '2026-11-21T07:35:12.000Z',
+          'officialCurrentLocalMembers': 420,
+          'actualNetIncreaseRequired': 280,
+        },
+      ],
+    });
+
+    expect(snapshot.history, hasLength(2));
+    await service.cacheSnapshot(snapshot, prefs: prefs);
+
+    final reloaded = await service.loadCachedSnapshot(prefs: prefs);
+    expect(reloaded, isNotNull);
+    expect(reloaded!.history, hasLength(2));
+
+    final history = await service.loadSnapshotHistory(prefs: prefs);
+    expect(history, hasLength(3));
+    expect(
+      history.map((point) => point.officialCurrentLocalMembers).toList(),
+      <int>[419, 420, 421],
+    );
+  });
+
+  test('mergeSnapshotHistory deduplicates JST days and retains local fallback',
+      () {
+    final serverHistory = <LocalElectionRealityHistoryPoint>[
+      // 2026-11-21T14:59:59Z -> 2026-11-21 23:59:59 JST
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-21T14:59:59.000Z'),
+        officialCurrentLocalMembers: 418,
+        actualNetIncreaseRequired: 282,
+      ),
+      // 2026-11-21T15:00:00Z -> 2026-11-22 00:00:00 JST (server beats tie)
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-21T15:00:00.000Z'),
+        officialCurrentLocalMembers: 421,
+        actualNetIncreaseRequired: 279,
+      ),
+      // Invalid zero-member point filtered out
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-19T00:00:00.000Z'),
+        officialCurrentLocalMembers: 0,
+        actualNetIncreaseRequired: 700,
+      ),
+    ];
+    final localHistory = <LocalElectionRealityHistoryPoint>[
+      // Local-only earlier day preserved as fallback
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-18T03:00:00.000Z'),
+        officialCurrentLocalMembers: 415,
+        actualNetIncreaseRequired: 285,
+      ),
+      // Exact timestamp tie on 11/22 JST -> serverHistory wins
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-21T15:00:00.000Z'),
+        officialCurrentLocalMembers: 999,
+        actualNetIncreaseRequired: 0,
+      ),
+    ];
+
+    final merged = LocalElectionRealityService.mergeSnapshotHistory(
+      serverHistory: serverHistory,
+      localHistory: localHistory,
+      maxPoints: 3,
+    );
+
+    expect(merged, hasLength(3));
+    expect(
+      merged.map((point) => point.officialCurrentLocalMembers).toList(),
+      <int>[415, 418, 421],
+    );
+
+    final capped = LocalElectionRealityService.mergeSnapshotHistory(
+      serverHistory: serverHistory,
+      localHistory: localHistory,
+      maxPoints: 2,
+    );
+    expect(capped, hasLength(2));
+    expect(
+      capped.map((point) => point.officialCurrentLocalMembers).toList(),
+      <int>[418, 421],
+    );
+  });
+
+  test('legacy snapshot JSON without history key remains backward compatible',
+      () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+    await service.cacheSnapshot(
+      LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+        'fetchedAt': '2026-11-20T05:00:00.000Z',
+        'officialCurrentLocalMembers': 419,
+        'actualNetIncreaseRequired': 281,
+      }),
+      prefs: prefs,
+    );
+
+    final reloaded = await service.loadCachedSnapshot(prefs: prefs);
+    expect(reloaded, isNotNull);
+    expect(reloaded!.history, isEmpty);
+
+    final merged = LocalElectionRealityService.mergeSnapshotHistory(
+      serverHistory: reloaded.history,
+      localHistory: await service.loadSnapshotHistory(prefs: prefs),
+      currentPoint: LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-22T05:00:00.000Z'),
+        officialCurrentLocalMembers: 421,
+        actualNetIncreaseRequired: 279,
+      ),
+    );
+    expect(
+      merged.map((point) => point.officialCurrentLocalMembers).toList(),
+      <int>[419, 421],
+    );
+  });
+
+  test(
+      'accepts snapshot whose linked prefecture has member parsed from generic section (other category)',
+      () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-23T02:52:40.818Z',
+      'officialCurrentLocalMembers': 421,
+      'actualNetIncreaseRequired': 279,
+      'prefectures': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '鳥取県',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/tottori',
+          'currentMembers': 1,
+          'prefecturalAssemblyMembers': 0,
+          'municipalAssemblyMembers': 0,
+        },
+      ],
+      'members': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '鳥取県',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/tottori',
+          'detailUrl': 'https://new-kokumin.jp/member/murao-masahiko',
+          'name': '村尾 昌彦',
+          'kana': 'むらお まさひこ',
+          'constituency': '',
+          'municipality': '鳥取県',
+          'assemblyLabel': '地方自治体議員',
+          'assemblyCategory': 'other',
+          'electionCountLabel': '当選1回',
+        },
+      ],
+    });
+
+    expect(snapshot.hasSuspiciousEmptyOfficialPrefecture, isFalse);
+    await service.cacheSnapshot(snapshot, prefs: prefs);
+    final reloaded = await service.loadCachedSnapshot(prefs: prefs);
+    expect(reloaded, isNotNull);
+    expect(reloaded!.officialCurrentLocalMembers, 421);
+    expect(reloaded.members.single.name, '村尾 昌彦');
+  });
+
+  test('flags linked prefecture with zero parsed members as suspicious', () {
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-23T02:52:40.818Z',
+      'officialCurrentLocalMembers': 420,
+      'actualNetIncreaseRequired': 280,
+      'prefectures': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '鳥取県',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/tottori',
+          'currentMembers': 0,
+          'prefecturalAssemblyMembers': 0,
+          'municipalAssemblyMembers': 0,
+        },
+      ],
+      'members': const <Map<String, dynamic>>[],
+    });
+
+    expect(snapshot.hasSuspiciousEmptyOfficialPrefecture, isTrue);
+    expect(snapshot.suspiciousEmptyOfficialPrefectures, <String>['鳥取県']);
+  });
 }

@@ -858,6 +858,25 @@ void main() {
       expect(report.implementationContexts.isNotEmpty, true);
     });
 
+    test('includes payment inconsistency summary in developer requests', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPayカード': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+        actualPaymentAmounts: const <String, double>{'paypay_card': 14617},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final req = report.developerRequests.firstWhere(
+        (item) => item.title == '支払記録の不整合（R1〜R3）の解消',
+      );
+      expect(req.description, contains('不整合のある項目が1件'));
+      expect(req.evidence.join(' '), contains('PayPayカード(R2)'));
+    });
+
     test('detects card billing configuration action items', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'KDDI': -5764},
@@ -898,6 +917,112 @@ void main() {
               AssetManagementInsightActionType.cardBillingConfiguration,
         ),
         false,
+      );
+    });
+
+    test(
+        'emits critical action item when card statement import is missing and clears after import',
+        () {
+      final beforeWorkbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'PayPayカード': -20000,
+          'KDDI': -5764,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'paypay_card': 20000,
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+
+      final beforeReport = service.buildReport(workbook: beforeWorkbook);
+      final missingImportItem = beforeReport.actionItems.firstWhere(
+        (item) =>
+            item.type ==
+                AssetManagementInsightActionType.cardBillingConfiguration &&
+            item.severity == AssetManagementInsightSeverity.critical &&
+            item.relatedAccountId == 'paypay_card',
+      );
+      expect(missingImportItem.title, startsWith('要確認：'));
+      expect(missingImportItem.title, contains('カード明細の取り込みが必要です'));
+      expect(
+        missingImportItem.description,
+        contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+      );
+      expect(missingImportItem.suggestedAction, contains('カード明細取り込み欄'));
+
+      final afterWorkbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'PayPayカード': -20000,
+          'KDDI': -5764,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'paypay_card': 20000,
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_paypay_1',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPayカード',
+            postedAt: null,
+            description: 'KDDI利用分',
+            amount: 5764,
+          ),
+        ],
+      );
+
+      final afterReport = service.buildReport(workbook: afterWorkbook);
+      expect(
+        afterReport.actionItems.any(
+          (item) =>
+              item.type ==
+                  AssetManagementInsightActionType.cardBillingConfiguration &&
+              item.severity == AssetManagementInsightSeverity.critical &&
+              item.relatedAccountId == 'paypay_card',
+        ),
+        isFalse,
+      );
+    });
+
+    test(
+        'suppresses critical missing statement action item for revolving cards',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'auPayカード': -100000,
+          'au': -12000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+                  AssetManagementInsightActionType.cardBillingConfiguration &&
+              item.severity == AssetManagementInsightSeverity.critical &&
+              item.relatedAccountId == 'aupay_card',
+        ),
+        isFalse,
       );
     });
 
@@ -1286,6 +1411,357 @@ void main() {
       expect(upcoming.title, contains('原資口座を確認してください'));
       expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
     });
+
+    test('shouldBlockPaymentExecution は使用可能額が負の時のみ true を返す (#4219)', () {
+      const planningService = AssetLiabilityPlanningService();
+      const service = AssetManagementInsightService();
+
+      final negativeWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 5000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final negativeReport = service.buildReport(
+        workbook: negativeWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(negativeReport.todayAvailable.availableAmount, lessThan(0));
+      expect(negativeReport.shouldBlockPaymentExecution, isTrue);
+
+      final positiveWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 200000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final positiveReport = service.buildReport(
+        workbook: positiveWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(
+        positiveReport.todayAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(
+        positiveReport.weekAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(positiveReport.shouldBlockPaymentExecution, isFalse);
+    });
+
+    test('buildRevolvingInlineHint returns null for non-revolving debt', () {
+      final nonRevolving = _debtRow(
+        annualRate: 0.15,
+        kind: AssetLiabilityAccountKind.cardLoan,
+      );
+      expect(
+        AssetManagementInsightService.buildRevolvingInlineHint(nonRevolving),
+        isNull,
+      );
+    });
+
+    test(
+        'buildRevolvingInlineHint computes exit months and principal for revolving debt',
+        () {
+      const revolving = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -100000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.15,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 1250,
+        principalPaymentEstimate: 8750,
+        balanceAfterPaymentEstimate: -91250,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 100000,
+          monthlyAmount: 10000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 100000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 10000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(revolving);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isTrue);
+      expect(hint.revolvingExitHintMonths, isNotNull);
+      expect(hint.revolvingExitHintMonths, greaterThan(0));
+      expect(hint.currentPrincipalEstimate, 8750);
+    });
+
+    test(
+        'buildRevolvingInlineHint marks stagnant revolving debt as never paying off',
+        () {
+      const stagnant = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -500000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.18,
+        minimumPaymentEstimate: 5000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 5000,
+        monthlyInterestEstimate: 7500,
+        principalPaymentEstimate: 0,
+        balanceAfterPaymentEstimate: -502500,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 500000,
+          monthlyAmount: 5000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 500000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 5000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(stagnant);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isFalse);
+      expect(hint.revolvingExitHintMonths, isNull);
+      expect(hint.currentPrincipalEstimate, 0);
+    });
+  });
+
+  group('AssetManagementInsightService subscription excess alert', () {
+    test('populates subscriptionExcessAlert and warning action when excessive',
+        () {
+      final workbook =
+          _workbook(debtRows: const <AssetLiabilityDebtRow>[]).copyWith(
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 's1',
+            name: 'Sub A',
+            amount: 5000,
+            paymentDay: 10,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 's2',
+            name: 'Sub B',
+            amount: 6000,
+            paymentDay: 12,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 's3',
+            name: 'Sub C',
+            amount: 5000,
+            paymentDay: 15,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+        ],
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+      expect(report.subscriptionExcessAlert, isNotNull);
+      expect(report.subscriptionExcessAlert!.activeCount, 3);
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+                  AssetManagementInsightActionType.subscriptionExcess &&
+              item.severity == AssetManagementInsightSeverity.warning,
+        ),
+        isTrue,
+      );
+    });
+
+    test('returns null subscriptionExcessAlert for only zero/utility entries',
+        () {
+      final workbook =
+          _workbook(debtRows: const <AssetLiabilityDebtRow>[]).copyWith(
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'zero',
+            name: 'Free Zero',
+            amount: 0,
+            paymentDay: 10,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 'utility',
+            name: '家賃',
+            amount: 80000,
+            paymentDay: 25,
+            category: AssetRecurringFixedCostCategory.utility,
+          ),
+        ],
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+      expect(report.subscriptionExcessAlert, isNull);
+    });
+  });
+
+  group('Issue #3393 & #4086 payment discrepancy & escape plan prompts', () {
+    test(
+      'adds paymentDiscrepancy critical action when actual < minimum/scheduled (#3393)',
+      () {
+        final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 50000,
+            'モビット': -200000,
+          },
+          baseDate: DateTime(2026, 6, 15),
+          monthlyPaymentOverrides: const <String, double>{'mobit': 12000},
+          actualPaymentAmounts: const <String, double>{'mobit': 5000},
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+        );
+
+        final discrepancyActions = report.actionItems
+            .where(
+              (item) =>
+                  item.type ==
+                  AssetManagementInsightActionType.paymentDiscrepancy,
+            )
+            .toList(growable: false);
+        expect(discrepancyActions, hasLength(1));
+        expect(
+          discrepancyActions.single.severity,
+          AssetManagementInsightSeverity.critical,
+        );
+        expect(discrepancyActions.single.title, contains('差額7,000円が発生'));
+        expect(
+          discrepancyActions.single.description,
+          contains('原因確認・補填の必要あり'),
+        );
+        expect(
+          discrepancyActions.single.suggestedAction,
+          contains('なぜ差額があるのか確認'),
+        );
+      },
+    );
+
+    test(
+      'prompt includes escape target period & monthly payment for revolving violation (#4086)',
+      () {
+        final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'cash': 50000,
+            'auPayカード': -500000,
+          },
+          baseDate: DateTime(2026, 6, 10),
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'aupay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 20000,
+              creditLimit: 500000,
+            ),
+          },
+          paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{'aupay_card': 5000},
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+        );
+        final prompt = const AssetManagementInsightPromptBuilder()
+            .buildDetailedAdvicePrompt(report);
+
+        expect(prompt, contains('推奨アクション:'));
+        expect(prompt, contains('解消目標プラン: 12ヶ月以内に毎月'));
+      },
+    );
+
+    test(
+      'emits cashShortageRisk for payment-day minimum shortage and late-fee note on overdue (#3342, #3442)',
+      () {
+        final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 200000,
+            'モビット': -500000,
+          },
+          baseDate: DateTime(2026, 9, 15),
+          paymentDayOverrides: const <String, int>{'mobit': 5},
+          annualRateOverrides: const <String, double>{'mobit': 0.18},
+          monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+        );
+
+        final shortageActions = report.actionItems
+            .where(
+              (item) =>
+                  item.type ==
+                      AssetManagementInsightActionType.cashShortageRisk &&
+                  item.paymentDay == 5,
+            )
+            .toList(growable: false);
+        expect(shortageActions, hasLength(1));
+        expect(
+          shortageActions.single.title,
+          contains('最低支払額より'),
+        );
+        expect(
+          shortageActions.single.suggestedAction,
+          contains('支払予定の増額入力'),
+        );
+
+        final overdue = report.actionItems.firstWhere(
+          (item) =>
+              item.type == AssetManagementInsightActionType.overduePayment &&
+              item.relatedAccountId == 'mobit',
+        );
+        expect(overdue.description, contains('遅延損害金(概算)'));
+        expect(overdue.description, contains('元の負債残高に加算見込み'));
+      },
+    );
   });
 }
 

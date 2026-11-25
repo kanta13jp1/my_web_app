@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
-import 'package:my_web_app/utils/wiki_page_response.dart';
+import 'package:my_web_app/repositories/wiki_repository.dart';
+import 'package:my_web_app/view_models/wiki_read_model.dart';
 
 /// Wiki・データベースページ
-/// wiki-database Edge Function と連携して階層型Wikiを管理
+/// enterprise-hub Edge Function と連携して階層型Wikiを管理
 /// Notion競合 — ページ階層・テーブルビュー・リンク参照
 class WikiDatabasePage extends StatefulWidget {
-  const WikiDatabasePage({super.key});
+  const WikiDatabasePage({
+    super.key,
+    this.wikiRepository,
+    this.isAuthenticatedOverride,
+  });
+
+  final WikiRepository? wikiRepository;
+  final bool? isAuthenticatedOverride;
 
   @override
   State<WikiDatabasePage> createState() => _WikiDatabasePageState();
@@ -21,147 +29,81 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   @override
   TabController get tabUrlController => _tabController;
 
-  final _supabase = Supabase.instance.client;
   late final TabController _tabController;
-  bool _isLoading = false;
-  String? _errorMessage;
-  List<Map<String, dynamic>> _pages = [];
-  String? _selectedPageId;
-  Map<String, dynamic>? _selectedPage;
-  List<Map<String, dynamic>> _children = [];
-  List<Map<String, dynamic>> _tableRows = [];
-  final _titleCtrl = TextEditingController();
-  final _contentCtrl = TextEditingController();
-  final _searchCtrl = TextEditingController();
+  late final WikiReadModel _readModel;
+  bool get _isLoading =>
+      (_readModel.loading && _pages.isEmpty) || _readModel.detailLoading;
+  String? get _errorMessage => _pages.isEmpty ? _readModel.error : null;
+  List<Map<String, dynamic>> get _pages => _readModel.pages;
+  String? get _selectedPageId => _readModel.selectedId;
+  Map<String, dynamic>? get _selectedPage => _readModel.selectedPage;
+  List<Map<String, dynamic>> get _children => _readModel.children;
+  List<Map<String, dynamic>> get _tableRows => _readModel.tableRows;
+
+  SupabaseClient get _supabaseClient => Supabase.instance.client;
+
+  bool get _isAuthenticated {
+    final override = widget.isAuthenticatedOverride;
+    if (override != null) return override;
+    if (widget.wikiRepository != null) return true;
+    return _supabaseClient.auth.currentUser != null;
+  }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    final repository = widget.wikiRepository ??
+        WikiRepository((body) async {
+          final response = await _supabaseClient.functions.invoke(
+            'enterprise-hub',
+            body: body,
+          );
+          return response.data;
+        });
+    _readModel = WikiReadModel(repository);
+    _readModel.addListener(_onReadChanged);
     _fetchPages();
+  }
+
+  void _onReadChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _readModel.removeListener(_onReadChanged);
+    _readModel.dispose();
     _tabController.dispose();
-    _titleCtrl.dispose();
-    _contentCtrl.dispose();
-    _searchCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _fetchPages() async {
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final response = await _supabase.functions
-          .invoke('enterprise-hub', body: {'action': 'wiki.list'});
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['pages'] is List) {
-        setState(
-          () => _pages = (data['pages'] as List)
-              .cast<Map<String, dynamic>>()
-              .map(normalizeWikiPageResponse)
-              .toList(),
-        );
-      } else {
-        setState(() => _pages = []);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Wiki ページの取得に失敗しました: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    if (!_isAuthenticated) return;
+    await _readModel.refresh();
   }
 
   Future<void> _fetchPageDetail(String pageId) async {
-    setState(() => _isLoading = true);
-    try {
-      final response = await _supabase.functions.invoke(
-        'enterprise-hub',
-        body: {'action': 'wiki.list'},
-      );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['pages'] is List) {
-        final allPages = (data['pages'] as List)
-            .cast<Map<String, dynamic>>()
-            .map(normalizeWikiPageResponse)
-            .toList();
-        final page = allPages.where((p) {
-          return p['id']?.toString() == pageId;
-        }).firstOrNull;
-        if (!mounted || _selectedPageId != pageId) return;
-        setState(() {
-          _selectedPage = page;
-          _children = [];
-          _tableRows = [];
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'ページ詳細の取得に失敗しました: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    await _readModel.select(pageId);
   }
 
   Future<void> _createPage({String? parentId}) async {
-    _titleCtrl.clear();
-    _contentCtrl.clear();
-    final confirmed = await showDialog<bool>(
+    final draft = await showDialog<_WikiPageDraft>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('新しいページを作成'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(labelText: 'タイトル'),
-              autofocus: true,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _contentCtrl,
-              decoration: const InputDecoration(labelText: '内容 (Markdown)'),
-              maxLines: 5,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('作成'),
-          ),
-        ],
-      ),
+      builder: (_) => const _CreateWikiPageDialog(),
     );
-    if (confirmed != true || _titleCtrl.text.trim().isEmpty) return;
+    if (draft == null || draft.title.isEmpty) return;
     try {
-      await _supabase.functions.invoke(
-        'enterprise-hub',
-        body: {
-          'action': 'wiki.create',
-          'title': _titleCtrl.text.trim(),
-          'content': _contentCtrl.text.trim(),
-          if (parentId != null) 'category': parentId,
-        },
+      await _readModel.createPage(
+        title: draft.title,
+        content: draft.content,
+        parentId: parentId,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('ページを作成しました')),
         );
       }
-      await _fetchPages();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -172,41 +114,16 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   }
 
   Future<void> _addTableRow(String pageId) async {
-    final ctrl = TextEditingController();
-    final confirmed = await showDialog<bool>(
+    final rowContent = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('行を追加'),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(labelText: '内容 (JSON またはテキスト)'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('追加'),
-          ),
-        ],
-      ),
+      builder: (_) => const _AddWikiTableRowDialog(),
     );
-    final rowContent = ctrl.text.trim();
-    ctrl.dispose();
-    if (confirmed != true) return;
+    if (rowContent == null) return;
     try {
-      await _supabase.functions.invoke(
-        'enterprise-hub',
-        body: {
-          'action': 'sheet.add_row',
-          'sheet_id': pageId,
-          'data': {'content': rowContent},
-        },
+      await _readModel.addTableRow(
+        pageId: pageId,
+        content: rowContent,
       );
-      await _fetchPageDetail(pageId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -313,8 +230,34 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       onRefresh: _fetchPages,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _pages.length,
+        itemCount: _pages.length + 1,
         itemBuilder: (context, index) {
+          if (index == _pages.length) {
+            return Column(
+              children: [
+                if (_readModel.error != null)
+                  Text(
+                    _readModel.error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                if (_readModel.nextOffset != null || _readModel.error != null)
+                  TextButton(
+                    onPressed: _readModel.loading
+                        ? null
+                        : _readModel.error != null
+                            ? _readModel.retry
+                            : _readModel.loadMore,
+                    child: Text(
+                      _readModel.loading
+                          ? '読み込み中…'
+                          : _readModel.error != null
+                              ? '再試行'
+                              : '続きを読む',
+                    ),
+                  ),
+              ],
+            );
+          }
           final page = _pages[index];
           final title = page['title']?.toString() ?? '無題';
           final pageId =
@@ -360,12 +303,6 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                 ],
               ),
               onTap: () {
-                setState(() {
-                  _selectedPageId = pageId;
-                  _selectedPage = null;
-                  _children = [];
-                  _tableRows = [];
-                });
                 _fetchPageDetail(pageId);
                 _tabController.animateTo(1);
               },
@@ -377,6 +314,28 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   }
 
   Widget _buildPageDetail() {
+    if (_readModel.detailError != null) {
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _readModel.detailError!,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              if (_selectedPageId != null)
+                TextButton(
+                  onPressed: () => _fetchPageDetail(_selectedPageId!),
+                  child: const Text('再試行'),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
     if (_selectedPage == null) {
       return const Center(
         child: Column(
@@ -440,6 +399,17 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                 height: 1.5,
               ),
             ),
+            if (_readModel.childrenHasMore) ...[
+              const SizedBox(height: 4),
+              const Text(
+                '※ サブページは最大100件まで表示しています。未表示のページがあります。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF9CA3AF),
+                  height: 1.5,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             ..._children.map(
               (child) => ListTile(
@@ -454,7 +424,6 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                       child['id']?.toString() ??
                       '';
                   if (id.isNotEmpty) {
-                    setState(() => _selectedPageId = id);
                     _fetchPageDetail(id);
                   }
                 },
@@ -462,7 +431,11 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             ),
             const SizedBox(height: 16),
           ],
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               const Text(
                 'テーブルデータ',
@@ -471,7 +444,6 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   height: 1.5,
                 ),
               ),
-              const Spacer(),
               TextButton.icon(
                 onPressed: () => _addTableRow(_selectedPageId!),
                 icon: const Icon(Icons.add, size: 16),
@@ -479,6 +451,17 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
               ),
             ],
           ),
+          if (_readModel.tableRowsHasMore) ...[
+            const SizedBox(height: 4),
+            const Text(
+              '※ テーブル行は最大100件まで表示しています。未表示の行があります。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           if (_tableRows.isEmpty)
             const Text(
@@ -520,6 +503,115 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             }),
         ],
       ),
+    );
+  }
+}
+
+class _WikiPageDraft {
+  const _WikiPageDraft({
+    required this.title,
+    required this.content,
+  });
+
+  final String title;
+  final String content;
+}
+
+class _CreateWikiPageDialog extends StatefulWidget {
+  const _CreateWikiPageDialog();
+
+  @override
+  State<_CreateWikiPageDialog> createState() => _CreateWikiPageDialogState();
+}
+
+class _CreateWikiPageDialogState extends State<_CreateWikiPageDialog> {
+  final TextEditingController _titleCtrl = TextEditingController();
+  final TextEditingController _contentCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _contentCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('新しいページを作成'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(labelText: 'タイトル'),
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _contentCtrl,
+              decoration: const InputDecoration(labelText: '内容 (Markdown)'),
+              maxLines: 5,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(
+            context,
+            _WikiPageDraft(
+              title: _titleCtrl.text.trim(),
+              content: _contentCtrl.text.trim(),
+            ),
+          ),
+          child: const Text('作成'),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddWikiTableRowDialog extends StatefulWidget {
+  const _AddWikiTableRowDialog();
+
+  @override
+  State<_AddWikiTableRowDialog> createState() => _AddWikiTableRowDialogState();
+}
+
+class _AddWikiTableRowDialogState extends State<_AddWikiTableRowDialog> {
+  final TextEditingController _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('行を追加'),
+      content: TextField(
+        controller: _ctrl,
+        decoration: const InputDecoration(labelText: '内容 (JSON またはテキスト)'),
+        autofocus: true,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _ctrl.text.trim()),
+          child: const Text('追加'),
+        ),
+      ],
     );
   }
 }

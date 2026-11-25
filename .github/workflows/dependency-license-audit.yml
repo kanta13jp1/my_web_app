@@ -1,0 +1,116 @@
+name: Dependency Multi-License Audit
+
+on:
+  pull_request:
+    paths:
+      - 'pubspec.yaml'
+      - '**/pubspec.yaml'
+      - 'pubspec.lock'
+      - '**/pubspec.lock'
+      - 'package.json'
+      - '**/package.json'
+      - 'package-lock.json'
+      - '**/package-lock.json'
+      - 'deno.json'
+      - '**/deno.json'
+      - 'deno.jsonc'
+      - '**/deno.jsonc'
+      - 'requirements*.txt'
+      - '**/requirements*.txt'
+      - 'scripts/audit_dependency_licenses.py'
+      - 'test/scripts/test_audit_dependency_licenses.py'
+      - '.github/workflows/dependency-license-audit.yml'
+  schedule:
+    - cron: "15 1 * * 1" # Weekly Monday 10:15 JST
+  workflow_dispatch:
+    inputs:
+      fail_on_weak_copyleft:
+        description: "Fail build when weak-copyleft licenses (LGPL/MPL/EPL) are present"
+        required: false
+        default: "false"
+
+permissions: {}
+
+concurrency:
+  group: dependency-license-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  license-audit-pr:
+    name: Audit dependency licenses across ecosystems
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Scan dependency manifests for forbidden copyleft licenses
+        id: audit
+        env:
+          FAIL_ON_WEAK_COPYLEFT: ${{ inputs.fail_on_weak_copyleft || 'false' }}
+        run: |
+          python3 -B scripts/audit_dependency_licenses.py \
+            --repo-root . \
+            --json-out license-audit-report.json \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Job Summary
+        if: always()
+        env:
+          POLICY_PASSED: ${{ steps.audit.outputs.policy_passed }}
+          MANIFESTS_SCANNED: ${{ steps.audit.outputs.manifests_scanned }}
+          TOTAL_PACKAGES: ${{ steps.audit.outputs.total_packages }}
+          FORBIDDEN_COUNT: ${{ steps.audit.outputs.forbidden_count }}
+          WEAK_COUNT: ${{ steps.audit.outputs.weak_copyleft_count }}
+        run: |
+          {
+            echo "## Dependency Multi-License Audit"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| Policy Passed | ${POLICY_PASSED:-false} |"
+            echo "| Manifests Scanned | ${MANIFESTS_SCANNED:-0} |"
+            echo "| Packages Audited | ${TOTAL_PACKAGES:-0} |"
+            echo "| Forbidden (AGPL/GPL/SSPL) | ${FORBIDDEN_COUNT:-0} |"
+            echo "| Weak Copyleft Review | ${WEAK_COUNT:-0} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  license-audit-notify:
+    name: Notify operators when non-PR license audit fails
+    needs: license-audit-pr
+    if: github.event_name != 'pull_request' && failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Create or update deduplicated license compliance Issue
+        id: notify
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FAIL_ON_WEAK_COPYLEFT: ${{ inputs.fail_on_weak_copyleft || 'false' }}
+        run: |
+          python3 -B scripts/audit_dependency_licenses.py \
+            --repo-root . \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --create-issue \
+            --github-output "$GITHUB_OUTPUT"

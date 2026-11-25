@@ -142,4 +142,24 @@ create index if not exists mfa_recovery_codes_set_id_idx
 /* auth_migration: 20260831180000 */
 alter table auth.one_time_tokens
     add column if not exists expires_at timestamptz;
+-- migrations/20260911120000_add_link_token_hash_to_one_time_tokens.up.sql
+/* auth_migration: 20260911120000 */
+-- High-entropy token hash for link (non-typed) OTP flows.
+alter table auth.one_time_tokens
+    add column if not exists link_token_hash text;
 
+do $$ begin
+  begin
+    create index if not exists one_time_tokens_link_token_hash_hash_idx on auth.one_time_tokens using hash (link_token_hash);
+  exception when others then
+    -- Fallback to a btree index if hash creation fails
+    create index if not exists one_time_tokens_link_token_hash_hash_idx on auth.one_time_tokens using btree (link_token_hash);
+  end;
+end $$;
+
+-- migrations/20261030120000_add_dedicated_scope_to_saml_providers.up.sql
+/* auth_migration: 20261030120000 */
+do $$ begin
+    alter table only auth.saml_providers
+        add column if not exists dedicated_scope boolean null;
+end $$;

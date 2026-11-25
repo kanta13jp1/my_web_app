@@ -48,6 +48,7 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "agent.create",
   "agent.run",
   "agent.tool_policy.evaluate",
+  "agent.tool_policy.preview",
   "org.get",
   "my_agent.chat",
   "my_agent.history",
@@ -116,6 +117,9 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "english_reading.ability",
   "english_reading.generate_lesson",
   "home.recommend",
+  "quota.daily_status",
+  "data_sources.status",
+  "data_sources.register",
 ]);
 
 // Paid LLM gateways: callable by a signed-in user, or by other Edge Functions

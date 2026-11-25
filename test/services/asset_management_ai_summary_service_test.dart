@@ -83,6 +83,185 @@ void main() {
       }
     });
 
+    test('provider failure renders all fixed sections and direct unpaid items',
+        () async {
+      final report = _report();
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (_) async {
+            throw StateError('simulated provider failure');
+          },
+        ),
+      );
+      final result = await service.generateSummary(report: report);
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      final headers = RegExp(r'^## [1-8]\. ', multiLine: true)
+          .allMatches(result.text)
+          .map((m) => m.group(0))
+          .toList();
+      expect(headers, List.generate(8, (index) => '## ${index + 1}. '));
+      expect(
+        RegExp(r'^## ', multiLine: true).allMatches(result.text).length,
+        8,
+      );
+      expect(result.text, contains('使用可能額:'));
+      expect(result.text, contains('未払い項目'));
+      for (final row in report.workbook.cashflowRows.where(
+        (row) =>
+            row.isPayment &&
+            row.isDirectCashflowTarget &&
+            !row.paid &&
+            row.paymentAmount > 0,
+      )) {
+        expect(result.text, contains(row.accountName));
+      }
+      expect(result.text, service.buildDeterministicSummary(report));
+    });
+
+    test('fallback signals an unconfirmed card statement', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+      );
+      expect(workbook.billingConfirmationPendingRows.length, 1);
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      expect(text, contains('請求額の確認待ち**: 1件'));
+    });
+
+    test('fallback keeps paid rows out of direct unpaid section', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'auPayカード': -505608,
+          'モビット': -1452644,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'auPayカード'},
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('auPayカード')));
+      for (final row in workbook.cashflowRows.where(
+        (row) =>
+            row.isPayment &&
+            row.isDirectCashflowTarget &&
+            !row.paid &&
+            row.paymentAmount > 0,
+      )) {
+        expect(section, contains(row.accountName));
+      }
+    });
+
+    test('fallback debt section is bounded to five priority rows', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 1000,
+          'debt-a': -100,
+          'debt-b': -200,
+          'debt-c': -300,
+          'debt-d': -400,
+          'debt-e': -500,
+          'debt-f': -600,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(workbook.repaymentPriorityRows.length, greaterThan(5));
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section =
+          text.split('## 3. 負債の確認（優先順上位5件）').last.split('## 4.').first;
+      for (final row in workbook.repaymentPriorityRows.take(5)) {
+        expect(section, contains(row.name));
+      }
+      expect(section, isNot(contains(workbook.repaymentPriorityRows[5].name)));
+      expect(text, contains('使用可能額:'));
+    });
+
+    test('fallback excludes card-included debt from direct unpaid items', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'auPayカード': -505608,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'auPayカード'},
+      );
+      final child =
+          workbook.currentDebtRows.singleWhere((row) => row.name == 'au');
+      expect(child.includedInBillingAccount, isTrue);
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('au:')));
+    });
+
+    test('fallback excludes card-funded fixed costs from direct unpaid items',
+        () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+      final row = workbook.cashflowRows.firstWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      expect(row.paymentSourceAccountId, 'paypay_card');
+      expect(row.isDirectCashflowTarget, isTrue);
+      expect(row.cashAfterPayment, row.cashBeforePayment);
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('KDDI:')));
+    });
+
+    test('fallback does not list a zero scheduled amount as unpaid', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('PayPay:')));
+    });
+
     test('does not call ai-hub when feature flag is off', () async {
       var calls = 0;
       final service = AssetManagementAiSummaryService(
@@ -1015,6 +1194,82 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.fallback);
       expect(result.usedExternalAi, isFalse);
       expect(result.errorMessage, contains('ファミマカードを支払済みなのに督促'));
+    });
+
+    test(
+        'accepts an AI summary that explains a paid debt was covered via a '
+        'different payment method using 完了/とはなりません phrasing', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'au'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は72,605円、負債合計は27,395円です。\n'
+                'なお、auの通信費27,395円はauPAYカード払いとして処理され、'
+                'auPAYカードの支払いは今月既に完了しておりますので、'
+                '個別の未払いとはなりません。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
+    test('rejects registration-only payment evidence', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'au'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は72,605円、負債合計は27,395円です。'
+                'auの支払い登録完了ですが未払いです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, isNot(AssetManagementAiSummaryStatus.aiGenerated));
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, isNotNull);
     });
 
     test(
@@ -2009,6 +2264,92 @@ void main() {
       );
       expect(payload.containsKey('daily_todo'), isFalse);
     });
+  });
+
+  group('Issue #3393 & #4086 AI payload, rules, and deterministic summary', () {
+    test(
+      'emits payment_discrepancies and discipline escape plan in payload, prompt, and fallback summary',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'cash': 80000,
+            'auPayカード': -500000,
+            'モビット': -200000,
+          },
+          baseDate: DateTime(2026, 6, 15),
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'aupay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 25000,
+              creditLimit: 500000,
+            ),
+          },
+          monthlyPaymentOverrides: const <String, double>{'mobit': 12000},
+          paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{
+            'aupay_card': 5000,
+            'mobit': 5000,
+          },
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+
+        String? capturedMessage;
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async {
+              capturedMessage = body['message']?.toString();
+              return <String, dynamic>{
+                'success': true,
+                'text': '## 1. 現状\n- 日本語の要約テストです。',
+                'provider': 'groq',
+              };
+            },
+          ),
+          now: () => DateTime(2026, 6, 15, 12),
+        );
+
+        final payload = service.buildPayload(report);
+        final detailedPayload = service.buildAiDetailedPayload(report);
+        expect(payload['payment_discrepancies'], isList);
+        expect(detailedPayload['payment_discrepancies'], isList);
+        final discrepancies = payload['payment_discrepancies'] as List<dynamic>;
+        expect(discrepancies, hasLength(2));
+        final mobitDiff = discrepancies.firstWhere(
+          (item) => (item as Map<String, dynamic>)['account_id'] == 'mobit',
+        ) as Map<String, dynamic>;
+        expect(mobitDiff['account_id'], 'mobit');
+        expect(mobitDiff['difference_amount'], -7000);
+        expect(mobitDiff['needs_top_up'], isTrue);
+
+        final disciplineMap =
+            payload['discipline_report'] as Map<String, dynamic>;
+        final violations = disciplineMap['violations'] as List<dynamic>;
+        expect(violations, isNotEmpty);
+        final aupayViolation = violations.single as Map<String, dynamic>;
+        expect(aupayViolation['escape_months'], 12);
+        expect(aupayViolation['escape_monthly_payment'], isA<num>());
+        expect(
+          aupayViolation['escape_plan_label'],
+          contains('12ヶ月以内に毎月'),
+        );
+
+        final deterministic = service.buildDeterministicSummary(report);
+        expect(deterministic, contains('支払差額確認: モビット'));
+        expect(deterministic, contains('原因確認・補填の必要あり'));
+        expect(deterministic, contains('リボ解消目標: auPayカード'));
+        expect(deterministic, contains('12ヶ月以内に毎月'));
+
+        await service.generateSummary(report: report);
+        expect(capturedMessage, contains('支払差額ルール'));
+        expect(capturedMessage, contains('リボ解消目標ルール'));
+      },
+    );
   });
 }
 
