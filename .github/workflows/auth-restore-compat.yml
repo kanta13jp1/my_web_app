@@ -36,7 +36,7 @@ jobs:
           container="$(docker ps --filter 'name=supabase_db_' --format '{{.Names}}')"
           test -n "$container"
           test "$(echo "$container" | wc -l)" -eq 1
-          echo "1ae2cae8d87ab6df4eb00e211a9e0b966b8254da5c4a8d689641770c234fa571  scripts/sql/supabase_auth_recovery_codes_20260824.sql" | sha256sum --check
+          echo "a32fbb8a320784b7d51d871c400f44caf85c4fd74112816ac6e7abaa20ae0a79  scripts/sql/supabase_auth_recovery_codes_20260824.sql" | sha256sum --check
           docker cp scripts/sql/supabase_auth_recovery_codes_20260824.sql "$container:/tmp/compat.sql"
           for pass in 1 2; do
             docker exec "$container" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql --host 127.0.0.1 --username supabase_auth_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/compat.sql'
@@ -68,6 +68,15 @@ jobs:
             END IF;
             IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'auth' AND table_name = 'one_time_tokens' AND column_name = 'expires_at' AND data_type = 'timestamp with time zone') THEN
               RAISE EXCEPTION 'one_time_tokens.expires_at missing or incorrect type';
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'auth' AND table_name = 'one_time_tokens' AND column_name = 'link_token_hash' AND data_type = 'text') THEN
+              RAISE EXCEPTION 'one_time_tokens.link_token_hash missing or incorrect type';
+            END IF;
+            IF to_regclass('auth.one_time_tokens_link_token_hash_hash_idx') IS NULL THEN
+              RAISE EXCEPTION 'one_time_tokens_link_token_hash_hash_idx missing';
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'auth' AND table_name = 'saml_providers' AND column_name = 'dedicated_scope' AND data_type = 'boolean') THEN
+              RAISE EXCEPTION 'saml_providers.dedicated_scope missing or incorrect type';
             END IF;
             IF (SELECT count(*) FROM information_schema.columns WHERE table_schema = 'storage' AND table_name = 'buckets' AND column_name IN ('lifecycle_configuration', 'lifecycle_configuration_generation')) <> 2 THEN
               RAISE EXCEPTION 'Storage lifecycle columns missing';
