@@ -164,6 +164,26 @@
     "security_audit": {
       "tier": "critical",
       "rationale": "Privileged boundary and vulnerability auditing warrants top reasoning capability."
+    },
+    "flutter_ui_routine": {
+      "tier": "trivial",
+      "rationale": "Routine Flutter widget layout, styling, and copy updates use fast low-cost models."
+    },
+    "flutter_widget_copy": {
+      "tier": "trivial",
+      "rationale": "Deterministic Flutter localization and static text updates stay on the low-cost lane."
+    },
+    "supabase_migration_design": {
+      "tier": "critical",
+      "rationale": "PostgreSQL schema, RLS, and trigger invariants require top reasoning models."
+    },
+    "supabase_rls_architecture": {
+      "tier": "critical",
+      "rationale": "Row-level security boundary design and privilege checks require frontier reasoning."
+    },
+    "root_cause_analysis": {
+      "tier": "critical",
+      "rationale": "Multi-layer production root-cause investigation escalates to high-reasoning models."
     }
   },
   "budget_guard": {
@@ -175,6 +195,13 @@
       "standard": "trivial",
       "trivial": "trivial"
     }
+  },
+  "loop_guard": {
+    "max_consecutive_retries": 5,
+    "max_calls_per_minute": 12,
+    "max_session_tokens": 120000,
+    "cost_spike_multiplier": 3.0,
+    "auto_halt_on_loop": true
   },
   "telemetry_thresholds": {
     "cost_alert_usd": 10.0,
