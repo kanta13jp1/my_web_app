@@ -187,9 +187,7 @@ export async function verifySnapshotIntegrity(
 
 export function isSystemImpactToolName(toolName: string): boolean {
   const normalized = toolName.trim().toLowerCase();
-  return SYSTEM_IMPACT_PREFIXES.some((prefix) =>
-    normalized.startsWith(prefix)
-  );
+  return SYSTEM_IMPACT_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 }
 
 export async function resolveCallerIsAdmin(
@@ -273,7 +271,8 @@ export async function defaultFetchGitHubIssueComments(
         ? item.id
         : "",
       author: asNonEmptyString(user.login),
-      authorAssociation: asNonEmptyString(item.author_association).toUpperCase(),
+      authorAssociation: asNonEmptyString(item.author_association)
+        .toUpperCase(),
       body: typeof item.body === "string" ? item.body : "",
       createdAt: asNonEmptyString(item.created_at),
     };
@@ -531,7 +530,9 @@ async function handleEvaluate(
 
   const { data: seqRows } = await db
     .from("agent_pause_checkpoints")
-    .select("checkpoint_seq, pause_status, state_snapshot, resumed_by, id, user_id, run_key, agent_name, resumed_at, created_at, updated_at")
+    .select(
+      "checkpoint_seq, pause_status, state_snapshot, resumed_by, id, user_id, run_key, agent_name, resumed_at, created_at, updated_at",
+    )
     .eq("user_id", effectiveUserId)
     .eq("run_key", runKey)
     .order("checkpoint_seq", { ascending: false })
@@ -767,7 +768,9 @@ async function handleApprove(
     return {
       status: 409,
       body: {
-        error: `Checkpoint is in state '${String(row.pause_status)}' and cannot be approved`,
+        error: `Checkpoint is in state '${
+          String(row.pause_status)
+        }' and cannot be approved`,
       },
     };
   }
@@ -777,7 +780,9 @@ async function handleApprove(
   if (safety.kind !== "architectural_safety_checkpoint") {
     return {
       status: 400,
-      body: { error: "Target record is not an architectural safety checkpoint" },
+      body: {
+        error: "Target record is not an architectural safety checkpoint",
+      },
     };
   }
   if (!(await verifySnapshotIntegrity(snapshot))) {
@@ -817,8 +822,7 @@ async function handleApprove(
     return {
       status: 403,
       body: {
-        error:
-          "github_repo does not match pinned safety checkpoint repository",
+        error: "github_repo does not match pinned safety checkpoint repository",
       },
     };
   }
@@ -843,75 +847,38 @@ async function handleApprove(
         .map((actor) => asNonEmptyString(actor).toLowerCase())
         .filter(Boolean),
     );
-    const directive = asNonEmptyString(body.approval_directive);
-    const inlineActor = asNonEmptyString(body.github_actor);
-    const inlineAssoc = asNonEmptyString(body.github_association)
-      .toUpperCase();
-
-    if (
-      isElevatedAutomation &&
-      directive.length > 0 &&
-      inlineActor.length > 0 &&
-      AUTHORIZED_GITHUB_ASSOCIATIONS.has(inlineAssoc) &&
-      !fetchIssueComments
-    ) {
-      const { approvedTargets, rejectedTargets } = extractApprovalCommandTarget(
-        directive,
-      );
-      const validApprove = approvedTargets.some((t) =>
-        matchesCheckpointTarget(t, checkpointId, runKey)
-      );
-      const hasReject = rejectedTargets.some((t) =>
-        matchesCheckpointTarget(t, checkpointId, runKey)
-      );
-      if (!validApprove || hasReject) {
-        return {
-          status: 403,
-          body: {
-            error:
-              "GitHub Issue directive does not authorize resuming this safety checkpoint",
-          },
-        };
-      }
-      approvedByActor = `github:${inlineActor}`;
-      githubCommentId = typeof body.github_comment_id === "number" ||
-          typeof body.github_comment_id === "string"
-        ? body.github_comment_id
-        : null;
-    } else {
-      const commentsFetcher = fetchIssueComments ??
-        defaultFetchGitHubIssueComments;
-      let comments: GitHubIssueCommentEntry[];
-      try {
-        comments = await commentsFetcher(githubRepo, githubIssueNumber);
-      } catch (err) {
-        return {
-          status: 502,
-          body: {
-            error: err instanceof Error
-              ? err.message
-              : "GitHub Issue verification failed",
-          },
-        };
-      }
-      const matched = findVerifiedGitHubIssueApproval(
-        comments,
-        checkpointId,
-        runKey,
-        allowedActors,
-      );
-      if (!matched) {
-        return {
-          status: 403,
-          body: {
-            error:
-              "No authorized GitHub Issue approval comment found for this checkpoint",
-          },
-        };
-      }
-      approvedByActor = `github:${matched.author}`;
-      githubCommentId = matched.id || null;
+    const commentsFetcher = fetchIssueComments ??
+      defaultFetchGitHubIssueComments;
+    let comments: GitHubIssueCommentEntry[];
+    try {
+      comments = await commentsFetcher(githubRepo, githubIssueNumber);
+    } catch (err) {
+      return {
+        status: 502,
+        body: {
+          error: err instanceof Error
+            ? err.message
+            : "GitHub Issue verification failed",
+        },
+      };
     }
+    const matched = findVerifiedGitHubIssueApproval(
+      comments,
+      checkpointId,
+      runKey,
+      allowedActors,
+    );
+    if (!matched) {
+      return {
+        status: 403,
+        body: {
+          error:
+            "No authorized GitHub Issue approval comment found for this checkpoint",
+        },
+      };
+    }
+    approvedByActor = `github:${matched.author}`;
+    githubCommentId = matched.id || null;
   }
 
   const nextSafety: Record<string, unknown> = {
@@ -920,7 +887,9 @@ async function handleApprove(
     approval_channel: channel,
     approved_by_actor: approvedByActor,
     github_issue_number: githubIssueNumber,
-    github_repo: channel === "github_issue" ? githubRepo : safety.github_repo ?? null,
+    github_repo: channel === "github_issue"
+      ? githubRepo
+      : safety.github_repo ?? null,
     github_comment_id: githubCommentId,
     approval_note: asNonEmptyString(body.approval_note) || null,
     approved_at: timestamp,
@@ -1017,7 +986,9 @@ async function handleReject(
     return {
       status: 409,
       body: {
-        error: `Checkpoint is in state '${String(row.pause_status)}' and cannot be rejected`,
+        error: `Checkpoint is in state '${
+          String(row.pause_status)
+        }' and cannot be rejected`,
       },
     };
   }
