@@ -134,7 +134,8 @@ void main() {
         throwsFormatException,
       );
 
-      final parsed = TokenCacheSummarySnapshot.fromJson(<String, Object?>{
+      final parsed =
+          TokenCacheSummarySnapshot.fromJson(const <String, Object?>{
         'totalRequests': 2,
         'totalInputUnits': 1000,
         'totalOutputUnits': 200,
