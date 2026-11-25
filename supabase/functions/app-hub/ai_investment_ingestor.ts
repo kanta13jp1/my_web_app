@@ -8,11 +8,11 @@ export const VERIFICATION_STATUSES = [
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
-export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
+export const VERIFICATION_LABELS = {
   needs_verification: "要検証",
   verified: "確認済み",
   rejected: "却下",
-};
+} as const satisfies Record<VerificationStatus, string>;
 
 export type RawFeedFormat =
   | "rss_item"
@@ -236,9 +236,7 @@ function inferStageFromText(text: string): string {
   for (const [regex, label] of patterns) {
     const match = regex.exec(text);
     if (match) {
-      return label === "Series"
-        ? match[0].replace(/\s+/g, " ").trim()
-        : label;
+      return label === "Series" ? match[0].replace(/\s+/g, " ").trim() : label;
     }
   }
   return "未分類";
@@ -435,8 +433,7 @@ function extractTag(block: string, tagName: string): string {
 }
 
 function extractAtomLink(block: string): string {
-  const linkTag =
-    /<link\b[^>]*\bhref=["']([^"']+)["'][^>]*\/?>/i.exec(block);
+  const linkTag = /<link\b[^>]*\bhref=["']([^"']+)["'][^>]*\/?>/i.exec(block);
   if (linkTag) return linkTag[1].trim();
   return extractTag(block, "link");
 }

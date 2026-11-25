@@ -28,6 +28,10 @@ import {
   createSupabaseVisionBenchmarkDb,
   handleVisionBenchmarkAction,
 } from "./vision_benchmark.ts";
+import {
+  createSupabaseAiCostMonitorDb,
+  handleAiCostAction,
+} from "./ai_cost_monitor.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1224,6 +1228,20 @@ serve(async (req: Request) => {
           body,
           userId,
           db: createSupabaseVisionBenchmarkDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- Third-party AI API Cost Monitor (#2760) ---
+      case "ai_cost.list_usage":
+      case "ai_cost.daily_summary":
+      case "ai_cost.record_usage":
+      case "ai_cost.check_budget": {
+        const result = await handleAiCostAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAiCostMonitorDb(admin),
         });
         return json(result.body, result.status);
       }
