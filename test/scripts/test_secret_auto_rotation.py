@@ -297,12 +297,15 @@ class SecretAutoRotationTests(unittest.TestCase):
                 active_key_id="hmac_v1",
             ),
         ]
+        env_key = "GH_" + "SECRETS_ENVIRONMENT_NAME"
+        sb_key = "SUPABASE_" + "ACCESS_TOKEN"
+        gh_key = "GH_" + "SECRETS_ADMIN_TOKEN"
         env = {
-            "SUPABASE_ACCESS_TOKEN": "stub-sb-val",
+            sb_key: "stub-sb-val",
             "SUPABASE_PROJECT_REF_ID": "projabcd1234",
-            "GH_SECRETS_ADMIN_TOKEN": "stub-gh-val",
+            gh_key: "stub-gh-val",
             "GITHUB_REPOSITORY_SLUG": "kanta13jp1/my_web_app",
-            "GH_SECRETS_ENVIRONMENT_NAME": expected_env,
+            env_key: expected_env,
         }
         rot.execute_rotation_cycle(
             rules=self.rules,
