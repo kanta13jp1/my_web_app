@@ -280,3 +280,10 @@ enabled = true
 # X-Webhook-Api-Key (SHA-256 hashed lookup) or user JWT verified in-function.
 verify_jwt = false
 entrypoint = "./functions/external-ai-webhook/index.ts"
+
+[functions.workos-scim-webhook]
+enabled = true
+# WorkOS Directory Sync webhooks authenticate via WorkOS-Signature
+# (HMAC-SHA256 timestamped signature verified with constant-time compare).
+verify_jwt = false
+entrypoint = "./functions/workos-scim-webhook/index.ts"
