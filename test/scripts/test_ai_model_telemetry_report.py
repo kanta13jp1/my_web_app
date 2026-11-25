@@ -133,8 +133,15 @@ class AiModelTelemetryReportTest(unittest.TestCase):
 
             summary = json.loads(out_json.read_text(encoding="utf-8"))
             self.assertEqual(summary["issue"], "#2522")
+            self.assertEqual(summary["model_count"], 2)
+            by_model = {(row["provider"], row["model"]): row for row in summary["by_model"]}
+            self.assertEqual(by_model[("openai", "gpt-5.5")]["call_count"], 2)
+            self.assertAlmostEqual(by_model[("openai", "gpt-5.5")]["estimated_cost_usd"], 0.07)
+            self.assertEqual(by_model[("anthropic", "claude-opus-4-7")]["call_count"], 1)
+            self.assertAlmostEqual(by_model[("anthropic", "claude-opus-4-7")]["estimated_cost_usd"], 0.06)
             markdown = out_md.read_text(encoding="utf-8")
             self.assertIn("AI Model Telemetry Monthly Review", markdown)
+            self.assertIn("Per-Model Call Count & Cost Summary", markdown)
             self.assertIn("fixed strongest model", markdown)
 
 

@@ -138,8 +138,47 @@ def canonical_event(raw: dict[str, Any], index: int) -> dict[str, Any]:
         "quality_score": number(raw.get("quality_score")),
         "issue": clean_text(raw.get("issue"), ""),
         "source": clean_text(raw.get("source"), "manual"),
+        "tier": clean_text(raw.get("tier") or raw.get("routing_effort"), "unspecified").lower(),
         "sensitive_keys": detect_sensitive_keys(raw),
     }
+
+
+def summarize_by_model(events: list[dict[str, Any]], total_cost: float) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for event in events:
+        grouped[(event["provider"], event["model"])].append(event)
+
+    summaries: list[dict[str, Any]] = []
+    for (provider, model), model_events in grouped.items():
+        costs = [
+            e["estimated_cost_usd"]
+            for e in model_events
+            if e["estimated_cost_usd"] is not None
+        ]
+        model_cost = round(sum(costs), 6)
+        failures = sum(1 for e in model_events if e["status"] in FAILURE_STATUSES)
+        successes = sum(1 for e in model_events if e["status"] in SUCCESS_STATUSES)
+        tier_counts: dict[str, int] = defaultdict(int)
+        for e in model_events:
+            tier_counts[e.get("tier") or "unspecified"] += 1
+        share_pct = round((model_cost / total_cost) * 100.0, 2) if total_cost > 0 else 0.0
+        summaries.append(
+            {
+                "provider": provider,
+                "model": model,
+                "call_count": len(model_events),
+                "success_count": successes,
+                "failure_count": failures,
+                "failure_rate": round(failures / len(model_events), 4) if model_events else 0.0,
+                "estimated_cost_usd": model_cost,
+                "cost_share_pct": share_pct,
+                "tier_breakdown": dict(sorted(tier_counts.items())),
+                "task_types": sorted({e["task_type"] for e in model_events}),
+            }
+        )
+
+    summaries.sort(key=lambda item: (-item["estimated_cost_usd"], -item["call_count"], item["provider"], item["model"]))
+    return summaries
 
 
 def group_key(event: dict[str, Any]) -> tuple[str, str, str]:
@@ -263,6 +302,7 @@ def build_report(
     total_cost = round(sum(group["estimated_cost_usd"] for group in groups), 6)
     total_failures = sum(group["failure_count"] for group in groups)
     total_events = len(events)
+    by_model = summarize_by_model(events, total_cost)
     report = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),
@@ -270,6 +310,7 @@ def build_report(
         "live_provider_calls": False,
         "event_count": total_events,
         "group_count": len(groups),
+        "model_count": len(by_model),
         "total_estimated_cost_usd": total_cost,
         "total_failure_rate": round(total_failures / total_events, 4) if total_events else 0.0,
         "thresholds": {
@@ -279,6 +320,7 @@ def build_report(
             "latency_alert_ms": latency_alert_ms,
         },
         "groups": groups,
+        "by_model": by_model,
         "alerts": build_alerts(
             groups,
             events,
@@ -332,6 +374,22 @@ def render_markdown(report: dict[str, Any]) -> str:
                 p95_latency=render_optional(group["p95_latency_ms"], "ms"),
                 quality=render_optional(group["avg_quality_score"]),
             )
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Per-Model Call Count & Cost Summary",
+            "",
+            "| Provider | Model | Calls | Failure Rate | Estimated Cost | Cost Share |",
+            "| --- | --- | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for model_row in report.get("by_model", []):
+        lines.append(
+            f"| {model_row['provider']} | {model_row['model']} | {model_row['call_count']} "
+            f"| {model_row['failure_rate']:.1%} | {render_money(model_row['estimated_cost_usd'])} "
+            f"| {model_row['cost_share_pct']:.2f}% |"
         )
 
     lines.extend(["", "## Alerts", ""])
