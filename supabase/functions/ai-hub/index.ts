@@ -97,6 +97,10 @@ import {
 import { AssetChatActionError, handleAssetChatAction } from "./asset_chat.ts";
 import { createSupabaseAssetChatStore } from "./asset_chat_supabase.ts";
 import {
+  handleSafetyCheckpointAction,
+  type SafetyCheckpointDb,
+} from "./safety_checkpoints.ts";
+import {
   DepartmentFinanceSummaryActionError,
   type DepartmentFinanceSummaryDb,
   handleDepartmentFinanceSummaryAction,
@@ -4972,6 +4976,20 @@ serve(async (req: Request) => {
           side_effects: gate.sideEffects,
           audit_logged: gate.auditLogged,
         }, gate.decision.allowed ? 200 : 403);
+      }
+
+      case "agent.safety_checkpoint.evaluate":
+      case "agent.safety_checkpoint.list":
+      case "agent.safety_checkpoint.approve":
+      case "agent.safety_checkpoint.reject": {
+        const res = await handleSafetyCheckpointAction({
+          db: admin as unknown as SafetyCheckpointDb,
+          action,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          body,
+        });
+        return json(res.body, res.status);
       }
 
       case "agent.run": {

@@ -207,3 +207,27 @@ Deno.test("disjointness of action registry sets", () => {
     );
   }
 });
+
+Deno.test("agent.safety_checkpoint.* allows signed-in and service-role callers while blocking anonymous", () => {
+  const safetyActions = [
+    "agent.safety_checkpoint.evaluate",
+    "agent.safety_checkpoint.list",
+    "agent.safety_checkpoint.approve",
+    "agent.safety_checkpoint.reject",
+  ];
+  for (const action of safetyActions) {
+    assertEquals(aiHubActionAccess(action), "authenticated_or_service_role");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      { allowed: true },
+    );
+  }
+});
