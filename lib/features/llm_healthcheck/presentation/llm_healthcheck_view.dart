@@ -226,7 +226,7 @@ class LlmHealthcheckView extends StatelessWidget {
                 ),
                 onPressed: state.isSaving ? null : onRunProbeAll,
                 icon: const Icon(Icons.monitor_heart_outlined),
-                label: const Text('全エンドポイント即計測'),
+                label: const Text('全件即計測'),
               ),
             ),
             SizedBox(
@@ -764,7 +764,7 @@ class LlmHealthcheckView extends StatelessWidget {
                   ),
                   onPressed: state.isSaving ? null : onSaveEndpoint,
                   icon: const Icon(Icons.add_link_outlined),
-                  label: const Text('監視エンドポイントを登録'),
+                  label: const Text('監視先を登録'),
                 ),
               ),
             ],
