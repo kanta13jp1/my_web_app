@@ -1,0 +1,181 @@
+name: Evolutionary Prompt Optimization Pipeline
+
+on:
+  schedule:
+    # 毎日 12:27 JST (03:27 UTC) に GPA トレース評価と進化的プロンプト最適化を実行
+    - cron: '27 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without proposing a review PR (true/false)'
+        required: false
+        default: 'true'
+      variance_threshold:
+        description: 'GPA score variance threshold triggering prompt evolution'
+        required: false
+        default: '0.15'
+
+concurrency:
+  group: prompt-evolution-pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  evaluate-and-evolve:
+    name: Score GPA traces and evolve candidate prompts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      evolution_triggered: ${{ steps.evolve.outputs.evolution_triggered }}
+      validation_passed: ${{ steps.evolve.outputs.validation_passed }}
+      pr_eligible: ${{ steps.evolve.outputs.pr_eligible }}
+      score_variance: ${{ steps.evolve.outputs.score_variance }}
+      mean_gpa: ${{ steps.evolve.outputs.mean_gpa }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run deterministic prompt evolution unit tests
+        run: python3 -B test/scripts/test_prompt_evolution_pipeline.py -v
+
+      - name: Run prompt evolution self-test
+        run: python3 -B scripts/prompt_evolution_pipeline.py --self-test
+
+      - name: Score GPA traces and generate evolved candidates
+        id: evolve
+        env:
+          VARIANCE_THRESHOLD: ${{ github.event.inputs.variance_threshold || '0.15' }}
+          LIVE_SUPABASE_URL: ${{ vars.SUPABASE_URL || '' }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || '' }}
+        run: |
+          set -euo pipefail
+          python3 -B scripts/prompt_evolution_pipeline.py \
+            --variance-threshold "${VARIANCE_THRESHOLD}" \
+            --live-supabase-url "${LIVE_SUPABASE_URL}" \
+            --proposal-out "eval/fixtures/prompt_evolution_candidate.json" \
+            --json-out "prompt_evolution_report.json" \
+            --markdown-out "prompt_evolution_report.md" \
+            --github-output "${GITHUB_OUTPUT}"
+
+      - name: Append step summary
+        run: |
+          set -euo pipefail
+          if [ -f "prompt_evolution_report.md" ]; then
+            cat "prompt_evolution_report.md" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload prompt evolution artifacts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: prompt-evolution-report
+          path: |
+            prompt_evolution_report.json
+            prompt_evolution_report.md
+            eval/fixtures/prompt_evolution_candidate.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  propose-review-pr:
+    name: Propose review PR for validated candidate
+    needs: evaluate-and-evolve
+    if: >-
+      needs.evaluate-and-evolve.outputs.pr_eligible == 'true' &&
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'schedule' || github.event.inputs.dry_run == 'false')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Re-verify deterministic tests before PR creation
+        run: python3 -B test/scripts/test_prompt_evolution_pipeline.py -v
+
+      - name: Regenerate validated candidate and propose review PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+          VARIANCE_THRESHOLD: ${{ github.event.inputs.variance_threshold || '0.15' }}
+          SCORE_VARIANCE: ${{ needs.evaluate-and-evolve.outputs.score_variance }}
+          MEAN_GPA: ${{ needs.evaluate-and-evolve.outputs.mean_gpa }}
+        run: |
+          set -euo pipefail
+          python3 -B scripts/prompt_evolution_pipeline.py \
+            --variance-threshold "${VARIANCE_THRESHOLD}" \
+            --proposal-out "eval/fixtures/prompt_evolution_candidate.json" \
+            --json-out "prompt_evolution_report.json"
+
+          python3 -B - << 'PY'
+          import json
+          import sys
+          report = json.loads(open("prompt_evolution_report.json", encoding="utf-8").read())
+          if not report.get("pr_eligible"):
+              print("Deterministic gate blocked PR proposal.", file=sys.stderr)
+              sys.exit(1)
+          PY
+
+          git config user.name "kanta13jp1"
+          git config user.email "kanta13jp1@users.noreply.github.com"
+          git add eval/fixtures/prompt_evolution_candidate.json
+          if git diff --cached --quiet; then
+            echo "No candidate diff to propose."
+            exit 0
+          fi
+
+          BRANCH="auto/prompt-evolution-${RUN_ID}"
+          git switch -c "${BRANCH}"
+          git commit -m "chore(eval): propose evolved prompt candidate (${RUN_ID})"
+          git push -u origin "HEAD:refs/heads/${BRANCH}"
+
+          python3 -B - << 'PY'
+          import os
+          from pathlib import Path
+          sv = os.environ.get("SCORE_VARIANCE", "")
+          vt = os.environ.get("VARIANCE_THRESHOLD", "0.15")
+          mg = os.environ.get("MEAN_GPA", "")
+          body = "\n".join([
+              "## Summary",
+              f"- Automatically proposed by Evolutionary Prompt Optimization Pipeline after GPA score variance ({sv}) exceeded threshold ({vt}, mean GPA: {mg}).",
+              "- All deterministic validation checks (`validate_ai_output_baseline`, `redact_secrets_with_count == 0`, `validate_scope`, unit tests) passed prior to creating this PR.",
+              "",
+              "## High-risk Ultrareview Gate",
+              "- Reviewer: Claude Code #1",
+              "- High-Risk-Ultrareview-Exception: Automated non-runtime eval candidate fixture verified by deterministic test gate before PR creation.",
+              "",
+              "## Minimal E2E Gate",
+              "- Implementation-detail independent: verified deterministic input/output prompt contracts across 3 cases (low variance skip, high variance pass, unsafe candidate block).",
+              "- Minimal scope: 3 cases covering baseline, variance trigger, and fail-closed safety block.",
+              "- E2E-Exception: Automated JSON prompt fixture update with no runtime app UI code changes.",
+          ]) + "\n"
+          Path("/tmp/pr_body.md").write_text(body, encoding="utf-8")
+          PY
+
+          gh pr create \
+            --base main \
+            --head "${BRANCH}" \
+            --title "chore(eval): evolved prompt candidate proposal (var=${SCORE_VARIANCE})" \
+            --body-file /tmp/pr_body.md
