@@ -88,4 +88,80 @@ at RenderFlex.performLayout (main.dart.js:3:1)
     expect(user.id, 'synthetic-user-id');
     expect(user.email, isNull);
   });
+
+  group('Client error PoC pipeline (#2768)', () {
+    tearDown(() {
+      ErrorReporter.instance.resetForTesting();
+    });
+
+    test('sanitizeMessage redacts emails, bearer tokens, and JWTs', () {
+      const bearerHeader = 'Bearer ' 'sample_opaque_987';
+      const jwtSample = 'eyJ' 'hbGciOiJIUzI1NiJ9.' 'payload123.sig456';
+      const raw =
+          'Failed for user@example.com with $bearerHeader and $jwtSample';
+      final cleaned = ErrorReporter.sanitizeMessage(raw);
+      expect(cleaned, isNot(contains('user@example.com')));
+      expect(cleaned, isNot(contains('sample_opaque_987')));
+      expect(cleaned, isNot(contains('payload123')));
+      expect(cleaned, contains('[REDACTED_EMAIL]'));
+      expect(cleaned, contains('Bearer [REDACTED]'));
+      expect(cleaned, contains('[REDACTED_JWT]'));
+    });
+
+    test('buildTelemetryPayload creates structured non-public hub payload', () {
+      final trace = StackTrace.fromString(
+        List<String>.generate(10, (final i) => 'frame_$i').join('\n'),
+      );
+      final payload = ErrorReporter.buildTelemetryPayload(
+        message: 'Checkout failed for alice@example.com',
+        error: StateError('network timeout'),
+        stackTrace: trace,
+      );
+      expect(payload['action'], 'feedback.submit');
+      expect(payload['category'], 'bug');
+      expect(payload['source'], 'auto_error_report');
+      final msg = payload['message'] as String;
+      expect(msg, startsWith('[自動エラー報告]'));
+      expect(msg, contains('[REDACTED_EMAIL]'));
+      expect(msg, contains('frame_5'));
+      expect(msg, isNot(contains('frame_6')));
+      expect(msg.length, lessThanOrEqualTo(2000));
+    });
+
+    test('dispatches PoC errors to Sentry & Supabase and enforces dedup/cap',
+        () {
+      final sentryEvents = <String>[];
+      final hubPayloads = <Map<String, Object?>>[];
+      ErrorReporter.instance.resetForTesting();
+      ErrorReporter.instance.setTestSinks(
+        sentrySink: (
+          final message, {
+          final Object? error,
+          final StackTrace? stackTrace,
+        }) {
+          sentryEvents.add(message);
+        },
+        supabaseSink: hubPayloads.add,
+        sentryEnabled: true,
+        authenticated: true,
+      );
+
+      ErrorReporter.instance.report('First error user@example.com');
+      ErrorReporter.instance.report('First error user@example.com');
+
+      expect(sentryEvents.length, 1);
+      expect(hubPayloads.length, 1);
+      expect(sentryEvents.first, contains('[REDACTED_EMAIL]'));
+
+      for (var i = 0; i < 12; i++) {
+        ErrorReporter.instance.report('Distinct failure #$i');
+      }
+      final snap = ErrorReporter.instance.diagnosticSnapshot();
+      expect(snap.sentryEnabled, isTrue);
+      expect(snap.reportedCount, 10);
+      expect(snap.suppressedDuplicateCount, 1);
+      expect(snap.suppressedThrottleCount, 3);
+      expect(hubPayloads.length, 10);
+    });
+  });
 }
