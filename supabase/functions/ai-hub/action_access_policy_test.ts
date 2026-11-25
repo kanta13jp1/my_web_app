@@ -208,14 +208,18 @@ Deno.test("disjointness of action registry sets", () => {
   }
 });
 
-Deno.test("prompt_cache.* allows signed-in and service-role callers while blocking anonymous", () => {
-  const cacheActions = [
+Deno.test("prompt_cache.* and agent.safety_checkpoint.* allow signed-in and service-role callers while blocking anonymous", () => {
+  const actions = [
     "prompt_cache.build_payload",
     "prompt_cache.record_metric",
     "prompt_cache.monitor_summary",
     "prompt_cache.check_renewal",
+    "agent.safety_checkpoint.evaluate",
+    "agent.safety_checkpoint.list",
+    "agent.safety_checkpoint.approve",
+    "agent.safety_checkpoint.reject",
   ];
-  for (const action of cacheActions) {
+  for (const action of actions) {
     assertEquals(aiHubActionAccess(action), "authenticated_or_service_role");
     assertEquals(
       authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
