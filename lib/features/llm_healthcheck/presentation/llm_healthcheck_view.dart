@@ -212,7 +212,7 @@ class LlmHealthcheckView extends StatelessWidget {
                 ),
                 onPressed: state.isSaving ? null : onSeedDefaults,
                 icon: const Icon(Icons.auto_fix_high_outlined),
-                label: const Text('初期サンプル読込'),
+                label: const Text('サンプル投入'),
               ),
             ),
             SizedBox(
@@ -699,9 +699,10 @@ class LlmHealthcheckView extends StatelessWidget {
                 ),
               ),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 140),
+                constraints: const BoxConstraints(maxWidth: 180),
                 child: DropdownButtonFormField<String>(
                   key: const ValueKey<String>('llm_health_method_dropdown'),
+                  isExpanded: true,
                   initialValue: state.draftMethod,
                   decoration: InputDecoration(
                     labelText: '方式',

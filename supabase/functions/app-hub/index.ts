@@ -1294,6 +1294,24 @@ serve(async (req: Request) => {
         return json(result.body, result.status);
       }
 
+      // --- AI Functional Emotion Feedback & NotebookLM KB (#2766) ---
+      case "ai_emotion_feedback.list":
+      case "ai_emotion_feedback.submit":
+      case "ai_emotion_feedback.seed_defaults":
+      case "ai_emotion_feedback.export_notebooklm_intake": {
+        const {
+          createSupabaseAiEmotionFeedbackDb,
+          handleAiEmotionFeedbackAction,
+        } = await import("./ai_emotion_feedback.ts");
+        const result = await handleAiEmotionFeedbackAction({
+          action,
+          body,
+          userId,
+          deps: { db: createSupabaseAiEmotionFeedbackDb(admin) },
+        });
+        return json(result.body, result.status);
+      }
+
       // --- Q2 2026 AI Investment Trend Batch (#2761) ---
       case "ai_investment.list":
       case "ai_investment.seed_defaults":
