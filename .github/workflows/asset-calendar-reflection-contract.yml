@@ -13,6 +13,10 @@ on:
       - 'lib/widgets/asset_reflection_day_badge.dart'
       - 'test/widgets/asset_calendar_reflection_panel_test.dart'
       - 'test/e2e/asset_calendar_projection_test.dart'
+      - 'test/widgets/asset_calendar_dining_review_candidate_test.dart'
+      - '.github/actions/setup-flutter-sdk/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
       - 'lib/widgets/asset_month_end_snapshot_card.dart'
       - 'test/services/asset_month_end_snapshot_service_test.dart'
   workflow_dispatch:
@@ -63,7 +67,7 @@ jobs:
           flutter-version: '3.38.x'
       - run: flutter pub get
       - name: Verify committed Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart test/e2e/asset_calendar_projection_test.dart
+        run: dart format --output=none --set-exit-if-changed lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart test/e2e/asset_calendar_projection_test.dart test/widgets/asset_calendar_dining_review_candidate_test.dart
       - name: Preserve exact tested source for review
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -78,10 +82,40 @@ jobs:
             test/models/asset_calendar_reflection_test.dart
             lib/widgets/asset_reflection_day_badge.dart
             test/widgets/asset_calendar_reflection_panel_test.dart
+            test/widgets/asset_calendar_dining_review_candidate_test.dart
+            test/widgets/asset_calendar_refresh_control_test.dart
             test/e2e/asset_calendar_projection_test.dart
             lib/widgets/asset_month_end_snapshot_card.dart
             test/services/asset_month_end_snapshot_service_test.dart
-      - run: flutter analyze lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart test/e2e/asset_calendar_projection_test.dart
-      - run: timeout 300s flutter test --no-pub --timeout 60s test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_refresh_control_test.dart test/widgets/asset_calendar_reflection_panel_test.dart test/services/asset_month_end_snapshot_service_test.dart --concurrency=2
+      - run: flutter analyze lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart test/e2e/asset_calendar_projection_test.dart test/widgets/asset_calendar_dining_review_candidate_test.dart
+      - run: timeout 300s flutter test --no-pub --timeout 60s test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_refresh_control_test.dart test/widgets/asset_calendar_reflection_panel_test.dart test/widgets/asset_calendar_dining_review_candidate_test.dart test/services/asset_month_end_snapshot_service_test.dart --concurrency=2
       - name: Verify reflection projection in the panel
         run: timeout 300s flutter test --no-pub --timeout 60s test/e2e/asset_calendar_projection_test.dart
+
+
+  dining-chrome-widget:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - run: flutter precache --web
+      - name: Exercise synthetic widgets in Chrome without external IP connectivity
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            exec runuser -u "${1}" -- env -i PATH="${2}" HOME="${3}" CI=true timeout 180s flutter test --no-pub --platform chrome test/widgets/asset_calendar_dining_review_candidate_test.dart --reporter expanded
+          ' _ "$(id -un)" "$PATH" "$HOME"

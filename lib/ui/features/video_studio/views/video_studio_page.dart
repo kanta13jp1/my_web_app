@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../theme/design_tokens.dart';
+import '../../../../features/video_preflight/video_preflight_container.dart';
 import '../domain/video_studio_models.dart';
 import '../view_models/video_studio_view_model.dart';
 
@@ -23,6 +24,28 @@ class VideoStudioPage extends StatelessWidget {
         foregroundColor: DesignTokens.textPrimary,
         title: const Text('AI動画スタジオ'),
         actions: [
+          IconButton(
+            key: const Key('video-studio-preflight-button'),
+            tooltip: '動作環境・ブラウザ互換チェック',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/video-studio?view=preflight',
+                  ),
+                  builder: (final BuildContext pageContext) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('動画編集 動作環境・権限プリフライト'),
+                    ),
+                    body: VideoPreflightContainer(
+                      onProceedToEditor: () => Navigator.of(pageContext).pop(),
+                    ),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.fact_check_outlined),
+          ),
           IconButton(
             tooltip: '再読み込み',
             onPressed: () => viewModel.load(currentUri: Uri.base),

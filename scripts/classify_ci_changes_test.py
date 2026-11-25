@@ -227,6 +227,63 @@ class ClassifyCiChangesTest(unittest.TestCase):
     def test_force_all_enables_every_group(self) -> None:
         self.assertTrue(all(classify([], force_all=True).values()))
 
+    def test_web_seo_assets_scope_matches_only_font_seo_ogp_inputs(self) -> None:
+        for path in (
+            "web/index.html",
+            "web/seo/public-routes.json",
+            "assets/legal/privacy_policy.md",
+            "assets/landing_journey/03-prioritized.webp",
+            "scripts/optimize_web_fonts.py",
+            "scripts/prerender_seo_routes.py",
+            "scripts/generate_sitemap.py",
+            "scripts/generate_ogp_cards.mjs",
+            "scripts/ogp_cards.json",
+            "test/scripts/test_optimize_web_fonts.py",
+            "test/scripts/test_prerender_seo_routes.py",
+            "test/web/seo_shell_handoff.test.cjs",
+            "test/web/generate_ogp_cards.test.mjs",
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+        ):
+            with self.subTest(included=path):
+                self.assertTrue(classify([path])["web_seo_assets"])
+
+        for path in (
+            "lib/pages/reading_page.dart",
+            "supabase/functions/ai-hub/index.ts",
+            "supabase/migrations/20261101000000_test.sql",
+            "docs/README.md",
+            "assets/data/tiger_remediation_status.json",
+            ".github/workflows/dependency-license-audit.yml",
+        ):
+            with self.subTest(excluded=path):
+                self.assertFalse(classify([path])["web_seo_assets"])
+
+    def test_high_risk_review_deps_scope_matches_only_lock_and_review_inputs(
+        self,
+    ) -> None:
+        for path in (
+            "scripts/requirements-high-risk-security-review.txt",
+            "scripts/run_dual_security_review.py",
+            "scripts/test_run_dual_security_review.py",
+            ".github/workflows/high-risk-dual-security-review.yml",
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+        ):
+            with self.subTest(included=path):
+                self.assertTrue(classify([path])["high_risk_review_deps"])
+
+        for path in (
+            "lib/pages/reading_page.dart",
+            "web/index.html",
+            "docs/README.md",
+            "supabase/functions/ai-hub/index.ts",
+        ):
+            with self.subTest(excluded=path):
+                self.assertFalse(classify([path])["high_risk_review_deps"])
+
 
 if __name__ == "__main__":
     unittest.main()

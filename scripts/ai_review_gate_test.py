@@ -86,6 +86,29 @@ class GateTests(unittest.TestCase):
     def test_binary_header_mentioned_in_source_is_not_a_binary_change(self):
         gate.validate_scope(['a.py'], '+message = "Binary files are unsupported"')
 
+    def test_safe_exact_names_allows_gitattributes_and_cursorignore(self):
+        gate.validate_scope(
+            [
+                '.gitattributes',
+                '.githooks/pre-push',
+                '.cursorignore',
+                'my_web_app.code-workspace',
+                '.cursor/rules/flutter_supabase_cross_stack.mdc',
+            ],
+            'diff --git a/.gitattributes b/.gitattributes\n+docs/QUARTERLY_ROADMAP.md merge=union\n',
+        )
+        for rejected in (
+            ['Makefile'],
+            ['.htaccess'],
+            ['.env'],
+            ['scripts/pre-push'],
+            ['pre-push'],
+            ['.cursor/settings.secret'],
+            ['app.exe'],
+        ):
+            with self.subTest(paths=rejected), self.assertRaises(ValueError):
+                gate.validate_scope(rejected, '+plain')
+
     def test_provider_failure_missing_evidence_and_moved_base_publish_failure(self):
         for result_kind in ('missing', 'malformed', 'moved_base', 'changes'):
             with self.subTest(kind=result_kind), tempfile.TemporaryDirectory() as temp:
@@ -321,6 +344,313 @@ class PublicPngTests(unittest.TestCase):
             self.assertIn('assets', payload['generationConfig']['responseJsonSchema']['required'])
             self.assertFalse((directory/'result.json').exists())
 
+    def test_receipt_6244_selection_and_count_bounds(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original, specific_5893, specific_6244 = root/'original.json', root/'5893.json', root/'6244.json'
+            base = {'schema_version': 1, 'provider': 'google-gemini',
+                    'endpoint': self.png.ENDPOINT, 'method': 'generateContent'}
+            original.write_text(json.dumps(dict(base, pull_request=5938, assets=[{}])), encoding='utf-8')
+            specific_5893.write_text(json.dumps(dict(base, pull_request=5893, assets=[{}])), encoding='utf-8')
+            specific_6244.write_text(json.dumps(dict(base, pull_request=6244, assets=[{}, {}])), encoding='utf-8')
+            with patch.object(self.png, 'RECEIPT', original), patch.object(self.png, 'RECEIPT_5893', specific_5893), patch.object(self.png, 'RECEIPT_6244', specific_6244):
+                self.assertEqual(self.png.load_receipt(6244)['pull_request'], 6244)
+                self.assertEqual(self.png.load_receipt(5893)['pull_request'], 5893)
+                self.assertEqual(self.png.load_receipt(5938)['pull_request'], 5938)
+                self.assertEqual(self.png.load_receipt(1)['pull_request'], 5938)
+                for bad_assets in ([{}], [{}, {}, {}]):
+                    specific_6244.write_text(json.dumps(dict(base, pull_request=6244, assets=bad_assets)), encoding='utf-8')
+                    with self.subTest(count=len(bad_assets)), self.assertRaises(ValueError):
+                        self.png.load_receipt(6244)
+
+    def test_visual_baseline_replacement_positive_and_negative_boundaries(self):
+        import base64
+        import hashlib
+        import struct
+        import zlib
+        signature = b'\x89PNG\r\n\x1a\n'
+        header = self.chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+        end = self.chunk(b'IEND', b'')
+        data1 = signature + header + self.chunk(b'IDAT', zlib.compress(b'\x00\x0e\x1b\x27')) + end
+        data2 = signature + header + self.chunk(b'IDAT', zlib.compress(b'\x00\xf0\xe5\xd0')) + end
+        p1 = 'test/e2e/visual_regression.spec.ts-snapshots/landing-chromium-linux.png'
+        p2 = 'test/e2e/visual_regression.spec.ts-snapshots/landing-mobile-chrome-linux.png'
+        def make_asset(path, raw, base_char):
+            return {
+                'path': path,
+                'base_blob': base_char * 40,
+                'head_blob': hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest(),
+                'sha256': hashlib.sha256(raw).hexdigest(),
+                'bytes': len(raw), 'width': 1, 'height': 1, 'bit_depth': 8,
+                'color_type': 2, 'mime_type': 'image/png', 'source_commit': 'e'*40,
+            }
+        a1 = make_asset(p1, data1, '1')
+        a2 = make_asset(p2, data2, '2')
+        receipt = {
+            'schema_version': 1, 'repository': 'owner/repo', 'pull_request': 6244,
+            'provider': 'google-gemini', 'endpoint': self.png.ENDPOINT, 'method': 'generateContent',
+            'related_paths': ['lib/widgets/landing_page_content.dart', p1, p2],
+            'assets': [a1, a2],
+        }
+        state = {'repository': 'owner/repo', 'pr': 6244, 'head': 'a'*40, 'base': 'b'*40,
+                 'files': receipt['related_paths']}
+        blobs = {a1['head_blob']: data1, a2['head_blob']: data2}
+        head_entries = {p1: f"100644 blob {a1['head_blob']}\t{p1}\0", p2: f"100644 blob {a2['head_blob']}\t{p2}\0"}
+        base_entries = {p1: f"100644 blob {a1['base_blob']}\t{p1}\0", p2: f"100644 blob {a2['base_blob']}\t{p2}\0"}
+        def git_fn(*args):
+            if args[0] == 'ls-tree':
+                ref, target = args[2], args[4]
+                table = head_entries if ref == state['head'] else base_entries
+                return table.get(target, '').encode()
+            if args[1] == '-s':
+                return str(len(blobs[args[2]])).encode()
+            return blobs[args[2]]
+
+        fixture = GateTests()
+        fixture.setUp()
+        with tempfile.TemporaryDirectory() as temp, patch.object(self.png, 'load_receipt', return_value=receipt):
+            directory = Path(temp)
+            assets = self.png.prepare_assets(state, state['files'], git_fn, directory)
+            self.assertEqual(len(assets), 2)
+            diff = (
+                'diff --git a/lib/widgets/landing_page_content.dart b/lib/widgets/landing_page_content.dart\n+final ok = true;\n'
+                f'diff --git a/{p1} b/{p1}\nindex 1111111..2222222 100644\nBinary files a/{p1} and b/{p1} differ\n'
+                f'diff --git a/{p2} b/{p2}\nindex 3333333..4444444 100644\nBinary files a/{p2} and b/{p2} differ\n'
+            )
+            gate.validate_scope(state['files'], diff, assets)
+            full_state = dict(state, assets=assets, input_sha256=self.png.input_digest(diff, assets))
+            self.assertEqual(self.png.read_assets(full_state, directory), [data1, data2])
+            gate.write(directory/'state.json', full_state)
+            (directory/'input.txt').write_bytes(diff.encode())
+            calls = []
+            def provider(url, headers, data=None, method=None):
+                calls.append((url, data))
+                if data is None:
+                    return {'models': [{'name': 'models/gemini-test', 'supportedGenerationMethods': ['generateContent']}]}
+                raise RuntimeError('API HTTP 400')
+            with patch.dict(os.environ, {'GEMINI_API_KEY': 'test', 'AI_REVIEW_MODEL': 'gemini-test'}), patch.object(gate, 'request', side_effect=provider):
+                with self.assertRaises(RuntimeError): gate.review(directory)
+            inline = [p['inlineData'] for p in calls[1][1]['contents'][0]['parts'] if 'inlineData' in p]
+            self.assertEqual([base64.b64decode(i['data']) for i in inline], [data1, data2])
+            ok_review = {
+                'schema_version': 1, 'head': state['head'], 'base': state['base'],
+                'input_sha256': full_state['input_sha256'], 'verdict': 'approve',
+                'summary': 'Reviewed both dark hero screenshots and Flutter widget code changes carefully.',
+                'areas': [{'area': area, 'assessment': 'Verified correctness, safety boundaries, and widget tests cleanly.'} for area in sorted(gate.AREAS)],
+                'files': [{'path': p, 'assessment': 'Verified all changed code lines and PNG visual regression metadata.'} for p in state['files']],
+                'findings': [],
+                'assets': [
+                    dict({k: a[k] for k in ('path', 'head_blob', 'sha256', 'bytes', 'width', 'height', 'receipt_sha256')},
+                         assessment='Inspected rendered hero sample preview dark container contrast and mobile button bounds.')
+                    for a in assets
+                ],
+            }
+            gate.validate_review(ok_review, full_state)
+
+            # Negative: cumulative MAX_BYTES and MAX_DECODED overflow on read_assets and prepare_assets
+            with patch.object(self.png, 'MAX_BYTES', len(data1)), self.assertRaisesRegex(ValueError, 'total size'):
+                self.png.read_assets(full_state, directory)
+            with patch.object(self.png, 'MAX_DECODED', 6), self.assertRaisesRegex(ValueError, 'total decoded size'):
+                self.png.read_assets(full_state, directory)
+            with patch.object(self.png, 'MAX_BYTES', len(data1)), self.assertRaisesRegex(ValueError, 'total size'):
+                self.png.prepare_assets(state, state['files'], git_fn, directory)
+            with patch.object(self.png, 'MAX_DECODED', 6), self.assertRaisesRegex(ValueError, 'total decoded size'):
+                self.png.prepare_assets(state, state['files'], git_fn, directory)
+
+            # Negative: validate_scope rejects wrong diff header styles for replacements, creations, deletions
+            bad_diffs = [
+                diff.replace(f'Binary files a/{p1} and b/{p1} differ', f'Binary files /dev/null and b/{p1} differ'),
+                diff.replace(f'Binary files a/{p1} and b/{p1} differ', f'Binary files a/{p1} and /dev/null differ'),
+            ]
+            for bad in bad_diffs:
+                with self.assertRaises(ValueError):
+                    gate.validate_scope(state['files'], bad, assets)
+            creation_diff = f'diff --git a/{self.asset["path"]} b/{self.asset["path"]}\nBinary files a/{self.asset["path"]} and b/{self.asset["path"]} differ\n'
+            with self.assertRaises(ValueError):
+                gate.validate_scope([self.asset['path']], creation_diff, [self.asset])
+
+        # Negative prepare_assets boundary checks: non-baseline path, nested path, duplicate, base mismatch, absent base, base==head
+        bad_cases = [
+            ('assets/hero.png', make_asset('assets/hero.png', data1, '1'), None, None),
+            ('test/e2e/visual_regression.spec.ts-snapshots/sub/a.png', make_asset('test/e2e/visual_regression.spec.ts-snapshots/sub/a.png', data1, '1'), None, None),
+            (p1, a1, {p1: f"100644 blob {'9'*40}\t{p1}\0", p2: base_entries[p2]}, None),
+            (p1, a1, {p2: base_entries[p2]}, None),
+            (p1, dict(a1, base_blob=a1['head_blob']), {p1: f"100644 blob {a1['head_blob']}\t{p1}\0", p2: base_entries[p2]}, None),
+            (p1, a1, base_entries, [a1, a1]),
+        ]
+        for target_p, bad_a, custom_base, custom_assets in bad_cases:
+            paths = ['lib/widgets/landing_page_content.dart', target_p, p2] if target_p != p1 else receipt['related_paths']
+            r = dict(receipt, related_paths=paths, assets=custom_assets or [bad_a, a2])
+            st = dict(state, files=paths)
+            h_entries = {target_p: f"100644 blob {bad_a['head_blob']}\t{target_p}\0", p2: head_entries[p2]}
+            b_entries = custom_base if custom_base is not None else {target_p: f"100644 blob {bad_a['base_blob']}\t{target_p}\0", p2: base_entries[p2]}
+            def bad_git(*args):
+                if args[0] == 'ls-tree':
+                    table = h_entries if args[2] == st['head'] else b_entries
+                    return table.get(args[4], '').encode()
+                if args[1] == '-s':
+                    return str(len(blobs[args[2]])).encode()
+                return blobs[args[2]]
+            with tempfile.TemporaryDirectory() as temp, patch.object(self.png, 'load_receipt', return_value=r):
+                with self.subTest(case=target_p, custom=bool(custom_base or custom_assets)), self.assertRaises(ValueError):
+                    self.png.prepare_assets(st, paths, bad_git, Path(temp))
+
+    def test_checked_in_receipt_6244_is_valid(self):
+        receipt = self.png.load_receipt(6244)
+        self.assertEqual(receipt['repository'], 'kanta13jp1/my_web_app')
+        self.assertEqual(receipt['pull_request'], 6244)
+        self.assertEqual(len(receipt['assets']), 2)
+        seen = set()
+        total_bytes = 0
+        total_decoded = 0
+        for asset in receipt['assets']:
+            path = asset['path']
+            self.assertTrue(self.png.is_visual_baseline_png(path))
+            self.assertNotIn(path, seen)
+            seen.add(path)
+            self.assertRegex(asset['base_blob'], self.png.BLOB_RE)
+            self.assertRegex(asset['head_blob'], self.png.BLOB_RE)
+            self.assertNotEqual(asset['base_blob'], asset['head_blob'])
+            total_bytes += asset['bytes']
+            total_decoded += self.png.decoded_size(asset['width'], asset['height'], asset['color_type'])
+        self.assertLessEqual(total_bytes, self.png.MAX_BYTES)
+        self.assertLessEqual(total_decoded, self.png.MAX_DECODED)
+        self.assertEqual(
+            sorted(receipt['related_paths']),
+            sorted([
+                'lib/widgets/landing_page_content.dart',
+                'test/e2e/visual_regression.spec.ts-snapshots/landing-chromium-linux.png',
+                'test/e2e/visual_regression.spec.ts-snapshots/landing-mobile-chrome-linux.png',
+                'test/pages/landing_page_conversion_test.dart',
+            ]),
+        )
+
+    def test_receipt_6273_selection_count_bounds_and_guidance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original, specific_5893, specific_6244, specific_6273 = (
+                root / 'original.json',
+                root / '5893.json',
+                root / '6244.json',
+                root / '6273.json',
+            )
+            base = {
+                'schema_version': 1,
+                'provider': 'google-gemini',
+                'endpoint': self.png.ENDPOINT,
+                'method': 'generateContent',
+            }
+            original.write_text(json.dumps(dict(base, pull_request=5938, assets=[{}])), encoding='utf-8')
+            specific_5893.write_text(json.dumps(dict(base, pull_request=5893, assets=[{}])), encoding='utf-8')
+            specific_6244.write_text(json.dumps(dict(base, pull_request=6244, assets=[{}, {}])), encoding='utf-8')
+            specific_6273.write_text(json.dumps(dict(base, pull_request=6273, assets=[{}, {}])), encoding='utf-8')
+            with (
+                patch.object(self.png, 'RECEIPT', original),
+                patch.object(self.png, 'RECEIPT_5893', specific_5893),
+                patch.object(self.png, 'RECEIPT_6244', specific_6244),
+                patch.object(self.png, 'RECEIPT_6273', specific_6273),
+            ):
+                self.assertEqual(self.png.load_receipt(6273)['pull_request'], 6273)
+                for bad_assets in ([{}], [{}, {}, {}]):
+                    specific_6273.write_text(json.dumps(dict(base, pull_request=6273, assets=bad_assets)), encoding='utf-8')
+                    with self.subTest(count=len(bad_assets)), self.assertRaises(ValueError):
+                        self.png.load_receipt(6273)
+
+        checked = self.png.load_receipt(6273)
+        self.assertEqual(checked['repository'], 'kanta13jp1/my_web_app')
+        self.assertEqual(checked['pull_request'], 6273)
+        self.assertEqual(len(checked['assets']), 2)
+        seen = set()
+        total_bytes = 0
+        total_decoded = 0
+        for asset in checked['assets']:
+            path = asset['path']
+            self.assertTrue(self.png.is_visual_baseline_png(path))
+            self.assertNotIn(path, seen)
+            seen.add(path)
+            self.assertRegex(asset['base_blob'], self.png.BLOB_RE)
+            self.assertRegex(asset['head_blob'], self.png.BLOB_RE)
+            self.assertNotEqual(asset['base_blob'], asset['head_blob'])
+            total_bytes += asset['bytes']
+            total_decoded += self.png.decoded_size(asset['width'], asset['height'], asset['color_type'])
+        self.assertLessEqual(total_bytes, self.png.MAX_BYTES)
+        self.assertLessEqual(total_decoded, self.png.MAX_DECODED)
+        self.assertEqual(
+            sorted(checked['related_paths']),
+            sorted([
+                'lib/widgets/landing_page_content.dart',
+                'test/e2e/lp_first_user_acquisition.spec.ts',
+                'test/e2e/visual_regression.spec.ts-snapshots/landing-chromium-linux.png',
+                'test/e2e/visual_regression.spec.ts-snapshots/landing-mobile-chrome-linux.png',
+                'test/pages/landing_page_conversion_test.dart',
+            ]),
+        )
+
+        # Verify PR #6273 visual guidance prompt is attached cleanly in gate.review()
+        import base64
+        import hashlib
+        import struct
+        import zlib
+        signature = b'\x89PNG\r\n\x1a\n'
+        header = self.chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+        end = self.chunk(b'IEND', b'')
+        data1 = signature + header + self.chunk(b'IDAT', zlib.compress(b'\x00\x0e\x1b\x27')) + end
+        data2 = signature + header + self.chunk(b'IDAT', zlib.compress(b'\x00\xf0\xe5\xd0')) + end
+        p1, p2 = sorted(seen)
+        def make_asset(path, raw, base_char):
+            return {
+                'path': path,
+                'base_blob': base_char * 40,
+                'head_blob': hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest(),
+                'sha256': hashlib.sha256(raw).hexdigest(),
+                'bytes': len(raw), 'width': 1, 'height': 1, 'bit_depth': 8,
+                'color_type': 2, 'mime_type': 'image/png', 'source_commit': '9'*40,
+            }
+        a1, a2 = make_asset(p1, data1, '1'), make_asset(p2, data2, '2')
+        mock_receipt = {
+            'schema_version': 1, 'repository': 'owner/repo', 'pull_request': 6273,
+            'provider': 'google-gemini', 'endpoint': self.png.ENDPOINT, 'method': 'generateContent',
+            'related_paths': sorted(checked['related_paths']),
+            'assets': [a1, a2],
+        }
+        state = {'repository': 'owner/repo', 'pr': 6273, 'head': 'a'*40, 'base': 'b'*40,
+                 'files': mock_receipt['related_paths']}
+        blobs = {a1['head_blob']: data1, a2['head_blob']: data2}
+        head_entries = {p1: f"100644 blob {a1['head_blob']}\t{p1}\0", p2: f"100644 blob {a2['head_blob']}\t{p2}\0"}
+        base_entries = {p1: f"100644 blob {a1['base_blob']}\t{p1}\0", p2: f"100644 blob {a2['base_blob']}\t{p2}\0"}
+        def git_fn(*args):
+            if args[0] == 'ls-tree':
+                table = head_entries if args[2] == state['head'] else base_entries
+                return table.get(args[4], '').encode()
+            if args[1] == '-s':
+                return str(len(blobs[args[2]])).encode()
+            return blobs[args[2]]
+        diff = (
+            'diff --git a/lib/widgets/landing_page_content.dart b/lib/widgets/landing_page_content.dart\n+final ok = true;\n'
+            f'diff --git a/{p1} b/{p1}\nindex 1111111..2222222 100644\nBinary files a/{p1} and b/{p1} differ\n'
+            f'diff --git a/{p2} b/{p2}\nindex 3333333..4444444 100644\nBinary files a/{p2} and b/{p2} differ\n'
+        )
+        calls = []
+        def provider(url, headers, data=None, method=None):
+            calls.append((url, data))
+            if data is None:
+                return {'models': [{'name': 'models/gemini-test', 'supportedGenerationMethods': ['generateContent']}]}
+            raise RuntimeError('API HTTP 400')
+        with tempfile.TemporaryDirectory() as temp, patch.object(self.png, 'load_receipt', return_value=mock_receipt):
+            directory = Path(temp)
+            assets = self.png.prepare_assets(state, state['files'], git_fn, directory)
+            full_state = dict(state, assets=assets, input_sha256=self.png.input_digest(diff, assets))
+            gate.write(directory/'state.json', full_state)
+            (directory/'input.txt').write_bytes(diff.encode())
+            with patch.dict(os.environ, {'GEMINI_API_KEY': 'test', 'AI_REVIEW_MODEL': 'gemini-test'}), patch.object(gate, 'request', side_effect=provider):
+                with self.assertRaises(RuntimeError):
+                    gate.review(directory)
+        sys_rules = calls[1][1]['systemInstruction']['parts'][0]['text']
+        self.assertIn('5-question guided-intake copy', sys_rules)
+        self.assertIn('WCAG 1.4.11 input border contrast', sys_rules)
+        inline = [p['inlineData'] for p in calls[1][1]['contents'][0]['parts'] if 'inlineData' in p]
+        self.assertEqual([base64.b64decode(i['data']) for i in inline], [data1, data2])
+
 
 
 class PlatformContextTests(unittest.TestCase):
@@ -412,6 +742,143 @@ class PlatformContextTests(unittest.TestCase):
             with patch.object(gate, 'request') as provider, self.assertRaisesRegex(ValueError, 'Review data changed'):
                 gate.review(directory)
             provider.assert_not_called()
+
+
+class ConfidenceAndCommentTests(unittest.TestCase):
+    def setUp(self):
+        self.state = {
+            'schema_version': 1, 'repository': 'owner/repo', 'pr': 42,
+            'head': 'a'*40, 'base': 'b'*40,
+            'input_sha256': gate.digest('example diff'),
+            'files': ['a.py', 'b.py'], 'complete_diff': True, 'redactions': 0,
+            'check_id': 12, 'run_url': 'https://example.invalid/run/99',
+        }
+        self.review = {
+            'schema_version': 1, 'head': 'a'*40, 'base': 'b'*40,
+            'input_sha256': self.state['input_sha256'], 'verdict': 'approve',
+            'summary': 'Verified all modified lines, edge cases, and regression coverage across both files.',
+            'files': [
+                {'path': 'a.py', 'assessment': 'Input boundary validation and error paths are deterministic and well-tested.'},
+                {'path': 'b.py', 'assessment': 'All unit test fixtures cover positive, negative, and boundary paths cleanly.'},
+            ],
+            'areas': [
+                {'area': area, 'assessment': 'Verified correctness, least-privilege permissions, and unit test coverage.'}
+                for area in sorted(gate.AREAS)
+            ],
+            'findings': [],
+        }
+
+    def test_confidence_tiers_high_medium_low_and_missing(self):
+        high = gate.evaluate_review_confidence(
+            self.review,
+            self.state,
+            provider={'finish_reasons': ['STOP'], 'prompt_block_reason': None},
+        )
+        self.assertEqual(high['tier'], 'high')
+        self.assertEqual(high['score'], 100)
+
+        short_review = copy.deepcopy(self.review)
+        short_review['summary'] = 'x' * 30
+        for item in short_review['files'] + short_review['areas']:
+            item['assessment'] = 'x' * 30
+        medium = gate.evaluate_review_confidence(
+            short_review,
+            dict(self.state, redactions=2),
+        )
+        self.assertEqual(medium['tier'], 'medium')
+        self.assertTrue(55 <= medium['score'] < 80, medium)
+
+        incomplete = gate.evaluate_review_confidence(
+            dict(short_review, files=[short_review['files'][0]]),
+            dict(self.state, complete_diff=False, redactions=3),
+            provider={'finish_reasons': ['MAX_TOKENS']},
+        )
+        self.assertEqual(incomplete['tier'], 'low')
+        self.assertLess(incomplete['score'], 55)
+
+        failed = gate.evaluate_evidence_confidence({'error': 'RuntimeError: API HTTP 500'})
+        self.assertEqual(failed['score'], 0)
+        self.assertEqual(failed['tier'], 'low')
+
+    def test_publish_records_confidence_and_keeps_check_run_patch_last(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            gate.write(directory/'state.json', self.state)
+            gate.write(directory/'provider.json', {'finish_reasons': ['STOP'], 'prompt_block_reason': None})
+            gate.write(directory/'result.json', {'review': self.review})
+            pr = {'state': 'open', 'draft': False, 'head': {'sha': 'a'*40}, 'base': {'sha': 'b'*40, 'ref': 'main'}}
+            summary_path = directory/'summary.md'
+            with patch.object(gate, 'github', return_value=pr) as api, patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(summary_path)}):
+                gate.publish(directory)
+                self.assertEqual(api.call_args.args[1]['conclusion'], 'success')
+                self.assertIn('Confidence:', api.call_args.args[1]['output']['summary'])
+            evidence = json.loads((directory/'evidence.json').read_text(encoding='utf-8'))
+            self.assertEqual(evidence['confidence']['tier'], 'high')
+            self.assertIn('Confidence:', summary_path.read_text(encoding='utf-8'))
+
+    def test_post_confidence_comment_creates_updates_and_redacts(self):
+        fake_secret = 'sk-' + 'secretvalue12345678'
+        fake_assignment = 'api_' + f'key="{fake_secret}"'
+        evidence = dict(
+            self.state,
+            status='changes_requested',
+            review=dict(
+                self.review,
+                verdict='changes_requested',
+                findings=[{
+                    'path': 'a.py',
+                    'line': 10,
+                    'severity': 'high',
+                    'blocking': True,
+                    'explanation': f'Leaked credential {fake_assignment} must be removed.',
+                    'recommendation': 'Read credentials from environment variables instead.',
+                }],
+            ),
+        )
+        evidence['confidence'] = gate.evaluate_evidence_confidence(evidence)
+
+        created_calls = []
+        def api_create(path, data=None, method=None):
+            created_calls.append((path, data, method))
+            if method is None:
+                return []
+            return {'id': 501}
+
+        res_created = gate.post_confidence_comment(evidence, api=api_create)
+        self.assertEqual(res_created, {'action': 'created', 'comment_id': 501})
+        self.assertEqual(created_calls[-1][0], '/issues/42/comments')
+        self.assertEqual(created_calls[-1][2], 'POST')
+        posted_body = created_calls[-1][1]['body']
+        self.assertIn(gate.COMMENT_MARKER, posted_body)
+        self.assertNotIn(fake_secret, posted_body)
+        self.assertIn('[REDACTED]', posted_body)
+
+        updated_calls = []
+        def api_update(path, data=None, method=None):
+            updated_calls.append((path, data, method))
+            if method is None and path.endswith('&page=1'):
+                return [{'id': i, 'body': 'unrelated'} for i in range(100)]
+            if method is None and path.endswith('&page=2'):
+                return [{'id': 777, 'body': f"{gate.COMMENT_MARKER}\nold report"}]
+            return {'id': 777}
+
+        res_updated = gate.post_confidence_comment(evidence, api=api_update)
+        self.assertEqual(res_updated, {'action': 'updated', 'comment_id': 777})
+        self.assertEqual(updated_calls[-1][0], '/issues/comments/777')
+        self.assertEqual(updated_calls[-1][2], 'PATCH')
+
+    def test_comment_cli_and_self_test(self):
+        gate.run_self_test()
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            with self.assertRaises(ValueError):
+                gate.comment(directory)
+            evidence = dict(self.state, status='approved', review=self.review)
+            gate.write(directory/'evidence.json', evidence)
+            with patch.object(gate, 'github', side_effect=[[], {'id': 888}]) as api:
+                res = gate.comment(directory)
+                self.assertEqual(res['action'], 'created')
+                self.assertEqual(api.call_count, 2)
 
 
 if __name__ == '__main__':

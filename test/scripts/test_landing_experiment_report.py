@@ -373,6 +373,108 @@ class LandingExperimentReportTest(unittest.TestCase):
         self.assertIn("SUPABASE_SERVICE_ROLE_KEY", workflow)
         self.assertNotIn("pull_request:", workflow)
 
+    def test_stale_oauth_failure_outside_recent_window_does_not_lock_action(self) -> None:
+        from landing_experiment_report import summarize_recent_funnel_rows
+
+        rows = fixture_rows()
+        rows[0]["first_event_at"] = "2026-07-22T01:00:00Z"
+        rows[-1]["last_event_at"] = "2026-11-23T09:00:00Z"
+        arms = validate_arm_rows(rows)
+        funnel_rows = [
+            {
+                "date": "2026-10-01",
+                "source_details": {
+                    "funnel_trial_run": 10,
+                    "funnel_save_cta": 2,
+                    "funnel_google_oauth_start": 1,
+                    "funnel_google_oauth_fail_callback_exchange": 1,
+                },
+            },
+            {
+                "date": "2026-11-23",
+                "source_details": {
+                    "funnel_google_oauth_start": 1,
+                },
+            },
+        ]
+        all_counts = summarize_funnel_rows(funnel_rows)
+        recent_counts, last_oauth_fail = summarize_recent_funnel_rows(
+            funnel_rows,
+            window_end_date="2026-11-23",
+        )
+        report = build_report(
+            arms,
+            funnel_counts=all_counts,
+            funnel_observation_window=("2026-07-22", "2026-11-23"),
+            recent_funnel_counts=recent_counts,
+            last_google_oauth_failure_date=last_oauth_fail,
+        )
+        diag = report["funnel_diagnostics"]
+        self.assertEqual(diag["google_oauth_failure_total"], 1)
+        self.assertEqual(diag["recent_google_oauth_failure_total"], 0)
+        self.assertEqual(diag["last_google_oauth_failure_date"], "2026-10-01")
+        self.assertEqual(
+            diag["recommended_next_action"],
+            "verify_oauth_callback_and_signup_completion",
+        )
+
+    def test_recent_oauth_failure_inside_window_triggers_repair_action(self) -> None:
+        from landing_experiment_report import summarize_recent_funnel_rows
+
+        arms = validate_arm_rows(fixture_rows())
+        funnel_rows = [
+            {
+                "date": "2026-11-20",
+                "source_details": {
+                    "funnel_trial_run": 5,
+                    "funnel_save_cta": 1,
+                    "funnel_google_oauth_start": 2,
+                    "funnel_google_oauth_fail_callback_exchange": 1,
+                },
+            },
+        ]
+        all_counts = summarize_funnel_rows(funnel_rows)
+        recent_counts, last_oauth_fail = summarize_recent_funnel_rows(
+            funnel_rows,
+            window_end_date="2026-11-23",
+        )
+        report = build_report(
+            arms,
+            funnel_counts=all_counts,
+            recent_funnel_counts=recent_counts,
+            last_google_oauth_failure_date=last_oauth_fail,
+        )
+        diag = report["funnel_diagnostics"]
+        self.assertEqual(diag["recent_google_oauth_failure_total"], 1)
+        self.assertEqual(diag["last_google_oauth_failure_date"], "2026-11-20")
+        self.assertEqual(
+            diag["recommended_next_action"],
+            "repair_google_oauth_callback_failure",
+        )
+
+    def test_oauth_failure_without_recent_counts_uses_cumulative_fallback(self) -> None:
+        arms = validate_arm_rows(fixture_rows())
+        counts = summarize_funnel_rows(
+            [
+                {
+                    "date": "2026-10-01",
+                    "source_details": {
+                        "funnel_trial_run": 3,
+                        "funnel_save_cta": 1,
+                        "funnel_google_oauth_start": 1,
+                        "funnel_google_oauth_fail_callback_exchange": 1,
+                    },
+                }
+            ]
+        )
+        report = build_report(arms, funnel_counts=counts)
+        diag = report["funnel_diagnostics"]
+        self.assertIsNone(diag["recent_google_oauth_failure_total"])
+        self.assertEqual(
+            diag["recommended_next_action"],
+            "repair_google_oauth_callback_failure",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

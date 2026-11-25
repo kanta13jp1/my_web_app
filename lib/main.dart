@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/agent_tool_policy_preview_page.dart';
 import 'package:my_web_app/pages/typing_game_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
@@ -21,6 +22,7 @@ import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
 import 'package:my_web_app/utils/route_document_title.dart';
+import 'package:my_web_app/services/spa_route_title_observer.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -52,6 +54,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
@@ -399,6 +402,14 @@ Future<void> main() async {
     httpClient: SupabaseTracingHttpClient(),
   );
 
+  final authClient = Supabase.instance.client.auth;
+  final startupAuthErrorSubscription = authClient.onAuthStateChange.listen(
+    (_) {},
+    onError: (Object error, StackTrace _) {
+      LandingOAuthCallbackFailure.captureStartupError(error);
+    },
+  );
+
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
   AppLogger.setErrorReporter(
     (message, {error, stackTrace}) => ErrorReporter.instance.report(
@@ -421,6 +432,7 @@ Future<void> main() async {
       );
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(startupAuthErrorSubscription.cancel());
         unawaited(_configureStartupNotifications(notificationService));
       });
     },
@@ -579,7 +591,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/shop':
       return MaterialPageRoute(
-        builder: (_) => const DigitalProductStorePage(),
+        builder: (_) => DigitalProductStorePage(attributionUri: uri),
         settings: settings,
       );
     case '/shop/product':
@@ -588,6 +600,7 @@ Route<dynamic> generateAppRoute(
           productId: uri.queryParameters['product_id'] ?? '',
           purchaseResult: uri.queryParameters['purchase'],
           funnel: ShopFunnelService(),
+          attributionUri: uri,
         ),
         settings: settings,
       );
@@ -604,6 +617,7 @@ Route<dynamic> generateAppRoute(
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
+          attributionUri: uri,
         ),
         settings: settings,
       );
@@ -1892,6 +1906,10 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-hub':
       return MaterialPageRoute(builder: (_) => const AppHubPage());
+    case '/agent-tool-policy-preview':
+      return MaterialPageRoute(
+        builder: (_) => const AgentToolPolicyPreviewPage(),
+      );
     case '/agent-hub':
       return MaterialPageRoute(builder: (_) => const AgentHubPage());
     case '/admin-notifications':
@@ -2148,7 +2166,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return ValueListenableBuilder(
       valueListenable: universalAiShareRouteObserver.currentPage,
       builder: (context, currentPage, _) => MaterialApp(
-        title: documentTitleForRoute(currentPage.routePath),
+        title: SpaRouteTitleResolver.resolve(currentPage.routePath),
         debugShowCheckedModeBanner: false,
         scaffoldMessengerKey: _scaffoldMessengerKey,
         navigatorKey: _navigatorKey,
@@ -2196,6 +2214,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         navigatorObservers: <NavigatorObserver>[
           _growthPresenceObserver,
           universalAiShareRouteObserver,
+          spaRouteTitleObserver,
           // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
           // LP View 計測を可視化まで遅延させる (可視化ゲート)。
           deepLinkVisibilityRouteObserver,

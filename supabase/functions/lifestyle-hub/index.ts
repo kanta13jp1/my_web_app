@@ -17,6 +17,13 @@ import {
   coerceJournalInsight,
   extractFirstJsonObject,
 } from "./journal_analysis.ts";
+import {
+  buildPriceAdvicePrompt,
+  buildStatisticalPriceAdviceFallback,
+  coercePriceAdvice,
+  computePriceLogStats,
+  formatPriceAdviceText,
+} from "./price_advice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1827,18 +1834,12 @@ serve(async (req) => {
           .order("fetched_at", { ascending: false })
           .limit(30);
         if (lErr) return json({ error: lErr.message }, 400);
-        const series = (logs ?? []).map((l) =>
-          `${l.fetched_at?.slice(0, 10)}: ¥${l.price}`
-        ).join(" / ");
-        const prompt = `商品: ${product.product_name}\n` +
-          `現在価格: ¥${product.current_price ?? "?"}\n` +
-          `目標価格: ¥${product.target_price ?? "なし"}\n` +
-          `史上最安: ¥${product.lowest_price ?? "?"}\n` +
-          `史上最高: ¥${product.highest_price ?? "?"}\n` +
-          `直近30件: ${series || "履歴なし"}\n\n` +
-          `この商品を「今買うべき」か「待つべき」か、200字以内で判断理由付きで答えてください。` +
-          `「今買うべき」なら理由 (例: 史上最安・目標達成・在庫薄)。` +
-          `「待つべき」なら根拠 (例: セール直前・下落トレンド)。`;
+        const traceId = req.headers.get("x-trace-id")?.trim() ||
+          crypto.randomUUID();
+        const startedAt = Date.now();
+        const stats = computePriceLogStats(product, logs ?? []);
+        const fallback = buildStatisticalPriceAdviceFallback(product, stats);
+        const prompt = buildPriceAdvicePrompt(product, stats, logs ?? []);
         try {
           const aiResp = await fetch(
             `${SUPABASE_URL}/functions/v1/ai-hub`,
@@ -1852,27 +1853,55 @@ serve(async (req) => {
                 action: "provider.chat",
                 provider: "groq",
                 message: prompt,
+                trace_id: traceId,
               }),
+              signal: AbortSignal.timeout(8000),
             },
           );
+          const elapsedMs = Date.now() - startedAt;
+          if (elapsedMs > 5000) {
+            console.warn(
+              `[price.advise] slow ai-hub response trace_id=${traceId} elapsed_ms=${elapsedMs}`,
+            );
+          }
           const aiData = await aiResp.json() as Record<string, unknown>;
-          if (aiData.success === true) {
+          if (aiResp.ok && aiData.success === true) {
+            const structured = coercePriceAdvice(
+              String(aiData.text ?? ""),
+              fallback,
+              "llm",
+            );
             return json({
               success: true,
-              advice: String(aiData.text ?? ""),
+              ...structured,
+              advice: formatPriceAdviceText(structured),
               model: String(aiData.model_used ?? "groq:llama-3.3-70b"),
+              trace_id: traceId,
+              elapsed_ms: elapsedMs,
             });
           }
           return json({
-            success: false,
-            advice: "AI助言が現在利用できません (Groq APIキー未設定の可能性)",
-            detail: aiData,
+            success: true,
+            ...fallback,
+            advice: formatPriceAdviceText(fallback),
+            model: "statistical:observed-logs",
+            ai_fallback_reason: "ai-hub unavailable",
+            trace_id: traceId,
+            elapsed_ms: elapsedMs,
           }, 200);
         } catch (e) {
+          const elapsedMs = Date.now() - startedAt;
+          console.warn(
+            `[price.advise] fallback triggered trace_id=${traceId} elapsed_ms=${elapsedMs}`,
+          );
           return json({
-            success: false,
-            advice: "AI助言取得エラー",
-            error: String(e),
+            success: true,
+            ...fallback,
+            advice: formatPriceAdviceText(fallback),
+            model: "statistical:observed-logs",
+            ai_fallback_reason: String(e),
+            trace_id: traceId,
+            elapsed_ms: elapsedMs,
           }, 200);
         }
       }

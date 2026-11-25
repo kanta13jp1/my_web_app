@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 // Services
 import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
+import '../services/asset_debt_guard_calendar_service.dart';
 import '../services/billing_service.dart';
 import '../services/completion_goal_service.dart';
 import '../services/feature_strategy_ai_review_service.dart';
@@ -55,6 +56,7 @@ import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
+import '../widgets/home_curated_calendar_section.dart';
 import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
@@ -83,6 +85,7 @@ import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
 import '../utils/home_calendar_visible_range.dart';
+import '../utils/home_cashflow_bundle_loader.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -859,97 +862,36 @@ class _HomePageState extends State<HomePage> with RouteAware {
       );
     }
 
-    final normalizedCalStart = _startOfDay(calendarStart);
-    final normalizedCalEndExclusive =
-        _startOfDay(calendarEnd).add(const Duration(days: 1));
-    final queryStart = _minDate(monthStart, normalizedCalStart);
-    final queryEndExclusive = _maxDate(nextMonth, normalizedCalEndExclusive);
-
-    try {
-      final dynamic rowsRaw = await AssetFlowRequest.table(
-        Supabase.instance.client,
-      )
+    final bundle = await loadHomeCashflowBundle(
+      userId: userId,
+      monthStart: monthStart,
+      nextMonth: nextMonth,
+      calendarStart: calendarStart,
+      calendarEnd: calendarEnd,
+      fetchRows: (query) => AssetFlowRequest.table(Supabase.instance.client)
           .select('action_type,amount,occurred_at')
-          .eq('user_id', userId)
-          .gte('occurred_at', queryStart.toUtc().toIso8601String())
-          .lt('occurred_at', queryEndExclusive.toUtc().toIso8601String())
-          .order('occurred_at', ascending: true);
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-
-      var incomeTotal = 0;
-      var expenseTotal = 0;
-      var incomeCount = 0;
-      var expenseCount = 0;
-      DateTime? lastRecordedAt;
-      final dailyByDate = <String, HomeDailyCashflowSummary>{};
-
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        final actionType = row['action_type']?.toString() ?? '';
-        final amount = _toIntValue(row['amount']);
-        final occurredAt = DateTime.tryParse(
-          row['occurred_at']?.toString() ?? '',
-        )?.toLocal();
-        if (occurredAt == null) continue;
-
-        if (!occurredAt.isBefore(monthStart) &&
-            occurredAt.isBefore(nextMonth)) {
-          if (lastRecordedAt == null || occurredAt.isAfter(lastRecordedAt)) {
-            lastRecordedAt = occurredAt;
-          }
-          if (actionType == 'conquer') {
-            incomeTotal += amount;
-            incomeCount += 1;
-          } else if (actionType == 'expense') {
-            expenseTotal += amount;
-            expenseCount += 1;
-          }
-        }
-
-        if (!occurredAt.isBefore(normalizedCalStart) &&
-            occurredAt.isBefore(normalizedCalEndExclusive)) {
-          final dateKey = _statusDateKey(occurredAt);
-          final current =
-              dailyByDate[dateKey] ?? const HomeDailyCashflowSummary();
-          dailyByDate[dateKey] = switch (actionType) {
-            'conquer' => current.copyWith(
-                incomeTotal: current.incomeTotal + amount,
-                incomeCount: current.incomeCount + 1,
-              ),
-            'expense' => current.copyWith(
-                expenseTotal: current.expenseTotal + amount,
-                expenseCount: current.expenseCount + 1,
-              ),
-            'transfer' => current.copyWith(
-                transferTotal: current.transferTotal + amount,
-                transferCount: current.transferCount + 1,
-              ),
-            _ => current,
-          };
-        }
-      }
-
-      return (
-        monthlySummary: _HomeMonthlyCashflowSummary(
-          month: monthStart,
-          incomeTotal: incomeTotal,
-          expenseTotal: expenseTotal,
-          incomeCount: incomeCount,
-          expenseCount: expenseCount,
-          reviewDone: reviewDone,
-          lastRecordedAt: lastRecordedAt,
-        ),
-        dailyByDate: dailyByDate,
-      );
-    } catch (e) {
-      debugPrint('Error loading cashflow bundle: $e');
-      return (
-        monthlySummary: _HomeMonthlyCashflowSummary(
-          month: monthStart,
-          reviewDone: reviewDone,
-        ),
-        dailyByDate: <String, HomeDailyCashflowSummary>{},
-      );
-    }
+          .eq('user_id', query.userId)
+          .gte('occurred_at', query.startUtcIso)
+          .lt('occurred_at', query.endExclusiveUtcIso)
+          .order('occurred_at', ascending: true),
+      dateKeyFor: _statusDateKey,
+      amountFor: _toIntValue,
+      onError: (error, _) {
+        debugPrint('Error loading cashflow bundle: $error');
+      },
+    );
+    return (
+      monthlySummary: _HomeMonthlyCashflowSummary(
+        month: monthStart,
+        incomeTotal: bundle.monthlyTotals.incomeTotal,
+        expenseTotal: bundle.monthlyTotals.expenseTotal,
+        incomeCount: bundle.monthlyTotals.incomeCount,
+        expenseCount: bundle.monthlyTotals.expenseCount,
+        reviewDone: reviewDone,
+        lastRecordedAt: bundle.monthlyTotals.lastRecordedAt,
+      ),
+      dailyByDate: bundle.dailyByDate,
+    );
   }
 
   String _dailyTodoCategoryLabel(String? category) {
@@ -1358,12 +1300,19 @@ class _HomePageState extends State<HomePage> with RouteAware {
         calendarStart: calendarRange.startDay,
         calendarEnd: calendarRange.endDay,
       );
+      final additionalDebtViolationDatesFuture =
+          _loadAdditionalDebtViolationDates(
+        startDate: calendarRange.startDay,
+        endDate: calendarRange.endDay,
+      );
 
       final abstinenceSnapshotsByDate = await abstinenceFuture;
       final cashflowBundle = await cashflowFuture;
       final pendingStockTaskCount = await stockTaskCountFuture;
       final homeDailyMap = await homeDailyMapFuture;
       final taskGoalBundle = await taskGoalFuture;
+      final additionalDebtViolationDates =
+          await additionalDebtViolationDatesFuture;
 
       final todayStatus =
           homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
@@ -1378,6 +1327,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         cashflowByDate: cashflowBundle.dailyByDate,
         tasksByDate: taskGoalBundle.tasksByDate,
         abstinenceSnapshotsByDate: abstinenceSnapshotsByDate,
+        additionalDebtViolationDates: additionalDebtViolationDates,
       );
 
       return _HomeOpsSnapshot(
@@ -1430,6 +1380,30 @@ class _HomePageState extends State<HomePage> with RouteAware {
   HomeCalendarVisibleRange _calendarVisibleRange() =>
       HomeCalendarVisibleRange.forMonth(_calendarAnchorMonth());
 
+  Future<Set<String>> _loadAdditionalDebtViolationDates({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return const <String>{};
+    }
+    final normalizedStart = _startOfDay(startDate);
+    final normalizedEndExclusive =
+        _startOfDay(endDate).add(const Duration(days: 1));
+    final violations =
+        await AssetDebtGuardCalendarService.loadBorrowingViolations(
+      client: Supabase.instance.client,
+      userId: userId,
+      start: normalizedStart,
+      endExclusive: normalizedEndExclusive,
+    );
+    return <String>{
+      for (final violation in violations)
+        AssetDebtGuardCalendarService.formatDateKey(violation.date),
+    };
+  }
+
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     HomeCalendarVisibleRange? calendarRange,
     required Map<String, _HomeDailyStatusRecord> homeDailyMap,
@@ -1437,6 +1411,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     required Map<String, HomeDailyCashflowSummary> cashflowByDate,
     required Map<String, List<_HomeCalendarTask>> tasksByDate,
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
+    Set<String> additionalDebtViolationDates = const <String>{},
   }) async {
     final now = _now();
     final range = calendarRange ?? _calendarVisibleRange();
@@ -1500,6 +1475,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
           pendingCriticalTaskCount: pendingCriticalTaskCountForDay,
           hasAbstinenceProtection: hasProtection,
           hasAbstinenceSlip: hasSlip,
+          hasAdditionalDebtViolation:
+              additionalDebtViolationDates.contains(dateKey),
           isSaturday: day.weekday == DateTime.saturday,
           enabledLabels: abstinence.enabledLabels,
           slipDetails: abstinence.slipDetails,
@@ -3090,7 +3067,9 @@ abstinence_slip_details: $slipDetailsText
                             isDark: isDark,
                             accentColor: accentColor,
                           ),
-                          if (day.isCurrentMonth && day.hasCashflow) ...[
+                          if (day.isCurrentMonth &&
+                              (day.hasCashflow ||
+                                  day.cashflow.hasBorrowing)) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
                               HomeCalendarCashflowLine(
@@ -3114,6 +3093,17 @@ abstinence_slip_details: $slipDetailsText
                                 sign: '-',
                                 isEmphasized: matchesFilter,
                               ),
+                            if (day.cashflow.borrowingCount > 0)
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
+                                  'calendar_day_borrowing_${DateFormat('yyyy-MM-dd').format(day.date)}',
+                                ),
+                                label: '借',
+                                amount: day.cashflow.borrowingTotal,
+                                color: const Color(0xFFB45309),
+                                sign: '+',
+                                isEmphasized: matchesFilter,
+                              ),
                           ],
                           const Spacer(),
                           HomeCalendarDayIndicators(
@@ -3125,6 +3115,9 @@ abstinence_slip_details: $slipDetailsText
                                 const Color(0xFFE53935),
                               if (day.hasAbstinenceSlip)
                                 const Color(0xFFFF6B35),
+                              if (day.cashflow.hasBorrowing ||
+                                  day.hasAdditionalDebtViolation)
+                                const Color(0xFFB45309),
                               if (day.isSaturday) const Color(0xFF009688),
                             ],
                             isEmphasized: matchesFilter,
@@ -3157,6 +3150,7 @@ abstinence_slip_details: $slipDetailsText
               _CalendarLegend(color: Color(0xFF4CAF50), label: '残高'),
               _CalendarLegend(color: Color(0xFFE53935), label: '禁欲安定'),
               _CalendarLegend(color: Color(0xFFFF6B35), label: '逸脱'),
+              _CalendarLegend(color: Color(0xFFB45309), label: '借入/違反'),
               _CalendarLegend(color: Color(0xFF009688), label: '土曜'),
             ],
           ),
@@ -4071,12 +4065,45 @@ abstinence_slip_details: $slipDetailsText
             const SizedBox(height: 10),
             Text(
               '入出金 ${cashflow.recordCount} 件'
-              '${cashflow.transferCount > 0 ? ' / 振替 ${cashflow.transferCount} 件 (${_formatYen(cashflow.transferTotal.toDouble())})' : ''}',
+              '${cashflow.transferCount > 0 ? ' / 振替 ${cashflow.transferCount} 件 (${_formatYen(cashflow.transferTotal.toDouble())})' : ''}'
+              '${cashflow.borrowingCount > 0 ? ' / 借入受取 ${cashflow.borrowingCount} 件 (${_formatYen(cashflow.borrowingTotal.toDouble())})' : ''}',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF666666),
                 height: 1.5,
+              ),
+            ),
+            if (cashflow.borrowingCount > 0) ...[
+              const SizedBox(height: 4),
+              const Text(
+                '※ 借入受取は収入・支出の合計には含まれません。',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF92400E),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+          if (day.hasAdditionalDebtViolation) ...[
+            const SizedBox(height: 8),
+            Container(
+              key: Key('calendar_day_detail_debt_violation_$dateKey'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFD97706)),
+              ),
+              child: const Text(
+                '追加借金ルール違反（Debt Guard）の記録あり',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF92400E),
+                ),
               ),
             ),
           ],
@@ -5213,6 +5240,22 @@ abstinence_slip_details: $slipDetailsText
                               isCompact: isCompact,
                               showInternalOperations: showInternalOperations,
                             ),
+                            if (!showInternalOperations) ...[
+                              const SizedBox(height: 12),
+                              HomeCuratedCalendarSection(
+                                isCompact: isCompact,
+                                calendarChild: _buildCalendarPanel(
+                                  context,
+                                  opsSnapshot,
+                                ),
+                                onOpenAssetManagement: () => _runTrackedAction(
+                                  'asset-management-calendar',
+                                  () => Navigator.of(
+                                    context,
+                                  ).pushNamed('/asset-management'),
+                                ),
+                              ),
+                            ],
                             if (showInternalOperations) ...[
                               const SizedBox(height: 40),
                               _buildHopsonInspiredHomeHero(
@@ -9554,6 +9597,7 @@ class _HomeCalendarDay {
   final int pendingCriticalTaskCount;
   final bool hasAbstinenceProtection;
   final bool hasAbstinenceSlip;
+  final bool hasAdditionalDebtViolation;
   final bool isSaturday;
   final List<String> enabledLabels;
   final List<String> slipDetails;
@@ -9572,6 +9616,7 @@ class _HomeCalendarDay {
     required this.pendingCriticalTaskCount,
     required this.hasAbstinenceProtection,
     required this.hasAbstinenceSlip,
+    this.hasAdditionalDebtViolation = false,
     required this.isSaturday,
     required this.enabledLabels,
     required this.slipDetails,

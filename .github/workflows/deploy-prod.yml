@@ -642,6 +642,9 @@ jobs:
           # Internal Issue #1352 decision-chain writer. Gateway JWT verification
           # plus an exact service-role bearer check is enforced in-function.
           deploy_function decision-events
+          # Issue #2659 RLHF bad-output -> GitHub Issue (AI-Feedback) webhook.
+          # Database Webhooks verify HMAC signatures; browser calls verify auth.getUser().
+          deploy_function rlhf-feedback-webhook --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -689,8 +692,10 @@ jobs:
           deploy_function viral-video-ad-generator --no-verify-jwt
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
+          deploy_function did-mcp-proxy --no-verify-jwt
+          deploy_function external-ai-webhook --no-verify-jwt
 
-          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
+          # Total: 36 functions deployed (ハードキャップ50本に対し36本 — 余裕14本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -817,10 +822,52 @@ jobs:
           cp web/release-notes.json build/web/release-notes.json
           cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
+      - name: Optimize bundled web fonts (subset NotoSansJP & NotoColorEmoji)
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1 || ! dpkg -s fonts-noto-cjk >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools fonts-noto-cjk
+          fi
+          /usr/bin/python3 scripts/optimize_web_fonts.py --build-dir build/web --repo-root . --require-fonts
+
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
+
+      - name: Setup Node for web assets and Firebase CLI
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Cache Playwright Chromium for OGP cards
+        id: playwright_cache
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Generate and verify build-time OGP and X social cards
+        if: steps.changes.outputs.web == 'true'
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright_cache.outputs.cache-hit }}
+        run: |
+          if [ ! -d node_modules/@playwright/test ]; then
+            npm ci --ignore-scripts
+          fi
+          # ubuntu-latest ships /usr/bin/google-chrome; Playwright browser download is a cached fallback only.
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/google-chrome-stable ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            if [ "$PLAYWRIGHT_CACHE_HIT" != "true" ]; then
+              npx playwright install --with-deps chromium
+            else
+              npx playwright install-deps chromium
+            fi
+          fi
+          node scripts/generate_ogp_cards.mjs --out-dir build/web
 
       - name: Prerender per-route static HTML + sitemap (SEO)
         if: steps.changes.outputs.web == 'true'
@@ -851,13 +898,6 @@ jobs:
         uses: ./.github/actions/prepare-sea-shelter-arena
         with:
           web-root: build/web
-
-      - name: Setup Node for Firebase CLI
-        if: steps.changes.outputs.web == 'true'
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: "24"
-          cache: npm
 
       - name: Upload Sentry sourcemaps and register release
         if: steps.changes.outputs.web == 'true'

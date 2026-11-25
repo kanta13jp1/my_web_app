@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_web_app/dev/claude_design/handoff_bundle.dart';
 import 'package:my_web_app/dev/claude_design/flutter_codegen.dart';
+import 'package:my_web_app/dev/claude_design/handoff_bundle.dart';
+import 'package:my_web_app/theme/claude_design_generated_theme.dart';
 
 void main() {
   group('FlutterCodegen', () {
@@ -126,6 +128,65 @@ void main() {
       ];
       final json = FlutterCodegen.reportAsJson(components);
       expect(json, contains('"count": 1'));
+    });
+
+    test('generateThemeDataCode emits deterministic Material 3 ThemeData', () {
+      const sampleBundle = DesignTokens(
+        colors: <String, Color>{
+          'primary': Color(0xFFFF6B35),
+          'secondary': Color(0xFF3D5AFE),
+          'surface0': Color(0xFF0A0A0A),
+          'surface1': Color(0xFF1A1A1A),
+          'text': Color(0xFFFFFFFF),
+          'border': Color(0xFF2A2A2A),
+        },
+        typography: <String, TextStyle>{
+          'bodyMedium': TextStyle(fontSize: 15, height: 1.5),
+        },
+        spacing: <String, double>{'md': 16},
+        radius: <String, double>{'lg': 14},
+      );
+      final darkCode = FlutterCodegen.generateThemeDataCode(
+        sampleBundle,
+        className: 'BrandTheme',
+      );
+      expect(darkCode, contains('class BrandTheme'));
+      expect(darkCode, contains('Color(0xFFFF6B35)'));
+      expect(darkCode, contains('CardThemeData('));
+      expect(darkCode, contains('DialogThemeData('));
+      expect(darkCode, contains('Brightness.dark'));
+
+      final lightCode = FlutterCodegen.generateThemeDataCode(
+        sampleBundle,
+        className: 'BrandTheme',
+        brightness: Brightness.light,
+      );
+      expect(lightCode, contains('Brightness.light'));
+    });
+
+    test('ClaudeDesignGeneratedTheme builds valid light and dark ThemeData',
+        () {
+      final darkTheme = ClaudeDesignGeneratedTheme.buildThemeData();
+      expect(darkTheme.useMaterial3, isTrue);
+      expect(darkTheme.brightness, Brightness.dark);
+      expect(
+        darkTheme.colorScheme.primary.toARGB32(),
+        ClaudeDesignGeneratedTheme.primaryColor.toARGB32(),
+      );
+      final darkExt = darkTheme.extension<ClaudeDesignGeneratedThemeTokens>();
+      expect(darkExt, isNotNull);
+      expect(darkExt!.radiusLg, 16);
+
+      final lightTheme = ClaudeDesignGeneratedTheme.buildThemeData(
+        brightness: Brightness.light,
+      );
+      expect(lightTheme.brightness, Brightness.light);
+      final lightExt = lightTheme.extension<ClaudeDesignGeneratedThemeTokens>();
+      expect(lightExt, isNotNull);
+      final copied = lightExt!.copyWith(spaceMd: 20);
+      expect(copied.spaceMd, 20);
+      final lerped = darkExt.lerp(lightExt, 0.5);
+      expect(lerped.radiusLg, 16);
     });
   });
 }

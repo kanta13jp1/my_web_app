@@ -14,7 +14,10 @@ import {
   rankBm25,
   ScoredMemoryDocument,
 } from "./search/bm25.ts";
-import { buildQueryRouteDecision } from "./query_report.ts";
+import {
+  buildHeuristicQueryReport,
+  buildQueryRouteDecision,
+} from "./query_report.ts";
 import { rerankWithHaiku } from "./search/rerank.ts";
 import { embedTextWithGemini, vectorSearch } from "./search/vector.ts";
 import {
@@ -301,28 +304,51 @@ function toResult(doc: ScoredMemoryDocument) {
   };
 }
 
-async function memorySearch(body: Body) {
+async function memorySearch(body: Body, ctx: McpAuthContext | null = null) {
   const query = asString(body.query);
   if (!query) return jsonResponse({ error: "query required" }, 400);
   const topK = asPositiveInt(body.top_k, 5, 20);
+  const {
+    createSupabaseOfflineAuditStore,
+    parseOfflineSecureModePolicy,
+    recordAuthorizedOfflineAudit,
+    shouldBlockExternalProviderCall,
+  } = await import("../_shared/offline_secure_mode_guard.ts");
+  const offlinePolicy = parseOfflineSecureModePolicy(body);
+  const externalBlocked = shouldBlockExternalProviderCall(offlinePolicy);
 
   const docs = await loadRecentDocuments();
   const bm25 = rankBm25(query, docs, 50);
   let vector: ScoredMemoryDocument[] = [];
-  try {
-    vector = (await vectorSearch(adminClient(), query, 20)).map((match) => ({
-      ...match,
-      updated_at: null,
-    }));
-  } catch (error) {
-    console.warn("memory.search vector stage skipped", error);
+  if (!externalBlocked) {
+    try {
+      vector = (await vectorSearch(adminClient(), query, 20)).map((match) => ({
+        ...match,
+        updated_at: null,
+      }));
+    } catch (error) {
+      console.warn("memory.search vector stage skipped", error);
+    }
   }
 
   const results = mergeHybridResults(bm25, vector, topK);
+  await recordAuthorizedOfflineAudit(
+    createSupabaseOfflineAuditStore(adminClient()),
+    ctx,
+    body.user_id,
+    {
+      action: "memory.search",
+      provider: externalBlocked ? offlinePolicy.inferenceEngine : "gemini",
+      policy: offlinePolicy,
+      status: externalBlocked ? "external_api_blocked" : "offline_policy_log",
+    },
+  );
   return jsonResponse({
     success: true,
     action: "memory.search",
     query,
+    offline_isolated: externalBlocked,
+    memory_limit_mb: offlinePolicy.memoryLimitMb,
     stages: {
       bm25_candidates: bm25.length,
       vector_candidates: vector.length,
@@ -436,6 +462,7 @@ async function generateLlmRagAnswer(
         action: "provider.chat_auto",
         tier: asString(body.tier) || "free",
         trace_id: traceId,
+        temperature: 0,
         messages: ragMessages(query, citations),
       }),
     });
@@ -532,9 +559,18 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     }
   }
 
+  const {
+    createSupabaseOfflineAuditStore,
+    parseOfflineSecureModePolicy,
+    recordAuthorizedOfflineAudit,
+    shouldBlockExternalProviderCall,
+  } = await import("../_shared/offline_secure_mode_guard.ts");
+  const offlinePolicy = parseOfflineSecureModePolicy(body);
+  const externalBlocked = shouldBlockExternalProviderCall(offlinePolicy);
+
   const bm25 = rankBm25(query, docs, 50);
   let vector: ScoredMemoryDocument[] = [];
-  if (!kgLoadError) {
+  if (!kgLoadError && !externalBlocked) {
     try {
       vector = await kgVectorSearch(client, query, sourceTypes, 20);
     } catch (error) {
@@ -554,7 +590,9 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     : "ok";
   let answer = extractiveAnswer(query, citations);
 
-  if (citations.length > 0) {
+  if (externalBlocked) {
+    if (answerStatus === "ok") answerStatus = "offline_extractive";
+  } else if (citations.length > 0) {
     try {
       const generatedAnswer = await generateLlmRagAnswer(
         body,
@@ -576,6 +614,12 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     }
   }
 
+  const { parseNativeCitations } = await import("./native_citation_parser.ts");
+  const parsedAnswer = parseNativeCitations(answer);
+  const normalizedAnswer = parsedAnswer.has_native_tokens
+    ? (parsedAnswer.plain_text || answer)
+    : answer;
+
   await logKgQuery(client, {
     trace_id: traceId,
     user_id: userId,
@@ -587,15 +631,31 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     citation_count: citations.length,
     latency_ms: Math.round(performance.now() - startedAt),
   });
+  await recordAuthorizedOfflineAudit(
+    createSupabaseOfflineAuditStore(client),
+    ctx,
+    body.user_id,
+    {
+      action: "memory.rag.query",
+      provider: externalBlocked ? offlinePolicy.inferenceEngine : "ai-hub",
+      policy: offlinePolicy,
+      status: externalBlocked ? "external_api_blocked" : answerStatus,
+    },
+  );
 
   return jsonResponse({
     success: true,
     action: "memory.rag.query",
     query,
-    answer,
+    answer: normalizedAnswer,
+    parsed_answer: parsedAnswer,
+    temperature_used: 0,
     citations,
     trace_id: traceId,
     answer_status: answerStatus,
+    offline_isolated: externalBlocked,
+    external_api_blocked: externalBlocked,
+    memory_limit_mb: offlinePolicy.memoryLimitMb,
     sources: sourceTypes,
     stages: {
       kg_documents: docs.length,
@@ -606,13 +666,78 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
   });
 }
 
+function queryReportPromptMessages(query: string) {
+  return [
+    {
+      role: "system",
+      content: [
+        "Classify the user search query for RAG routing.",
+        "Respond strictly using Pleias query report tags:",
+        "<|query_report_start|>",
+        "<|state|>trivial | reformulated | unclear",
+        "<|reformulated_query|>improved standalone query when reformulated",
+        "<|reason|>concise explanation in Japanese",
+        "<|query_report_end|>",
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: query,
+    },
+  ];
+}
+
+async function inferQueryReportForRoute(
+  body: Body,
+  query: string,
+): Promise<{ rawReport: string; source: "explicit" | "llm" | "heuristic" }> {
+  const explicitReport = asString(
+    body.query_report ?? body.queryReport ?? body.report,
+  );
+  if (explicitReport) {
+    return { rawReport: explicitReport, source: "explicit" };
+  }
+  if (body.auto_report !== true) {
+    return { rawReport: "", source: "explicit" };
+  }
+  if (body.use_llm !== false && SUPABASE_URL && SERVICE_ROLE_KEY) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-hub`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          action: "provider.chat_auto",
+          tier: asString(body.tier) || "free",
+          trace_id: crypto.randomUUID(),
+          messages: queryReportPromptMessages(query),
+        }),
+      });
+      const payload = await response.json() as Record<string, unknown>;
+      const text = asString(payload["text"]);
+      if (response.ok && payload["success"] !== false && text) {
+        return { rawReport: text, source: "llm" };
+      }
+    } catch (error) {
+      console.warn("memory.query_route llm inference fallback", error);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  return { rawReport: buildHeuristicQueryReport(query), source: "heuristic" };
+}
+
 async function memoryQueryRoute(body: Body) {
   const query = asString(body.query);
   if (!query) return jsonResponse({ error: "query required" }, 400);
 
-  const rawReport = asString(
-    body.query_report ?? body.queryReport ?? body.report,
-  );
+  const inferred = await inferQueryReportForRoute(body, query);
+  const rawReport = inferred.rawReport;
   if (!rawReport) {
     return jsonResponse({ error: "query_report required" }, 400);
   }
@@ -626,6 +751,7 @@ async function memoryQueryRoute(body: Body) {
     used_reformulated_query: route.action === "search" &&
       route.searchQuery !== query,
     feedback: route.feedback,
+    report_source: inferred.source,
     parsed_report: {
       state: route.report.state,
       reformulated_query: route.report.reformulatedQuery,
@@ -751,6 +877,52 @@ async function memoryStats() {
   });
 }
 
+async function memoryOfflineAudit(
+  action: string,
+  body: Body,
+  ctx: McpAuthContext | null,
+) {
+  const {
+    createSupabaseOfflineAuditStore,
+    DEFAULT_MEMORY_LIMIT_MB,
+    listOfflineSecureModeAuditLogs,
+    parseOfflineSecureModePolicy,
+    recordOfflineSecureModeAudit,
+    resolveOfflineAuditUserId,
+  } = await import("../_shared/offline_secure_mode_guard.ts");
+  const identity = resolveOfflineAuditUserId(ctx, body.user_id);
+  if (!identity.ok) {
+    return jsonResponse({ error: identity.error }, identity.status);
+  }
+  const userId = identity.userId;
+  const store = createSupabaseOfflineAuditStore(adminClient());
+  if (action === "memory.offline_audit_logs") {
+    const logs = await listOfflineSecureModeAuditLogs(
+      store,
+      userId,
+      asPositiveInt(body.limit, 20, 100),
+    );
+    return jsonResponse({
+      success: true,
+      action,
+      user_id: userId,
+      memory_limit_mb: DEFAULT_MEMORY_LIMIT_MB,
+      logs,
+    });
+  }
+  const policy = parseOfflineSecureModePolicy(body);
+  const status = asString(body.status) ||
+    (policy.externalApiBlocked ? "external_api_blocked" : "online_allowed");
+  const result = await recordOfflineSecureModeAudit(store, {
+    userId,
+    action: asString(body.audit_action) || "settings.update",
+    provider: asString(body.provider) || policy.inferenceEngine,
+    policy,
+    status,
+  });
+  return jsonResponse({ success: true, action, user_id: userId, ...result });
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -767,6 +939,8 @@ serve(async (req: Request) => {
         "memory.rag.query",
         "rag.query",
         "memory-search-hub.rag.query",
+        "memory.offline_audit_logs",
+        "memory.offline_audit.record",
       ]),
     );
   }
@@ -792,12 +966,16 @@ serve(async (req: Request) => {
     let response: Response;
     switch (action) {
       case "memory.search":
-        response = await memorySearch(body);
+        response = await memorySearch(body, ctx);
         break;
       case "memory.rag.query":
       case "rag.query":
       case "memory-search-hub.rag.query":
         response = await memoryRagQuery(body, ctx);
+        break;
+      case "memory.offline_audit_logs":
+      case "memory.offline_audit.record":
+        response = await memoryOfflineAudit(action, body, ctx);
         break;
       case "memory.query_route":
         response = await memoryQueryRoute(body);

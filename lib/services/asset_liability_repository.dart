@@ -2042,7 +2042,12 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.billingAccountName != right.billingAccountName ||
           left.postedAt != right.postedAt ||
           left.description != right.description ||
-          left.amount != right.amount) {
+          left.amount != right.amount ||
+          left.category != right.category ||
+          left.isProvisional != right.isProvisional ||
+          left.isConfiguredAdjustment != right.isConfiguredAdjustment ||
+          left.excludeFromStatementTotal != right.excludeFromStatementTotal ||
+          left.createdAt != right.createdAt) {
         return false;
       }
     }
@@ -2075,7 +2080,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.completionMemo != right.completionMemo ||
           left.canceled != right.canceled ||
           left.canceledAt != right.canceledAt ||
-          left.cancellationReason != right.cancellationReason) {
+          left.cancellationReason != right.cancellationReason ||
+          left.dedupeKey != right.dedupeKey) {
         return false;
       }
     }

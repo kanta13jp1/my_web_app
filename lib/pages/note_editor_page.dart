@@ -161,6 +161,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _currentNoteId;
   DateTime? _reminderDate;
   bool _isFavorite = false;
+  bool _isPinned = false;
   List<String> _tags = const <String>[];
   bool _isLoading = false;
   bool _isLoadingAttachments = false;
@@ -173,6 +174,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _persistedContent;
   String? _persistedReminderIso;
   bool? _persistedIsFavorite;
+  bool? _persistedIsPinned;
   List<String>? _persistedTags;
   DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
@@ -187,6 +189,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _relatedNotesHasError = false;
   int _relatedNotesRequestId = 0;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const String _newDraftKey = '${_draftKeyPrefix}new';
+  int _draftWriteEpoch = 0;
+  Future<void> _draftStorageQueue = Future<void>.value();
+  String? _latestDraftPayloadJson;
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const String _slashBarExpandedKey = 'note_editor_slash_bar_expanded';
   static const List<String> _slashCommandSuggestions = <String>[
@@ -198,6 +204,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     '/title',
     '/translate en',
     '/favorite',
+    '/pin',
     '/stamp',
     '/tabs',
   ];
@@ -289,7 +296,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   String _currentDraftKey() {
-    return '$_draftKeyPrefix${_currentNoteId ?? 'new'}';
+    return _currentNoteId == null
+        ? _newDraftKey
+        : '$_draftKeyPrefix$_currentNoteId';
   }
 
   bool get _hasPersistableState =>
@@ -297,28 +306,48 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _contentController.text.trim().isNotEmpty ||
       _reminderDate != null ||
       _isFavorite ||
+      _isPinned ||
       _tags.isNotEmpty;
 
   bool _boolFromValue(dynamic value) => value == true;
 
-  Future<void> _persistDraftToLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    final title = _titleController.text;
-    final content = _contentController.text;
-    if (!_hasPersistableState) {
-      await prefs.remove(_currentDraftKey());
-      return;
-    }
+  Future<void> _enqueueDraftStorageOp(Future<void> Function() operation) {
+    final next = _draftStorageQueue.then((_) => operation());
+    _draftStorageQueue = next.catchError((Object _) {});
+    return next;
+  }
+
+  String _encodeCurrentDraftPayload() {
     final payload = <String, dynamic>{
-      'title': title,
-      'content': content,
+      'title': _titleController.text,
+      'content': _contentController.text,
       'reminder_date': _reminderDate?.toIso8601String(),
       'is_favorite': _isFavorite,
-      'tags': _tags,
+      'is_pinned': _isPinned,
+      'tags': List<String>.from(_tags),
       // サーバーの updated_at と比較するため UTC で保存する。
       'saved_at': DateTime.now().toUtc().toIso8601String(),
     };
-    await prefs.setString(_currentDraftKey(), jsonEncode(payload));
+    return jsonEncode(payload);
+  }
+
+  Future<void> _persistDraftToLocal() {
+    if (!mounted) return Future<void>.value();
+    final epoch = ++_draftWriteEpoch;
+    final draftKey = _currentDraftKey();
+    final payloadJson =
+        _hasPersistableState ? _encodeCurrentDraftPayload() : null;
+    _latestDraftPayloadJson = payloadJson;
+    return _enqueueDraftStorageOp(() async {
+      if (epoch != _draftWriteEpoch) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (epoch != _draftWriteEpoch) return;
+      if (payloadJson == null) {
+        await prefs.remove(draftKey);
+        return;
+      }
+      await prefs.setString(draftKey, payloadJson);
+    });
   }
 
   Future<void> _restoreDraftFromLocal() async {
@@ -330,6 +359,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String content;
     DateTime? reminderDate;
     bool isFavorite;
+    bool isPinned;
     List<String> tags;
     DateTime? draftSavedAt;
     try {
@@ -341,6 +371,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ? null
           : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
       isFavorite = _boolFromValue(decoded['is_favorite']);
+      isPinned = decoded.containsKey('is_pinned')
+          ? _boolFromValue(decoded['is_pinned'])
+          : _isPinned;
       tags = NoteTagService.normalize(decoded['tags']);
       draftSavedAt = decoded['saved_at'] == null
           ? null
@@ -352,6 +385,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         content.isEmpty &&
         reminderDate == null &&
         !isFavorite &&
+        !isPinned &&
         tags.isEmpty) {
       return;
     }
@@ -360,6 +394,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _contentController.text != content ||
         _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
         _isFavorite != isFavorite ||
+        _isPinned != isPinned ||
         !NoteTagService.equals(_tags, tags);
     if (!hasChanges) return;
 
@@ -405,6 +440,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _contentController.text = content;
     _reminderDate = reminderDate;
     _isFavorite = isFavorite;
+    _isPinned = isPinned;
     _tags = tags;
 
     if (mounted) {
@@ -414,9 +450,38 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
-  Future<void> _clearDraftFromLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_currentDraftKey());
+  Future<void> _clearDraftFromLocal({bool alsoClearNewDraft = false}) {
+    final epoch = ++_draftWriteEpoch;
+    final draftKey = _currentDraftKey();
+    final clearObsoleteNewDraft = alsoClearNewDraft || widget.noteId == null;
+    _latestDraftPayloadJson = null;
+    return _enqueueDraftStorageOp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      if (clearObsoleteNewDraft && draftKey != _newDraftKey) {
+        await prefs.remove(_newDraftKey);
+      }
+      if (epoch != _draftWriteEpoch) return;
+      await prefs.remove(draftKey);
+    });
+  }
+
+  Future<void> _migrateNewDraftToNoteId(
+    String noteId,
+    String? payloadJson,
+  ) {
+    final epoch = ++_draftWriteEpoch;
+    final targetKey = '$_draftKeyPrefix$noteId';
+    _latestDraftPayloadJson = payloadJson;
+    return _enqueueDraftStorageOp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_newDraftKey);
+      if (epoch != _draftWriteEpoch) return;
+      if (payloadJson == null) {
+        await prefs.remove(targetKey);
+      } else {
+        await prefs.setString(targetKey, payloadJson);
+      }
+    });
   }
 
   void _attachTextListeners() {
@@ -439,12 +504,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String content,
     required String? reminderIso,
     required bool isFavorite,
+    required bool isPinned,
     required List<String> tags,
   }) {
     _persistedTitle = title;
     _persistedContent = content;
     _persistedReminderIso = reminderIso;
     _persistedIsFavorite = isFavorite;
+    _persistedIsPinned = isPinned;
     _persistedTags = NoteTagService.normalize(tags);
   }
 
@@ -459,12 +526,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String content,
     required String? reminderIso,
     required bool isFavorite,
+    required bool isPinned,
     required List<String> tags,
   }) {
     return _persistedTitle == title &&
         _persistedContent == content &&
         _persistedReminderIso == reminderIso &&
         _persistedIsFavorite == isFavorite &&
+        _persistedIsPinned == isPinned &&
         NoteTagService.equals(_persistedTags, tags);
   }
 
@@ -490,6 +559,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _contentController.text.trim().isNotEmpty ||
         _reminderDate != null ||
         _isFavorite ||
+        _isPinned ||
         _tags.isNotEmpty;
     // ローカル下書きを復元した直後は、画面上の内容がサーバーより新しい。
     // 従来はここで無条件に markAsSaved していたため「保存済み」と表示され
@@ -500,6 +570,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           content: _contentController.text.trim(),
           reminderIso: _reminderDate?.toUtc().toIso8601String(),
           isFavorite: _isFavorite,
+          isPinned: _isPinned,
           tags: _tags,
         );
 
@@ -1224,6 +1295,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             SizedBox(height: 8),
             Text('/favorite Toggle favorite for this note'),
             SizedBox(height: 8),
+            Text('/pin Toggle pin for this note'),
+            SizedBox(height: 8),
             Text('/stamp Insert the current timestamp'),
             SizedBox(height: 8),
             Text('/tabs Insert a 3-tab block template'),
@@ -1271,6 +1344,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       case 'fav':
       case 'star':
         _toggleFavorite();
+        _slashCommandController.clear();
+        return;
+      case 'pin':
+      case 'unpin':
+        _togglePin();
         _slashCommandController.clear();
         return;
       case 'style':
@@ -1409,7 +1487,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       final data = await _supabase
           .from('notes')
           .select(
-            'title, content, reminder_date, is_favorite, tags, updated_at',
+            'title, content, reminder_date, is_favorite, is_pinned, tags, updated_at',
           )
           .eq('id', id)
           .single();
@@ -1427,6 +1505,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   data['reminder_date'].toString(),
                 )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
+          _isPinned = _boolFromValue(data['is_pinned']);
           _tags = NoteTagService.normalize(data['tags']);
         });
         _markStatePersisted(
@@ -1434,6 +1513,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           content: _contentController.text.trim(),
           reminderIso: _reminderDate?.toUtc().toIso8601String(),
           isFavorite: _isFavorite,
+          isPinned: _isPinned,
           tags: _tags,
         );
         _syncObservedText();
@@ -1519,10 +1599,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   // Call only from the AutoSaveService lane, including attachment flows.
   Future<void> _saveNoteWithoutClosing({bool allowEmpty = false}) async {
     if (!mounted) return;
+    final wasNewNote = _currentNoteId == null;
+    final requestDraftEpoch = _draftWriteEpoch;
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
     final isFavorite = _isFavorite;
+    final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
 
     if (!allowEmpty && !_hasPersistableState && _currentNoteId == null) {
@@ -1543,21 +1626,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         content: content,
         reminderIso: reminderIso,
         isFavorite: isFavorite,
+        isPinned: isPinned,
         tags: tags,
       )) {
         _autoSaveService.markAsSaved();
+        await _clearDraftFromLocal(alsoClearNewDraft: widget.noteId == null);
         return;
       }
-      await _supabase.from('notes').update({
-        'title': title,
-        'content': content,
-        'reminder_date': reminderIso,
-        'is_favorite': isFavorite,
-        'tags': tags,
-        // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
-        // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', _currentNoteId!);
+      await _supabase
+          .from('notes')
+          .update({
+            'title': title,
+            'content': content,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
+            'is_pinned': isPinned,
+            'tags': tags,
+            // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
+            // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', _currentNoteId!)
+          .eq('user_id', user.id);
     } else {
       final dynamic inserted = await _supabase
           .from('notes')
@@ -1569,17 +1659,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'is_favorite': isFavorite,
             'tags': tags,
             'is_archived': false,
-            'is_pinned': false,
+            'is_pinned': isPinned,
           })
           .select('id')
           .maybeSingle();
 
-      if (!mounted) return;
+      final insertedId = inserted is Map && inserted['id'] != null
+          ? inserted['id'].toString()
+          : null;
+      if (!mounted) {
+        if (insertedId != null && _supabase.auth.currentUser?.id == user.id) {
+          final pendingDraftJson = _draftWriteEpoch == requestDraftEpoch
+              ? null
+              : _latestDraftPayloadJson;
+          await _migrateNewDraftToNoteId(insertedId, pendingDraftJson);
+        }
+        return;
+      }
       if (_supabase.auth.currentUser?.id != user.id) {
         throw StateError('Session changed during save');
       }
-      if (inserted is Map && inserted['id'] != null) {
-        _currentNoteId = inserted['id'].toString();
+      if (insertedId != null) {
+        _currentNoteId = insertedId;
         unawaited(_loadCommentCount());
         if (mounted) {
           setState(() {});
@@ -1596,6 +1697,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       content: content,
       reminderIso: reminderIso,
       isFavorite: isFavorite,
+      isPinned: isPinned,
       tags: tags,
     );
 
@@ -1604,13 +1706,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       content: _contentController.text.trim(),
       reminderIso: _reminderDate?.toUtc().toIso8601String(),
       isFavorite: _isFavorite,
+      isPinned: _isPinned,
       tags: _tags,
     );
     if (currentMatchesSavedRequest) {
       _autoSaveService.markAsSaved();
-      await _clearDraftFromLocal();
+      await _clearDraftFromLocal(
+        alsoClearNewDraft: wasNewNote || widget.noteId == null,
+      );
     } else {
       _autoSaveService.markAsModified();
+      if (wasNewNote && _currentNoteId != null) {
+        await _migrateNewDraftToNoteId(
+          _currentNoteId!,
+          _hasPersistableState ? _encodeCurrentDraftPayload() : null,
+        );
+      }
     }
   }
 
@@ -1882,6 +1993,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         ),
       ),
     );
+  }
+
+  void _togglePin() {
+    final nextValue = !_isPinned;
+    setState(() {
+      _isPinned = nextValue;
+    });
+    _autoSaveService.markAsModified();
+    _persistDraftToLocal();
+    if (_currentNoteId != null || _hasPersistableState) {
+      _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            nextValue ? 'メモをピン留めしました' : 'ピン留めを解除しました',
+          ),
+        ),
+      );
   }
 
   void _undo() {
@@ -2756,6 +2889,29 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                               isNarrow ? 'タグ' : 'タグ (${_tags.length})',
                             ),
                           ),
+                          OutlinedButton.icon(
+                            key: const Key('note_editor_pin_button'),
+                            onPressed: _togglePin,
+                            style: _isPinned
+                                ? OutlinedButton.styleFrom(
+                                    foregroundColor:
+                                        theme.brightness == Brightness.dark
+                                            ? const Color(0xFFFFB38A)
+                                            : const Color(0xFFB53D0B),
+                                    side: const BorderSide(
+                                      color: Color(0xFFFF6B35),
+                                    ),
+                                    backgroundColor: const Color(0xFFFF6B35)
+                                        .withValues(alpha: 0.14),
+                                  )
+                                : null,
+                            icon: Icon(
+                              _isPinned
+                                  ? Icons.push_pin
+                                  : Icons.push_pin_outlined,
+                            ),
+                            label: Text(_isPinned ? 'ピン留め解除' : 'ピン留め'),
+                          ),
                           if (_currentNoteId != null)
                             OutlinedButton.icon(
                               key: const Key('note_editor_tasks_button'),
@@ -2923,12 +3079,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
     final isFavorite = _isFavorite;
+    final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
     if (_matchesPersistedState(
           title: title,
           content: content,
           reminderIso: reminderIso,
           isFavorite: isFavorite,
+          isPinned: isPinned,
           tags: tags,
         ) &&
         !_autoSaveService.hasPendingOperations) {
@@ -2941,14 +3099,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     unawaited(
       _autoSaveService.saveOnExit(() async {
         if (client.auth.currentUser?.id != owner) return;
-        await client.from('notes').update({
-          'title': title,
-          'content': content,
-          'reminder_date': reminderIso,
-          'is_favorite': isFavorite,
-          'tags': tags,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', noteId);
+        await client
+            .from('notes')
+            .update({
+              'title': title,
+              'content': content,
+              'reminder_date': reminderIso,
+              'is_favorite': isFavorite,
+              'is_pinned': isPinned,
+              'tags': tags,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', noteId)
+            .eq('user_id', owner);
       }).catchError((Object _) {
         // Preserve the local draft if the final request fails after UI disposal.
       }),

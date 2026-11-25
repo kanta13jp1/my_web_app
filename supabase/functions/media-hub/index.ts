@@ -9,6 +9,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { handleMultimodalRagAction } from "./multimodal_rag.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -875,6 +876,36 @@ serve(async (req) => {
           params: body.params ?? {},
         });
         return json({ success: true, effect_applied: item });
+      }
+
+      case "multimodal_rag.ingest":
+      case "multimodal_rag.search":
+      case "multimodal_rag.list":
+      case "multimodal_rag.signed_url":
+      case "multimodal_rag.delete": {
+        return await handleMultimodalRagAction({
+          action,
+          body,
+          userId,
+          admin,
+          json,
+        });
+      }
+
+      case "media_library.upload_or_deduplicate":
+      case "media_library.reuse_in_project":
+      case "media_library.update_tags":
+      case "media_library.search":
+      case "media_library.signed_url":
+      case "media_library.delete": {
+        const { handleMediaLibraryAction } = await import("./media_library.ts");
+        return await handleMediaLibraryAction({
+          action,
+          body,
+          userId,
+          admin,
+          json,
+        });
       }
 
       default:

@@ -317,3 +317,38 @@ jobs:
               body: `## 🔬 Claude ultrareview (multi-agent)\n\n${body}\n\n---\n*Claude Code ultrareview — [bc58b50b #1779](https://github.com/kanta13jp1/my_web_app/issues/1779)*`
             });
             core.info(`Posted ultrareview comment to PR #${prNumber}`);
+
+  confidence-comment:
+    name: Post AI review confidence comment
+    needs: [review]
+    if: always() && needs.review.result != 'skipped' && (github.event_name == 'pull_request_target' || (github.event_name == 'workflow_dispatch' && inputs.ultrareview != 'true')) && (github.ref == 'refs/heads/main' || github.sha == vars.AI_REVIEW_BOOTSTRAP_SHA)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      REVIEW_DIR: /tmp/ai-review
+    steps:
+      - name: Checkout trusted workflow source only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Download machine-readable review evidence
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: ai-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/ai-review
+      - name: Upsert PR confidence comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -f /tmp/ai-review/evidence.json ]; then
+            python -B scripts/ai_review_gate.py comment
+          else
+            echo "::notice::No AI review evidence artifact found; skipping confidence comment."
+          fi

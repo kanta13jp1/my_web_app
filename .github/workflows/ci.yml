@@ -54,7 +54,7 @@ jobs:
     outputs:
       analyzer_evidence_uploaded: ${{ steps.upload_analyzer_evidence.outcome == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     permissions:
       contents: read
 
@@ -67,7 +67,7 @@ jobs:
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             ref="refs/pull/${{ github.event.pull_request.number }}/merge"
-            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+            if ! git fetch --depth=2 origin "+${ref}:refs/remotes/origin/checkout"; then
               echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
               git fetch --depth=1 \
                 "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
@@ -110,13 +110,36 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
+            const pull = context.payload.pull_request;
+            if (!pull || !Number.isSafeInteger(pull.number) || pull.number <= 0 ||
+                !/^[0-9a-f]{40}$/.test(pull.base.sha) || !/^[0-9a-f]{40}$/.test(pull.head.sha)) {
+              throw new Error('Invalid immutable PR identity');
+            }
+            const params = {owner: context.repo.owner, repo: context.repo.repo, pull_number: pull.number};
+            const snapshot = async () => (await github.rest.pulls.get(params)).data;
+            const before = await snapshot();
+            if (before.base.sha !== pull.base.sha || before.head.sha !== pull.head.sha ||
+                !Number.isSafeInteger(before.changed_files) || before.changed_files <= 0 ||
+                before.changed_files >= 3000 ||
+                (pull.changed_files != null && pull.changed_files !== before.changed_files)) {
+              throw new Error('PR refs or file count changed before collection');
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {...params, per_page: 100});
+            const after = await snapshot();
+            if (after.base.sha !== pull.base.sha || after.head.sha !== pull.head.sha ||
+                after.changed_files !== before.changed_files || files.length !== before.changed_files) {
+              throw new Error('PR refs or file count changed during collection');
+            }
             fs.mkdirSync('.ci-logs', { recursive: true });
+            const logDir = fs.lstatSync('.ci-logs');
+            if (logDir.isSymbolicLink() || !logDir.isDirectory()) {
+              throw new Error('Unsafe CI metadata directory');
+            }
+            fs.writeFileSync('.ci-logs/debt-read-files.json', JSON.stringify({
+              schema: 1, number: pull.number, base_sha: pull.base.sha, head_sha: pull.head.sha,
+              count: before.changed_files,
+              files: files.map(({filename, status, previous_filename}) => ({filename, status, previous_filename})),
+            }), {flag: 'wx', mode: 0o600});
             fs.writeFileSync(
               '.ci-logs/changed-files.txt',
               files.map((file) => file.filename).join('\n') + '\n',
@@ -139,9 +162,33 @@ jobs:
             --github-output "$GITHUB_OUTPUT" \
             "${args[@]}"
 
+      - name: Evaluate commit CI skip guard
+        id: commit_skip
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: python scripts/check_commit_message.py --check-ci-skip-git --event-name "${EVENT_NAME}" --github-output "${GITHUB_OUTPUT}"
+
+      - name: Classify debt read regression scope
+        id: debt_read_scope
+        run: python -B scripts/classify_debt_read_scope.py
+
+      - name: Require debt read scope decision
+        shell: bash
+        env:
+          DEBT_SCOPE: ${{ steps.debt_read_scope.outputs.run }}
+        run: |
+          case "$DEBT_SCOPE" in
+            true|false) ;;
+            *) echo "::error::Debt read scope decision missing"; exit 1 ;;
+          esac
+
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python -B scripts/test_classify_debt_read_scope.py
+          node --test scripts/test_ci_collection.cjs
+          python scripts/supabase_capacity_plan_test.py
           python -B scripts/check_claude_review_workflow_test.py
           python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
@@ -169,6 +216,7 @@ jobs:
           python scripts/test_paid_ai_policy.py
           python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
           python scripts/ai_university_rss_manifest_test.py
+          python -m unittest discover -s test/scripts -p test_check_commit_message.py
 
       - name: Test high-risk dual security review
         run: >-
@@ -178,6 +226,7 @@ jobs:
           scripts/test_decision_event_migration.py
 
       - name: Verify high-risk security review dependency lock
+        if: steps.changes.outputs.high_risk_review_deps == 'true'
         shell: bash
         run: |
           mkdir -p "${RUNNER_TEMP}/high-risk-security-review-wheels"
@@ -194,17 +243,17 @@ jobs:
             -r scripts/requirements-high-risk-security-review.txt
 
       - name: Setup Flutter
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x' # 指定のバージョンに戻しました
 
       - name: Get Flutter version
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         run: flutter --version
 
       - name: Cache Flutter pub
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
@@ -214,13 +263,69 @@ jobs:
 
       - name: Install dependencies
         id: flutter_dependencies
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         run: flutter pub get
 
       - name: Verify dependencies
         id: flutter_dependencies_verify
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         run: flutter pub get --dry-run
+
+      - name: Test debt read failures in a temporary checkout
+        if: steps.debt_read_scope.outputs.run == 'true'
+        shell: bash
+        timeout-minutes: 5
+        env:
+          EVENT_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EVENT_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EVENT_COMMIT"
+          scratch="$(mktemp -d "$RUNNER_TEMP/debt-read-ci.XXXXXXXX")"
+          git archive --format=tar "$EVENT_COMMIT" | tar -x -C "$scratch"
+          pub_cache="${PUB_CACHE:-$HOME/.pub-cache}"
+          [[ "$pub_cache" == /* ]]
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            ip link show lo >/dev/null
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" \
+              RUNNER_TEMP="$4" GITHUB_WORKSPACE="$5" PUB_CACHE="$6" \
+              SCRATCH="$7" CI=true bash "$7/scripts/run_debt_read_sandbox.sh"
+          ' _ "$(id -un)" "$PATH" "$HOME" "$RUNNER_TEMP" "$GITHUB_WORKSPACE" "$pub_cache" "$scratch"
+
+      - name: Test synthetic debt restore in isolated browser
+        if: steps.debt_read_scope.outputs.run == 'true'
+        shell: bash
+        timeout-minutes: 18
+        env:
+          EVENT_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EVENT_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EVENT_COMMIT"
+          scratch="$(mktemp -d "$RUNNER_TEMP/debt-browser-ci.XXXXXXXX")"
+          git archive --format=tar "$EVENT_COMMIT" | tar -x -C "$scratch"
+          flutter precache --web
+          (cd "$scratch" && flutter pub get)
+          chromedriver --version
+          google-chrome --version
+          pub_cache="${PUB_CACHE:-$HOME/.pub-cache}"
+          [[ "$pub_cache" == /* ]]
+          chrome="$(command -v google-chrome)"
+          [[ "$chrome" == /* ]]
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            ip link show lo >/dev/null
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" \
+              RUNNER_TEMP="$4" GITHUB_WORKSPACE="$5" PUB_CACHE="$6" \
+              SCRATCH="$7" CHROME_EXECUTABLE="$8" \
+              NO_PROXY=127.0.0.1,localhost CI=true \
+              bash "$7/scripts/run_browser_in_namespace.sh"
+          ' _ "$(id -un)" "$PATH" "$HOME" "$RUNNER_TEMP" "$GITHUB_WORKSPACE" "$pub_cache" "$scratch" "$chrome"
 
       - name: Analyze code
         id: flutter_analyze
@@ -248,6 +353,17 @@ jobs:
           name: analyzer-evidence
           path: .ci-logs/analyzer
           if-no-files-found: error
+
+      - name: Upload static analysis failure report
+        id: upload_analyzer_failure_report
+        if: failure() && steps.changes.outputs.flutter == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: flutter-static-analysis-error-report
+          path: |
+            .ci-logs/analyzer/
+            flutter_*.log
+          if-no-files-found: ignore
 
       - name: Setup Deno
         if: steps.changes.outputs.edge == 'true'
@@ -404,6 +520,18 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
+      - name: Verify web font subsetting and SEO shell handoff tests
+        if: steps.changes.outputs.web_seo_assets == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_optimize_web_fonts.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_prerender_seo_routes.py'
+          node --test test/web/seo_shell_handoff.test.cjs
+          node --test test/web/generate_ogp_cards.test.mjs
+
       - name: Verify acquisition measurement audit
         run: |
           python -m unittest discover -s test/scripts -p 'test_seo_measurement_audit.py'
@@ -510,7 +638,7 @@ jobs:
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
         id: web_build
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: >
           flutter build web --release --pwa-strategy=none
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
@@ -518,14 +646,47 @@ jobs:
           FLUTTER_WEB: true
 
       - name: Package verified Sea Shelter 3D assets
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         uses: ./.github/actions/prepare-sea-shelter-arena
         with:
           web-root: build/web
 
+      - name: Setup Node for build-time OGP cards
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Cache Playwright Chromium for OGP cards
+        id: playwright_cache
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Generate and verify build-time OGP and X social cards
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright_cache.outputs.cache-hit }}
+        run: |
+          if [ ! -d node_modules/@playwright/test ]; then
+            npm ci --ignore-scripts
+          fi
+          # CI uses preinstalled Chrome + repo-bundled NotoSansJP-Regular.ttf; Playwright Chromium is cached fallback only.
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/google-chrome-stable ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            if [ "$PLAYWRIGHT_CACHE_HIT" != "true" ]; then
+              npx playwright install --with-deps chromium
+            else
+              npx playwright install-deps chromium
+            fi
+          fi
+          node scripts/generate_ogp_cards.mjs --out-dir build/web
+
       - name: Check build output
         id: web_build_output
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: |
           if [ ! -d "build/web" ]; then
             echo "Build failed: build/web directory not found"
@@ -533,6 +694,15 @@ jobs:
           fi
           echo "Build successful!"
           ls -la build/web
+
+      - name: Optimize bundled web fonts
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 scripts/optimize_web_fonts.py --build-dir build/web --repo-root . --require-fonts
 
       - name: Build business execution browser fixture
         if: steps.changes.outputs.business_execution == 'true'
@@ -597,7 +767,7 @@ jobs:
         if: steps.changes.outputs.business_execution == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
 
       - name: Install existing Playwright browser dependencies
