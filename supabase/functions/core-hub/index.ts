@@ -65,6 +65,10 @@ import {
   handleStageGateList,
   handleStageGateSubmit,
 } from "./stage_gate.ts";
+import { handleExternalDiffAction } from "./external_diff_monitor.ts";
+import {
+  createSupabaseExternalDiffStore,
+} from "./external_diff_monitor_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2984,6 +2988,26 @@ description: ${pageDescription}
           { userId, isServiceRole },
           body,
         );
+        return json(res.body, res.status);
+      }
+
+      case "external_diff.rule.list":
+      case "external_diff.rule.upsert":
+      case "external_diff.alert.list":
+      case "external_diff.alert.acknowledge":
+      case "external_diff.snapshot_and_detect":
+      case "external_diff.batch_scan": {
+        const res = await handleExternalDiffAction({
+          action,
+          body,
+          userId,
+          isServiceRole,
+          store: createSupabaseExternalDiffStore(
+            admin,
+            dependencies.fetcher,
+            dependencies.getEnv,
+          ),
+        });
         return json(res.body, res.status);
       }
 
