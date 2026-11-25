@@ -125,6 +125,9 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "quota.daily_status",
   "data_sources.status",
   "data_sources.register",
+  "ai_router.structured.route",
+  "ai_router.structured.validate_and_save",
+  "ai_router.structured.list_preferences",
 ]);
 
 // Paid LLM gateways: callable by a signed-in user, or by other Edge Functions

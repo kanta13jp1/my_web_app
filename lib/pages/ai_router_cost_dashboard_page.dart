@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/structured_llm_routing/structured_llm_routing_container.dart';
 import '../services/ai_router_cost_dashboard_service.dart';
 import '../widgets/jev_input_cost_card.dart';
 
@@ -142,6 +143,20 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
         backgroundColor: _bg,
         title: const Text('AI Router Cost'),
         actions: [
+          IconButton(
+            tooltip: 'Structured Routing',
+            icon: const Icon(Icons.schema_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/ai-router-cost-dashboard?view=structured-routing',
+                  ),
+                  builder: (_) => const StructuredLlmRoutingContainer(),
+                ),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
