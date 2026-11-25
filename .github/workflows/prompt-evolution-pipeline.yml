@@ -161,29 +161,46 @@ jobs:
 
           python3 -B - << 'PY'
           import os
+          import subprocess
           from pathlib import Path
-          sv = os.environ.get("SCORE_VARIANCE", "")
-          vt = os.environ.get("VARIANCE_THRESHOLD", "0.15")
-          mg = os.environ.get("MEAN_GPA", "")
+
+          def _fmt_float(raw: str, default: str = "0.0000") -> str:
+              try:
+                  val = float(raw)
+              except (TypeError, ValueError):
+                  return default
+              return f"{val:.4f}"
+
+          sv = _fmt_float(os.environ.get("SCORE_VARIANCE", ""))
+          vt = _fmt_float(os.environ.get("VARIANCE_THRESHOLD", "0.15"), "0.1500")
+          mg = _fmt_float(os.environ.get("MEAN_GPA", ""))
+          run_id = os.environ["RUN_ID"]
+          branch = f"auto/prompt-evolution-{run_id}"
           body = "\n".join([
               "## Summary",
               f"- Automatically proposed by Evolutionary Prompt Optimization Pipeline after GPA score variance ({sv}) exceeded threshold ({vt}, mean GPA: {mg}).",
               "- All deterministic validation checks (`validate_ai_output_baseline`, `redact_secrets_with_count == 0`, `validate_scope`, unit tests) passed prior to creating this PR.",
               "",
-              "## High-risk Ultrareview Gate",
-              "- Reviewer: Claude Code #1",
-              "- High-Risk-Ultrareview-Exception: Automated non-runtime eval candidate fixture verified by deterministic test gate before PR creation.",
-              "",
-              "## Minimal E2E Gate",
-              "- Implementation-detail independent: verified deterministic input/output prompt contracts across 3 cases (low variance skip, high variance pass, unsafe candidate block).",
-              "- Minimal scope: 3 cases covering baseline, variance trigger, and fail-closed safety block.",
-              "- E2E-Exception: Automated JSON prompt fixture update with no runtime app UI code changes.",
+              "## Reviewer Checklist",
+              "- [ ] Confirm human or designated reviewer approval before merge.",
+              "- [ ] Verify whether high-risk ultrareview or E2E coverage is required for the proposed fixture diff.",
           ]) + "\n"
-          Path("/tmp/pr_body.md").write_text(body, encoding="utf-8")
+          body_path = Path("/tmp/pr_body.md")
+          body_path.write_text(body, encoding="utf-8")
+          subprocess.run(
+              [
+                  "gh",
+                  "pr",
+                  "create",
+                  "--base",
+                  "main",
+                  "--head",
+                  branch,
+                  "--title",
+                  f"chore(eval): evolved prompt candidate proposal (var={sv})",
+                  "--body-file",
+                  str(body_path),
+              ],
+              check=True,
+          )
           PY
-
-          gh pr create \
-            --base main \
-            --head "${BRANCH}" \
-            --title "chore(eval): evolved prompt candidate proposal (var=${SCORE_VARIANCE})" \
-            --body-file /tmp/pr_body.md
