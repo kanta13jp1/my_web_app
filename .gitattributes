@@ -1,1 +1,13 @@
 services/video-inference-worker/patches/*.patch text eol=lf
+
+# Append-only roadmap, changelog, and fleet registry documents (#2670).
+# Built-in git union driver retains appended entries from both branches.
+docs/GROWTH_STRATEGY_ROADMAP.md merge=union
+docs/LOCAL_PERSISTENCE_RETIREMENT_ROADMAP.md merge=union
+docs/QUARTERLY_ROADMAP.md merge=union
+docs/EDGE_FUNCTION_LIST.md merge=union
+docs/WORKTREE_REGISTRY.md merge=union
+docs/roadmap/*.md merge=union
+docs/roadmaps/*.md merge=union
+docs/technical/*ROADMAP*.md merge=union
+docs/ai-tool-changelog/*.md merge=union
