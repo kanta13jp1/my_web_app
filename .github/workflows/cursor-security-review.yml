@@ -1,0 +1,242 @@
+name: Cursor Security Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - 'memory/**'
+      - '*.md'
+      - '**/*.md'
+      - '.claude/**'
+      - '.codex/**'
+      - '.agents/**'
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to review (optional for offline validation)'
+        required: false
+        type: string
+        default: ''
+      workflow_run_id:
+        description: 'Failed CI workflow run ID to triage (optional)'
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: 'Run review and autofix planning without posting comments'
+        required: true
+        type: boolean
+        default: true
+      post_review_comments:
+        description: 'Submit inline PR review comments in non-dry-run dispatch'
+        required: false
+        type: boolean
+        default: false
+      enable_cursor_sdk:
+        description: 'Invoke configured Cursor SDK endpoint when key is present'
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: cursor-security-review-${{ github.event.pull_request.number || github.event.workflow_run.id || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-security-review-offline:
+    name: Cursor Policy Security Review (Offline Safe)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run cursor security review unit tests
+        run: python3 -B test/scripts/test_cursor_security_review.py -v
+
+      - name: Run cursor security review self-test
+        run: python3 -B scripts/cursor_security_review.py --self-test
+
+      - name: Scan PR diff deterministically without exposing secrets
+        id: pr_scan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p tmp/cursor-security-review
+          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${PR_BASE_SHA}" ]; then
+            git diff --no-ext-diff --name-only "${PR_BASE_SHA}...${PR_HEAD_SHA}" > tmp/cursor-security-review/changed_files.txt || true
+            git diff --no-ext-diff --unified=0 "${PR_BASE_SHA}...${PR_HEAD_SHA}" > tmp/cursor-security-review/pr.diff || true
+            python3 -B scripts/cursor_security_review.py \
+              --dry-run \
+              --pr-number "${PR_NUMBER}" \
+              --commit-sha "${PR_HEAD_SHA}" \
+              --changed-files tmp/cursor-security-review/changed_files.txt \
+              --diff-file tmp/cursor-security-review/pr.diff \
+              --json-out tmp/cursor-security-review/report.json \
+              --review-payload-out tmp/cursor-security-review/inline_review.json \
+              --markdown-out tmp/cursor-security-review/summary.md \
+              --github-output "${GITHUB_OUTPUT}"
+          else
+            python3 -B scripts/cursor_security_review.py \
+              --dry-run \
+              --commit-sha "${PR_HEAD_SHA}" \
+              --json-out tmp/cursor-security-review/report.json \
+              --markdown-out tmp/cursor-security-review/summary.md \
+              --github-output "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Upload offline security review artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: cursor-security-review-offline
+          path: |
+            tmp/cursor-security-review/report.json
+            tmp/cursor-security-review/inline_review.json
+            tmp/cursor-security-review/summary.md
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Append offline review summary
+        if: always()
+        run: |
+          if [ -f tmp/cursor-security-review/summary.md ]; then
+            cat tmp/cursor-security-review/summary.md >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+  cursor-sdk-and-autofix-triage:
+    name: Cursor SDK Review and CI Autofix Triage
+    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Checkout trusted default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Collect PR diff or failed CI triage context
+        id: triage
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPO_SLUG: ${{ github.repository }}
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || '' }}
+          INPUT_RUN_ID: ${{ github.event.workflow_run.id || github.event.inputs.workflow_run_id || '' }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+          INPUT_POST_COMMENTS: ${{ github.event.inputs.post_review_comments || 'false' }}
+          INPUT_ENABLE_SDK: ${{ github.event.inputs.enable_cursor_sdk || 'false' }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY || '' }}
+        run: |
+          set -euo pipefail
+          mkdir -p tmp/cursor-sdk
+          : > tmp/cursor-sdk/ci_failure.log
+          : > tmp/cursor-sdk/pr.diff
+          : > tmp/cursor-sdk/changed_files.txt
+          commit_sha="${GITHUB_SHA}"
+
+          if [ -n "${INPUT_PR_NUMBER}" ]; then
+            if ! [[ "${INPUT_PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::pr_number must be a positive integer"
+              exit 1
+            fi
+            commit_sha="$(gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}" --jq '.head.sha' || echo "${GITHUB_SHA}")"
+            gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}/files?per_page=100" --jq '.[].filename' > tmp/cursor-sdk/changed_files.txt || true
+            gh pr diff "${INPUT_PR_NUMBER}" --repo "${REPO_SLUG}" > tmp/cursor-sdk/pr.diff || true
+          fi
+
+          if [ -n "${INPUT_RUN_ID}" ]; then
+            if ! [[ "${INPUT_RUN_ID}" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::workflow_run_id must be a positive integer"
+              exit 1
+            fi
+            gh api "repos/${REPO_SLUG}/actions/runs/${INPUT_RUN_ID}/jobs" \
+              --jq '.jobs[] | select(.conclusion=="failure") | "FAILED_JOB: \(.name) (\(.html_url))"' \
+              > tmp/cursor-sdk/ci_failure.log || true
+          fi
+
+          args=(
+            --commit-sha "${commit_sha}"
+            --changed-files tmp/cursor-sdk/changed_files.txt
+            --diff-file tmp/cursor-sdk/pr.diff
+            --ci-log-file tmp/cursor-sdk/ci_failure.log
+            --json-out tmp/cursor-sdk/report.json
+            --review-payload-out tmp/cursor-sdk/inline_review.json
+            --autofix-proposal-out tmp/cursor-sdk/autofix_proposal.json
+            --markdown-out tmp/cursor-sdk/summary.md
+            --github-output "${GITHUB_OUTPUT}"
+          )
+          if [ -n "${INPUT_PR_NUMBER}" ]; then
+            args+=(--pr-number "${INPUT_PR_NUMBER}")
+          fi
+          if [ -n "${INPUT_RUN_ID}" ]; then
+            args+=(--workflow-run-id "${INPUT_RUN_ID}")
+          fi
+          if [ "${INPUT_ENABLE_SDK}" = "true" ]; then
+            args+=(--enable-cursor-sdk)
+          fi
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${INPUT_DRY_RUN}" = "false" ]; then
+            args+=(--live)
+          else
+            args+=(--dry-run)
+          fi
+          python3 -B scripts/cursor_security_review.py "${args[@]}"
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${INPUT_DRY_RUN}" = "false" ] && [ "${INPUT_POST_COMMENTS}" = "true" ] && [ -n "${INPUT_PR_NUMBER}" ]; then
+            comment_count="$(python3 -B -c "import json; print(len(json.load(open('tmp/cursor-sdk/inline_review.json'))['comments']))")"
+            if [ "${comment_count}" -gt 0 ]; then
+              gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}/reviews" --method POST --input tmp/cursor-sdk/inline_review.json >/dev/null
+            fi
+          fi
+
+      - name: Upload Cursor SDK triage artifacts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: cursor-sdk-security-triage
+          path: |
+            tmp/cursor-sdk/report.json
+            tmp/cursor-sdk/inline_review.json
+            tmp/cursor-sdk/autofix_proposal.json
+            tmp/cursor-sdk/summary.md
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Publish triage step summary
+        if: always()
+        run: |
+          if [ -f tmp/cursor-sdk/summary.md ]; then
+            cat tmp/cursor-sdk/summary.md >> "${GITHUB_STEP_SUMMARY}"
+          fi

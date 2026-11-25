@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "issue": 2693,
+  "updated_at": "2026-11-25",
+  "description": "Cursor SDK automated PR security review and CI failure autofix proposal policy (#2693).",
+  "sdk": {
+    "package_name": "@cursor/sdk",
+    "cli_command": "agent",
+    "endpoint_url": "https://api.cursor.com/v0/agents/review",
+    "allowed_hosts": [
+      "api.cursor.com",
+      "api.github.com"
+    ],
+    "max_diff_bytes": 120000,
+    "timeout_seconds": 60
+  },
+  "governance": {
+    "human_approval_required": true,
+    "auto_merge_allowed": false,
+    "restricted_autonomy": "proposal_only",
+    "autofix_branch_prefix": "autofix/cursor-ci-",
+    "allowed_autofix_prefixes": [
+      "lib/",
+      "test/",
+      "scripts/",
+      "test/scripts/",
+      "supabase/functions/"
+    ]
+  },
+  "security_rules": [
+    {
+      "id": "supabase-rls-permissive",
+      "domain": "supabase-rls",
+      "severity": "critical",
+      "blocking": true,
+      "path_regex": "^supabase/migrations/.*\\.sql$",
+      "line_regex": "(?i)(?:USING|WITH\\s+CHECK)\\s*\\(\\s*true\\s*\\)",
+      "cwe": "CWE-862",
+      "title": "Permissive RLS policy allows unrestricted row access",
+      "recommendation": "Restrict USING / WITH CHECK predicates to authenticated user ownership (`auth.uid() = user_id`) or explicit role checks."
+    },
+    {
+      "id": "supabase-client-privileged-key",
+      "domain": "supabase-auth",
+      "severity": "critical",
+      "blocking": true,
+      "path_regex": "^(?:lib|web|test)/.*$",
+      "line_regex": "(?:SUPABASE_SERVICE_ROLE_KEY|service_role|sb_secret_)",
+      "cwe": "CWE-798",
+      "title": "Server-side Supabase credential reference in client/test bundle",
+      "recommendation": "Keep service-role and secret keys strictly in server-side Edge Functions or backend environments; use anon/publishable keys with RLS on clients."
+    },
+    {
+      "id": "supabase-edge-missing-tracing-header",
+      "domain": "supabase-edge",
+      "severity": "medium",
+      "blocking": true,
+      "path_regex": "^supabase/functions/.*\\.ts$",
+      "line_regex": "Access-Control-Allow-Headers[\"']?\\s*:(?!.*traceparent)",
+      "cwe": "CWE-346",
+      "title": "Edge Function CORS allow-headers omits distributed tracing headers",
+      "recommendation": "Include `traceparent, tracestate, baggage, sentry-trace` in `Access-Control-Allow-Headers` so browser telemetry does not trigger CORS preflight failures."
+    },
+    {
+      "id": "supabase-edge-unmasked-credential-log",
+      "domain": "supabase-logging",
+      "severity": "high",
+      "blocking": true,
+      "path_regex": "^supabase/functions/.*\\.ts$",
+      "line_regex": "(?i)console\\.(?:log|error|warn)\\([^)]*(?:authorization|bearer|credential|apikey)",
+      "cwe": "CWE-532",
+      "title": "Potential unmasked sensitive header or credential in Edge Function logs",
+      "recommendation": "Sanitize output through `_shared/sensitive_log_masker.ts` (`maskLogString`) before emitting logs."
+    },
+    {
+      "id": "flutter-cleartext-http-endpoint",
+      "domain": "flutter-network",
+      "severity": "high",
+      "blocking": true,
+      "path_regex": "^lib/.*\\.dart$",
+      "line_regex": "http://(?!(?:localhost|127\\.0\\.0\\.1|10\\.0\\.2\\.2|0\\.0\\.0\\.0)(?:[:/]|$))[A-Za-z0-9.-]+",
+      "cwe": "CWE-319",
+      "title": "Cleartext HTTP endpoint in Flutter application code",
+      "recommendation": "Use HTTPS endpoints exclusively to protect user authentication headers and financial/session payloads in transit."
+    },
+    {
+      "id": "flutter-insecure-webview-or-js-eval",
+      "domain": "flutter-web",
+      "severity": "high",
+      "blocking": true,
+      "path_regex": "^lib/.*\\.dart$",
+      "line_regex": "(?:allowUniversalAccessFromFileURLs|allowFileAccessFromFileURLs|unsafe_html|eval\\()",
+      "cwe": "CWE-79",
+      "title": "Potentially unsafe WebView or DOM execution configuration",
+      "recommendation": "Disable file/universal URL cross-origin access and sanitize rendered HTML using trusted Flutter widgets or explicit escaping."
+    },
+    {
+      "id": "workflow-untrusted-pr-target-checkout",
+      "domain": "ci-security",
+      "severity": "critical",
+      "blocking": true,
+      "path_regex": "^\\.github/workflows/.*\\.ya?ml$",
+      "line_regex": "github\\.event\\.pull_request\\.head\\.(?:ref|sha)",
+      "cwe": "CWE-269",
+      "title": "Workflow checks out untrusted pull_request_target head ref",
+      "recommendation": "Keep privileged workflows on immutable default-branch commits and pass PR metadata safely via explicit read-only verification."
+    }
+  ]
+}
