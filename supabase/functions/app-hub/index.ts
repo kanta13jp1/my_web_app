@@ -1336,6 +1336,35 @@ serve(async (req: Request) => {
         }
       }
 
+      // --- AI Model Compliance & Security Review Workflow (#2763) ---
+      case "ai_compliance.list":
+      case "ai_compliance.seed_defaults":
+      case "ai_compliance.submit_review":
+      case "ai_compliance.update_checklist":
+      case "ai_compliance.approve":
+      case "ai_compliance.check_invoke_guard": {
+        const { AiComplianceError, handleAiComplianceAction } = await import(
+          "./ai_compliance.ts"
+        );
+        try {
+          const result = await handleAiComplianceAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AiComplianceError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
