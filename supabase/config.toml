@@ -273,3 +273,10 @@ enabled = true
 # constant-time service_role authentication before proxying to D-ID MCP/REST.
 verify_jwt = false
 entrypoint = "./functions/did-mcp-proxy/index.ts"
+
+[functions.external-ai-webhook]
+enabled = true
+# External automation callers (n8n/Zapier/analytics) authenticate via
+# X-Webhook-Api-Key (SHA-256 hashed lookup) or user JWT verified in-function.
+verify_jwt = false
+entrypoint = "./functions/external-ai-webhook/index.ts"
