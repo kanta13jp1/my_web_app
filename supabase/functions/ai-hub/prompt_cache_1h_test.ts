@@ -59,11 +59,11 @@ class InMemoryPromptCacheDb implements PromptCacheDb {
         orderAscending = options?.ascending ?? true;
         return query;
       },
-      async limit(count: number) {
-        return { data: matchRows().slice(0, count), error: null };
+      limit(count: number) {
+        return Promise.resolve({ data: matchRows().slice(0, count), error: null });
       },
-      async maybeSingle() {
-        return { data: matchRows()[0] ?? null, error: null };
+      maybeSingle() {
+        return Promise.resolve({ data: matchRows()[0] ?? null, error: null });
       },
       insert: (value: Record<string, unknown>) => {
         const row: Record<string, unknown> = {
@@ -74,7 +74,7 @@ class InMemoryPromptCacheDb implements PromptCacheDb {
         this.metrics.push(row);
         return {
           select: (_columns?: string) => ({
-            single: async () => ({ data: { ...row }, error: null }),
+            single: () => Promise.resolve({ data: { ...row }, error: null }),
           }),
         };
       },
@@ -261,4 +261,38 @@ Deno.test("handlePromptCacheAction records metrics and aggregates latency & USD 
   assertEquals(summaryRes.body.ttl_1h_count, 1);
   assertEquals(summaryRes.body.avg_hit_latency_ms, 450);
   assertEquals(summaryRes.body.avg_latency_reduction_ratio, 0.75);
+
+  const spoofAttempt = await handlePromptCacheAction({
+    db,
+    action: "prompt_cache.record_metric",
+    userId: "",
+    isElevatedAutomation: false,
+    body: { user_id: "user-1" },
+  });
+  assertEquals(spoofAttempt.status, 401);
+
+  const anonSummary = await handlePromptCacheAction({
+    db,
+    action: "prompt_cache.monitor_summary",
+    userId: "",
+    isElevatedAutomation: false,
+    body: {},
+  });
+  assertEquals(anonSummary.status, 401);
+
+  const elevatedRecord = await handlePromptCacheAction({
+    db,
+    action: "prompt_cache.record_metric",
+    userId: "",
+    isElevatedAutomation: true,
+    body: {
+      user_id: "user-1",
+      request_id: "req-elevated-1",
+      workflow_key: "scheduled-audit",
+      model_id: "claude-sonnet-4-6",
+      cache_ttl: "1h",
+      usage: usagePayload,
+    },
+  });
+  assertEquals(elevatedRecord.status, 200);
 });

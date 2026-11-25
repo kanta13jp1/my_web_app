@@ -654,7 +654,7 @@ export async function handlePromptCacheAction(
 
   if (action === "prompt_cache.record_metric") {
     const effectiveUserId = asTrimmedString(userId) ||
-      asTrimmedString(body.user_id);
+      (isElevatedAutomation ? asTrimmedString(body.user_id) : "");
     if (!effectiveUserId) {
       return {
         status: 401,
@@ -725,12 +725,19 @@ export async function handlePromptCacheAction(
 
   if (action === "prompt_cache.monitor_summary") {
     const isAdmin = await resolveIsAdmin(db, userId, isElevatedAutomation);
+    const scopedUserId = asTrimmedString(userId);
+    if (!isAdmin && !scopedUserId) {
+      return {
+        status: 401,
+        body: { error: "Authenticated user_id or admin privilege is required" },
+      };
+    }
     let query = db
       .from("context_cache_usage_metrics")
       .select("*")
       .order("created_at", { ascending: false });
-    if (!isAdmin && userId) {
-      query = query.eq("user_id", userId);
+    if (!isAdmin) {
+      query = query.eq("user_id", scopedUserId);
     }
     const wfFilter = asTrimmedString(body.workflow_key);
     if (wfFilter) {

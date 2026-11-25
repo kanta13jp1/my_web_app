@@ -156,7 +156,8 @@ void main() {
 
           controller.selectCacheTtl(PromptCacheTtl.oneHour);
           await controller.recordSimulatedRequest(
-              workflowKey: 'long-agent-sync');
+            workflowKey: 'long-agent-sync',
+          );
           expect(controller.state.ttl1hCount, 1);
           expect(controller.state.averageLatencyReductionPercent, 77.3);
 
