@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/prompt_evolution/prompt_evolution_container.dart';
+
 typedef AgentGpaDashboardLoader = Future<List<AgentGpaEvaluation>> Function(
   AgentGpaDashboardQuery query,
 );
@@ -58,7 +60,7 @@ class AgentGpaEvaluation {
   final String judgeModel;
   final DateTime? evaluatedAt;
 
-  factory AgentGpaEvaluation.fromJson(Map<String, dynamic> json) {
+  factory AgentGpaEvaluation.fromJson(Map<String, Object?> json) {
     return AgentGpaEvaluation(
       id: _stringValue(json['id'] ?? json['evaluation_id']),
       sourceType: _stringValue(json['source_type']),
@@ -89,7 +91,7 @@ class AgentGpaSuggestion {
   final String axis;
   final String suggestion;
 
-  factory AgentGpaSuggestion.fromJson(Map<String, dynamic> json) {
+  factory AgentGpaSuggestion.fromJson(Map<String, Object?> json) {
     return AgentGpaSuggestion(
       type: _stringValue(json['type'], fallback: 'improve'),
       axis: _stringValue(json['axis'], fallback: 'gpa'),
@@ -204,22 +206,24 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
   Future<List<AgentGpaEvaluation>> _loadFromAppHub(
     AgentGpaDashboardQuery query,
   ) async {
-    final body = <String, dynamic>{
+    final body = <String, Object?>{
       'action': 'agent.list_gpa_recent',
       'limit': query.limit,
       if (query.sourceType != null) 'source_type': query.sourceType,
       if (query.lowOnly) 'max_gpa': 2.49,
     };
     final response = await _supabase.functions.invoke('app-hub', body: body);
-    final data = response.data;
-    final raw = data is Map<String, dynamic> && data['evaluations'] is List
-        ? data['evaluations'] as List
-        : const <dynamic>[];
-    return raw
-        .whereType<Map>()
+    final Object? data = response.data;
+    final Object? rawEvaluations =
+        data is Map<Object?, Object?> ? data['evaluations'] : null;
+    if (rawEvaluations is! List<Object?>) {
+      return const [];
+    }
+    return rawEvaluations
+        .whereType<Map<Object?, Object?>>()
         .map(
           (item) =>
-              AgentGpaEvaluation.fromJson(Map<String, dynamic>.from(item)),
+              AgentGpaEvaluation.fromJson(Map<String, Object?>.from(item)),
         )
         .toList();
   }
@@ -269,6 +273,20 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
         backgroundColor: const Color(0xFF0A0A0A),
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: 'Prompt Evolution',
+            icon: const Icon(Icons.auto_fix_high),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/agent-gpa-dashboard?view=prompt-evolution',
+                  ),
+                  builder: (_) => const PromptEvolutionContainer(),
+                ),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
@@ -1387,11 +1405,11 @@ DateTime? _dateValue(Object? value) {
 }
 
 List<AgentGpaSuggestion> _suggestionsValue(Object? value) {
-  if (value is! List) return const [];
+  if (value is! List<Object?>) return const [];
   return value
-      .whereType<Map>()
+      .whereType<Map<Object?, Object?>>()
       .map(
-        (item) => AgentGpaSuggestion.fromJson(Map<String, dynamic>.from(item)),
+        (item) => AgentGpaSuggestion.fromJson(Map<String, Object?>.from(item)),
       )
       .toList();
 }
