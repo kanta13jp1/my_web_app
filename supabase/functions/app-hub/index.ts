@@ -229,12 +229,35 @@ serve(async (req: Request) => {
 
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const body = req.method === "POST"
-      ? await req.json() as Record<string, unknown>
-      : {};
-    const action = String(
-      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
-    );
+    const rawBody = req.method === "POST" ? await req.text() : "";
+    let body: Record<string, unknown> = {};
+    if (rawBody.trim() !== "") {
+      try {
+        body = JSON.parse(rawBody) as Record<string, unknown>;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+    }
+    const {
+      handleDevReviewAction,
+      resolveAppHubAction,
+    } = await import("./dev_review_tracking.ts");
+    const action = resolveAppHubAction(req.url, body);
+    if (action === "dev_review.github_webhook") {
+      const { createSupabaseDevReviewStore } = await import(
+        "./dev_review_tracking_supabase.ts"
+      );
+      const sig = req.headers.get("x-hub-signature-256") ?? "";
+      const res = await handleDevReviewAction({
+        action,
+        body,
+        rawBody,
+        signatureHeader: sig,
+        userId: "",
+        store: createSupabaseDevReviewStore(admin),
+      });
+      return json(res.body, res.status);
+    }
     const userId = await getUserId(req);
 
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -1015,6 +1038,27 @@ serve(async (req: Request) => {
           created_at: new Date().toISOString(),
         });
         return json({ success: true, entry });
+      }
+
+      // --- Development Review Approval & GitHub Tracking (#2743) ---
+      case "dev_review.session.list":
+      case "dev_review.session.create":
+      case "dev_review.item.update":
+      case "dev_review.github.sync":
+      case "dev_review.phase.advance": {
+        const { handleDevReviewAction } = await import(
+          "./dev_review_tracking.ts"
+        );
+        const { createSupabaseDevReviewStore } = await import(
+          "./dev_review_tracking_supabase.ts"
+        );
+        const res = await handleDevReviewAction({
+          action,
+          body,
+          userId,
+          store: createSupabaseDevReviewStore(admin),
+        });
+        return json(res.body, res.status);
       }
 
       // --- Agent GPA Evaluations (#1124 Phase 1) ---
