@@ -14,7 +14,10 @@ import {
   rankBm25,
   ScoredMemoryDocument,
 } from "./search/bm25.ts";
-import { buildQueryRouteDecision } from "./query_report.ts";
+import {
+  buildHeuristicQueryReport,
+  buildQueryRouteDecision,
+} from "./query_report.ts";
 import { rerankWithHaiku } from "./search/rerank.ts";
 import { embedTextWithGemini, vectorSearch } from "./search/vector.ts";
 import {
@@ -615,13 +618,78 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
   });
 }
 
+function queryReportPromptMessages(query: string) {
+  return [
+    {
+      role: "system",
+      content: [
+        "Classify the user search query for RAG routing.",
+        "Respond strictly using Pleias query report tags:",
+        "<|query_report_start|>",
+        "<|state|>trivial | reformulated | unclear",
+        "<|reformulated_query|>improved standalone query when reformulated",
+        "<|reason|>concise explanation in Japanese",
+        "<|query_report_end|>",
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: query,
+    },
+  ];
+}
+
+async function inferQueryReportForRoute(
+  body: Body,
+  query: string,
+): Promise<{ rawReport: string; source: "explicit" | "llm" | "heuristic" }> {
+  const explicitReport = asString(
+    body.query_report ?? body.queryReport ?? body.report,
+  );
+  if (explicitReport) {
+    return { rawReport: explicitReport, source: "explicit" };
+  }
+  if (body.auto_report !== true) {
+    return { rawReport: "", source: "explicit" };
+  }
+  if (body.use_llm !== false && SUPABASE_URL && SERVICE_ROLE_KEY) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-hub`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          action: "provider.chat_auto",
+          tier: asString(body.tier) || "free",
+          trace_id: crypto.randomUUID(),
+          messages: queryReportPromptMessages(query),
+        }),
+      });
+      const payload = await response.json() as Record<string, unknown>;
+      const text = asString(payload["text"]);
+      if (response.ok && payload["success"] !== false && text) {
+        return { rawReport: text, source: "llm" };
+      }
+    } catch (error) {
+      console.warn("memory.query_route llm inference fallback", error);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  return { rawReport: buildHeuristicQueryReport(query), source: "heuristic" };
+}
+
 async function memoryQueryRoute(body: Body) {
   const query = asString(body.query);
   if (!query) return jsonResponse({ error: "query required" }, 400);
 
-  const rawReport = asString(
-    body.query_report ?? body.queryReport ?? body.report,
-  );
+  const inferred = await inferQueryReportForRoute(body, query);
+  const rawReport = inferred.rawReport;
   if (!rawReport) {
     return jsonResponse({ error: "query_report required" }, 400);
   }
@@ -635,6 +703,7 @@ async function memoryQueryRoute(body: Body) {
     used_reformulated_query: route.action === "search" &&
       route.searchQuery !== query,
     feedback: route.feedback,
+    report_source: inferred.source,
     parsed_report: {
       state: route.report.state,
       reformulated_query: route.report.reformulatedQuery,

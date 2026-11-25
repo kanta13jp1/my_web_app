@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
+import 'package:my_web_app/features/rag_query_routing/rag_query_routing_container.dart';
 import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
 import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -145,6 +146,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('Realtime 同時編集ロック / 競合検知'),
                     ),
                     body: const RealtimeLockContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.alt_route),
+            tooltip: 'クエリレポート再定式化・ルーティング制御',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=query-routing',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('クエリレポート再定式化・ルーティング制御'),
+                    ),
+                    body: const RagQueryRoutingContainer(),
                   ),
                 ),
               );
