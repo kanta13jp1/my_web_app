@@ -153,7 +153,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           REPO_SLUG: ${{ github.repository }}
-          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || '' }}
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || github.event.workflow_run.pull_requests[0].number || '' }}
           INPUT_RUN_ID: ${{ github.event.workflow_run.id || github.event.inputs.workflow_run_id || '' }}
           INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
           INPUT_POST_COMMENTS: ${{ github.event.inputs.post_review_comments || 'false' }}
