@@ -163,6 +163,14 @@ Related to #
 - [ ] 外部サービスの設定変更が必要
 - [ ] 特別なデプロイ手順は不要
 
+### デュアルライト移行確認（データ構造変更時のみ・14日間標準）
+<!-- 参照: docs/DUAL_WRITE_TRANSITION_STANDARD.md (#2774) -->
+
+- [ ] 該当なし（破壊的なスキーマ・データ構造変更を含まない）
+- [ ] 新旧双方への書き込み（デュアルライト）を Edge Functions / DB Trigger 含め実装済み
+- [ ] コード内に `DUAL-WRITE TRANSITION: issue=#<id> sunset=YYYY-MM-DD read-failsafe=<legacy>`（14日後目安）を記載済み
+- [ ] 移行期間中の読み取り処理は既存の旧データ構造を正とするフェールセーフを保持している
+
 ### デプロイ手順
 
 1.
