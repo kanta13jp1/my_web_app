@@ -2,10 +2,12 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   DEFAULT_CLAUDE_HAIKU_MODEL,
   DEFAULT_CLAUDE_SONNET_MODEL,
+  detectAgentLoopHalt,
   mapComplexityToEffort,
   mapEffortToComplexity,
   selectClaudeModelForEffort,
   selectDynamicLlmRoute,
+  summarizePerModelTokenCosts,
 } from "./effort_router.ts";
 import { calculateApiCost } from "./task_budget.ts";
 
@@ -77,4 +79,35 @@ Deno.test("dynamic router scales from trivial to critical and honors budget/circ
   assertEquals(downgraded.tier, "complex");
   assertEquals(downgraded.downgradedByBudget, true);
   assertEquals(downgraded.model, "gpt-5.4");
+});
+
+Deno.test("summarizePerModelTokenCosts and detectAgentLoopHalt detect token/retry loops", () => {
+  const events = Array.from({ length: 5 }, (_, idx) => ({
+    model: "claude-opus-4-7",
+    taskType: "root_cause_analysis",
+    status: "error",
+    inputTokens: 20_000,
+    outputTokens: 6_000,
+    estimatedCostUsd: 0.4,
+    occurredAt: `2026-11-25T03:00:0${idx}Z`,
+  }));
+  const breakdown = summarizePerModelTokenCosts([
+    ...events,
+    {
+      model: "claude-haiku-4-5",
+      taskType: "flutter_ui_routine",
+      status: "success",
+      inputTokens: 1_000,
+      outputTokens: 200,
+      estimatedCostUsd: 0.01,
+    },
+  ]);
+  assertEquals(breakdown.length, 2);
+  assertEquals(breakdown[0].model, "claude-opus-4-7");
+  assertEquals(breakdown[0].totalTokens, 130_000);
+
+  const halt = detectAgentLoopHalt(events);
+  assertEquals(halt.shouldHalt, true);
+  assertEquals(halt.triggers.includes("consecutive_retry_loop"), true);
+  assertEquals(halt.triggers.includes("token_burn_spike"), true);
 });

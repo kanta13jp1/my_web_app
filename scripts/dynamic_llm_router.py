@@ -169,6 +169,23 @@ def validate_routing_config(config: dict[str, Any]) -> list[str]:
         if not isinstance(hard_stop, (int, float)) or isinstance(hard_stop, bool) or hard_stop < 0:
             errors.append("budget_guard.hard_stop_threshold_usd must be >= 0")
 
+    loop_guard = config.get("loop_guard")
+    if loop_guard is not None:
+        if not isinstance(loop_guard, dict):
+            errors.append("Config 'loop_guard' must be a JSON object")
+        else:
+            for int_key, min_val in (
+                ("max_consecutive_retries", 1),
+                ("max_calls_per_minute", 1),
+                ("max_session_tokens", 100),
+            ):
+                raw_val = loop_guard.get(int_key)
+                if not isinstance(raw_val, int) or isinstance(raw_val, bool) or raw_val < min_val:
+                    errors.append(f"loop_guard.{int_key} must be an integer >= {min_val}")
+            spike = loop_guard.get("cost_spike_multiplier")
+            if not isinstance(spike, (int, float)) or isinstance(spike, bool) or spike < 1.0:
+                errors.append("loop_guard.cost_spike_multiplier must be >= 1.0")
+
     if errors:
         raise ValueError("; ".join(errors))
     return []
@@ -330,11 +347,162 @@ def route_task(
     )
 
 
+def per_model_token_cost_breakdown(
+    raw_events: Iterable[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Aggregate per-model token consumption and estimated inference cost."""
+    buckets: dict[tuple[str, str], dict[str, Any]] = {}
+    total_cost_all = 0.0
+    for idx, raw in enumerate(raw_events, start=1):
+        event = telemetry_report.canonical_event(raw, idx)
+        key = (event["provider"], event["model"])
+        bucket = buckets.setdefault(
+            key,
+            {
+                "provider": event["provider"],
+                "model": event["model"],
+                "call_count": 0,
+                "in_c": 0,
+                "out_c": 0,
+                "thk_c": 0,
+                "tot_c": 0,
+                "estimated_cost_usd": 0.0,
+            },
+        )
+        in_tok = max(0, int(event["input_tokens"] or 0))
+        out_tok = max(0, int(event["output_tokens"] or 0))
+        think_tok = max(0, int(event["thinking_tokens"] or 0))
+        cost = max(0.0, float(event["estimated_cost_usd"] or 0.0))
+        bucket["call_count"] += 1
+        bucket["in_c"] += in_tok
+        bucket["out_c"] += out_tok
+        bucket["thk_c"] += think_tok
+        bucket["tot_c"] += in_tok + out_tok + think_tok
+        bucket["estimated_cost_usd"] = round(bucket["estimated_cost_usd"] + cost, 6)
+        total_cost_all += cost
+
+    rows: list[dict[str, Any]] = []
+    for b in buckets.values():
+        in_v = int(b["in_c"])
+        out_v = int(b["out_c"])
+        thk_v = int(b["thk_c"])
+        tot_v = int(b["tot_c"])
+        est_c = float(b["estimated_cost_usd"])
+        rows.append(
+            {
+                "provider": b["provider"],
+                "model": b["model"],
+                "call_count": int(b["call_count"]),
+                "input_tokens": in_v,
+                "output_tokens": out_v,
+                "thinking_tokens": thk_v,
+                "total_tokens": tot_v,
+                "estimated_cost_usd": est_c,
+                "cost_share": round(est_c / total_cost_all, 4) if total_cost_all > 0 else 0.0,
+            }
+        )
+    rows.sort(
+        key=lambda item: (
+            -float(item["estimated_cost_usd"]),
+            -int(item["total_tokens"]),
+            str(item["model"]),
+        )
+    )
+    return rows
+
+
+def detect_agent_loop_and_budget_halt(
+    raw_events: Iterable[dict[str, Any]],
+    config: dict[str, Any],
+    *,
+    remaining_budget_usd: float | None = None,
+) -> dict[str, Any]:
+    """Detect abnormal agent retry/token loops or budget exhaustion for auto-halt (#2694)."""
+    loop_cfg = config.get("loop_guard", {})
+    max_retries = int(loop_cfg.get("max_consecutive_retries", 5))
+    max_cpm = int(loop_cfg.get("max_calls_per_minute", 12))
+    tok_cap = int(loop_cfg.get("max_session_tokens", 120000))
+    auto_halt_enabled = bool(loop_cfg.get("auto_halt_on_loop", True))
+
+    budget_guard = config.get("budget_guard", {})
+    hard_stop = float(budget_guard.get("hard_stop_threshold_usd", 0.0))
+    cost_alert_usd = float(config.get("telemetry_thresholds", {}).get("cost_alert_usd", 10.0))
+
+    consecutive_non_success = 0
+    max_consecutive_non_success = 0
+    consecutive_same_task = 0
+    max_consecutive_same_task = 0
+    prev_signature: tuple[str, str] | None = None
+    tok_sum = 0
+    total_cost = 0.0
+    minute_counts: dict[str, int] = {}
+
+    for idx, raw in enumerate(raw_events, start=1):
+        event = telemetry_report.canonical_event(raw, idx)
+        in_tok = max(0, int(event["input_tokens"] or 0))
+        out_tok = max(0, int(event["output_tokens"] or 0))
+        think_tok = max(0, int(event["thinking_tokens"] or 0))
+        tok_sum += in_tok + out_tok + think_tok
+        total_cost += max(0.0, float(event["estimated_cost_usd"] or 0.0))
+
+        status = str(event["status"]).lower()
+        if status in telemetry_report.FAILURE_STATUSES:
+            consecutive_non_success += 1
+            if consecutive_non_success > max_consecutive_non_success:
+                max_consecutive_non_success = consecutive_non_success
+        else:
+            consecutive_non_success = 0
+
+        sig = (str(event["model"]), str(event["task_type"]))
+        if sig == prev_signature:
+            consecutive_same_task += 1
+        else:
+            consecutive_same_task = 1
+            prev_signature = sig
+        if consecutive_same_task > max_consecutive_same_task:
+            max_consecutive_same_task = consecutive_same_task
+
+        ts = str(event["occurred_at"])
+        if len(ts) >= 16 and ts != "unknown":
+            minute_key = ts[:16]
+            minute_counts[minute_key] = minute_counts.get(minute_key, 0) + 1
+
+    peak_cpm = max(minute_counts.values()) if minute_counts else 0
+    triggers: list[str] = []
+    if max_consecutive_non_success >= max_retries or max_consecutive_same_task >= max_retries:
+        triggers.append("consecutive_retry_loop")
+    if tok_sum >= tok_cap:
+        triggers.append("token_burn_spike")
+    if peak_cpm >= max_cpm:
+        triggers.append("call_rate_spike")
+    if (remaining_budget_usd is not None and remaining_budget_usd <= hard_stop) or (
+        total_cost >= cost_alert_usd
+    ):
+        triggers.append("budget_cap_exceeded")
+
+    should_halt = auto_halt_enabled and len(triggers) > 0
+    out_summary: dict[str, Any] = {
+        "should_halt": should_halt,
+        "auto_halt_enabled": auto_halt_enabled,
+        "triggers": triggers,
+        "max_consecutive_failures": max_consecutive_non_success,
+        "max_consecutive_same_task": max_consecutive_same_task,
+        "peak_calls_per_minute": peak_cpm,
+        "total_cost_usd": round(total_cost, 6),
+        "halt_reason": ", ".join(triggers) if should_halt else "",
+    }
+    out_summary["total_tokens"] = tok_sum
+    return out_summary
+
+
 def analyze_routing_telemetry(
     raw_events: Iterable[dict[str, Any]],
     config: dict[str, Any],
+    *,
+    remaining_budget_usd: float | None = None,
 ) -> dict[str, Any]:
-    """Aggregate per-model call counts, costs, and frontier cost-share alerts."""
+    """Aggregate per-model call counts, costs, tokens, and loop-halt alerts."""
+    event_list = list(raw_events)
     thresholds = config.get("telemetry_thresholds", {})
     cost_alert_usd = float(thresholds.get("cost_alert_usd", 10.0))
     failure_rate_alert = float(thresholds.get("failure_rate_alert", 0.2))
@@ -343,11 +511,17 @@ def analyze_routing_telemetry(
     frontier_share_alert = float(thresholds.get("frontier_cost_share_alert", 0.7))
 
     base = telemetry_report.build_report(
-        raw_events,
+        event_list,
         cost_alert_usd=cost_alert_usd,
         failure_rate_alert=failure_rate_alert,
         min_events_for_failure_alert=min_events,
         latency_alert_ms=latency_alert_ms,
+    )
+    bd_rows = per_model_token_cost_breakdown(event_list)
+    loop_guard_status = detect_agent_loop_and_budget_halt(
+        event_list,
+        config,
+        remaining_budget_usd=remaining_budget_usd,
     )
 
     tiers = config["tiers"]
@@ -393,12 +567,26 @@ def analyze_routing_telemetry(
             }
         )
 
-    return {
+    if loop_guard_status["should_halt"]:
+        alerts.append(
+            {
+                "severity": "critical",
+                "label": "agent_loop_halt",
+                "reason": "abnormal_agent_loop_detected",
+                "message": (
+                    "Automatic halt triggered by abnormal loop / budget guard: "
+                    f"{loop_guard_status['halt_reason']}"
+                ),
+            }
+        )
+
+    result_payload: dict[str, Any] = {
         "schema_version": 1,
-        "issue": "#2684",
+        "issue": "#2684/#2694",
         "event_count": base["event_count"],
         "total_estimated_cost_usd": total_cost,
         "by_model": base.get("by_model", []),
+        "loop_guard": loop_guard_status,
         "cost_separation": {
             "frontier_calls": frontier_calls,
             "frontier_cost_usd": round(frontier_cost, 6),
@@ -408,6 +596,8 @@ def analyze_routing_telemetry(
         },
         "alerts": alerts,
     }
+    result_payload["token_cost_breakdown"] = bd_rows
+    return result_payload
 
 
 def render_markdown_report(
@@ -437,13 +627,15 @@ def render_markdown_report(
         )
     if telemetry_summary is not None:
         sep = telemetry_summary["cost_separation"]
+        loop_guard = telemetry_summary.get("loop_guard", {})
         lines.extend(
             [
                 "",
-                "### Per-Model Cost Separation",
+                "### Per-Model Cost & Loop Guard Summary",
                 f"- Total Events: `{telemetry_summary['event_count']}`, Total Cost: `${telemetry_summary['total_estimated_cost_usd']:.4f}`",
                 f"- Frontier Tier: `{sep['frontier_calls']}` calls, `${sep['frontier_cost_usd']:.4f}` ({sep['frontier_cost_share']:.1%})",
                 f"- Lightweight/Standard Tier: `{sep['non_frontier_calls']}` calls, `${sep['non_frontier_cost_usd']:.4f}`",
+                f"- Loop Guard Auto-Halted: `{str(bool(loop_guard.get('should_halt'))).lower()}` (triggers=`{loop_guard.get('triggers', [])}`)",
             ]
         )
     rendered = "\n".join(lines).rstrip() + "\n"
@@ -554,7 +746,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     telemetry_summary: dict[str, Any] | None = None
     if args.telemetry_input is not None:
         events = telemetry_report.load_events(args.telemetry_input)
-        telemetry_summary = analyze_routing_telemetry(events, config)
+        telemetry_summary = analyze_routing_telemetry(
+            events,
+            config,
+            remaining_budget_usd=args.remaining_budget_usd,
+        )
 
     payload: dict[str, Any] = {
         "schema_version": 1,
@@ -588,6 +784,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 handle.write(f"selected_model={decision.model}\n")
             if telemetry_summary is not None:
                 handle.write(f"telemetry_events={telemetry_summary['event_count']}\n")
+                halted = bool(telemetry_summary.get("loop_guard", {}).get("should_halt"))
+                handle.write(f"loop_guard_halted={str(halted).lower()}\n")
     if args.json_out is None and args.markdown_out is None:
         print(md_text, end="")
     return 0
