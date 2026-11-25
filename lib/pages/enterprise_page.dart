@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
@@ -182,6 +183,26 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('クエリレポート再定式化・ルーティング制御'),
                     ),
                     body: const RagQueryRoutingContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_alt_supply_risk_action'),
+            icon: const Icon(Icons.warehouse_outlined),
+            tooltip: '代替供給・輸入シナリオ監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=alt-supply-risk',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('代替供給・輸入シナリオ監視'),
+                    ),
+                    body: const AltSupplyRiskContainer(),
                   ),
                 ),
               );
