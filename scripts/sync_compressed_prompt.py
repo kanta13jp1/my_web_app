@@ -114,7 +114,7 @@ def verify_ci_analyze_contract(repo_root: Path) -> dict[str, Any]:
 def verify_rebase_sync_protocol(
     repo_root: Path,
     *,
-    require_pre_push_hook: bool = False,
+    require_pre_push_hook: bool = True,
 ) -> dict[str, Any]:
     """Verify pre-push `git pull --rebase` protocol across prompt docs and opt-in git hooks."""
     violations: list[str] = []
@@ -242,7 +242,7 @@ def check_sync_state(
     repo_root: Path,
     *,
     strict_metrics: bool = False,
-    require_pre_push_hook: bool = False,
+    require_pre_push_hook: bool = True,
 ) -> dict[str, Any]:
     """Validate parity between `.github/COMPRESSED_PROMPT_V3.md`, `COMPRESSED_PROMPT.md`, hooks, and CI."""
     violations: list[str] = []
@@ -333,7 +333,7 @@ def check_sync_state(
 
 
 def run_self_test(repo_root: Path) -> dict[str, Any]:
-    result = check_sync_state(repo_root, strict_metrics=False)
+    result = check_sync_state(repo_root, strict_metrics=False, require_pre_push_hook=True)
     if not result["in_sync"]:
         raise RuntimeError(f"live repo sync check failed: {result['violations']}")
 
@@ -355,13 +355,13 @@ def run_self_test(repo_root: Path) -> dict[str, Any]:
             dst.parent.mkdir(parents=True, exist_ok=True)
             dst.write_bytes(src.read_bytes())
 
-        if not (tmp / ".githooks" / "pre-push").exists():
-            assert verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)["ok"] is False
-            (tmp / ".githooks" / "pre-push").write_text(
-                "#!/usr/bin/env bash\npython -B scripts/sync_compressed_prompt.py --check\n# origin/main git pull --rebase\n",
-                encoding="utf-8",
-                newline="\n",
-            )
+        hook_path = tmp / ".githooks" / "pre-push"
+        assert hook_path.exists(), ".githooks/pre-push must exist in repository root"
+        assert verify_rebase_sync_protocol(tmp)["ok"] is True
+        hook_bytes = hook_path.read_bytes()
+        hook_path.unlink()
+        assert verify_rebase_sync_protocol(tmp)["ok"] is False
+        hook_path.write_bytes(hook_bytes)
         assert verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)["ok"] is True
 
         doc, _ = render_compressed_prompt(tmp)
@@ -386,7 +386,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     mode.add_argument("--write", action="store_true", default=False)
     mode.add_argument("--dry-run", action="store_true", default=False)
     parser.add_argument("--strict-metrics", action="store_true", default=False)
-    parser.add_argument("--require-pre-push-hook", action="store_true", default=False)
+    parser.add_argument("--require-pre-push-hook", action="store_true", default=True)
     parser.add_argument("--json-out", type=Path, default=None)
     parser.add_argument("--markdown-out", type=Path, default=None)
     parser.add_argument("--github-output", type=Path, default=None)
