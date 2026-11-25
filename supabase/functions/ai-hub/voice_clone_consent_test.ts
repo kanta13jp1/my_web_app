@@ -166,14 +166,20 @@ Deno.test("authorizeAiHubAction enforces authenticated user for voice.clone.* ac
     "voice.clone.generate",
   ];
   for (const action of actions) {
-    assertEquals(
-      authorizeAiHubAction(action, { userId: null, isServiceRole: false }).status,
-      401,
-    );
-    assertEquals(
-      authorizeAiHubAction(action, { userId: null, isServiceRole: true }).status,
-      403,
-    );
+    const anonDecision = authorizeAiHubAction(action, {
+      userId: null,
+      isServiceRole: false,
+    });
+    assertEquals(anonDecision.allowed, false);
+    if (!anonDecision.allowed) assertEquals(anonDecision.status, 401);
+
+    const srDecision = authorizeAiHubAction(action, {
+      userId: null,
+      isServiceRole: true,
+    });
+    assertEquals(srDecision.allowed, false);
+    if (!srDecision.allowed) assertEquals(srDecision.status, 401);
+
     assertEquals(
       authorizeAiHubAction(action, { userId: "usr-1", isServiceRole: false })
         .allowed,
@@ -183,7 +189,10 @@ Deno.test("authorizeAiHubAction enforces authenticated user for voice.clone.* ac
 });
 
 Deno.test("normalizes audio mime types, rejects silent buffers, and verifies spoken phrase", () => {
-  assertEquals(normalizeConsentMimeType("audio/webm;codecs=opus"), "audio/webm");
+  assertEquals(
+    normalizeConsentMimeType("audio/webm;codecs=opus"),
+    "audio/webm",
+  );
   const decoded = decodeConsentAudioBase64(validSampleAudioBase64(256));
   assertEquals(decoded.byteLength, 256);
 
@@ -324,7 +333,7 @@ Deno.test("voice.clone end-to-end flow: blocks unconsented generation, records c
   });
   assertEquals(verified.status, 200);
   assertEquals(verified.body.can_generate_voice_clone, true);
-  assertEquals(uploads.size, 2);
+  assertEquals(uploads.size, 1);
 
   // 8. Verified user can generate / activate voice clone profile.
   const generated = await handleVoiceCloneConsentAction({

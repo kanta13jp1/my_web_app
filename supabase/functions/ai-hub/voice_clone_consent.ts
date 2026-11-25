@@ -211,9 +211,11 @@ export function verifySpokenPhraseMatch(options: {
 }): { matched: boolean; reason: string } {
   const transcript = options.spokenTranscript.trim();
   if (!transcript) {
-    // Allow raw browser MediaRecorder uploads without live SpeechRecognition STT
-    // while still enforcing duration, audio entropy, and prior legal acceptance.
-    return { matched: true, reason: "audio_binary_verified" };
+    return {
+      matched: false,
+      reason:
+        "spoken_transcript_missing: spoken verification phrase transcript is required",
+    };
   }
   const normalizedTranscript = transcript
     .normalize("NFKC")
@@ -238,9 +240,8 @@ export function verifySpokenPhraseMatch(options: {
     "voiceclone",
     "authorize",
   ];
-  const keywordHits = requiredKeywords.filter((kw) =>
-    normalizedTranscript.includes(kw)
-  ).length;
+  const keywordHits =
+    requiredKeywords.filter((kw) => normalizedTranscript.includes(kw)).length;
   if (keywordHits >= 2) {
     return { matched: true, reason: "consent_phrase_keywords_matched" };
   }
@@ -396,12 +397,11 @@ export async function assertVerifiedVoiceCloneConsent(options: {
 
   const currentStatus: VoiceCloneConsentStatus = consent?.consent_status ??
     "pending_terms";
-  const requiredStep =
-    !consent ||
+  const requiredStep = !consent ||
       currentStatus === "pending_terms" ||
       currentStatus === "revoked"
-      ? "accept_legal_terms"
-      : "submit_voice_recording";
+    ? "accept_legal_terms"
+    : "submit_voice_recording";
 
   if (consent) {
     await options.store.recordEvent({
@@ -554,8 +554,9 @@ export async function handleVoiceCloneConsentAction(options: {
         recording_byte_size: 0,
         recording_duration_ms: 0,
         recording_sha256: null,
-        microphone_permission_granted: existing?.microphone_permission_granted ??
-          false,
+        microphone_permission_granted:
+          existing?.microphone_permission_granted ??
+            false,
         spoken_transcript: null,
         consent_status: "terms_accepted",
         verified_at: null,
@@ -874,8 +875,7 @@ export async function handleVoiceCloneConsentAction(options: {
           allowed: true,
           profile,
           consent_status: gate.consent.consent_status,
-          message:
-            "同意検証済みの本人ボイスプロファイルを有効化しました。",
+          message: "同意検証済みの本人ボイスプロファイルを有効化しました。",
         },
       };
     }
