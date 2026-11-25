@@ -1210,6 +1210,33 @@ serve(async (req: Request) => {
         return json(result.body, result.status);
       }
 
+      // --- Agricultural Policy Timeline & Knowledge Graph (#2755) ---
+      case "agri_policy.list":
+      case "agri_policy.seed_defaults":
+      case "agri_policy.create":
+      case "agri_policy.update": {
+        const { AgriPolicyActionError, handleAgriPolicyAction } = await import(
+          "./agri_policy.ts"
+        );
+        try {
+          const result = await handleAgriPolicyAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AgriPolicyActionError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
