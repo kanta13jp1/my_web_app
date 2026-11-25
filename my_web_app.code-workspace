@@ -1,0 +1,58 @@
+{
+  "folders": [
+    {
+      "name": "my_web_app (Root)",
+      "path": "."
+    },
+    {
+      "name": "Flutter Web UI (lib)",
+      "path": "lib"
+    },
+    {
+      "name": "Flutter Tests (test)",
+      "path": "test"
+    },
+    {
+      "name": "Supabase Backend (supabase)",
+      "path": "supabase"
+    },
+    {
+      "name": "Automation & CI (scripts)",
+      "path": "scripts"
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "files.encoding": "utf8",
+    "files.eol": "\n",
+    "dart.mcpServer": true,
+    "deno.enable": true,
+    "deno.lint": true,
+    "deno.config": "supabase/functions/deno.json",
+    "terminal.integrated.env.windows": {
+      "PYTHONUTF8": "1",
+      "PYTHONIOENCODING": "utf-8"
+    },
+    "files.exclude": {
+      "**/.dart_tool": true,
+      "**/build": true,
+      "**/.ci-logs": true
+    },
+    "search.exclude": {
+      "**/.dart_tool": true,
+      "**/build": true,
+      "**/.ci-logs": true,
+      "**/node_modules": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "Dart-Code.dart-code",
+      "Dart-Code.flutter",
+      "denoland.vscode-deno",
+      "redhat.java",
+      "ms-azuretools.vscode-containers",
+      "ms-vscode-remote.remote-containers"
+    ]
+  }
+}
