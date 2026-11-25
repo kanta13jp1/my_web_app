@@ -145,13 +145,6 @@ jobs:
               files.map((file) => file.filename).join('\n') + '\n',
             );
 
-      - name: Evaluate commit CI skip guard
-        id: commit_skip
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-        run: python scripts/check_commit_message.py --check-ci-skip-git --event-name "${EVENT_NAME}" --github-output "${GITHUB_OUTPUT}"
-
       - name: Classify CI scope
         id: changes
         shell: bash
@@ -168,6 +161,13 @@ jobs:
             --changed-files .ci-logs/changed-files.txt \
             --github-output "$GITHUB_OUTPUT" \
             "${args[@]}"
+
+      - name: Evaluate commit CI skip guard
+        id: commit_skip
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: python scripts/check_commit_message.py --check-ci-skip-git --event-name "${EVENT_NAME}" --github-output "${GITHUB_OUTPUT}"
 
       - name: Classify debt read regression scope
         id: debt_read_scope
