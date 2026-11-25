@@ -348,7 +348,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repo.syncCalls, 1);
-      expect(find.text('GitHub #2743: open / approved'), findsOneWidget);
+      expect(find.text('GitHub #2743: open / none'), findsOneWidget);
 
       final filterChip = find.byKey(const Key('dev_review_filter_pending'));
       await tester.ensureVisible(filterChip);

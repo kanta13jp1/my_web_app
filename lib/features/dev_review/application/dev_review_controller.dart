@@ -246,6 +246,7 @@ class DevReviewTrackingController extends ChangeNotifier {
     required String sessionId,
     required String state,
     required String reviewDecision,
+    bool fetchLive = false,
   }) async {
     if (_disposed || _state.isSubmitting) {
       return;
@@ -256,6 +257,7 @@ class DevReviewTrackingController extends ChangeNotifier {
         sessionId: sessionId,
         state: state,
         reviewDecision: reviewDecision,
+        fetchLive: fetchLive,
       );
       if (_disposed) {
         return;

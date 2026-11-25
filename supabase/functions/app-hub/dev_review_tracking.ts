@@ -583,62 +583,48 @@ export async function handleDevReviewAction(params: {
     }
 
     const nowIso = new Date().toISOString();
-    let snapshot: DevReviewGithubSnapshot;
 
-    if (body.fetch_live === true) {
-      if (!isValidGithubRepo(existing.githubRepo)) {
-        return { status: 400, body: { error: "Invalid repository format." } };
-      }
-      const segment = existing.targetType === "pr" ? "pulls" : "issues";
-      const url = `https://api.github.com/repos/${existing.githubRepo}/` +
-        `${segment}/${existing.targetNumber}`;
-      const ghAuth = (getEnv("GITHUB_TOKEN") ?? "").trim();
-      const headers: Record<string, string> = {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "my-web-app-dev-review-tracker",
-      };
-      if (ghAuth) {
-        headers.Authorization = `Bearer ${ghAuth}`;
-      }
-      const resp = await fetcher(url, { method: "GET", headers });
-      if (!resp.ok) {
-        return {
-          status: 502,
-          body: { error: `GitHub API returned HTTP ${resp.status}` },
-        };
-      }
-      const payload = asRecord(await resp.json());
-      snapshot = {
-        provider: "github",
-        repo: existing.githubRepo,
-        targetType: existing.targetType,
-        number: existing.targetNumber,
-        url: asText(payload.html_url, 300),
-        state: mapGithubState(
-          asText(payload.state, 20),
-          payload.merged === true,
-        ),
-        reviewDecision: mapReviewDecision(
-          asText(body.review_decision, 40) || "none",
-        ),
-        syncedAt: nowIso,
-      };
-    } else {
-      snapshot = {
-        provider: "github",
-        repo: existing.githubRepo,
-        targetType: existing.targetType,
-        number: existing.targetNumber,
-        url: asText(body.html_url, 300) ||
-          (existing.githubSnapshot?.url ?? ""),
-        state: mapGithubState(
-          asText(body.state, 20) || "open",
-          body.merged === true,
-        ),
-        reviewDecision: mapReviewDecision(asText(body.review_decision, 40)),
-        syncedAt: nowIso,
+    if (body.fetch_live !== true) {
+      return {
+        status: 400,
+        body: { error: "fetch_live must be true to sync from GitHub." },
       };
     }
+    if (!isValidGithubRepo(existing.githubRepo)) {
+      return { status: 400, body: { error: "Invalid repository format." } };
+    }
+    const segment = existing.targetType === "pr" ? "pulls" : "issues";
+    const url = `https://api.github.com/repos/${existing.githubRepo}/` +
+      `${segment}/${existing.targetNumber}`;
+    const ghAuth = (getEnv("GITHUB_TOKEN") ?? "").trim();
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "my-web-app-dev-review-tracker",
+    };
+    if (ghAuth) {
+      headers.Authorization = `Bearer ${ghAuth}`;
+    }
+    const resp = await fetcher(url, { method: "GET", headers });
+    if (!resp.ok) {
+      return {
+        status: 502,
+        body: { error: `GitHub API returned HTTP ${resp.status}` },
+      };
+    }
+    const payload = asRecord(await resp.json());
+    const snapshot: DevReviewGithubSnapshot = {
+      provider: "github",
+      repo: existing.githubRepo,
+      targetType: existing.targetType,
+      number: existing.targetNumber,
+      url: asText(payload.html_url, 300),
+      state: mapGithubState(
+        asText(payload.state, 20),
+        payload.merged === true,
+      ),
+      reviewDecision: existing.githubSnapshot?.reviewDecision ?? "none",
+      syncedAt: nowIso,
+    };
 
     const updated = await store.updateSession(sessionId, userId, {
       ...existing,

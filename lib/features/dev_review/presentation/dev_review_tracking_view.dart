@@ -181,7 +181,10 @@ class _DevReviewTrackingViewState extends State<DevReviewTrackingView> {
                             widget.controller.syncGithub(
                               sessionId: session.id,
                               state: session.githubSnapshot?.state ?? 'open',
-                              reviewDecision: 'approved',
+                              reviewDecision:
+                                  session.githubSnapshot?.reviewDecision ??
+                                      'none',
+                              fetchLive: true,
                             );
                           },
                           onAdvancePhase: () {
