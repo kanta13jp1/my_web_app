@@ -167,6 +167,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.textContaining('secretary_action'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('secretary_action'), findsOneWidget);
 
       final scoreBtn = find.byKey(const ValueKey<String>('score_batch_button'));
@@ -215,6 +220,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repo.evolveCalls, 0);
+      await tester.scrollUntilVisible(
+        find.textContaining('安全ガード検証エラー'),
+        -300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('安全ガード検証エラー'), findsOneWidget);
     });
 
@@ -231,6 +241,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('実行エラー / 安全ブロック'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.textContaining('secretary_action'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('secretary_action'), findsOneWidget);
     });
 

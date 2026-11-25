@@ -201,11 +201,9 @@ class _PromptEvolutionViewState extends State<PromptEvolutionView> {
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 960),
-              child: SingleChildScrollView(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+                children: [
                   if (errorMessage != null)
                     _EvolutionBanner(
                       backgroundColor: colors.errorContainer,
@@ -408,8 +406,7 @@ class _PromptEvolutionViewState extends State<PromptEvolutionView> {
                       ),
                     ),
                   ),
-                  ],
-                ),
+                ],
               ),
             ),
           );
