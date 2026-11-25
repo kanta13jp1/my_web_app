@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
+import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
+import 'package:my_web_app/features/ai_investment_batch/ai_investment_batch_container.dart';
+import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
+import 'package:my_web_app/features/income_insurance_sim/income_insurance_sim_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
 import 'package:my_web_app/features/rag_query_routing/rag_query_routing_container.dart';
 import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
@@ -189,6 +194,26 @@ class _EnterprisePageState extends State<EnterprisePage> {
             },
           ),
           IconButton(
+            key: const Key('enterprise_alt_supply_risk_action'),
+            icon: const Icon(Icons.warehouse_outlined),
+            tooltip: '代替供給・輸入シナリオ監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=alt-supply-risk',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('代替供給・輸入シナリオ監視'),
+                    ),
+                    body: const AltSupplyRiskContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
             key: const Key('enterprise_vision_benchmark_action'),
             icon: const Icon(Icons.monitor_heart_outlined),
             tooltip: 'AI監視ダッシュボード (Visionベンチマーク)',
@@ -203,6 +228,85 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('AI監視ダッシュボード（Visionベンチマーク）'),
                     ),
                     body: const VisionBenchmarkContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_cost_monitor_action'),
+            icon: const Icon(Icons.payments_outlined),
+            tooltip: 'サードパーティ AI API コスト監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-cost-monitor',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('サードパーティ AI API コスト監視'),
+                    ),
+                    body: const AiCostMonitorContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: '農政改革タイムライン・ナレッジグラフ',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=agri-policy-timeline',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('農政改革タイムライン・ナレッジグラフ'),
+                    ),
+                    body: const AgriPolicyTimelineContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('open_ai_investment_batch_btn'),
+            icon: const Icon(Icons.trending_up),
+            tooltip: '2026Q2 AI企業投資動向管理',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-investment-batch',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('2026Q2 AI企業投資動向管理'),
+                    ),
+                    body: const AiInvestmentBatchContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.calculate_outlined),
+            tooltip: '収入保険・代替モデル比較シミュレーター',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=income-insurance-sim',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('収入保険・代替モデル比較シミュレーター'),
+                    ),
+                    body: const IncomeInsuranceSimContainer(),
                   ),
                 ),
               );

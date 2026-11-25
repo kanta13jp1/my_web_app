@@ -21,9 +21,17 @@ import {
 import { handlePromptEvolutionAction } from "./prompt_evolution.ts";
 import { createSupabasePromptEvolutionDb } from "./prompt_evolution_supabase.ts";
 import {
+  createSupabaseAltSupplyDb,
+  handleAltSupplyAction,
+} from "./alt_supply.ts";
+import {
   createSupabaseVisionBenchmarkDb,
   handleVisionBenchmarkAction,
 } from "./vision_benchmark.ts";
+import {
+  createSupabaseAiCostMonitorDb,
+  handleAiCostAction,
+} from "./ai_cost_monitor.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1198,6 +1206,20 @@ serve(async (req: Request) => {
         return json({ success: true, action, ...recorded });
       }
 
+      // --- Alternative Supply & Import Risk Monitor (#2756) ---
+      case "alt_supply.list":
+      case "alt_supply.seed_defaults":
+      case "alt_supply.create":
+      case "alt_supply.update": {
+        const result = await handleAltSupplyAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAltSupplyDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
       // --- AI Vision Benchmark Monitoring (#2758) ---
       case "vision_benchmark.list":
       case "vision_benchmark.record": {
@@ -1208,6 +1230,71 @@ serve(async (req: Request) => {
           db: createSupabaseVisionBenchmarkDb(admin),
         });
         return json(result.body, result.status);
+      }
+
+      // --- Third-party AI API Cost Monitor (#2760) ---
+      case "ai_cost.list_usage":
+      case "ai_cost.daily_summary":
+      case "ai_cost.record_usage":
+      case "ai_cost.check_budget": {
+        const result = await handleAiCostAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAiCostMonitorDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- Agricultural Policy Timeline & Knowledge Graph (#2755) ---
+      case "agri_policy.list":
+      case "agri_policy.seed_defaults":
+      case "agri_policy.create":
+      case "agri_policy.update": {
+        const { AgriPolicyActionError, handleAgriPolicyAction } = await import(
+          "./agri_policy.ts"
+        );
+        try {
+          const result = await handleAgriPolicyAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AgriPolicyActionError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
+
+      // --- Q2 2026 AI Investment Trend Batch (#2761) ---
+      case "ai_investment.list":
+      case "ai_investment.seed_defaults":
+      case "ai_investment.ingest":
+      case "ai_investment.verify_entry": {
+        const { AiInvestmentError, handleAiInvestmentAction } = await import(
+          "./ai_investment.ts"
+        );
+        try {
+          const result = await handleAiInvestmentAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AiInvestmentError) {
+            return json({ error: err.message }, err.status);
+          }
+          throw err;
+        }
       }
 
       default:
