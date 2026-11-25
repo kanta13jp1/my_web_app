@@ -178,6 +178,64 @@ void main() {
           expect(controller.state.filteredEntries.length, 1);
           expect(controller.state.filteredEntries.first.id, 'tel-writer-2');
 
+          expect(controller.state.modelBreakdowns.length, 2);
+          expect(
+              controller.state.modelBreakdowns.first.modelId, 'claude-sonnet');
+          expect(controller.state.modelBreakdowns.first.totalTokens, 5500);
+
+          controller.dispose();
+        },
+      );
+
+      test(
+        'halts invocations automatically on abnormal consecutive retry loop (#2694)',
+        () async {
+          final loopEntries = List<AiComputeTelemetryEntry>.generate(
+            5,
+            (final int i) => AiComputeTelemetryEntry(
+              id: 'loop-$i',
+              userId: 'usr-agent',
+              toolName: 'ai-hub',
+              gpuProfile: GpuComputeProfile.managedApi,
+              modelId: 'claude-opus-4-7',
+              inputTokens: 25000,
+              outputTokens: 5000,
+              apiRequestCount: 1,
+              latencyMs: 1200,
+              estimatedComputeCostUsd: 0.4,
+              costThresholdUsd: 50.0,
+              thresholdAlertTriggered: false,
+              recordedAt: DateTime.utc(2026, 11, 25, 3, 0, i),
+            ),
+          );
+          final repo = _InMemoryAiComputeCostMonitorRepository(
+            initialEntries: loopEntries,
+            isAdmin: true,
+          );
+          final controller = AiComputeCostMonitorController(repository: repo);
+          await controller.loadDashboard();
+
+          expect(controller.state.loopDetection.autoHalted, isTrue);
+          expect(
+            controller.state.loopDetection.maxConsecutiveRepeats,
+            greaterThanOrEqualTo(5),
+          );
+
+          final blocked = await controller.recordInvocation(
+            toolName: 'ai-hub',
+            gpuProfile: GpuComputeProfile.managedApi,
+            modelId: 'claude-opus-4-7',
+            inputTokens: 1000,
+            outputTokens: 500,
+            apiRequestCount: 1,
+            latencyMs: 500,
+          );
+          expect(blocked, isFalse);
+          expect(
+            controller.state.errorMessage,
+            contains('異常ループまたはコスト上限超過を検知したため自動停止しました'),
+          );
+
           controller.dispose();
         },
       );
@@ -245,6 +303,64 @@ void main() {
           expect(
             find.byKey(
               const ValueKey<String>('ai-compute-entry-tel-1'),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.byKey(
+              const ValueKey<String>('ai-compute-model-breakdown-card'),
+            ),
+            findsOneWidget,
+          );
+        },
+      );
+
+      testWidgets(
+        'renders abnormal agent loop halt banner when consecutive loop triggered (#2694)',
+        (final WidgetTester tester) async {
+          final loopEntries = List<AiComputeTelemetryEntry>.generate(
+            5,
+            (final int i) => AiComputeTelemetryEntry(
+              id: 'loop-$i',
+              userId: 'usr-agent',
+              toolName: 'ai-hub',
+              gpuProfile: GpuComputeProfile.managedApi,
+              modelId: 'claude-opus-4-7',
+              inputTokens: 25000,
+              outputTokens: 5000,
+              apiRequestCount: 1,
+              latencyMs: 1200,
+              estimatedComputeCostUsd: 0.4,
+              costThresholdUsd: 50.0,
+              thresholdAlertTriggered: false,
+              recordedAt: DateTime.utc(2026, 11, 25, 3, 0, i),
+            ),
+          );
+          final repo = _InMemoryAiComputeCostMonitorRepository(
+            initialEntries: loopEntries,
+            isAdmin: true,
+          );
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: ThemeData.dark(),
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: AiComputeCostMonitorContainer(repository: repo),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(
+            find.byKey(
+              const ValueKey<String>('ai-compute-loop-halt-banner'),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.byKey(
+              const ValueKey<String>('ai-compute-model-breakdown-card'),
             ),
             findsOneWidget,
           );
