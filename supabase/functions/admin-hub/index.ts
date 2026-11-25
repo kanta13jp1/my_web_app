@@ -40,6 +40,13 @@ import {
   handleWorkosPortalLink,
   handleWorkosUpdateMemberRole,
 } from "./workos_admin.ts";
+import {
+  createSupabaseOrgIdpRbacStore,
+  handleOrgIdpMappingsDelete,
+  handleOrgIdpMappingsList,
+  handleOrgIdpMappingsUpsert,
+  handleOrgSsoEvaluate,
+} from "./idp_rbac_admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1032,6 +1039,42 @@ serve(async (req: Request) => {
       case "workos.update_member_role": {
         const res = await handleWorkosUpdateMemberRole({
           store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.list": {
+        const res = await handleOrgIdpMappingsList({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.upsert": {
+        const res = await handleOrgIdpMappingsUpsert({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.delete": {
+        const res = await handleOrgIdpMappingsDelete({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.sso_evaluate": {
+        const res = await handleOrgSsoEvaluate({
+          store: createSupabaseOrgIdpRbacStore(admin),
           caller: { userId, isServiceRole },
           body,
         });
