@@ -169,8 +169,44 @@ export function parseAgentToolRequestedScopes(value: unknown): string[] {
   if (typeof value === "string") {
     return value.split(/[,\s]+/).map((scope) => scope.trim()).filter(Boolean);
   }
-  if (!Array.isArray(value) || value.some((scope) => typeof scope !== "string")) {
+  if (
+    !Array.isArray(value) || value.some((scope) => typeof scope !== "string")
+  ) {
     return [""];
   }
   return [...value];
+}
+
+export function parseAgentToolApproval(
+  body: Record<string, unknown>,
+): AgentToolApproval | null {
+  const raw = body.approval;
+  const record = raw !== null && typeof raw === "object" && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>)
+    : body;
+  const rawDecision = String(
+    record.decision ?? body.approval_decision ?? body.approvalDecision ?? "",
+  ).trim().toLowerCase();
+  if (
+    rawDecision !== "approved" &&
+    rawDecision !== "pending" &&
+    rawDecision !== "rejected"
+  ) {
+    return null;
+  }
+  const rawApprovedBy = record.approvedBy ?? record.approved_by ??
+    body.approved_by ?? body.approvedBy;
+  const approvedBy = typeof rawApprovedBy === "string"
+    ? rawApprovedBy.trim() || null
+    : null;
+  const rawApprovedAt = record.approvedAt ?? record.approved_at ??
+    body.approved_at ?? body.approvedAt;
+  const approvedAt = typeof rawApprovedAt === "string"
+    ? rawApprovedAt.trim() || null
+    : null;
+  return {
+    decision: rawDecision,
+    approvedBy,
+    approvedAt,
+  };
 }
