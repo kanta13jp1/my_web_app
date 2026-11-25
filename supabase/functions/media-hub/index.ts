@@ -892,6 +892,22 @@ serve(async (req) => {
         });
       }
 
+      case "media_library.upload_or_deduplicate":
+      case "media_library.reuse_in_project":
+      case "media_library.update_tags":
+      case "media_library.search":
+      case "media_library.signed_url":
+      case "media_library.delete": {
+        const { handleMediaLibraryAction } = await import("./media_library.ts");
+        return await handleMediaLibraryAction({
+          action,
+          body,
+          userId,
+          admin,
+          json,
+        });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
