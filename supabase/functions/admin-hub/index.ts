@@ -35,6 +35,11 @@ import {
   handleOrgQuotaStatus,
   handleOrgQuotaUpdateLimit,
 } from "./organization_audit_quota.ts";
+import {
+  createSupabaseWorkosAdminStore,
+  handleWorkosPortalLink,
+  handleWorkosUpdateMemberRole,
+} from "./workos_admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1012,6 +1017,24 @@ serve(async (req: Request) => {
           { userId, isServiceRole },
           body,
         );
+        return json(res.body, res.status);
+      }
+
+      case "workos.portal_link": {
+        const res = await handleWorkosPortalLink({
+          store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.update_member_role": {
+        const res = await handleWorkosUpdateMemberRole({
+          store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
         return json(res.body, res.status);
       }
 
