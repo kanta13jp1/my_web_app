@@ -88,10 +88,10 @@ class GateTests(unittest.TestCase):
 
     def test_safe_exact_names_allows_gitattributes_only(self):
         gate.validate_scope(
-            ['.gitattributes'],
+            ['.gitattributes', '.githooks/pre-push'],
             'diff --git a/.gitattributes b/.gitattributes\n+docs/QUARTERLY_ROADMAP.md merge=union\n',
         )
-        for rejected in (['Makefile'], ['.htaccess'], ['.env']):
+        for rejected in (['Makefile'], ['.htaccess'], ['.env'], ['scripts/pre-push'], ['pre-push']):
             with self.subTest(paths=rejected), self.assertRaises(ValueError):
                 gate.validate_scope(rejected, '+plain')
 

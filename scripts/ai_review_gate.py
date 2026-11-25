@@ -44,6 +44,7 @@ AREAS = {'correctness', 'security', 'tests'}
 SAFE_SUFFIXES = {'.dart', '.ts', '.js', '.mjs', '.cjs', '.py', '.ps1', '.sh',
                  '.yaml', '.yml', '.json', '.sql', '.md', '.toml', '.txt', '.lock', '.html', '.css'}
 SAFE_EXACT_NAMES = {'.gitattributes'}
+SAFE_EXACT_PATHS = {'.githooks/pre-push'}
 PRIVATE_PATH = re.compile(r'(^|/)(attachments|receipts|payslips|financial_records|bank_statements|\.env)(/|\.|$)', re.I)
 
 
@@ -112,9 +113,11 @@ def validate_scope(paths, diff, assets=()):
     for path in paths:
         require(not PRIVATE_PATH.search(path), 'Private records must not be sent to AI review')
         path_obj = Path(path)
+        normalized_path = path.replace('\\', '/').lower()
         require(
             path_obj.suffix.lower() in SAFE_SUFFIXES
             or path_obj.name.lower() in SAFE_EXACT_NAMES
+            or normalized_path in SAFE_EXACT_PATHS
             or path in approved,
             'Unsupported file type; expand policy through review',
         )

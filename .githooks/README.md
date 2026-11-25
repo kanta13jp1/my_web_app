@@ -20,3 +20,9 @@ git config core.hooksPath .githooks
 - 同じゲートは [`ci.yml`](../.github/workflows/ci.yml) でも走るため、hook 未設定でも
   CI で必ず検出される。hook は「手元での早期検知」用。
 - 緊急迂回は `git commit --no-verify`(非推奨)。
+
+## pre-push
+
+`scripts/sync_compressed_prompt.py --check` および `origin/main` との差分を検証し、
+共有メモリ (`COMPRESSED_PROMPT.md`) の同期漏れや `git pull --rebase origin main` 未実施のままの
+古いプッシュを事前にブロックする（緊急スキップ: `SKIP_PRE_PUSH_SYNC=1`）。
