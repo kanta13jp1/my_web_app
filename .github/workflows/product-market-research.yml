@@ -1,0 +1,164 @@
+name: Product and Market Research Pipeline
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/product-market-research.yml"
+      - "scripts/product_market_research_pipeline.py"
+      - "test/scripts/test_product_market_research_pipeline.py"
+  issues:
+    types:
+      - labeled
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Research topic or product requirement query"
+        required: false
+        default: ""
+        type: string
+      issue_number:
+        description: "Optional GitHub Issue number to link"
+        required: false
+        default: ""
+        type: string
+      budget_minutes:
+        description: "Bounded async research budget (5-45 minutes)"
+        required: false
+        default: "15"
+        type: choice
+        options:
+          - "5"
+          - "15"
+          - "30"
+          - "45"
+      dry_run:
+        description: "Run deterministic pipeline without external notifications (true/false)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      notify_target:
+        description: "Notification payload mode (none / issue-comment-dry-run)"
+        required: false
+        default: "issue-comment-dry-run"
+        type: choice
+        options:
+          - "none"
+          - "issue-comment-dry-run"
+
+concurrency:
+  group: product-market-research-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    name: Validate product market research pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run unit tests and self-test
+        run: |
+          python3 -B test/scripts/test_product_market_research_pipeline.py -v
+          python3 -B scripts/product_market_research_pipeline.py --self-test
+
+  research:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+        (github.event.label.name == 'research-pipeline' || github.event.label.name == 'ai-research'))
+    name: Run multi-angle PRD and risk synthesis
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      issues: read
+    env:
+      EVENT_NAME: ${{ github.event_name }}
+      DRY_RUN_INPUT: ${{ inputs.dry_run || 'true' }}
+      RESEARCH_TOPIC: ${{ inputs.topic || '' }}
+      RESEARCH_ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number || '' }}
+      RESEARCH_ISSUE_TITLE: ${{ github.event.issue.title || '' }}
+      RESEARCH_ISSUE_BODY: ${{ github.event.issue.body || '' }}
+      RESEARCH_BUDGET_MINUTES: ${{ inputs.budget_minutes || '15' }}
+      RESEARCH_NOTIFY_MODE: ${{ inputs.notify_target || 'issue-comment-dry-run' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Execute bounded research synthesis
+        id: research_run
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ]; then
+            python3 -B scripts/product_market_research_pipeline.py \
+              --state-file research_job_state.json \
+              --json-out research_report.json \
+              --markdown-out research_report.md \
+              --notify-json-out research_notify_payload.json \
+              --github-output "${GITHUB_OUTPUT}" \
+              --live
+          else
+            python3 -B scripts/product_market_research_pipeline.py \
+              --state-file research_job_state.json \
+              --json-out research_report.json \
+              --markdown-out research_report.md \
+              --notify-json-out research_notify_payload.json \
+              --github-output "${GITHUB_OUTPUT}" \
+              --dry-run
+          fi
+
+      - name: Upload research PRD and risk artifacts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: product-market-research-artifacts
+          path: |
+            research_job_state.json
+            research_report.json
+            research_report.md
+            research_notify_payload.json
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append step summary
+        if: always()
+        env:
+          JOB_ID: ${{ steps.research_run.outputs.job_id }}
+          JOB_STATUS: ${{ steps.research_run.outputs.status }}
+          SOURCE_COUNT: ${{ steps.research_run.outputs.source_count }}
+          FINDING_COUNT: ${{ steps.research_run.outputs.finding_count }}
+          RISK_COUNT: ${{ steps.research_run.outputs.risk_count }}
+          NOTIFY_MODE: ${{ steps.research_run.outputs.notification_mode }}
+        run: |
+          {
+            echo "## Product & Market Research Pipeline (#2677)"
+            echo "- Job ID: \`${JOB_ID}\` | Status: \`${JOB_STATUS}\`"
+            echo "- Sources: \`${SOURCE_COUNT}\` | Requirements: \`${FINDING_COUNT}\` | Risks: \`${RISK_COUNT}\`"
+            echo "- Notification payload mode: \`${NOTIFY_MODE}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
