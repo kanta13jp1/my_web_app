@@ -107,6 +107,7 @@ circuit-breaker (Step 3) / DLQ = 失敗イベントの退避先 (Step 3,5) / tra
 | ディスク逼迫 (C: < 25GB) | [`DISK_HYGIENE_RUNBOOK.md`](./DISK_HYGIENE_RUNBOOK.md) | worktree prune / git gc / cache 削除 |
 | 資産管理機能の品質障害 | [`ASSET_MANAGEMENT_QA_OPERATIONS_RUNBOOK.md`](./ASSET_MANAGEMENT_QA_OPERATIONS_RUNBOOK.md) | 該当機能の feature flag off |
 | ブログ/ニュース自動配信の停止 | [`BLOG_NEWS_AUTOMATION_RUNBOOK.md`](./BLOG_NEWS_AUTOMATION_RUNBOOK.md) | dispatch 一時停止 / 再投稿 gate |
+| 外部依存サービス (Supabase / Firebase / GitHub) の障害疑い・外部サポート判断 | [`INCIDENT_ESCALATION_RUNBOOK.md`](./INCIDENT_ESCALATION_RUNBOOK.md) (Firebase 固有は [`FIREBASE_SUPPORT_GUIDE.md`](./FIREBASE_SUPPORT_GUIDE.md)) | 公式 Status 確認 / 設定・課金変更で回避しない |
 | deploy-prod RED 継続 | (本 SOP §4 + Issue handoff) | 原因 commit を特定 → Codex へ修正 PR handoff |
 | 上記に該当しない新規クラス | (本 SOP §4 で対応) | 対応後 §8 に従い新 runbook を follow-up |
 
@@ -177,3 +178,4 @@ SEV1/2 は復旧後 1 営業日以内に記録する。保存先は [`docs/incid
 | 日付 | 変更 |
 | --- | --- |
 | 2026-06-09 | 初版 v1 (Win版#132 part 245 / Win Claude)。MVP ローンチ版 umbrella SOP として Sev 分類・solo founder + AI fleet on-call モデル・検知 source 表・6 ステップフロー・既存 runbook dispatch 表・通信プロトコル・blameless postmortem テンプレを確立。成熟版は paying-100 task `3cb3aa46` へ deferred。 |
+| 2026-11-26 | §5 dispatch 表に外部依存サービス障害の行を追加し、[`INCIDENT_ESCALATION_RUNBOOK.md`](./INCIDENT_ESCALATION_RUNBOOK.md) へ接続 (Issue #2769)。他の節は変更なし。 |
