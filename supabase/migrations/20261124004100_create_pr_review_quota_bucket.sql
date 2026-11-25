@@ -194,18 +194,10 @@ DECLARE
   v_skip_reason text;
 BEGIN
   IF NOT v_is_service THEN
-    IF v_uid IS NULL THEN
-      RAISE EXCEPTION 'Authentication required'
-        USING ERRCODE = '42501';
-    END IF;
-    IF p_owner_user_id IS NOT NULL AND p_owner_user_id <> v_uid THEN
-      RAISE EXCEPTION 'Cannot specify another owner_user_id'
-        USING ERRCODE = '42501';
-    END IF;
-    v_owner := v_uid;
-  ELSE
-    v_owner := coalesce(p_owner_user_id, v_uid);
+    RAISE EXCEPTION 'service_role required'
+      USING ERRCODE = '42501';
   END IF;
+  v_owner := coalesce(p_owner_user_id, v_uid);
 
   IF v_owner IS NULL THEN
     RAISE EXCEPTION 'owner_user_id is required'
@@ -404,8 +396,8 @@ BEGIN
 END;
 $fn$;
 
-REVOKE ALL ON FUNCTION public.claim_or_skip_pr_review_quota(uuid, text, text, integer, text, text, text, integer, integer, boolean) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.claim_or_skip_pr_review_quota(uuid, text, text, integer, text, text, text, integer, integer, boolean) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.claim_or_skip_pr_review_quota(uuid, text, text, integer, text, text, text, integer, integer, boolean) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_or_skip_pr_review_quota(uuid, text, text, integer, text, text, text, integer, integer, boolean) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.reconcile_pr_review_model_calls(
   p_owner_user_id uuid,
@@ -434,18 +426,10 @@ DECLARE
   v_bucket public.pr_review_quota_buckets;
 BEGIN
   IF NOT v_is_service THEN
-    IF v_uid IS NULL THEN
-      RAISE EXCEPTION 'Authentication required'
-        USING ERRCODE = '42501';
-    END IF;
-    IF p_owner_user_id IS NOT NULL AND p_owner_user_id <> v_uid THEN
-      RAISE EXCEPTION 'Cannot specify another owner_user_id'
-        USING ERRCODE = '42501';
-    END IF;
-    v_owner := v_uid;
-  ELSE
-    v_owner := coalesce(p_owner_user_id, v_uid);
+    RAISE EXCEPTION 'service_role required'
+      USING ERRCODE = '42501';
   END IF;
+  v_owner := coalesce(p_owner_user_id, v_uid);
 
   IF v_owner IS NULL OR v_install = '' OR v_repo = '' OR p_pr_number IS NULL OR p_pr_number <= 0 THEN
     RAISE EXCEPTION 'Invalid reconcile_pr_review_model_calls arguments'
@@ -502,8 +486,8 @@ BEGIN
 END;
 $fn$;
 
-REVOKE ALL ON FUNCTION public.reconcile_pr_review_model_calls(uuid, text, text, integer, integer, integer, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.reconcile_pr_review_model_calls(uuid, text, text, integer, integer, integer, text) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.reconcile_pr_review_model_calls(uuid, text, text, integer, integer, integer, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reconcile_pr_review_model_calls(uuid, text, text, integer, integer, integer, text) TO service_role;
 
 COMMENT ON TABLE public.pr_review_quota_buckets IS
   'Daily PR review quota consumption isolated from general prompt/IDE quotas (#2700).';
