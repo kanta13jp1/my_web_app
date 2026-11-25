@@ -25,12 +25,13 @@ class _RecordingShopFunnelService extends ShopFunnelService {
     String? source,
     String? campaign,
   }) async {
-    calls.add((
+    final _FunnelCall call = (
       stage: stage,
       productId: productId,
       source: source,
       campaign: campaign,
-    ));
+    );
+    calls.add(call);
   }
 }
 
@@ -372,6 +373,8 @@ void main() {
         expect(funnel.calls.single.source, 'x');
         expect(funnel.calls.single.campaign, 'h4_h7_pitch');
 
+        await tester.ensureVisible(find.text('¥800 で購入'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('¥800 で購入'));
         await tester.pumpAndSettle();
 
