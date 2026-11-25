@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "issue": "#2684",
+  "description": "Canonical complexity-based dynamic LLM routing rules synchronized with Edge effort_router.ts",
+  "tiers": {
+    "trivial": {
+      "effort": "low",
+      "is_frontier": false,
+      "primary": {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5"
+      },
+      "fallbacks": [
+        {
+          "provider": "groq",
+          "model": "llama-3.3-70b-versatile"
+        },
+        {
+          "provider": "google",
+          "model": "gemini-2.5-flash"
+        }
+      ],
+      "max_cost_per_call_usd": 0.01,
+      "rationale": "Routine operations, retrieval, and simple classification favor speed and minimal cost."
+    },
+    "standard": {
+      "effort": "medium",
+      "is_frontier": false,
+      "primary": {
+        "provider": "openai",
+        "model": "gpt-5.4-mini"
+      },
+      "fallbacks": [
+        {
+          "provider": "anthropic",
+          "model": "claude-haiku-4-5"
+        },
+        {
+          "provider": "google",
+          "model": "gemini-2.5-flash"
+        }
+      ],
+      "max_cost_per_call_usd": 0.05,
+      "rationale": "General-purpose summarization, linting, and moderate context generation balance quality and cost."
+    },
+    "complex": {
+      "effort": "high",
+      "is_frontier": true,
+      "primary": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6"
+      },
+      "fallbacks": [
+        {
+          "provider": "openai",
+          "model": "gpt-5.4"
+        },
+        {
+          "provider": "google",
+          "model": "gemini-3.1-pro-preview"
+        }
+      ],
+      "max_cost_per_call_usd": 0.25,
+      "rationale": "Architecture decisions, code reviews, and multi-signal judgment require strong reasoning."
+    },
+    "critical": {
+      "effort": "xhigh",
+      "is_frontier": true,
+      "primary": {
+        "provider": "anthropic",
+        "model": "claude-opus-4-7"
+      },
+      "fallbacks": [
+        {
+          "provider": "openai",
+          "model": "gpt-5.5"
+        },
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-6"
+        }
+      ],
+      "max_cost_per_call_usd": 1.5,
+      "rationale": "Deep synthesis, critical security audits, and irreversible architectural decisions escalate to frontier tier."
+    }
+  },
+  "categories": {
+    "ai.assistant.chat": {
+      "tier": "trivial",
+      "rationale": "Daily assistant chat favors latency and low cost."
+    },
+    "ai.university.quiz_grade": {
+      "tier": "trivial",
+      "rationale": "Deterministic quiz grading only needs a lightweight model."
+    },
+    "memory.search": {
+      "tier": "trivial",
+      "rationale": "BM25 and vector retrieval should stay fast."
+    },
+    "memory.rank": {
+      "tier": "trivial",
+      "rationale": "Reranking is capped to a small candidate set."
+    },
+    "routine_ops": {
+      "tier": "trivial",
+      "rationale": "Scheduled housekeeping and triage require minimal compute."
+    },
+    "classification": {
+      "tier": "trivial",
+      "rationale": "Short label/tag classification stays on lightweight lane."
+    },
+    "ai.competitor.monitor": {
+      "tier": "standard",
+      "rationale": "Monitoring requires short summarization and classification."
+    },
+    "ai.video.caption": {
+      "tier": "standard",
+      "rationale": "Caption generation is structured text with moderate context."
+    },
+    "provider.chat_auto": {
+      "tier": "standard",
+      "rationale": "Automatic provider routing is general purpose chat."
+    },
+    "edge_llm.invoke": {
+      "tier": "standard",
+      "rationale": "Generic EF LLM invoke balances latency and quality by default."
+    },
+    "memory.lint": {
+      "tier": "standard",
+      "rationale": "Memory linting may need semantic judgment."
+    },
+    "summarization": {
+      "tier": "standard",
+      "rationale": "Multi-paragraph summarization balances cost and fidelity."
+    },
+    "ai.daily.judgment": {
+      "tier": "complex",
+      "rationale": "Daily judgment combines multiple personal signals."
+    },
+    "ai.cross_instance.routing": {
+      "tier": "complex",
+      "rationale": "Cross-instance routing requires trade-off analysis."
+    },
+    "architecture_design": {
+      "tier": "complex",
+      "rationale": "Architecture decisions require careful interface and trade-off review."
+    },
+    "code_review": {
+      "tier": "complex",
+      "rationale": "Code review inspects edge cases, security boundaries, and regressions."
+    },
+    "ai.horse_racing.predict": {
+      "tier": "critical",
+      "rationale": "Multi-factor prediction requires deep synthesis."
+    },
+    "ai.notebooklm.distill": {
+      "tier": "critical",
+      "rationale": "Axis distillation needs deep synthesis across prior decisions."
+    },
+    "deep_reasoning": {
+      "tier": "critical",
+      "rationale": "High-stakes system design or security root-cause synthesis escalates to Opus."
+    },
+    "security_audit": {
+      "tier": "critical",
+      "rationale": "Privileged boundary and vulnerability auditing warrants top reasoning capability."
+    }
+  },
+  "budget_guard": {
+    "low_budget_threshold_usd": 5.0,
+    "hard_stop_threshold_usd": 0.0,
+    "downgrade_map": {
+      "critical": "complex",
+      "complex": "standard",
+      "standard": "trivial",
+      "trivial": "trivial"
+    }
+  },
+  "telemetry_thresholds": {
+    "cost_alert_usd": 10.0,
+    "frontier_cost_share_alert": 0.7,
+    "failure_rate_alert": 0.2,
+    "min_events_for_failure_alert": 3,
+    "latency_alert_ms": 30000.0
+  }
+}
