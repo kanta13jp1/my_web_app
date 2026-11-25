@@ -70,6 +70,11 @@ import {
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
+  createSupabaseVoiceCloneConsentStore,
+  guardClonedVoiceGeneration,
+  handleVoiceCloneConsentAction,
+} from "./voice_clone_consent.ts";
+import {
   buildGuardrailBlockedPayload,
   evaluateComplianceGuardrail,
   evaluateMessagesGuardrail,
@@ -8674,6 +8679,15 @@ serve(async (req: Request) => {
 
       case "voice.tts": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const clonedTtsBlock = await guardClonedVoiceGeneration({
+          store: createSupabaseVoiceCloneConsentStore(admin),
+          userId,
+          body,
+          action: "voice.tts",
+        });
+        if (clonedTtsBlock) {
+          return json(clonedTtsBlock.body, clonedTtsBlock.status);
+        }
         const text = String(body.text ?? "").slice(0, 5000);
         const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
@@ -8859,6 +8873,15 @@ serve(async (req: Request) => {
 
       case "voice.dubbing.generate": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const clonedDubbingBlock = await guardClonedVoiceGeneration({
+          store: createSupabaseVoiceCloneConsentStore(admin),
+          userId,
+          body,
+          action: "voice.dubbing.generate",
+        });
+        if (clonedDubbingBlock) {
+          return json(clonedDubbingBlock.body, clonedDubbingBlock.status);
+        }
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
         if (!elevenKey) {
           return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
@@ -9245,6 +9268,36 @@ serve(async (req: Request) => {
           >)?.[0]?.alternatives as Array<{ transcript: string }>;
         const transcriptText = transcript?.[0]?.transcript ?? "";
         return json({ success: true, transcript: transcriptText });
+      }
+
+      case "voice.clone.consent.status":
+      case "voice.clone.consent.accept":
+      case "voice.clone.consent.submit_recording":
+      case "voice.clone.consent.revoke":
+      case "voice.clone.generate": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        try {
+          const result = await handleVoiceCloneConsentAction({
+            action,
+            store: createSupabaseVoiceCloneConsentStore(admin),
+            userId,
+            body,
+          });
+          return json(result.body, result.status);
+        } catch (err) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.clone action failed", {
+            errorId,
+            action,
+            detail: err instanceof Error
+              ? err.message.slice(0, 500)
+              : String(err).slice(0, 500),
+          });
+          return json({
+            error: "voice_clone_consent_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
       }
 
       case "home.recommend": {
