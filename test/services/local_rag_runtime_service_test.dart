@@ -17,8 +17,8 @@ void main() {
           'offline_only': true,
           'network_blocked': true,
           'memory_peak_mb': 256,
-          'citations': <Map<String, dynamic>>[
-            <String, dynamic>{
+          'citations': <Map<String, Object?>>[
+            <String, Object?>{
               'source_id': 'doc-1',
               'title': 'manual.md',
               'path': r'C:\rag\lancedb\manual.md',
@@ -90,5 +90,66 @@ void main() {
       parsed.segments.where((segment) => segment.markerOnly),
       hasLength(1),
     );
+  });
+
+  test(
+      'parsePleiasCitationText handles <|answer_start|>, <|citation_start|>, <ref>, and [N]',
+      () {
+    final parsed = parsePleiasCitationText(
+      '<|thought_start|>draft<|thought_end|>'
+      '<|answer_start|>Budget is <ref id="1">100k JPY</ref> '
+      'with <|citation_start|>2<|citation_end|>CFO sign-off<|/citation|> [3].'
+      '<|answer_end|>',
+    );
+
+    expect(parsed.hasCitationTokens, isTrue);
+    expect(
+      parsed.plainText,
+      'Budget is 100k JPY with CFO sign-off [3].',
+    );
+    expect(parsed.sourceIds, <String>['1', '2', '3']);
+  });
+
+  test(
+      'LocalRagCitation and PleiasCitationParseResult consume Supabase RAG JSON',
+      () {
+    final response = LocalRagRuntimeResponse.fromMap(<String, Object?>{
+      'answer': '上限は10万円です [1]。',
+      'parsed_answer': <String, Object?>{
+        'plain_text': '上限は10万円です [1]。',
+        'has_native_tokens': true,
+        'reference_ids': <String>['1'],
+        'segments': <Map<String, Object?>>[
+          <String, Object?>{'text': '上限は10万円です '},
+          <String, Object?>{
+            'text': '10万円',
+            'reference_id': '1',
+            'marker_only': false,
+          },
+        ],
+      },
+      'citations': <Map<String, Object?>>[
+        <String, Object?>{
+          'citation_id': '1',
+          'file_name': 'budget.md',
+          'title': 'Budget Guide',
+          'source_url': 'docs/budget.md',
+          'highlight_text': '月額上限は10万円です。',
+          'excerpt': '月額上限は10万円です。',
+          'confidence': 0.95,
+          'position': <String, Object?>{'label': 'line 12'},
+        },
+      ],
+    });
+
+    expect(response.citations.single.sourceId, '1');
+    expect(response.citations.single.title, 'Budget Guide');
+    expect(response.citations.single.path, 'docs/budget.md');
+    expect(response.citations.single.snippet, '月額上限は10万円です。');
+    expect(response.citations.single.locationLabel, 'line 12');
+    expect(response.citations.single.score, 0.95);
+    expect(response.citationText.hasCitationTokens, isTrue);
+    expect(response.citationText.sourceIds, <String>['1']);
+    expect(response.citationText.segments[1].text, '10万円');
   });
 }

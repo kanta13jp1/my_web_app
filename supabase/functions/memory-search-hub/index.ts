@@ -436,6 +436,7 @@ async function generateLlmRagAnswer(
         action: "provider.chat_auto",
         tier: asString(body.tier) || "free",
         trace_id: traceId,
+        temperature: 0,
         messages: ragMessages(query, citations),
       }),
     });
@@ -576,6 +577,12 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     }
   }
 
+  const { parseNativeCitations } = await import("./native_citation_parser.ts");
+  const parsedAnswer = parseNativeCitations(answer);
+  const normalizedAnswer = parsedAnswer.has_native_tokens
+    ? (parsedAnswer.plain_text || answer)
+    : answer;
+
   await logKgQuery(client, {
     trace_id: traceId,
     user_id: userId,
@@ -592,7 +599,9 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     success: true,
     action: "memory.rag.query",
     query,
-    answer,
+    answer: normalizedAnswer,
+    parsed_answer: parsedAnswer,
+    temperature_used: 0,
     citations,
     trace_id: traceId,
     answer_status: answerStatus,
