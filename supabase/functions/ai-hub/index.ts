@@ -107,6 +107,10 @@ import {
   handlePromptCacheAction,
   type PromptCacheDb,
 } from "./prompt_cache_1h.ts";
+import { handleTokenCacheMonitorAction } from "./token_cache_monitor.ts";
+import {
+  createSupabaseTokenCacheMonitorDb,
+} from "./token_cache_monitor_supabase.ts";
 import {
   handleSafetyCheckpointAction,
   type SafetyCheckpointDb,
@@ -5144,6 +5148,19 @@ serve(async (req: Request) => {
           userId,
           isElevatedAutomation: isServiceRoleRequest(req),
           body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "ai_monitor.token_cache.summary":
+      case "ai_monitor.token_cache.diagnose_prefix":
+      case "ai_monitor.token_cache.record_tool_usage": {
+        const res = await handleTokenCacheMonitorAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          db: createSupabaseTokenCacheMonitorDb(admin),
         });
         return json(res.body, res.status);
       }
