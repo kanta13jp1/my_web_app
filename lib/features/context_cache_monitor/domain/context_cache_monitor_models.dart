@@ -1,5 +1,43 @@
 import 'package:flutter/foundation.dart';
 
+/// プロンプトキャッシュ有効期間 (TTL) ポリシー (#2713).
+enum PromptCacheTtl {
+  fiveMinutes(wireValue: '5m', labelJa: '5分TTL (1.25x)'),
+  oneHour(wireValue: '1h', labelJa: '1時間TTL (2.0x)');
+
+  const PromptCacheTtl({
+    required this.wireValue,
+    required this.labelJa,
+  });
+
+  final String wireValue;
+  final String labelJa;
+}
+
+/// 1時間を超える長期タスク向けの文脈引き継ぎ再キャッシュ計画 (#2713).
+@immutable
+class LongTaskRecachePlan {
+  const LongTaskRecachePlan({
+    required this.workflowKey,
+    required this.status,
+    required this.exceededOneHour,
+    required this.elapsedMinutes,
+    required this.recacheSeq,
+    required this.pendingStep,
+    required this.handoffDigest,
+    required this.cacheTtl,
+  });
+
+  final String workflowKey;
+  final String status;
+  final bool exceededOneHour;
+  final int elapsedMinutes;
+  final int recacheSeq;
+  final String pendingStep;
+  final String handoffDigest;
+  final PromptCacheTtl cacheTtl;
+}
+
 /// コンテキストキャッシュ対応プロバイダー (#2656).
 enum CacheProviderKind {
   anthropic(wireValue: 'anthropic', displayName: 'Anthropic Prompt Cache'),
@@ -45,6 +83,9 @@ class ContextCacheRateCard {
 
   double get referenceReadMultiplier =>
       inputPer1mUsd > 0 ? cacheReadPer1mUsd / inputPer1mUsd : 0.1;
+
+  double get ttl1hWritePer1mUsd =>
+      double.parse((inputPer1mUsd * 2.0).toStringAsFixed(6));
 }
 
 /// Supabase `context_cache_usage_metrics` の不変レコード (#2656).
@@ -136,6 +177,38 @@ class ContextCacheUsageMetric {
 
   String get formattedSavingsPercent =>
       '${(savingsRatio * 100).toStringAsFixed(1)}%';
+
+  PromptCacheTtl get cacheTtl {
+    if (rateCardVersion == ContextCacheEstimator.rateCard1hVersion ||
+        estimateDisclaimer.contains('TTL=1h')) {
+      return PromptCacheTtl.oneHour;
+    }
+    return PromptCacheTtl.fiveMinutes;
+  }
+
+  int? get latencyMs => _extractIntMetric(estimateDisclaimer, 'latency_ms');
+
+  int? get baselineLatencyMs =>
+      _extractIntMetric(estimateDisclaimer, 'baseline_latency_ms');
+
+  double? get latencyReductionPercent {
+    final current = latencyMs;
+    final baseline = baselineLatencyMs;
+    if (current == null || baseline == null || baseline <= 0) {
+      return null;
+    }
+    return double.parse(
+      (((baseline - current) / baseline) * 100.0).toStringAsFixed(1),
+    );
+  }
+
+  static int? _extractIntMetric(String text, String key) {
+    final match = RegExp('\\b$key=(\\d+)\\b').firstMatch(text);
+    if (match == null) {
+      return null;
+    }
+    return int.tryParse(match.group(1) ?? '');
+  }
 
   ContextCacheUsageMetric copyWith({
     String? id,
@@ -252,8 +325,9 @@ class WorkflowUserCacheRollup {
 /// コンテキストキャッシュ試算・ペイロード最適化・ロールアップ計算 (#2656).
 abstract final class ContextCacheEstimator {
   static const String rateCardVersion = 'provider-ref-2026-11';
+  static const String rateCard1hVersion = 'anthropic-1h-ttl-2026-11';
   static const String estimateDisclaimer =
-      'プロバイダー公称基準レート (~0.10x キャッシュ読込 / 1.25x 書込) による試算値です。実請求は公式請求明細で確認してください。';
+      'プロバイダー公称基準レート (~0.10x キャッシュ読込 / 1.25x 5分書込 / 2.00x 1時間書込) による試算値です。実請求は公式請求明細で確認してください。';
 
   static const Map<String, ContextCacheRateCard> defaultRateCards =
       <String, ContextCacheRateCard>{
@@ -297,6 +371,9 @@ abstract final class ContextCacheEstimator {
     int uncachedInputCount = 600,
     int outputCount = 450,
     DateTime? now,
+    PromptCacheTtl cacheTtl = PromptCacheTtl.fiveMinutes,
+    int? latencyMs,
+    int? baselineLatencyMs,
   }) {
     final cleanedWorkflow = workflowKey.trim();
     if (cleanedWorkflow.isEmpty) {
@@ -306,13 +383,17 @@ abstract final class ContextCacheEstimator {
     final cacheWrite = simulateCacheHit ? 0 : contextCount;
     final cacheRead = simulateCacheHit ? contextCount : 0;
     final totalInputEquiv = cacheWrite + cacheRead + uncachedInputCount;
+    final effectiveWritePer1m = (card.provider == CacheProviderKind.anthropic &&
+            cacheTtl == PromptCacheTtl.oneHour)
+        ? card.ttl1hWritePer1mUsd
+        : card.cacheWritePer1mUsd;
     final baseline = double.parse(
       ((totalInputEquiv / 1000000.0) * card.inputPer1mUsd +
               (outputCount / 1000000.0) * card.outputPer1mUsd)
           .toStringAsFixed(6),
     );
     final actual = double.parse(
-      ((cacheWrite / 1000000.0) * card.cacheWritePer1mUsd +
+      ((cacheWrite / 1000000.0) * effectiveWritePer1m +
               (cacheRead / 1000000.0) * card.cacheReadPer1mUsd +
               (uncachedInputCount / 1000000.0) * card.inputPer1mUsd +
               (outputCount / 1000000.0) * card.outputPer1mUsd)
@@ -323,6 +404,16 @@ abstract final class ContextCacheEstimator {
         ? double.parse((net / baseline).clamp(-1.0, 1.0).toStringAsFixed(4))
         : 0.0;
     final timestamp = (now ?? DateTime.now()).toUtc();
+    final telemetryBuffer = StringBuffer(
+      'Measured TTL=${cacheTtl.wireValue} | ',
+    );
+    if (latencyMs != null && latencyMs >= 0) {
+      telemetryBuffer.write('latency_ms=$latencyMs | ');
+    }
+    if (baselineLatencyMs != null && baselineLatencyMs >= 0) {
+      telemetryBuffer.write('baseline_latency_ms=$baselineLatencyMs | ');
+    }
+    telemetryBuffer.write(estimateDisclaimer);
     return ContextCacheUsageMetric(
       id: 'draft-${timestamp.microsecondsSinceEpoch}',
       requestId: 'req-${timestamp.microsecondsSinceEpoch}',
@@ -339,9 +430,50 @@ abstract final class ContextCacheEstimator {
       netSavingsUsd: net,
       savingsRatio: ratio,
       cacheHit: cacheRead > 0,
-      rateCardVersion: rateCardVersion,
-      estimateDisclaimer: estimateDisclaimer,
+      rateCardVersion: cacheTtl == PromptCacheTtl.oneHour
+          ? rateCard1hVersion
+          : rateCardVersion,
+      estimateDisclaimer: telemetryBuffer.toString(),
       createdAt: timestamp,
+    );
+  }
+
+  static LongTaskRecachePlan buildLongTaskRecachePlan({
+    required String workflowKey,
+    required int elapsedMinutes,
+    int idleSinceRefreshMinutes = 62,
+    int recacheSeq = 0,
+    String pendingStep = 'step_continue_after_1h',
+  }) {
+    final cleanedWorkflow =
+        workflowKey.trim().isEmpty ? 'long-context-agent' : workflowKey.trim();
+    final String status;
+    if (idleSinceRefreshMinutes >= 60) {
+      status = 'expired_recache_required';
+    } else if (idleSinceRefreshMinutes >= 55) {
+      status = 'prewarm_renewal';
+    } else {
+      status = 'cache_active';
+    }
+    final nextSeq = status == 'cache_active' ? recacheSeq : recacheSeq + 1;
+    final rawHashSource =
+        '$cleanedWorkflow:$nextSeq:$elapsedMinutes:${pendingStep.trim()}';
+    var hashAcc = 2166136261;
+    for (final unit in rawHashSource.codeUnits) {
+      hashAcc ^= unit;
+      hashAcc = (hashAcc * 16777619) & 0xFFFFFFFF;
+    }
+    final digest =
+        'handoff-${hashAcc.toRadixString(16).padLeft(8, '0')}-seq$nextSeq';
+    return LongTaskRecachePlan(
+      workflowKey: cleanedWorkflow,
+      status: status,
+      exceededOneHour: elapsedMinutes > 60 || idleSinceRefreshMinutes >= 60,
+      elapsedMinutes: elapsedMinutes,
+      recacheSeq: nextSeq,
+      pendingStep: pendingStep.trim(),
+      handoffDigest: digest,
+      cacheTtl: PromptCacheTtl.oneHour,
     );
   }
 
