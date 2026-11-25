@@ -67,7 +67,7 @@ jobs:
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             ref="refs/pull/${{ github.event.pull_request.number }}/merge"
-            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+            if ! git fetch --depth=2 origin "+${ref}:refs/remotes/origin/checkout"; then
               echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
               git fetch --depth=1 \
                 "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
@@ -145,6 +145,13 @@ jobs:
               files.map((file) => file.filename).join('\n') + '\n',
             );
 
+      - name: Evaluate commit CI skip guard
+        id: commit_skip
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: python scripts/check_commit_message.py --check-ci-skip-git --event-name "${EVENT_NAME}" --github-output "${GITHUB_OUTPUT}"
+
       - name: Classify CI scope
         id: changes
         shell: bash
@@ -209,6 +216,7 @@ jobs:
           python scripts/test_paid_ai_policy.py
           python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
           python scripts/ai_university_rss_manifest_test.py
+          python -m unittest discover -s test/scripts -p test_check_commit_message.py
 
       - name: Test high-risk dual security review
         run: >-
@@ -345,6 +353,17 @@ jobs:
           name: analyzer-evidence
           path: .ci-logs/analyzer
           if-no-files-found: error
+
+      - name: Upload static analysis failure report
+        id: upload_analyzer_failure_report
+        if: failure() && steps.changes.outputs.flutter == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: flutter-static-analysis-error-report
+          path: |
+            .ci-logs/analyzer/
+            flutter_*.log
+          if-no-files-found: ignore
 
       - name: Setup Deno
         if: steps.changes.outputs.edge == 'true'
@@ -619,7 +638,7 @@ jobs:
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
         id: web_build
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: >
           flutter build web --release --pwa-strategy=none
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
@@ -627,13 +646,13 @@ jobs:
           FLUTTER_WEB: true
 
       - name: Package verified Sea Shelter 3D assets
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         uses: ./.github/actions/prepare-sea-shelter-arena
         with:
           web-root: build/web
 
       - name: Setup Node for build-time OGP cards
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '24'
@@ -641,14 +660,14 @@ jobs:
 
       - name: Cache Playwright Chromium for OGP cards
         id: playwright_cache
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Generate and verify build-time OGP and X social cards
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         env:
           PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright_cache.outputs.cache-hit }}
         run: |
@@ -667,7 +686,7 @@ jobs:
 
       - name: Check build output
         id: web_build_output
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: |
           if [ ! -d "build/web" ]; then
             echo "Build failed: build/web directory not found"
@@ -677,7 +696,7 @@ jobs:
           ls -la build/web
 
       - name: Optimize bundled web fonts
-        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        if: steps.commit_skip.outputs.skip_non_required_heavy != 'true' && github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: |
           if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
             sudo apt-get update
