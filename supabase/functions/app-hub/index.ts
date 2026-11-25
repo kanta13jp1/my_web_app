@@ -1273,6 +1273,30 @@ serve(async (req: Request) => {
         }
       }
 
+      // --- Q2 2026 AI Investment Trend Batch (#2761) ---
+      case "ai_investment.list":
+      case "ai_investment.seed_defaults":
+      case "ai_investment.ingest":
+      case "ai_investment.verify_entry": {
+        const { AiInvestmentError, handleAiInvestmentAction } = await import(
+          "./ai_investment.ts"
+        );
+        try {
+          const result = await handleAiInvestmentAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AiInvestmentError) {
+            return json({ error: err.message }, err.status);
+          }
+          throw err;
+        }
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

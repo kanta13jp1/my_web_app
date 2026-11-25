@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
 import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
+import 'package:my_web_app/features/ai_investment_batch/ai_investment_batch_container.dart';
 import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
@@ -266,6 +267,27 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('農政改革タイムライン・ナレッジグラフ'),
                     ),
                     body: const AgriPolicyTimelineContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('open_ai_investment_batch_btn'),
+            icon: const Icon(Icons.trending_up),
+            tooltip: '2026Q2 AI企業投資動向管理',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-investment-batch',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('2026Q2 AI企業投資動向管理'),
+                    ),
+                    body: const AiInvestmentBatchContainer(),
                   ),
                 ),
               );
