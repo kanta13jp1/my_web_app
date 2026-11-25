@@ -70,6 +70,31 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "caption": ("services/caption-transcoder/**",),
     "migration": ("supabase/migrations/**",),
     "tiger": ("assets/data/tiger_*",),
+    "web_seo_assets": (
+        "web/**",
+        "assets/**",
+        "scripts/optimize_web_fonts.py",
+        "scripts/prerender_seo_routes.py",
+        "scripts/generate_sitemap.py",
+        "scripts/generate_ogp_cards.mjs",
+        "scripts/ogp_cards.json",
+        "test/scripts/test_optimize_web_fonts.py",
+        "test/scripts/test_prerender_seo_routes.py",
+        "test/web/seo_shell_handoff.test.cjs",
+        "test/web/generate_ogp_cards.test.mjs",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+    ),
+    "high_risk_review_deps": (
+        "scripts/requirements-high-risk-security-review.txt",
+        "scripts/run_dual_security_review.py",
+        "scripts/test_run_dual_security_review.py",
+        ".github/workflows/high-risk-dual-security-review.yml",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+    ),
 }
 
 # These exact Python suites are executed by Agent Skill Contract on every
@@ -94,6 +119,7 @@ IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
     "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS, *NOTION_AUDIT_TESTS),
     "web": ("assets/data/tiger_*",),
     "business_execution": ("assets/data/tiger_*",),
+    "web_seo_assets": ("assets/data/tiger_*",),
 }
 
 
