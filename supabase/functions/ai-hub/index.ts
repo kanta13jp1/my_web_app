@@ -141,7 +141,16 @@ import {
   MarketPriceActionError,
   type MarketPriceDb,
 } from "./market_price.ts";
-import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
+import {
+  applyProviderGenerationOptions,
+  applyStructuredGenerationOptions,
+} from "./provider_generation_options.ts";
+import {
+  extractStructuredOutputOptions,
+  handleStructuredRoutingAction,
+  validateAgainstJsonSchema,
+} from "./structured_routing.ts";
+import { createSupabaseStructuredRoutingStore } from "./structured_routing_supabase.ts";
 import {
   concatenateAudio,
   normalizeVoiceId,
@@ -285,6 +294,9 @@ type ProviderCallOptions = {
   /// この 1 呼び出しの timeout (ms)。未指定なら providerFetchTimeoutMs()。
   /// chat_auto はリクエスト全体予算から残り時間を配分して渡す。
   timeoutMs?: number;
+  responseMimeType?: string;
+  responseSchema?: Record<string, unknown>;
+  schemaName?: string;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -858,9 +870,13 @@ async function callSingleProvider(
           ...(cfg.extraHeaders ?? {}),
         },
         body: JSON.stringify(
-          applyProviderGenerationOptions(
+          applyStructuredGenerationOptions(
             providerId,
-            cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+            applyProviderGenerationOptions(
+              providerId,
+              cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+              options,
+            ),
             options,
           ),
         ),
@@ -8120,8 +8136,11 @@ serve(async (req: Request) => {
           }, 429);
         }
 
+        const structuredOutputOpts = extractStructuredOutputOptions(body);
         const requestedResponseFormat = asString(body.response_format);
-        const responseFormat = requestedResponseFormat === "json"
+        const responseFormat = requestedResponseFormat === "json" ||
+            structuredOutputOpts.responseSchema != null ||
+            structuredOutputOpts.responseMimeType === "application/json"
           ? "json"
           : requestedResponseFormat === "markdown"
           ? "markdown"
@@ -8211,6 +8230,8 @@ serve(async (req: Request) => {
             finalMessages,
             explicitModel ??
               (providerId === "anthropic" ? claudeRoute.model : undefined),
+            undefined,
+            structuredOutputOpts,
           );
           if (result.ok && result.text) {
             resultText = result.text;
@@ -8232,6 +8253,8 @@ serve(async (req: Request) => {
                 fbPid,
                 finalMessages,
                 fbPid === "anthropic" ? claudeRoute.model : undefined,
+                undefined,
+                structuredOutputOpts,
               );
               if (fbResult.ok && fbResult.text) {
                 console.warn(
@@ -8274,6 +8297,8 @@ serve(async (req: Request) => {
                 (manualPreference.provider === "anthropic"
                   ? claudeRoute.model
                   : undefined),
+              undefined,
+              structuredOutputOpts,
             );
             if (result.ok && result.text) {
               resultText = result.text;
@@ -8304,6 +8329,8 @@ serve(async (req: Request) => {
                   finalMessages,
                   explicitModel ??
                     (pid === "anthropic" ? claudeRoute.model : undefined),
+                  undefined,
+                  structuredOutputOpts,
                 );
                 if (result.ok && result.text) {
                   resultText = result.text;
@@ -8369,11 +8396,27 @@ serve(async (req: Request) => {
         );
         let parsedJson: unknown = null;
         let parseError: string | undefined;
+        let schemaValidation:
+          | ReturnType<typeof validateAgainstJsonSchema>
+          | undefined;
         if (responseFormat === "json") {
-          try {
-            parsedJson = JSON.parse(stripMarkdownCodeFence(resultText));
-          } catch (error) {
-            parseError = String(error);
+          if (structuredOutputOpts.responseSchema != null) {
+            schemaValidation = validateAgainstJsonSchema(
+              resultText,
+              structuredOutputOpts.responseSchema,
+            );
+            parsedJson = schemaValidation.parsed;
+            if (!schemaValidation.valid) {
+              parseError = schemaValidation.issues
+                .map((issue) => `${issue.path}: ${issue.message}`)
+                .join("; ");
+            }
+          } else {
+            try {
+              parsedJson = JSON.parse(stripMarkdownCodeFence(resultText));
+            } catch (error) {
+              parseError = String(error);
+            }
           }
         }
 
@@ -8416,6 +8459,8 @@ serve(async (req: Request) => {
           response_format: responseFormat,
           parsed_json: parsedJson,
           parse_error: parseError,
+          schema_valid: schemaValidation?.valid ?? null,
+          schema_issues: schemaValidation?.issues ?? [],
           observability: {
             provider: usedProvider,
             model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
@@ -8431,6 +8476,20 @@ serve(async (req: Request) => {
             routing_use_case: routingUseCase,
           },
         });
+      }
+
+      case "ai_router.structured.route":
+      case "ai_router.structured.validate_and_save":
+      case "ai_router.structured.list_preferences": {
+        const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const result = await handleStructuredRoutingAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          store: createSupabaseStructuredRoutingStore(admin),
+        });
+        return json(result.body, result.status);
       }
 
       case "provider.list": {

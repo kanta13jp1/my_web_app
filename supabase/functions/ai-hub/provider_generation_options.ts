@@ -16,6 +16,129 @@ export const GEMINI_OUTPUT_TOKEN_RESERVE = 8000;
 export const GEMINI_MIN_THINKING_BUDGET = 512;
 export const GEMINI_MAX_THINKING_BUDGET = 24576;
 
+export type StructuredGenerationOptions = {
+  responseMimeType?: string;
+  responseSchema?: Record<string, unknown>;
+  schemaName?: string;
+};
+
+function isSchemaRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function sanitizeJsonSchemaForProvider(
+  node: unknown,
+  mode: "gemini" | "openai",
+): unknown {
+  if (Array.isArray(node)) {
+    return node.map((item) => sanitizeJsonSchemaForProvider(item, mode));
+  }
+  if (!isSchemaRecord(node)) {
+    return node;
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "$schema" || key === "$id") {
+      continue;
+    }
+    if (mode === "gemini" && key === "additionalProperties") {
+      continue;
+    }
+    if (key === "properties" && isSchemaRecord(value)) {
+      const nextProps: Record<string, unknown> = {};
+      for (const [propKey, propValue] of Object.entries(value)) {
+        nextProps[propKey] = sanitizeJsonSchemaForProvider(propValue, mode);
+      }
+      sanitized[key] = nextProps;
+      continue;
+    }
+    if (key === "items" || key === "anyOf") {
+      sanitized[key] = sanitizeJsonSchemaForProvider(value, mode);
+      continue;
+    }
+    sanitized[key] = value;
+  }
+
+  if (
+    mode === "openai" &&
+    sanitized.type === "object" &&
+    sanitized.additionalProperties === undefined
+  ) {
+    sanitized.additionalProperties = false;
+  }
+  return sanitized;
+}
+
+export function applyStructuredGenerationOptions(
+  providerId: string,
+  requestBody: Record<string, unknown>,
+  options?: StructuredGenerationOptions,
+): Record<string, unknown> {
+  const responseMimeType = options?.responseMimeType?.trim() || undefined;
+  const responseSchema = options?.responseSchema;
+  const wantsJson = responseMimeType === "application/json" ||
+    responseSchema != null;
+  if (!wantsJson || providerId === "anthropic") {
+    return requestBody;
+  }
+
+  const rawSchemaName = options?.schemaName?.trim() || "structured_output";
+  const cleanedName = rawSchemaName
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .slice(0, 64);
+  const schemaName = cleanedName || "structured_output";
+
+  if (providerId === "google" || providerId === "google_flash_lite") {
+    const generationConfig = isSchemaRecord(requestBody.generationConfig)
+      ? requestBody.generationConfig
+      : {};
+    const nextGenerationConfig: Record<string, unknown> = {
+      ...generationConfig,
+    };
+    if (nextGenerationConfig.responseMimeType == null) {
+      nextGenerationConfig.responseMimeType = responseMimeType ??
+        "application/json";
+    }
+    if (
+      responseSchema != null &&
+      nextGenerationConfig.responseSchema == null
+    ) {
+      nextGenerationConfig.responseSchema = sanitizeJsonSchemaForProvider(
+        responseSchema,
+        "gemini",
+      );
+    }
+    return {
+      ...requestBody,
+      generationConfig: nextGenerationConfig,
+    };
+  }
+
+  if (requestBody.response_format != null) {
+    return requestBody;
+  }
+
+  if (providerId === "openai" && responseSchema != null) {
+    return {
+      ...requestBody,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: schemaName,
+          strict: true,
+          schema: sanitizeJsonSchemaForProvider(responseSchema, "openai"),
+        },
+      },
+    };
+  }
+
+  return {
+    ...requestBody,
+    response_format: { type: "json_object" },
+  };
+}
+
 export function applyProviderGenerationOptions(
   providerId: string,
   requestBody: Record<string, unknown>,
