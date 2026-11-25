@@ -48,6 +48,7 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "agent.create",
   "agent.run",
   "agent.tool_policy.evaluate",
+  "agent.tool_policy.preview",
   "org.get",
   "my_agent.chat",
   "my_agent.history",

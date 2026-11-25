@@ -1,0 +1,109 @@
+name: AI Compute Cost Alert
+
+on:
+  schedule:
+    # 毎日 11:47 JST (02:47 UTC) に GPU/API 計算コストと閾値監視を実行
+    - cron: '47 2 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without external alert delivery (true/false)'
+        required: false
+        default: 'true'
+      daily_threshold_usd:
+        description: 'Daily estimated compute cost threshold in USD'
+        required: false
+        default: '50.0'
+      monthly_threshold_usd:
+        description: 'Monthly estimated compute cost threshold in USD'
+        required: false
+        default: '500.0'
+
+concurrency:
+  group: ai-compute-cost-alert-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  monitor-compute-cost:
+    name: Evaluate AI compute cost and latency telemetry
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run compute cost monitor unit tests
+        run: python3 -B test/scripts/test_monitor_ai_compute_cost.py -v
+
+      - name: Run compute cost monitor self-test
+        run: python3 -B scripts/monitor_ai_compute_cost.py --self-test
+
+      - name: Evaluate compute cost thresholds
+        id: cost_eval
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          DAILY_THRESHOLD: ${{ github.event.inputs.daily_threshold_usd || '50.0' }}
+          MONTHLY_THRESHOLD: ${{ github.event.inputs.monthly_threshold_usd || '500.0' }}
+          COST_ALERT_WEBHOOK_URL: ${{ secrets.AI_COMPUTE_COST_WEBHOOK_URL || vars.AI_COMPUTE_COST_WEBHOOK_URL || '' }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ] && [ -n "${COST_ALERT_WEBHOOK_URL}" ]; then
+            python3 -B scripts/monitor_ai_compute_cost.py \
+              --daily-threshold-usd "${DAILY_THRESHOLD}" \
+              --monthly-threshold-usd "${MONTHLY_THRESHOLD}" \
+              --json-out "ai_compute_cost_report.json" \
+              --markdown-out "ai_compute_cost_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --live \
+              --webhook-url "${COST_ALERT_WEBHOOK_URL}"
+          else
+            python3 -B scripts/monitor_ai_compute_cost.py \
+              --daily-threshold-usd "${DAILY_THRESHOLD}" \
+              --monthly-threshold-usd "${MONTHLY_THRESHOLD}" \
+              --json-out "ai_compute_cost_report.json" \
+              --markdown-out "ai_compute_cost_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --dry-run
+          fi
+
+      - name: Upload compute cost telemetry artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ai-compute-cost-alert-report
+          path: |
+            ai_compute_cost_report.json
+            ai_compute_cost_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append workflow summary
+        env:
+          COST_STATUS: ${{ steps.cost_eval.outputs.status }}
+          ALERT_TRIGGERED: ${{ steps.cost_eval.outputs.threshold_alert_triggered }}
+          DAILY_COST: ${{ steps.cost_eval.outputs.latest_daily_cost_usd }}
+          MONTHLY_COST: ${{ steps.cost_eval.outputs.latest_monthly_cost_usd }}
+          TOTAL_REQUESTS: ${{ steps.cost_eval.outputs.total_requests }}
+          AVG_LATENCY: ${{ steps.cost_eval.outputs.avg_latency_ms }}
+        run: |
+          {
+            echo "## AI Compute & GPU Cost Telemetry Monitor (#2658)"
+            echo "- Status: \`${COST_STATUS}\` (threshold_alert_triggered=\`${ALERT_TRIGGERED}\`)"
+            echo "- Latest Daily Cost: \`USD ${DAILY_COST}\`"
+            echo "- Latest Monthly Cost: \`USD ${MONTHLY_COST}\`"
+            echo "- Total Requests / Avg Latency: \`${TOTAL_REQUESTS}\` / \`${AVG_LATENCY} ms\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

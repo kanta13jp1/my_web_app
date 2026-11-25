@@ -5,17 +5,39 @@ on:
     branches:
       - main
     paths:
+      - ".gitattributes"
       - "docs/GROWTH_STRATEGY_ROADMAP.md"
+      - "docs/LOCAL_PERSISTENCE_RETIREMENT_ROADMAP.md"
+      - "docs/QUARTERLY_ROADMAP.md"
+      - "docs/EDGE_FUNCTION_LIST.md"
+      - "docs/WORKTREE_REGISTRY.md"
+      - "docs/roadmap/*.md"
+      - "docs/roadmaps/*.md"
+      - "docs/technical/*ROADMAP*.md"
+      - "docs/ai-tool-changelog/*.md"
       - "scripts/check_roadmap_append_only.py"
+      - "scripts/resolve_append_only_conflicts.py"
       - "test/scripts/test_check_roadmap_append_only.py"
+      - "test/scripts/test_resolve_append_only_conflicts.py"
       - ".github/workflows/roadmap-append-only-guard.yml"
   push:
     branches:
       - main
     paths:
+      - ".gitattributes"
       - "docs/GROWTH_STRATEGY_ROADMAP.md"
+      - "docs/LOCAL_PERSISTENCE_RETIREMENT_ROADMAP.md"
+      - "docs/QUARTERLY_ROADMAP.md"
+      - "docs/EDGE_FUNCTION_LIST.md"
+      - "docs/WORKTREE_REGISTRY.md"
+      - "docs/roadmap/*.md"
+      - "docs/roadmaps/*.md"
+      - "docs/technical/*ROADMAP*.md"
+      - "docs/ai-tool-changelog/*.md"
       - "scripts/check_roadmap_append_only.py"
+      - "scripts/resolve_append_only_conflicts.py"
       - "test/scripts/test_check_roadmap_append_only.py"
+      - "test/scripts/test_resolve_append_only_conflicts.py"
       - ".github/workflows/roadmap-append-only-guard.yml"
   workflow_dispatch:
 
@@ -69,5 +91,14 @@ jobs:
             --base-ref "${{ steps.refs.outputs.base }}" \
             --head-ref "${{ steps.refs.outputs.head }}"
 
+      - name: Check append-only docs for unresolved conflict markers
+        run: |
+          set -euo pipefail
+          python -B scripts/resolve_append_only_conflicts.py --self-test
+          python -B scripts/resolve_append_only_conflicts.py --scan-tracked --check
+
       - name: Run unit tests
-        run: python -m unittest discover -s test/scripts -p "test_check_roadmap_append_only.py"
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s test/scripts -p "test_check_roadmap_append_only.py"
+          python -m unittest discover -s test/scripts -p "test_resolve_append_only_conflicts.py"

@@ -642,6 +642,9 @@ jobs:
           # Internal Issue #1352 decision-chain writer. Gateway JWT verification
           # plus an exact service-role bearer check is enforced in-function.
           deploy_function decision-events
+          # Issue #2659 RLHF bad-output -> GitHub Issue (AI-Feedback) webhook.
+          # Database Webhooks verify HMAC signatures; browser calls verify auth.getUser().
+          deploy_function rlhf-feedback-webhook --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -689,8 +692,9 @@ jobs:
           deploy_function viral-video-ad-generator --no-verify-jwt
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
+          deploy_function did-mcp-proxy --no-verify-jwt
 
-          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
+          # Total: 35 functions deployed (ハードキャップ50本に対し35本 — 余裕15本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:

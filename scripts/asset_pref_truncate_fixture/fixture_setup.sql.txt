@@ -1,0 +1,36 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC FIXTURE ONLY. A trusted isolated runner must verify the target.
+-- The marker below is not a security boundary and can be forged.
+\set ON_ERROR_STOP on
+do $$ begin
+ if current_setting('codex.debt_cas_fixture',true) is distinct from 'isolated-debt-cas-v2' then
+   raise exception 'synthetic fixture marker missing';
+ end if;
+end $$;
+create schema auth;
+create role anon nologin;
+create role authenticated nologin;
+create role service_role nologin bypassrls;
+create table auth.users(id uuid primary key);
+create function auth.uid() returns uuid language sql stable as $$
+  select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid
+$$;
+grant usage on schema auth to anon,authenticated,service_role;
+grant execute on function auth.uid() to anon,authenticated,service_role;
+create table public.asset_pref_mirror (
+ user_id uuid not null references auth.users(id) on delete cascade,
+ pref_key text not null, value jsonb not null, updated_at timestamptz not null default now(),
+ primary key(user_id,pref_key)
+);
+alter table public.asset_pref_mirror enable row level security;
+create policy asset_pref_mirror_own_all on public.asset_pref_mirror for all to authenticated
+  using (auth.uid()=user_id) with check (auth.uid()=user_id);
+grant select,insert,update,delete on public.asset_pref_mirror to authenticated;
+insert into auth.users values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+insert into public.asset_pref_mirror(user_id,pref_key,value) values
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','debt_payment_day_overrides','{"fictional-a":5}'),
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','debt_payment_day_override_deleted','{"ids":["fictional-old"]}'),
+ ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','debt_payment_day_overrides','{"fictional-b":9}'),
+ ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','debt_payment_day_override_deleted','{"ids":[]}'),
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','unrelated-fixture','{"keep":true}');
