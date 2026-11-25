@@ -5025,7 +5025,74 @@ serve(async (req: Request) => {
         return json(res.body, res.status);
       }
 
+      case "agent.sandbox.evaluate":
+      case "agent.sandbox.execute_isolated":
+      case "agent.sandbox.audit_list":
+      case "agent.sandbox.policy_upsert": {
+        const { handleSandboxSecurityAction } = await import(
+          "./sandbox_security.ts"
+        );
+        return await handleSandboxSecurityAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          admin,
+          json,
+        });
+      }
+
       case "agent.run": {
+        const {
+          evaluateAgentSandboxPreflight,
+          recordSandboxAuditEntry,
+        } = await import("./sandbox_security.ts");
+        const sandboxToolName = asString(
+          body.tool_name ?? body.toolName ?? body.target_tool,
+        ) || "agent.run";
+        const sandboxDecision = evaluateAgentSandboxPreflight({
+          userId: userId!,
+          sessionId: asString(body.session_id) || "agent-run",
+          sandboxId: asString(body.sandbox_id) || "isolated_worker",
+          actorRole: normalizeActorRole(body.actor_role ?? body.actorRole) ??
+            "generated_ui_sandbox",
+          toolName: sandboxToolName,
+          requestedScopes: parseAgentToolRequestedScopes(
+            body.requested_scopes ?? body.requestedScopes ?? body.scopes ??
+              ["read"],
+          ),
+          toolArgs: body.tool_args ?? body.toolArgs ?? {
+            task: body.task ?? "",
+          },
+          promptText: asString(body.task ?? body.prompt_text),
+          retryAttempt: Number(body.retry_attempt ?? 0),
+          recentAttemptCount: Number(body.recent_attempt_count ?? 0),
+          networkEgressTarget: asString(body.network_egress_target) || null,
+          enforceIsolatedToolAllowlist: body.sandbox_mode === true,
+          approval: parseAgentToolApproval(body),
+        });
+        if (!sandboxDecision.allowed) {
+          const audit = await recordSandboxAuditEntry(admin, {
+            userId: userId!,
+            sessionId: asString(body.session_id) || "agent-run",
+            sandboxId: asString(body.sandbox_id) || "isolated_worker",
+            actorRole: normalizeActorRole(body.actor_role ?? body.actorRole) ??
+              "generated_ui_sandbox",
+            toolName: sandboxToolName,
+            actionKind: "agent_run_preflight",
+            decision: sandboxDecision,
+            retryAttempt: Number(body.retry_attempt ?? 0),
+            networkEgressTarget: asString(body.network_egress_target) || null,
+            latencyMs: 0,
+          });
+          return json({
+            success: false,
+            error: "agent_sandbox_blocked",
+            decision: sandboxDecision,
+            audit_logged: audit.logged,
+          }, 403);
+        }
+
         const shouldEvaluateToolPolicy = body.tool_name !== undefined ||
           body.toolName !== undefined ||
           body.requested_scopes !== undefined ||
