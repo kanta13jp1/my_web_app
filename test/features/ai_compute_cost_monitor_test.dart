@@ -180,7 +180,9 @@ void main() {
 
           expect(controller.state.modelBreakdowns.length, 2);
           expect(
-              controller.state.modelBreakdowns.first.modelId, 'claude-sonnet');
+            controller.state.modelBreakdowns.first.modelId,
+            'claude-sonnet',
+          );
           expect(controller.state.modelBreakdowns.first.totalTokens, 5500);
 
           controller.dispose();
