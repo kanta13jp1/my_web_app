@@ -269,6 +269,46 @@ class UserUtilizationSummary {
   final double totalEstimatedCostUsd;
 }
 
+/// モデル別トークン消費量・推定推論コスト内訳 (#2694).
+@immutable
+class ModelTokenCostBreakdown {
+  const ModelTokenCostBreakdown({
+    required this.modelId,
+    required this.requestCount,
+    required this.inputTokens,
+    required this.outputTokens,
+    required this.totalTokens,
+    required this.estimatedCostUsd,
+    required this.costSharePct,
+  });
+
+  final String modelId;
+  final int requestCount;
+  final int inputTokens;
+  final int outputTokens;
+  final int totalTokens;
+  final double estimatedCostUsd;
+  final double costSharePct;
+}
+
+/// 異常ループ・予算超過による自動停止判定レポート (#2694).
+@immutable
+class AgentLoopDetectionReport {
+  const AgentLoopDetectionReport({
+    required this.autoHalted,
+    required this.triggers,
+    required this.maxConsecutiveRepeats,
+    required this.totalWindowTokens,
+    required this.haltMessage,
+  });
+
+  final bool autoHalted;
+  final List<String> triggers;
+  final int maxConsecutiveRepeats;
+  final int totalWindowTokens;
+  final String haltMessage;
+}
+
 /// 初期ダッシュボード読込ペイロード (#2658).
 @immutable
 class AiComputeDashboardSnapshot {
