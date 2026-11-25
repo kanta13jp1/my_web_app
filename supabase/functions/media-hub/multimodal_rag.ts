@@ -511,7 +511,7 @@ export async function handleMultimodalRagAction(args: {
   fetchImpl?: FetchLike;
   json: (data: unknown, status?: number) => Response;
 }): Promise<Response> {
-  const { action, body, userId, admin, json } = args;
+  const { action, body, userId, json } = args;
   const ownerUserId = userId === "service_role"
     ? asTrimmedString(body.user_id)
     : userId;

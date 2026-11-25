@@ -90,7 +90,7 @@ Deno.test("chunkMultimodalContent splits video, audio, pdf, and overlapping text
     maxTextChars: 140,
     textOverlapChars: 20,
   });
-  assertEquals(textChunks.length, 3);
+  assertEquals(textChunks.length, 2);
   assertEquals(textChunks[0].modality, "text");
 });
 

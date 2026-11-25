@@ -163,7 +163,7 @@ int estimateMultimodalChunkCount({
   if (trimmed.length <= maxChars) {
     return 1;
   }
-  final int step = maxChars - overlap;
+  const int step = maxChars - overlap;
   final int remaining = trimmed.length - maxChars;
   return (1 + ((remaining + step - 1) ~/ step)).clamp(1, 32);
 }
