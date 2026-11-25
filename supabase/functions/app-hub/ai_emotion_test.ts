@@ -6,10 +6,7 @@ import {
   AI_EMOTION_ALERT_SOURCE,
   AI_EMOTION_LOG_SOURCE,
 } from "../_shared/ai_functional_emotion.ts";
-import {
-  type AiEmotionDb,
-  handleAiEmotionAction,
-} from "./ai_emotion.ts";
+import { type AiEmotionDb, handleAiEmotionAction } from "./ai_emotion.ts";
 
 function createInMemoryEmotionDb(): AiEmotionDb {
   let seq = 0;
@@ -79,7 +76,8 @@ Deno.test(
     const created = await handleAiEmotionAction({
       action: "ai_emotion.classify_and_log",
       body: {
-        response_text: "至急今すぐ対処しないと重大な危険でパニックです！!",
+        response_text:
+          "今すぐ対応しないと崩壊して取り返しがつかないパニック状態です！!",
         model: "gemini-2.5-flash",
         source_action: "assistant_reply",
         alert_threshold: 0.65,
