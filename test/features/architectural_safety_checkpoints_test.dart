@@ -8,7 +8,6 @@ class _InMemorySafetyRepository
     implements ArchitecturalSafetyCheckpointRepository {
   _InMemorySafetyRepository({
     this.isAdmin = true,
-    this.throwOnFetch = false,
   }) : _store = <SafetyCheckpointRecord>[
           const SafetyCheckpointRecord(
             id: 'safety-chk-1',
@@ -28,14 +27,10 @@ class _InMemorySafetyRepository
         ];
 
   final bool isAdmin;
-  final bool throwOnFetch;
   final List<SafetyCheckpointRecord> _store;
 
   @override
   Future<SafetyCheckpointFeed> fetchSafetyCheckpoints() async {
-    if (throwOnFetch) {
-      throw StateError('network unavailable');
-    }
     return SafetyCheckpointFeed(
       isAdmin: isAdmin,
       checkpoints: List<SafetyCheckpointRecord>.from(_store),
