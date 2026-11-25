@@ -119,6 +119,60 @@ void main() {
           expect(controller.state.metrics.length, 2);
         },
       );
+
+      test(
+        'models 1h TTL 2.0x write rate, latency reduction, and >1h context recache plan (#2713)',
+        () async {
+          final cold1h = ContextCacheEstimator.buildSimulatedMetric(
+            workflowKey: 'long-agent-sync',
+            modelId: 'claude-sonnet-4',
+            simulateCacheHit: false,
+            cacheTtl: PromptCacheTtl.oneHour,
+            latencyMs: 1850,
+            baselineLatencyMs: 1850,
+          );
+          expect(cold1h.cacheTtl, PromptCacheTtl.oneHour);
+          expect(
+            cold1h.rateCardVersion,
+            ContextCacheEstimator.rateCard1hVersion,
+          );
+          expect(cold1h.netSavingsUsd < 0, isTrue);
+
+          final warm1h = ContextCacheEstimator.buildSimulatedMetric(
+            workflowKey: 'long-agent-sync',
+            modelId: 'claude-sonnet-4',
+            simulateCacheHit: true,
+            cacheTtl: PromptCacheTtl.oneHour,
+            latencyMs: 420,
+            baselineLatencyMs: 1850,
+          );
+          expect(warm1h.cacheTtl, PromptCacheTtl.oneHour);
+          expect(warm1h.latencyReductionPercent, 77.3);
+          expect(warm1h.netSavingsUsd > 0, isTrue);
+
+          final repo = _FakeContextCacheMonitorRepository();
+          final controller = ContextCacheMonitorController(repository: repo);
+          addTearDown(controller.dispose);
+
+          controller.selectCacheTtl(PromptCacheTtl.oneHour);
+          await controller.recordSimulatedRequest(
+              workflowKey: 'long-agent-sync');
+          expect(controller.state.ttl1hCount, 1);
+          expect(controller.state.averageLatencyReductionPercent, 77.3);
+
+          controller.evaluateLongTaskRecache(
+            workflowKey: 'long-agent-sync',
+            elapsedMinutes: 75,
+            idleSinceRefreshMinutes: 64,
+          );
+          expect(controller.state.lastRecachePlan, isNotNull);
+          expect(controller.state.lastRecachePlan!.exceededOneHour, isTrue);
+          expect(
+            controller.state.lastRecachePlan!.status,
+            'expired_recache_required',
+          );
+        },
+      );
     },
   );
 
@@ -200,6 +254,29 @@ void main() {
             findsOneWidget,
           );
           expect(find.textContaining('nightly-doc-sync'), findsWidgets);
+
+          final ttl1hBtn = find.byKey(
+            const ValueKey<String>('cache_ttl_chip_1h'),
+          );
+          await tester.ensureVisible(ttl1hBtn);
+          await tester.tap(ttl1hBtn);
+          await tester.pumpAndSettle();
+
+          final recacheBtn = find.byKey(
+            const ValueKey<String>('cache_recache_check_button'),
+          );
+          await tester.ensureVisible(recacheBtn);
+          await tester.tap(recacheBtn);
+          await tester.pumpAndSettle();
+
+          expect(
+            find.byKey(const ValueKey<String>('cache_recache_plan_card')),
+            findsOneWidget,
+          );
+          expect(
+            find.byKey(const ValueKey<String>('cache_latency_summary_text')),
+            findsOneWidget,
+          );
         },
       );
 

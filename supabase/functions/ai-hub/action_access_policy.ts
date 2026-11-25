@@ -129,6 +129,10 @@ export const AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
   "provider.chat",
   "provider.chat_auto",
   "edge_llm.invoke",
+  "prompt_cache.build_payload",
+  "prompt_cache.record_metric",
+  "prompt_cache.monitor_summary",
+  "prompt_cache.check_renewal",
 ]);
 
 export const SERVICE_ROLE_AI_HUB_ACTIONS = new Set([

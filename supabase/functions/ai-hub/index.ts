@@ -97,6 +97,12 @@ import {
 import { AssetChatActionError, handleAssetChatAction } from "./asset_chat.ts";
 import { createSupabaseAssetChatStore } from "./asset_chat_supabase.ts";
 import {
+  ANTHROPIC_EXTENDED_CACHE_TTL_BETA,
+  buildAnthropicCachedBodySync,
+  handlePromptCacheAction,
+  type PromptCacheDb,
+} from "./prompt_cache_1h.ts";
+import {
   DepartmentFinanceSummaryActionError,
   type DepartmentFinanceSummaryDb,
   handleDepartmentFinanceSummaryAction,
@@ -439,13 +445,15 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     envKey: "ANTHROPIC_API_KEY",
     chatUrl: "https://api.anthropic.com/v1/messages",
     defaultModel: "claude-haiku-4-5-20251001",
-    buildBody: (messages, model) => ({
-      model,
-      max_tokens: 512,
-      messages: (messages as { role: string; content: string }[]).filter(
-        (m) => m.role !== "system",
-      ),
-    }),
+    extraHeaders: {
+      "anthropic-beta": ANTHROPIC_EXTENDED_CACHE_TTL_BETA,
+    },
+    buildBody: (messages, model) =>
+      buildAnthropicCachedBodySync({
+        model,
+        messages: messages as { role: string; content: string }[],
+        cacheTtl: "1h",
+      }),
     parseResponse: (data) => String(pick(data, "content", 0, "text") ?? ""),
   },
   // Google Gemini は Bearer ではなく ?key=xxx クエリ認証 — provider.chat で特殊分岐
@@ -5018,6 +5026,20 @@ serve(async (req: Request) => {
           success: true,
           org: { agents, departments: ["CEO", "CMO", "CTO", "CFO", "COO"] },
         });
+      }
+
+      case "prompt_cache.build_payload":
+      case "prompt_cache.record_metric":
+      case "prompt_cache.monitor_summary":
+      case "prompt_cache.check_renewal": {
+        const res = await handlePromptCacheAction({
+          db: admin as unknown as PromptCacheDb,
+          action,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          body,
+        });
+        return json(res.body, res.status);
       }
 
       case "my_agent.chat": {

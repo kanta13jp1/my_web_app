@@ -207,3 +207,27 @@ Deno.test("disjointness of action registry sets", () => {
     );
   }
 });
+
+Deno.test("prompt_cache.* allows signed-in and service-role callers while blocking anonymous", () => {
+  const cacheActions = [
+    "prompt_cache.build_payload",
+    "prompt_cache.record_metric",
+    "prompt_cache.monitor_summary",
+    "prompt_cache.check_renewal",
+  ];
+  for (const action of cacheActions) {
+    assertEquals(aiHubActionAccess(action), "authenticated_or_service_role");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      { allowed: true },
+    );
+  }
+});
