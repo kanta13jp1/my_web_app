@@ -25,7 +25,8 @@ create table if not exists public.workos_organizations (
     ),
   last_portal_generated_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint uq_workos_organizations_id_org unique (id, workos_org_id)
 );
 
 create index if not exists idx_workos_organizations_owner
@@ -33,9 +34,11 @@ create index if not exists idx_workos_organizations_owner
 
 create table if not exists public.workos_directory_memberships (
   id uuid primary key default gen_random_uuid(),
-  organization_id uuid not null references public.workos_organizations(id) on delete cascade,
+  organization_id uuid not null,
   workos_org_id text not null
     check (char_length(btrim(workos_org_id)) between 1 and 120),
+  foreign key (organization_id, workos_org_id)
+    references public.workos_organizations(id, workos_org_id) on delete cascade,
   workos_directory_user_id text not null
     check (char_length(btrim(workos_directory_user_id)) between 1 and 160),
   workos_directory_id text not null default ''
@@ -280,20 +283,10 @@ create policy "workos_directory_memberships_select_scoped"
 
 drop policy if exists "workos_directory_memberships_insert_admin"
   on public.workos_directory_memberships;
-create policy "workos_directory_memberships_insert_admin"
-  on public.workos_directory_memberships
-  for insert
-  to authenticated
-  with check (public.is_workos_org_admin(workos_org_id));
-
 drop policy if exists "workos_directory_memberships_update_admin"
   on public.workos_directory_memberships;
-create policy "workos_directory_memberships_update_admin"
-  on public.workos_directory_memberships
-  for update
-  to authenticated
-  using (public.is_workos_org_admin(workos_org_id))
-  with check (public.is_workos_org_admin(workos_org_id));
+revoke insert, update, delete on public.workos_directory_memberships
+  from anon, authenticated;
 
 drop policy if exists "workos_scim_sync_events_select_admin"
   on public.workos_scim_sync_events;
