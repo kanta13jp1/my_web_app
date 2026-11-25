@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
@@ -203,6 +204,26 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('AI監視ダッシュボード（Visionベンチマーク）'),
                     ),
                     body: const VisionBenchmarkContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_cost_monitor_action'),
+            icon: const Icon(Icons.payments_outlined),
+            tooltip: 'サードパーティ AI API コスト監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-cost-monitor',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('サードパーティ AI API コスト監視'),
+                    ),
+                    body: const AiCostMonitorContainer(),
                   ),
                 ),
               );
