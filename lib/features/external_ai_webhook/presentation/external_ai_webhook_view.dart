@@ -183,41 +183,46 @@ class _HeaderSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                Text(
                   '外部 AI Webhook レシーバー',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: palette.titleText,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-              ),
-              Container(
-                key: const ValueKey<String>('webhook_realtime_badge'),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: state.realtimeActive
-                      ? palette.liveBadgeBg
-                      : palette.surfaceSubtle,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  state.realtimeActive ? 'Realtime 購読中' : '待機中',
-                  style: TextStyle(
+                Container(
+                  key: const ValueKey<String>('webhook_realtime_badge'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
                     color: state.realtimeActive
-                        ? palette.liveBadgeFg
-                        : palette.mutedText,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                        ? palette.liveBadgeBg
+                        : palette.surfaceSubtle,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    state.realtimeActive ? 'Realtime 購読中' : '待機中',
+                    style: TextStyle(
+                      color: state.realtimeActive
+                          ? palette.liveBadgeFg
+                          : palette.mutedText,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
