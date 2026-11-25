@@ -24,6 +24,7 @@ class LocalRagCitation {
   final String path;
   final String snippet;
   final double score;
+  final String locationLabel;
 
   const LocalRagCitation({
     required this.sourceId,
@@ -31,15 +32,38 @@ class LocalRagCitation {
     required this.path,
     required this.snippet,
     required this.score,
+    this.locationLabel = '',
   });
 
   factory LocalRagCitation.fromMap(Map<String, Object?> map) {
+    final position = _asStringMap(map['position']);
+    final locationLabel = _firstNonEmpty(<Object?>[
+      map['location_label'],
+      position?['label'],
+    ]);
     return LocalRagCitation(
-      sourceId: map['source_id']?.toString().trim() ?? '',
-      title: map['title']?.toString().trim() ?? '',
-      path: map['path']?.toString().trim() ?? '',
-      snippet: map['snippet']?.toString().trim() ?? '',
-      score: _asDouble(map['score']) ?? 0,
+      sourceId: _firstNonEmpty(<Object?>[
+        map['source_id'],
+        map['citation_id'],
+        map['reference_id'],
+        map['id'],
+      ]),
+      title: _firstNonEmpty(<Object?>[
+        map['title'],
+        map['file_name'],
+      ]),
+      path: _firstNonEmpty(<Object?>[
+        map['path'],
+        map['source_url'],
+      ]),
+      snippet: _firstNonEmpty(<Object?>[
+        map['snippet'],
+        map['highlight_text'],
+        map['excerpt'],
+        map['preview_text'],
+      ]),
+      score: _asDouble(map['score'] ?? map['confidence']) ?? 0,
+      locationLabel: locationLabel,
     );
   }
 
@@ -50,6 +74,7 @@ class LocalRagCitation {
       'path': path,
       'snippet': snippet,
       'score': score,
+      if (locationLabel.isNotEmpty) 'location_label': locationLabel,
     };
   }
 }
@@ -64,6 +89,16 @@ class PleiasCitationSegment {
     this.sourceId,
     this.markerOnly = false,
   });
+
+  factory PleiasCitationSegment.fromMap(Map<String, Object?> map) {
+    final rawRef = map['reference_id'] ?? map['source_id'];
+    final ref = rawRef?.toString().trim() ?? '';
+    return PleiasCitationSegment(
+      text: map['text']?.toString() ?? '',
+      sourceId: ref.isEmpty ? null : ref,
+      markerOnly: map['marker_only'] == true,
+    );
+  }
 
   bool get cited => sourceId != null && sourceId!.trim().isNotEmpty;
 }
@@ -80,6 +115,45 @@ class PleiasCitationParseResult {
     required this.sourceIds,
     required this.hasCitationTokens,
   });
+
+  factory PleiasCitationParseResult.fromMap(Map<String, Object?> map) {
+    final segmentsRaw = map['segments'];
+    final segments = segmentsRaw is List
+        ? segmentsRaw
+            .whereType<Map>()
+            .map(
+              (item) => PleiasCitationSegment.fromMap(
+                Map<String, Object?>.from(item),
+              ),
+            )
+            .where((segment) => segment.text.isNotEmpty)
+            .toList(growable: false)
+        : const <PleiasCitationSegment>[];
+
+    final refsRaw = map['reference_ids'] ?? map['source_ids'];
+    final refs = <String>{
+      if (refsRaw is List)
+        for (final item in refsRaw)
+          if (item != null && item.toString().trim().isNotEmpty)
+            item.toString().trim(),
+      for (final seg in segments)
+        if (seg.cited) seg.sourceId!.trim(),
+    }.toList(growable: false);
+
+    final plain = map['plain_text']?.toString() ??
+        segments.map((segment) => segment.text).join();
+    final found = map['has_native_tokens'] == true ||
+        map['has_citation_tokens'] == true ||
+        refs.isNotEmpty ||
+        segments.any((segment) => segment.cited);
+
+    return PleiasCitationParseResult(
+      plainText: plain,
+      segments: segments,
+      sourceIds: refs,
+      hasCitationTokens: found,
+    );
+  }
 
   bool get hasCitations => sourceIds.isNotEmpty;
 }
@@ -126,7 +200,14 @@ class LocalRagRuntimeResponse {
             .toList()
         : const <LocalRagCitation>[];
 
-    final text = (map['text'] ?? map['answer'] ?? '').toString().trim();
+    final parsedMap = _asStringMap(map['parsed_answer']);
+    final text =
+        (map['text'] ?? map['answer'] ?? parsedMap?['plain_text'] ?? '')
+            .toString()
+            .trim();
+    final citationText = parsedMap != null
+        ? PleiasCitationParseResult.fromMap(parsedMap)
+        : parsePleiasCitationText(text);
     return LocalRagRuntimeResponse(
       text: text,
       engine: map['engine']?.toString().trim() ?? 'local-rag',
@@ -138,7 +219,7 @@ class LocalRagRuntimeResponse {
       memoryLimitMb: _asInt(map['memory_limit_mb']),
       memoryGuardPassed: map['memory_guard_passed'] != false,
       citations: citations,
-      citationText: parsePleiasCitationText(text),
+      citationText: citationText,
       raw: map,
     );
   }
@@ -273,6 +354,20 @@ double? _asDouble(Object? value) {
   return double.tryParse(value.toString());
 }
 
+String _firstNonEmpty(List<Object?> candidates) {
+  for (final item in candidates) {
+    final value = item?.toString().trim() ?? '';
+    if (value.isNotEmpty) return value;
+  }
+  return '';
+}
+
+Map<String, Object?>? _asStringMap(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) return Map<String, Object?>.from(value);
+  return null;
+}
+
 PleiasCitationParseResult parsePleiasCitationText(String raw) {
   if (raw.isEmpty) {
     return const PleiasCitationParseResult(
@@ -291,11 +386,50 @@ PleiasCitationParseResult parsePleiasCitationText(String raw) {
     '<|source_stop|>',
     '<|source_finish|>',
   ];
-  final bracketSource = RegExp(r'\[source\s*:\s*([^\]]+)\]');
+  final bracketSource =
+      RegExp(r'\[source\s*:\s*([^\]]+)\]', caseSensitive: false);
   final segments = <PleiasCitationSegment>[];
   final sourceIds = <String>{};
   var cursor = 0;
   var hasCitationTokens = false;
+
+  const answerStart = '<|answer_start|>';
+  const answerEnd = '<|answer_end|>';
+  const citationStart = '<|citation_start|>';
+  const citationEnd = '<|citation_end|>';
+  const citationClosers = <String>[
+    '<|/citation|>',
+    '<|citation_close|>',
+    '<|citation_stop|>',
+    '<|citation_finish|>',
+    ...closeTokens,
+  ];
+
+  var text = raw;
+  final answerStartIdx = text.indexOf(answerStart);
+  final answerEndIdx = text.indexOf(answerEnd);
+  if (answerStartIdx >= 0 || answerEndIdx >= 0) {
+    hasCitationTokens = true;
+    if (answerStartIdx >= 0) {
+      final bodyStart = answerStartIdx + answerStart.length;
+      final bodyEnd = text.indexOf(answerEnd, bodyStart);
+      text = bodyEnd >= 0
+          ? text.substring(bodyStart, bodyEnd)
+          : text.substring(bodyStart);
+    }
+    text = text
+        .replaceAll(
+          RegExp(
+            r'<\|\/?(?:answer_start|answer_end|answer)\|>',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .trim();
+  }
+
+  final refOpen = RegExp(r'<ref\b([^>]*)>', caseSensitive: false);
+  final numericBracket = RegExp(r'\[(\d+)\](?!\()');
 
   void addPlain(String value) {
     if (value.isNotEmpty) {
@@ -303,80 +437,181 @@ PleiasCitationParseResult parsePleiasCitationText(String raw) {
     }
   }
 
-  while (cursor < raw.length) {
-    final specialIndex = raw.indexOf(sourceStart, cursor);
-    final bracketMatch = bracketSource
-        .allMatches(raw, cursor)
-        .cast<RegExpMatch?>()
-        .firstWhere((match) => match != null, orElse: () => null);
-    final bracketIndex = bracketMatch?.start ?? -1;
-
-    final nextIndex = _earliestPositive(specialIndex, bracketIndex);
-    if (nextIndex < 0) {
-      addPlain(raw.substring(cursor));
-      break;
-    }
-
-    addPlain(raw.substring(cursor, nextIndex));
-
-    if (bracketIndex == nextIndex && bracketMatch != null) {
-      final sourceId = _normalizeSourceId(bracketMatch.group(1) ?? '');
-      final markerText = '[source:$sourceId]';
-      hasCitationTokens = true;
-      if (sourceId.isNotEmpty) sourceIds.add(sourceId);
+  void addCited(String value, String id, {bool markerOnly = false}) {
+    if (id.isNotEmpty) sourceIds.add(id);
+    if (markerOnly) {
       segments.add(
         PleiasCitationSegment(
-          text: markerText,
-          sourceId: sourceId,
+          text: value,
+          sourceId: id.isEmpty ? null : id,
           markerOnly: true,
         ),
       );
-      cursor = bracketMatch.end;
-      continue;
-    }
-
-    final idStart = nextIndex + sourceStart.length;
-    final idEnd = raw.indexOf(sourceEnd, idStart);
-    if (idEnd < 0) {
-      addPlain(raw.substring(nextIndex));
-      break;
-    }
-
-    final sourceId = _normalizeSourceId(raw.substring(idStart, idEnd));
-    final contentStart = idEnd + sourceEnd.length;
-    final close = _findFirstCloseToken(raw, contentStart, closeTokens);
-    hasCitationTokens = true;
-    if (sourceId.isNotEmpty) sourceIds.add(sourceId);
-
-    if (close == null) {
+    } else if (value.isNotEmpty) {
       segments.add(
         PleiasCitationSegment(
-          text: '[source:$sourceId]',
-          sourceId: sourceId,
-          markerOnly: true,
+          text: value,
+          sourceId: id.isEmpty ? null : id,
         ),
       );
-      cursor = contentStart;
-      continue;
     }
-
-    final citedText = raw.substring(contentStart, close.index);
-    if (citedText.isEmpty) {
-      segments.add(
-        PleiasCitationSegment(
-          text: '[source:$sourceId]',
-          sourceId: sourceId,
-          markerOnly: true,
-        ),
-      );
-    } else {
-      segments.add(
-        PleiasCitationSegment(text: citedText, sourceId: sourceId),
-      );
-    }
-    cursor = close.index + close.token.length;
   }
 
+  while (cursor < text.length) {
+    final sourceIdx = text.indexOf(sourceStart, cursor);
+    final citationIdx = text.indexOf(citationStart, cursor);
+    final refMatch = refOpen.firstMatch(text.substring(cursor));
+    final refIdx = refMatch != null ? cursor + refMatch.start : -1;
+    final bSourceMatch = bracketSource.firstMatch(text.substring(cursor));
+    final bSourceIdx = bSourceMatch != null ? cursor + bSourceMatch.start : -1;
+    final numMatch = numericBracket.firstMatch(text.substring(cursor));
+    final numIdx = numMatch != null ? cursor + numMatch.start : -1;
+
+    final indices = <int>[
+      if (sourceIdx >= 0) sourceIdx,
+      if (citationIdx >= 0) citationIdx,
+      if (refIdx >= 0) refIdx,
+      if (bSourceIdx >= 0) bSourceIdx,
+      if (numIdx >= 0) numIdx,
+    ];
+    if (indices.isEmpty) {
+      addPlain(text.substring(cursor));
+      break;
+    }
+    indices.sort();
+    final nextIndex = indices.first;
+    addPlain(text.substring(cursor, nextIndex));
+
+    if (numIdx == nextIndex && numMatch != null) {
+      final id = (numMatch.group(1) ?? '').trim();
+      hasCitationTokens = true;
+      addCited('[$id]', id, markerOnly: true);
+      cursor = nextIndex + numMatch.group(0)!.length;
+      continue;
+    }
+
+    if (bSourceIdx == nextIndex && bSourceMatch != null) {
+      final id = _normalizeSourceId(bSourceMatch.group(1) ?? '');
+      hasCitationTokens = true;
+      addCited('[source:$id]', id, markerOnly: true);
+      cursor = nextIndex + bSourceMatch.group(0)!.length;
+      continue;
+    }
+
+    if (sourceIdx == nextIndex) {
+      final idStart = nextIndex + sourceStart.length;
+      final idEnd = text.indexOf(sourceEnd, idStart);
+      if (idEnd < 0) {
+        addPlain(text.substring(nextIndex));
+        break;
+      }
+      final sourceId = _normalizeSourceId(text.substring(idStart, idEnd));
+      final contentStart = idEnd + sourceEnd.length;
+      final close = _findFirstCloseToken(
+        text,
+        contentStart,
+        closeTokens,
+      );
+      hasCitationTokens = true;
+      if (close == null) {
+        addCited('[source:$sourceId]', sourceId, markerOnly: true);
+        cursor = contentStart;
+        continue;
+      }
+      final citedText = text.substring(contentStart, close.index);
+      if (citedText.isEmpty) {
+        addCited('[source:$sourceId]', sourceId, markerOnly: true);
+      } else {
+        addCited(citedText, sourceId);
+      }
+      cursor = close.index + close.token.length;
+      continue;
+    }
+
+    if (citationIdx == nextIndex) {
+      final innerStart = nextIndex + citationStart.length;
+      final endIdx = text.indexOf(citationEnd, innerStart);
+      if (endIdx < 0) {
+        hasCitationTokens = true;
+        cursor = innerStart;
+        continue;
+      }
+      hasCitationTokens = true;
+      final inner = text.substring(innerStart, endIdx);
+      final afterEnd = endIdx + citationEnd.length;
+      final close = _findFirstCloseToken(
+        text,
+        afterEnd,
+        citationClosers,
+      );
+      final nextCit = text.indexOf(citationStart, afterEnd);
+      final pairedClose =
+          close != null && (nextCit < 0 || close.index < nextCit)
+              ? close
+              : null;
+      if (pairedClose != null && _isBareReferenceId(inner)) {
+        final sourceId = _normalizeSourceId(inner);
+        final citedText = text.substring(afterEnd, pairedClose.index);
+        if (citedText.isEmpty) {
+          addCited('[source:$sourceId]', sourceId, markerOnly: true);
+        } else {
+          addCited(citedText, sourceId);
+        }
+        cursor = pairedClose.index + pairedClose.token.length;
+        continue;
+      }
+      final nested = parsePleiasCitationText(inner);
+      for (final seg in nested.segments) {
+        addCited(
+          seg.text,
+          seg.sourceId ?? '',
+          markerOnly: seg.markerOnly,
+        );
+      }
+      cursor = afterEnd;
+      continue;
+    }
+
+    if (refIdx == nextIndex && refMatch != null) {
+      hasCitationTokens = true;
+      final rawTag = refMatch.group(0) ?? '';
+      final attrs = refMatch.group(1) ?? '';
+      final attrId = _parseRefIdFromAttributes(attrs);
+      final tagEnd = nextIndex + rawTag.length;
+      if (rawTag.trimRight().endsWith('/>')) {
+        if (attrId.isNotEmpty) {
+          addCited('[source:$attrId]', attrId, markerOnly: true);
+        }
+        cursor = tagEnd;
+        continue;
+      }
+      final closeTagIdx = text.toLowerCase().indexOf('</ref>', tagEnd);
+      if (closeTagIdx < 0) {
+        if (attrId.isNotEmpty) {
+          addCited('[source:$attrId]', attrId, markerOnly: true);
+        }
+        cursor = tagEnd;
+        continue;
+      }
+      final inner = text.substring(tagEnd, closeTagIdx);
+      if (attrId.isNotEmpty) {
+        if (inner.trim().isEmpty) {
+          addCited('[source:$attrId]', attrId, markerOnly: true);
+        } else {
+          addCited(inner, attrId);
+        }
+      } else if (_isBareReferenceId(inner)) {
+        final bareId = _normalizeSourceId(inner);
+        addCited('[source:$bareId]', bareId, markerOnly: true);
+      } else {
+        addPlain(inner);
+      }
+      cursor = closeTagIdx + '</ref>'.length;
+      continue;
+    }
+  }
+
+  _mergeAdjacentPlainSegments(segments);
   final plainText = segments.map((segment) => segment.text).join();
   return PleiasCitationParseResult(
     plainText: plainText,
@@ -386,10 +621,19 @@ PleiasCitationParseResult parsePleiasCitationText(String raw) {
   );
 }
 
-int _earliestPositive(int first, int second) {
-  if (first < 0) return second;
-  if (second < 0) return first;
-  return first < second ? first : second;
+void _mergeAdjacentPlainSegments(List<PleiasCitationSegment> segments) {
+  var writeIdx = 0;
+  for (final item in segments) {
+    if (item.text.isEmpty) continue;
+    if (writeIdx > 0 && !segments[writeIdx - 1].cited && !item.cited) {
+      segments[writeIdx - 1] = PleiasCitationSegment(
+        text: '${segments[writeIdx - 1].text}${item.text}',
+      );
+    } else {
+      segments[writeIdx++] = item;
+    }
+  }
+  segments.length = writeIdx;
 }
 
 ({int index, String token})? _findFirstCloseToken(
@@ -409,5 +653,38 @@ int _earliestPositive(int first, int second) {
 }
 
 String _normalizeSourceId(String value) {
-  return value.trim().replaceAll(RegExp(r'^\s*source\s*:\s*'), '').trim();
+  return value
+      .trim()
+      .replaceAll(
+        RegExp(r'^(?:source|reference|ref|id)\s*:\s*', caseSensitive: false),
+        '',
+      )
+      .trim();
+}
+
+String _parseRefIdFromAttributes(String attrsRaw) {
+  final trimmed = attrsRaw.replaceAll(RegExp(r'/$'), '').trim();
+  if (trimmed.isEmpty) return '';
+  final attrMatch = RegExp(
+    r'''\b(?:reference_id|source_id|source|id|ref|doc|name)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'>/]+))''',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
+  if (attrMatch != null) {
+    return _normalizeSourceId(
+      attrMatch.group(1) ?? attrMatch.group(2) ?? attrMatch.group(3) ?? '',
+    );
+  }
+  if (RegExp(r'^(?:source\s*:\s*)?[A-Za-z0-9._-]+$', caseSensitive: false)
+      .hasMatch(trimmed)) {
+    return _normalizeSourceId(trimmed);
+  }
+  return '';
+}
+
+bool _isBareReferenceId(String value) {
+  final trimmed = value.trim();
+  return RegExp(
+    r'^(?:source\s*:\s*)?(?:\d+|(?:doc|source)[-_][A-Za-z0-9._-]+)$',
+    caseSensitive: false,
+  ).hasMatch(trimmed);
 }
