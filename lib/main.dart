@@ -6,6 +6,7 @@ import 'package:my_web_app/pages/vibe_sim_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/features/vision_benchmark/vision_benchmark_container.dart';
 import 'package:my_web_app/pages/neon_showcase_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
@@ -1590,6 +1591,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
     case '/time-tracker':
       return MaterialPageRoute(builder: (_) => const TimeTrackerPage());
+    case '/vision-benchmark':
+      return MaterialPageRoute(
+        builder: (_) => const VisionBenchmarkDashboardPage(),
+      );
     case '/voice-memo':
       return MaterialPageRoute(
         builder: (_) => const VoiceMemoTranscriberPage(),

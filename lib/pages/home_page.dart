@@ -5824,6 +5824,8 @@ abstinence_slip_details: $slipDetailsText
                                 child: EdgeFunctionSummaryCard(),
                               ),
                               const SizedBox(height: 16),
+                              _buildAiVisionMonitorButton(context),
+                              const SizedBox(height: 10),
                               _buildUiStatusButton(context),
                               const SizedBox(height: 40),
                             ],
@@ -5943,6 +5945,26 @@ abstinence_slip_details: $slipDetailsText
         child: const AiRecommendedFeaturesList(),
       ),
     ];
+  }
+
+  Widget _buildAiVisionMonitorButton(BuildContext context) {
+    return OutlinedButton.icon(
+      key: const Key('home_vision_benchmark_button'),
+      onPressed: () => Navigator.of(context).pushNamed('/vision-benchmark'),
+      icon: const Icon(Icons.monitor_heart_outlined, size: 16),
+      label: const Text('AI監視ダッシュボード (Visionベンチマーク)'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF0F766E),
+        side: const BorderSide(color: Color(0xFF0F766E)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        minimumSize: const Size(double.infinity, 44),
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1.6,
+        ),
+      ),
+    );
   }
 
   Widget _buildUiStatusButton(BuildContext context) {

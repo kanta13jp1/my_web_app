@@ -24,6 +24,10 @@ import {
   createSupabaseAltSupplyDb,
   handleAltSupplyAction,
 } from "./alt_supply.ts";
+import {
+  createSupabaseVisionBenchmarkDb,
+  handleVisionBenchmarkAction,
+} from "./vision_benchmark.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1208,6 +1212,18 @@ serve(async (req: Request) => {
           body,
           userId,
           db: createSupabaseAltSupplyDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- AI Vision Benchmark Monitoring (#2758) ---
+      case "vision_benchmark.list":
+      case "vision_benchmark.record": {
+        const result = await handleVisionBenchmarkAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseVisionBenchmarkDb(admin),
         });
         return json(result.body, result.status);
       }
