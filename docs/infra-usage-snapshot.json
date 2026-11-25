@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "collected_at": null,
+  "period_start": null,
+  "collector": null,
+  "plans": {
+    "supabase": "unknown",
+    "firebase_hosting": "unknown"
+  },
+  "services_in_use": ["supabase", "firebase_hosting"],
+  "usage": {
+    "supabase.db_size_mb": null,
+    "supabase.disk_gb": null,
+    "supabase.egress_gb": null,
+    "supabase.cached_egress_gb": null,
+    "supabase.storage_gb": null,
+    "supabase.mau": null,
+    "supabase.edge_invocations": null,
+    "supabase.realtime_messages": null,
+    "supabase.realtime_peak_connections": null,
+    "supabase.log_ingestion_gb": null,
+    "firebase_hosting.storage_gb": null,
+    "firebase_hosting.transfer_gb": null
+  },
+  "evidence": "未計測。Supabase Dashboard の Usage ページ / Firebase console の Hosting Usage ダッシュボードの値を転記し、collected_at (YYYY-MM-DD, UTC) と period_start (請求期間開始日) を更新すること。"
+}
