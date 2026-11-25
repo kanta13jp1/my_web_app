@@ -166,6 +166,8 @@ class LocalRagRuntimeResponse {
   final bool offlineOnly;
   final bool networkBlocked;
   final int? memoryPeakMb;
+  final int? memoryLimitMb;
+  final bool memoryGuardPassed;
   final List<LocalRagCitation> citations;
   final PleiasCitationParseResult citationText;
   final Map<String, Object?> raw;
@@ -181,6 +183,8 @@ class LocalRagRuntimeResponse {
     required this.citationText,
     required this.raw,
     this.memoryPeakMb,
+    this.memoryLimitMb,
+    this.memoryGuardPassed = true,
   });
 
   factory LocalRagRuntimeResponse.fromMap(Map<String, Object?> map) {
@@ -212,6 +216,8 @@ class LocalRagRuntimeResponse {
       offlineOnly: map['offline_only'] != false,
       networkBlocked: map['network_blocked'] == true,
       memoryPeakMb: _asInt(map['memory_peak_mb']),
+      memoryLimitMb: _asInt(map['memory_limit_mb']),
+      memoryGuardPassed: map['memory_guard_passed'] != false,
       citations: citations,
       citationText: citationText,
       raw: map,
@@ -227,6 +233,8 @@ class LocalRagRuntimeResponse {
       'offline_only': offlineOnly,
       'network_blocked': networkBlocked,
       if (memoryPeakMb != null) 'memory_peak_mb': memoryPeakMb,
+      if (memoryLimitMb != null) 'memory_limit_mb': memoryLimitMb,
+      'memory_guard_passed': memoryGuardPassed,
       'citations': citations.map((item) => item.toJson()).toList(),
       'citation_source_ids': citationText.sourceIds,
     };
@@ -268,6 +276,12 @@ class LocalRagRuntimeService {
       'vector_db_path': settings.localVectorDbPath,
       'engine': settings.inferenceEngine,
       'temperature': 0,
+      'memory_limit_mb': settings.memoryLimitMb
+          .clamp(
+            OfflineSecureModeSettings.minMemoryLimitMb,
+            OfflineSecureModeSettings.defaultMemoryLimitMb,
+          )
+          .toInt(),
       'offline_only': true,
       'network_policy': 'offline_only',
       if (sessionId != null && sessionId.trim().isNotEmpty)
