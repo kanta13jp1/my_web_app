@@ -1144,6 +1144,56 @@ serve(async (req: Request) => {
         }
       }
 
+      // --- Isolated Offline Secure Mode Audit (#2753) ---
+      case "offline_secure_mode.audit_list":
+      case "offline_secure_mode.audit_record": {
+        const {
+          createSupabaseOfflineAuditStore,
+          DEFAULT_MEMORY_LIMIT_MB,
+          listOfflineSecureModeAuditLogs,
+          parseOfflineSecureModePolicy,
+          recordOfflineSecureModeAudit,
+        } = await import("../_shared/offline_secure_mode_guard.ts");
+        const store = createSupabaseOfflineAuditStore(admin);
+        if (action === "offline_secure_mode.audit_list") {
+          const rawLimit = Number(body.limit ?? 20);
+          const limit = Number.isFinite(rawLimit) && rawLimit > 0
+            ? Math.min(100, Math.floor(rawLimit))
+            : 20;
+          const logs = await listOfflineSecureModeAuditLogs(
+            store,
+            userId,
+            limit,
+          );
+          return json({
+            success: true,
+            action,
+            memory_limit_mb: DEFAULT_MEMORY_LIMIT_MB,
+            logs,
+          });
+        }
+        const policy = parseOfflineSecureModePolicy(body);
+        const statusText = typeof body.status === "string" &&
+            body.status.trim()
+          ? body.status.trim()
+          : policy.externalApiBlocked
+          ? "external_api_blocked"
+          : "online_allowed";
+        const recorded = await recordOfflineSecureModeAudit(store, {
+          userId,
+          action: typeof body.audit_action === "string" &&
+              body.audit_action.trim()
+            ? body.audit_action.trim()
+            : "settings.update",
+          provider: typeof body.provider === "string" && body.provider.trim()
+            ? body.provider.trim()
+            : policy.inferenceEngine,
+          policy,
+          status: statusText,
+        });
+        return json({ success: true, action, ...recorded });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

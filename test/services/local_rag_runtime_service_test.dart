@@ -17,6 +17,8 @@ void main() {
           'offline_only': true,
           'network_blocked': true,
           'memory_peak_mb': 256,
+          'memory_limit_mb': 8192,
+          'memory_guard_passed': true,
           'citations': <Map<String, Object?>>[
             <String, Object?>{
               'source_id': 'doc-1',
@@ -44,11 +46,14 @@ void main() {
     expect(capturedBody?['offline_only'], true);
     expect(capturedBody?['network_policy'], 'offline_only');
     expect(capturedBody?['temperature'], 0);
+    expect(capturedBody?['memory_limit_mb'], 8192);
     expect(capturedBody?['model_path'], r'C:\models\pleias-rag.gguf');
     expect(response.text, contains('外部ネットワークなし'));
     expect(response.citations.single.sourceId, 'doc-1');
     expect(response.networkBlocked, isTrue);
     expect(response.memoryPeakMb, 256);
+    expect(response.memoryLimitMb, 8192);
+    expect(response.memoryGuardPassed, isTrue);
   });
 
   test('query fails safely when local paths are not configured', () async {
