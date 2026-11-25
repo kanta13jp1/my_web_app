@@ -318,8 +318,8 @@ grant execute on function public.check_org_idp_rbac(text, text)
 create or replace function public.guard_org_idp_group_mappings()
 returns trigger
 language plpgsql
-security invoker
-set search_path = public, pg_temp
+security definer
+set search_path = public, auth, pg_temp
 as $guard$
 declare
   caller_uid uuid := (select auth.uid());
@@ -327,8 +327,10 @@ begin
   if tg_op = 'INSERT' then
     if caller_uid is not null then
       new.created_by := caller_uid;
-    else
-      new.created_by := public._resolve_existing_workos_actor(new.created_by);
+    elsif new.created_by is not null
+      and not exists (select 1 from auth.users as u where u.id = new.created_by)
+    then
+      new.created_by := null;
     end if;
     new.created_at := coalesce(new.created_at, timezone('utc', now()));
   end if;
@@ -353,12 +355,14 @@ create trigger guard_org_idp_group_mappings
 create or replace function public.guard_org_sso_sessions_audit()
 returns trigger
 language plpgsql
-security invoker
-set search_path = public, pg_temp
+security definer
+set search_path = public, auth, pg_temp
 as $guard$
 begin
-  if new.user_id is not null then
-    new.user_id := public._resolve_existing_workos_actor(new.user_id);
+  if new.user_id is not null
+    and not exists (select 1 from auth.users as u where u.id = new.user_id)
+  then
+    new.user_id := null;
   end if;
   new.evaluated_at := coalesce(new.evaluated_at, timezone('utc', now()));
   return new;
@@ -401,6 +405,12 @@ create policy "org_idp_group_mappings_insert_admin"
   with check (
     public.is_workos_org_admin(workos_org_id)
     and created_by = (select auth.uid())
+    and exists (
+      select 1
+      from public.workos_organizations as wo_org
+      where wo_org.id = organization_id
+        and wo_org.workos_org_id = org_idp_group_mappings.workos_org_id
+    )
     and (
       mapped_role <> 'owner'
       or exists (
@@ -421,6 +431,12 @@ create policy "org_idp_group_mappings_update_admin"
   using (public.is_workos_org_admin(workos_org_id))
   with check (
     public.is_workos_org_admin(workos_org_id)
+    and exists (
+      select 1
+      from public.workos_organizations as wo_org
+      where wo_org.id = organization_id
+        and wo_org.workos_org_id = org_idp_group_mappings.workos_org_id
+    )
     and (
       mapped_role <> 'owner'
       or exists (
