@@ -434,9 +434,9 @@ class _RealtimeLockViewState extends State<RealtimeLockView> {
                 controller: _draftContentController,
                 onChanged: ctrl.updateDraftContent,
                 maxLines: 4,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '本文 (expected_revision=r${ctrl.baseRevision} で保存)',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),

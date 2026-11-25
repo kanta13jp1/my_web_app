@@ -69,7 +69,7 @@ class _InMemoryRealtimeLockRepository implements RealtimeLockRepository {
       content: newContent,
       revision: prev.revision + 1,
       updatedBy: updatedBy,
-      updatedAtIso: '2026-11-25T01:00:0${updated.revision}Z',
+      updatedAtIso: '2026-11-25T01:00:0${prev.revision + 1}Z',
       sourceActor: sourceActor,
     );
     _records[idx] = updated;
