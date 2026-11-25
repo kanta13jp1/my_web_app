@@ -255,9 +255,10 @@ class DeterministicReflectiveBackend:
         if not directives:
             directives.append("Preserve Goal-Plan-Action constraint alignment.")
 
+        weak_summary = {k: v for k, v in weak_counts.items() if v > 0}
         reflection = (
             f"Observed GPA variance={score_variance:.4f} (> {variance_threshold:.2f}); "
-            f"weak axes={ {k: v for k, v in weak_counts.items() if v > 0} }."
+            f"weak axes={weak_summary}."
         )
 
         title = str(base_prompt.get("title") or "Executive Agent Prompt")

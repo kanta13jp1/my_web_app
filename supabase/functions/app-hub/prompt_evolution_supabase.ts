@@ -24,24 +24,11 @@ export function createSupabasePromptEvolutionDb(
     },
 
     async listRecentEvaluations(userId, limit) {
-      const cols = [
-        "id",
-        "source_type",
-        "source_id",
-        "goal_score",
-        "plan_score",
-        "action_score",
-        "consistency_score",
-        "gpa",
-        "judge_model",
-        "rationale_short",
-        "improvement_suggestions",
-        "evaluated_at",
-        "created_at",
-      ].join(",");
       const { data, error } = await admin
         .from("agent_gpa_evaluations")
-        .select(cols)
+        .select(
+          "id,source_type,source_id,goal_score,plan_score,action_score,consistency_score,gpa,judge_model,rationale_short,improvement_suggestions,evaluated_at,created_at",
+        )
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -50,8 +37,9 @@ export function createSupabasePromptEvolutionDb(
           error?.message ?? "Failed to load agent_gpa_evaluations rows.",
         );
       }
-      return data.filter((item): item is Record<string, unknown> =>
-        item != null && typeof item === "object"
+      return (data as unknown[]).filter(
+        (item): item is Record<string, unknown> =>
+          item != null && typeof item === "object",
       );
     },
 
