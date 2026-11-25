@@ -283,7 +283,7 @@ void main() {
           const ValueKey<String>('format_importer_save_record_attr_button'),
         ),
       );
-      expect(find.textContaining('JP-EAST'), findsOneWidget);
+      expect(find.textContaining('{region_zone: JP-EAST}'), findsOneWidget);
 
       // 4. Export while excluding internal_note field & internal tag.
       await _tapVisible(
