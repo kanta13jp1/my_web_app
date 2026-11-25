@@ -42,7 +42,7 @@ jobs:
             docker exec "$container" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql --host 127.0.0.1 --username supabase_auth_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/compat.sql'
           done
           echo "45969060b55102f56af317b0d7981434be58927de1ff76e1e1789139a3f2defc  scripts/sql/supabase_storage_v1_71_0_0062.sql" | sha256sum --check
-          echo "139969ce1a32e6385979f5d86fea78f2ba14a23342ece274122bbbd9a863be78  scripts/sql/supabase_storage_lifecycle_0068_0069.sql" | sha256sum --check
+          echo "28f9635f28738a3fae81e38d8f4fb8b7041a8899de3f660dc91ffb4c2236938f  scripts/sql/supabase_storage_lifecycle_0068_0069.sql" | sha256sum --check
           docker cp scripts/sql/supabase_storage_v1_71_0_0062.sql "$container:/tmp/storage-core.sql"
           docker cp scripts/sql/supabase_storage_lifecycle_0068_0069.sql "$container:/tmp/storage-lifecycle.sql"
           docker exec "$container" sh -c 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql --host 127.0.0.1 --username supabase_storage_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/storage-core.sql'
@@ -83,6 +83,9 @@ jobs:
             END IF;
             IF (SELECT count(*) FROM pg_constraint WHERE conrelid = 'storage.buckets'::regclass AND conname LIKE 'buckets_lifecycle_configuration_%_check' AND convalidated) <> 3 THEN
               RAISE EXCEPTION 'Storage lifecycle constraints missing or unvalidated';
+            END IF;
+            IF to_regclass('storage.bucket_lifecycle_states') IS NULL OR to_regclass('storage.lifecycle_abandoned_artifacts') IS NULL THEN
+              RAISE EXCEPTION 'Storage noncurrent lifecycle tables missing';
             END IF;
           END $$;
           SQL
