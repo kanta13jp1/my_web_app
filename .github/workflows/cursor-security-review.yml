@@ -129,7 +129,7 @@ jobs:
 
   cursor-sdk-and-autofix-triage:
     name: Cursor SDK Review and CI Autofix Triage
-    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure')
+    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -173,7 +173,19 @@ jobs:
               echo "::error::pr_number must be a positive integer"
               exit 1
             fi
-            commit_sha="$(gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}" --jq '.head.sha' || echo "${GITHUB_SHA}")"
+            pr_meta="$(gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}" --jq '[.head.sha, (.head.repo.full_name // "")] | @tsv')" || {
+              echo "::error::Failed to fetch metadata for PR #${INPUT_PR_NUMBER}"
+              exit 1
+            }
+            IFS=$'\t' read -r commit_sha head_repo <<< "${pr_meta}"
+            if [ -z "${commit_sha}" ]; then
+              echo "::error::Missing head.sha for PR #${INPUT_PR_NUMBER}"
+              exit 1
+            fi
+            if [ "${head_repo}" != "${REPO_SLUG}" ]; then
+              echo "::error::Refusing to run privileged PR triage on external fork PR #${INPUT_PR_NUMBER} (${head_repo})"
+              exit 1
+            fi
             gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}/files?per_page=100" --jq '.[].filename' > tmp/cursor-sdk/changed_files.txt || true
             gh pr diff --repo "${REPO_SLUG}" -- "${INPUT_PR_NUMBER}" > tmp/cursor-sdk/pr.diff || true
           fi
