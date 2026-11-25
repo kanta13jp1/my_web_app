@@ -56,8 +56,8 @@ REVOKE ALL ON TABLE public.pr_review_quota_buckets FROM PUBLIC, anon, authentica
 GRANT SELECT ON TABLE public.pr_review_quota_buckets TO authenticated;
 GRANT ALL ON TABLE public.pr_review_quota_buckets TO service_role;
 
-REVOKE ALL ON TABLE public.pr_review_quota_events FROM PUBLIC, anon;
-GRANT SELECT, INSERT ON TABLE public.pr_review_quota_events TO authenticated;
+REVOKE ALL ON TABLE public.pr_review_quota_events FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.pr_review_quota_events TO authenticated;
 GRANT ALL ON TABLE public.pr_review_quota_events TO service_role;
 
 DROP POLICY IF EXISTS pr_review_quota_buckets_select_own ON public.pr_review_quota_buckets;
@@ -78,11 +78,6 @@ CREATE POLICY pr_review_quota_events_select_own
   USING ((select auth.uid()) = owner_user_id);
 
 DROP POLICY IF EXISTS pr_review_quota_events_insert_own ON public.pr_review_quota_events;
-CREATE POLICY pr_review_quota_events_insert_own
-  ON public.pr_review_quota_events
-  FOR INSERT
-  TO authenticated
-  WITH CHECK ((select auth.uid()) = owner_user_id);
 
 CREATE OR REPLACE FUNCTION public._pr_review_quota_is_service_role()
 RETURNS boolean
@@ -216,14 +211,18 @@ BEGIN
     RAISE EXCEPTION 'installation_key, repository, and positive pr_number are required'
       USING ERRCODE = '22023';
   END IF;
-  IF v_plan NOT IN ('consumer', 'enterprise') THEN
+  IF NOT v_is_service THEN
     v_plan := 'consumer';
+    v_limit := 33;
+  ELSE
+    IF v_plan NOT IN ('consumer', 'enterprise') THEN
+      v_plan := 'consumer';
+    END IF;
+    v_limit := coalesce(
+      CASE WHEN p_daily_limit IS NOT NULL AND p_daily_limit > 0 THEN p_daily_limit ELSE NULL END,
+      CASE WHEN v_plan = 'enterprise' THEN 100 ELSE 33 END
+    );
   END IF;
-
-  v_limit := coalesce(
-    CASE WHEN p_daily_limit IS NOT NULL AND p_daily_limit > 0 THEN p_daily_limit ELSE NULL END,
-    CASE WHEN v_plan = 'enterprise' THEN 100 ELSE 33 END
-  );
 
   INSERT INTO public.pr_review_quota_buckets (
     owner_user_id,
