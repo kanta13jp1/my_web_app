@@ -31,7 +31,8 @@ class MockMediaLibraryClient {
               data: { signedUrl: `https://storage.local/${path}?ttl=${ttl}` },
               error: null,
             }),
-          remove: (_paths: string[]) => Promise.resolve({ data: [], error: null }),
+          remove: (_paths: string[]) =>
+            Promise.resolve({ data: [], error: null }),
         };
       },
     };
@@ -72,8 +73,22 @@ class MockMediaLibraryClient {
           error: null,
         });
       },
+      then(
+        resolve: (
+          value: { data: Record<string, unknown>[]; error: null },
+        ) => unknown,
+        reject?: (reason: unknown) => unknown,
+      ) {
+        return Promise.resolve({
+          data: applyFilters(),
+          error: null,
+        }).then(resolve, reject);
+      },
       maybeSingle() {
-        return Promise.resolve({ data: applyFilters()[0] ?? null, error: null });
+        return Promise.resolve({
+          data: applyFilters()[0] ?? null,
+          error: null,
+        });
       },
       insert: (payload: Record<string, unknown>) => {
         const row: Record<string, unknown> = {
@@ -103,7 +118,10 @@ class MockMediaLibraryClient {
       single: () => {
         const matched = applyFilters();
         if (!matched[0]) {
-          return Promise.resolve({ data: null, error: { message: "Not found" } });
+          return Promise.resolve({
+            data: null,
+            error: { message: "Not found" },
+          });
         }
         if (updatePayload) {
           Object.assign(matched[0], updatePayload, {
