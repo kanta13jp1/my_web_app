@@ -105,6 +105,36 @@ const LOCAL_EFFORT_MATRIX: EffortConfig[] = [
     default_effort: "medium",
     rationale: "Memory linting may need semantic judgment.",
   },
+  {
+    action: "flutter_ui_routine",
+    default_effort: "low",
+    rationale:
+      "Routine Flutter widget layout, styling, and copy updates use fast low-cost models.",
+  },
+  {
+    action: "flutter_widget_copy",
+    default_effort: "low",
+    rationale:
+      "Deterministic Flutter localization and static text updates stay on the low-cost lane.",
+  },
+  {
+    action: "supabase_migration_design",
+    default_effort: "xhigh",
+    rationale:
+      "PostgreSQL schema, RLS, and trigger invariants require top reasoning models.",
+  },
+  {
+    action: "supabase_rls_architecture",
+    default_effort: "xhigh",
+    rationale:
+      "Row-level security boundary design and privilege checks require frontier reasoning.",
+  },
+  {
+    action: "root_cause_analysis",
+    default_effort: "xhigh",
+    rationale:
+      "Multi-layer production root-cause investigation escalates to high-reasoning models.",
+  },
 ];
 
 let cachedClient: SupabaseClient | null = null;
