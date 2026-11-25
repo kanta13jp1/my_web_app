@@ -8,7 +8,7 @@ create table if not exists public.workos_organizations (
     check (char_length(btrim(workos_org_id)) between 1 and 120),
   organization_name text not null
     check (char_length(btrim(organization_name)) between 1 and 160),
-  owner_user_id uuid not null default (select auth.uid()) references auth.users(id) on delete cascade,
+  owner_user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   scim_enabled boolean not null default true,
   default_role text not null default 'member'
     check (default_role in ('admin', 'member', 'viewer')),
