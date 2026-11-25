@@ -189,9 +189,19 @@ void main() {
       await tester.tap(evolveBtn);
       await tester.pumpAndSettle();
       expect(repo.evolveCalls, 1);
+      await tester.scrollUntilVisible(
+        find.textContaining('reflective_constraint_patch'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(
         find.textContaining('reflective_constraint_patch'),
         findsOneWidget,
+      );
+      await tester.scrollUntilVisible(
+        find.textContaining('tpl-gepa-1'),
+        300,
+        scrollable: find.byType(Scrollable).first,
       );
       expect(find.textContaining('tpl-gepa-1'), findsOneWidget);
     });
