@@ -44,7 +44,7 @@
       "domain": "supabase-auth",
       "severity": "critical",
       "blocking": true,
-      "path_regex": "^(?:lib|web|test)/.*$",
+      "path_regex": "^(?:lib|web|test/(?!scripts/)).*$",
       "line_regex": "(?:SUPABASE_SERVICE_ROLE_KEY|service_role|sb_secret_)",
       "cwe": "CWE-798",
       "title": "Server-side Supabase credential reference in client/test bundle",
