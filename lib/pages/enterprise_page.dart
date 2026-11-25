@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
+import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
 import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -122,6 +123,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('IdP グループ RBAC / SSO 権限管理'),
                     ),
                     body: const OrgIdpRbacContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.lock_clock_outlined),
+            tooltip: 'Realtime 同時編集ロック / 競合検知',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=realtime-lock',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Realtime 同時編集ロック / 競合検知'),
+                    ),
+                    body: const RealtimeLockContainer(),
                   ),
                 ),
               );
