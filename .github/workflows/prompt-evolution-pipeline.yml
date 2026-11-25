@@ -115,7 +115,13 @@ jobs:
       - name: Re-verify deterministic tests before PR creation
         run: python3 -B test/scripts/test_prompt_evolution_pipeline.py -v
 
-      - name: Regenerate validated candidate and propose review PR
+      - name: Download validated prompt evolution artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: prompt-evolution-report
+          path: .
+
+      - name: Propose review PR for validated candidate
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_ID: ${{ github.run_id }}
@@ -124,10 +130,8 @@ jobs:
           MEAN_GPA: ${{ needs.evaluate-and-evolve.outputs.mean_gpa }}
         run: |
           set -euo pipefail
-          python3 -B scripts/prompt_evolution_pipeline.py \
-            --variance-threshold "${VARIANCE_THRESHOLD}" \
-            --proposal-out "eval/fixtures/prompt_evolution_candidate.json" \
-            --json-out "prompt_evolution_report.json"
+          test -f "prompt_evolution_report.json"
+          test -f "eval/fixtures/prompt_evolution_candidate.json"
 
           python3 -B - << 'PY'
           import json
