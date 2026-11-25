@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:my_web_app/features/vision_benchmark/domain/vision_benchmark_models.dart';
+import 'package:my_web_app/features/vision_benchmark/vision_benchmark_container.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,6 +23,49 @@ class _FakeUser extends Fake implements User {
 class _FakeGoTrueClient extends Fake implements GoTrueClient {
   @override
   User? get currentUser => _FakeUser();
+}
+
+class _RecordingVisionRepository implements VisionBenchmarkRepository {
+  final List<VisionBenchmarkRun> runs = <VisionBenchmarkRun>[];
+
+  @override
+  Future<VisionBenchmarkSnapshot> fetchDashboard({
+    required int threshold,
+    String? modelFilter,
+    int limit = 40,
+  }) async {
+    return VisionBenchmarkSnapshot.build(
+      runs: runs.take(limit).toList(growable: false),
+      threshold: threshold,
+    );
+  }
+
+  @override
+  Future<VisionBenchmarkRun> recordRun({
+    required String model,
+    required String provider,
+    required int score,
+    required int latencyMs,
+    required int threshold,
+    required bool passed,
+    required String detail,
+    List<VisionBenchmarkLevel> levels = const <VisionBenchmarkLevel>[],
+  }) async {
+    final run = VisionBenchmarkRun(
+      id: 'ai-status-run-${runs.length + 1}',
+      model: model,
+      provider: provider,
+      score: score,
+      latencyMs: latencyMs,
+      threshold: threshold,
+      passed: passed,
+      detail: detail,
+      levels: levels,
+      recordedAt: DateTime.utc(2026, 11, 25, 13, runs.length),
+    );
+    runs.insert(0, run);
+    return run;
+  }
 }
 
 void main() {
@@ -332,5 +377,78 @@ void main() {
 
     prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('magi_system_melchior_model_v1'), 'gpt-5.4');
+  });
+
+  testWidgets('records Vision benchmark runs and opens AI dashboard', (
+    WidgetTester tester,
+  ) async {
+    final visionRepo = _RecordingVisionRepository();
+    final mockListResp = MockFunctionResponse();
+    when(mockListResp.status).thenReturn(200);
+    when(mockListResp.data).thenReturn(<String, Object?>{
+      'success': true,
+      'models': <Map<String, Object?>>[
+        <String, Object?>{
+          'model': 'gemini-2.5-flash',
+          'provider': 'google',
+          'score': 60,
+        },
+      ],
+    });
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockListResp);
+
+    final mockTestResp = MockFunctionResponse();
+    when(mockTestResp.status).thenReturn(200);
+    when(mockTestResp.data).thenReturn(<String, Object?>{
+      'success': true,
+      'benchmark': <String, Object?>{
+        'score': 55,
+        'latency': 720,
+        'detail': 'Low accuracy on L5 test',
+        'levels': <Object?>[],
+      },
+    });
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'test_model', 'model': 'gemini-2.5-flash'},
+      ),
+    ).thenAnswer((_) async => mockTestResp);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AiStatusPage(
+          supabaseClient: mockSupabaseClient,
+          visionBenchmarkRepository: visionRepo,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final card = find.byKey(const ValueKey<String>('gemini-2.5-flash'));
+    await revealInScrollView(tester, card);
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+
+    expect(visionRepo.runs, hasLength(1));
+    expect(visionRepo.runs.first.model, 'gemini-2.5-flash');
+    expect(visionRepo.runs.first.score, 55);
+
+    await tester.tap(
+      find.byKey(const Key('ai_status_vision_dashboard_button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VisionBenchmarkDashboardPage), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('vision_benchmark_alert_banner')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('gemini-2.5-flash: 55点'), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import 'package:my_web_app/features/format_importer/format_importer_container.da
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
 import 'package:my_web_app/features/rag_query_routing/rag_query_routing_container.dart';
 import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
+import 'package:my_web_app/features/vision_benchmark/vision_benchmark_container.dart';
 import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -182,6 +183,26 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('クエリレポート再定式化・ルーティング制御'),
                     ),
                     body: const RagQueryRoutingContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_vision_benchmark_action'),
+            icon: const Icon(Icons.monitor_heart_outlined),
+            tooltip: 'AI監視ダッシュボード (Visionベンチマーク)',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=vision-benchmark',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AI監視ダッシュボード（Visionベンチマーク）'),
+                    ),
+                    body: const VisionBenchmarkContainer(),
                   ),
                 ),
               );
