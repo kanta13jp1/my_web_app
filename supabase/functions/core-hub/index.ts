@@ -11,8 +11,8 @@ import {
   type MemoReactionAction,
 } from "./memo_reactions.ts";
 import {
+  notifySlackWithDiscordFailover,
   sendDiscordWebhook,
-  wantsDiscordSecondary,
 } from "./notification_channels.ts";
 import {
   externalSaasGateReason,
@@ -52,6 +52,23 @@ import {
   renderBlogMarkdown,
   renderBlogNotFoundHtml,
 } from "./blog_view.ts";
+import {
+  createSupabaseAsyncJobStore,
+  handleAsyncJobEnqueue,
+  handleAsyncJobList,
+  handleAsyncJobStatus,
+  handleAsyncJobUpdateStatus,
+} from "./async_jobs.ts";
+import {
+  createSupabaseStageGateStore,
+  handleStageGateDecide,
+  handleStageGateList,
+  handleStageGateSubmit,
+} from "./stage_gate.ts";
+import { handleExternalDiffAction } from "./external_diff_monitor.ts";
+import {
+  createSupabaseExternalDiffStore,
+} from "./external_diff_monitor_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -849,6 +866,8 @@ export interface CoreHubRequestDependencies {
   handleMemoReaction?: typeof handleMemoReactionAction;
   serviceRoleKey?: string;
   reportError?: (error: unknown) => void;
+  fetcher?: typeof fetch;
+  getEnv?: (name: string) => string | undefined;
 }
 
 export async function handleCoreHubRequest(
@@ -1498,66 +1517,15 @@ export async function handleCoreHubRequest(
           }
         }
 
-        const webhookEnvMap: Record<string, string> = {
-          "default": "SLACK_WEBHOOK_URL",
-          "quota": "SLACK_WEBHOOK_QUOTA",
-          "ci": "SLACK_WEBHOOK_CI",
-          "alerts": "SLACK_WEBHOOK_ALERTS",
-          "daily": "SLACK_WEBHOOK_DAILY",
-          "handoff": "SLACK_WEBHOOK_HANDOFF",
-        };
-        const envKey = webhookEnvMap[channel] ?? "SLACK_WEBHOOK_URL";
-        const url = Deno.env.get(envKey);
-        if (!url) {
-          return json({
-            error: `webhook not configured: ${envKey}`,
-            channel,
-          }, 500);
-        }
-
-        const slackPayload: Record<string, unknown> = {};
-        if (text) slackPayload.text = text;
-        if (blocks) slackPayload.blocks = blocks;
-
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(slackPayload),
-        });
-
-        if (!resp.ok) {
-          const errBody = await resp.text();
-          const discord = await sendDiscordWebhook({
-            enabled: wantsDiscordSecondary(body),
-            webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
-            text: text || `Slack ${channel} notification failed.`,
-            username: body.discord_username ?? body.username,
-            channel,
-          });
-          return json({
-            error: `slack webhook failed: ${resp.status}`,
-            detail: errBody.slice(0, 500),
-            channel,
-            envKey,
-            discord,
-          }, 502);
-        }
-
-        const discord = await sendDiscordWebhook({
-          enabled: wantsDiscordSecondary(body),
-          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
-          text: text || `Slack ${channel} notification mirrored to Discord.`,
-          username: body.discord_username ?? body.username,
+        const notifyRes = await notifySlackWithDiscordFailover({
+          body,
           channel,
+          text,
+          blocks,
+          getEnv: dependencies.getEnv,
+          fetcher: dependencies.fetcher,
         });
-
-        return json({
-          success: true,
-          channel,
-          envKey,
-          status: resp.status,
-          discord,
-        });
+        return json(notifyRes.payload, notifyRes.status);
       }
 
       case "discord.notify": {
@@ -1570,12 +1538,15 @@ export async function handleCoreHubRequest(
           return json({ error: "text or message required" }, 400);
         }
 
+        const getEnv = dependencies.getEnv ??
+          ((name: string) => Deno.env.get(name));
         const discord = await sendDiscordWebhook({
           enabled: true,
-          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+          webhookUrl: getEnv("DISCORD_WEBHOOK_URL") ?? "",
           text,
           username: body.discord_username ?? body.username,
           channel: typeof body.channel === "string" ? body.channel : undefined,
+          fetcher: dependencies.fetcher,
         });
 
         return json(
@@ -2955,6 +2926,89 @@ description: ${pageDescription}
         });
         if (rErr) return json({ error: rErr.message }, 500);
         return json({ success: true });
+      }
+
+      case "async_job.enqueue": {
+        const res = await handleAsyncJobEnqueue(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "async_job.status": {
+        const res = await handleAsyncJobStatus(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "async_job.list": {
+        const res = await handleAsyncJobList(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "async_job.update_status": {
+        const res = await handleAsyncJobUpdateStatus(
+          createSupabaseAsyncJobStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "stage_gate.list": {
+        const res = await handleStageGateList(
+          createSupabaseStageGateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "stage_gate.submit": {
+        const res = await handleStageGateSubmit(
+          createSupabaseStageGateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "stage_gate.decide": {
+        const res = await handleStageGateDecide(
+          createSupabaseStageGateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "external_diff.rule.list":
+      case "external_diff.rule.upsert":
+      case "external_diff.alert.list":
+      case "external_diff.alert.acknowledge":
+      case "external_diff.snapshot_and_detect":
+      case "external_diff.batch_scan": {
+        const res = await handleExternalDiffAction({
+          action,
+          body,
+          userId,
+          isServiceRole,
+          store: createSupabaseExternalDiffStore(
+            admin,
+            dependencies.fetcher,
+            dependencies.getEnv,
+          ),
+        });
+        return json(res.body, res.status);
       }
 
       default:

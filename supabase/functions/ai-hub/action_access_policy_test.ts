@@ -12,6 +12,9 @@ import {
 Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
   assertEquals(aiHubActionAccess("university.content"), "public");
   assertEquals(aiHubActionAccess("judgment.get"), "authenticated");
+  assertEquals(aiHubActionAccess("quota.daily_status"), "authenticated");
+  assertEquals(aiHubActionAccess("data_sources.status"), "authenticated");
+  assertEquals(aiHubActionAccess("data_sources.register"), "authenticated");
   assertEquals(
     aiHubActionAccess("edge_llm.invoke"),
     "authenticated_or_service_role",
@@ -201,6 +204,54 @@ Deno.test("disjointness of action registry sets", () => {
       AUTHENTICATED_AI_HUB_ACTIONS.has(a),
       false,
       `${a} is in both service_role and authenticated`,
+    );
+  }
+});
+
+Deno.test("prompt_cache.* and agent.safety_checkpoint.* allow signed-in and service-role callers while blocking anonymous", () => {
+  const actions = [
+    "prompt_cache.build_payload",
+    "prompt_cache.record_metric",
+    "prompt_cache.monitor_summary",
+    "prompt_cache.check_renewal",
+    "agent.safety_checkpoint.evaluate",
+    "agent.safety_checkpoint.list",
+    "agent.safety_checkpoint.approve",
+    "agent.safety_checkpoint.reject",
+  ];
+  for (const action of actions) {
+    assertEquals(aiHubActionAccess(action), "authenticated_or_service_role");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      { allowed: true },
+    );
+  }
+});
+
+Deno.test("agent.sandbox.* requires authenticated users and blocks anonymous callers", () => {
+  const sandboxActions = [
+    "agent.sandbox.evaluate",
+    "agent.sandbox.execute_isolated",
+    "agent.sandbox.audit_list",
+    "agent.sandbox.policy_upsert",
+  ];
+  for (const action of sandboxActions) {
+    assertEquals(aiHubActionAccess(action), "authenticated");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
     );
   }
 });

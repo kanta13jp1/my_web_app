@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_balance_observation.dart';
@@ -12,11 +14,15 @@ class AssetBalanceHistoryControl extends StatelessWidget {
     required this.accountName,
     required this.latest,
     required this.loadPage,
+    this.ownerId,
+    this.ownerChanges,
   });
 
   final String accountName;
   final AssetBalanceObservation? latest;
   final AssetBalanceHistoryLoader loadPage;
+  final String? ownerId;
+  final Stream<String?>? ownerChanges;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +42,8 @@ class AssetBalanceHistoryControl extends StatelessWidget {
             builder: (_) => _AssetBalanceHistoryDialog(
               accountName: accountName,
               loadPage: loadPage,
+              ownerId: ownerId,
+              ownerChanges: ownerChanges,
             ),
           ),
           icon: const Icon(Icons.history, size: 18),
@@ -50,10 +58,14 @@ class _AssetBalanceHistoryDialog extends StatefulWidget {
   const _AssetBalanceHistoryDialog({
     required this.accountName,
     required this.loadPage,
+    this.ownerId,
+    this.ownerChanges,
   });
 
   final String accountName;
   final AssetBalanceHistoryLoader loadPage;
+  final String? ownerId;
+  final Stream<String?>? ownerChanges;
 
   @override
   State<_AssetBalanceHistoryDialog> createState() =>
@@ -67,22 +79,40 @@ class _AssetBalanceHistoryDialogState
   bool _hasMore = true;
   bool _failed = false;
   int _offset = 0;
+  bool _invalidated = false;
+  StreamSubscription<String?>? _ownerSubscription;
 
   @override
   void initState() {
     super.initState();
+    _ownerSubscription = widget.ownerChanges?.listen((owner) {
+      if (!mounted || owner == widget.ownerId || _invalidated) return;
+      setState(() {
+        _invalidated = true;
+        _rows.clear();
+        _loading = false;
+        _hasMore = false;
+        _failed = false;
+      });
+    });
     _loadNext();
   }
 
+  @override
+  void dispose() {
+    unawaited(_ownerSubscription?.cancel());
+    super.dispose();
+  }
+
   Future<void> _loadNext() async {
-    if (_loading || !_hasMore) return;
+    if (_invalidated || _loading || !_hasMore) return;
     setState(() {
       _loading = true;
       _failed = false;
     });
     try {
       final page = await widget.loadPage(_offset);
-      if (!mounted) return;
+      if (!mounted || _invalidated) return;
       setState(() {
         final ids = _rows.map((row) => row.id).whereType<int>().toSet();
         for (final row in page) {
@@ -97,7 +127,7 @@ class _AssetBalanceHistoryDialogState
         _loading = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || _invalidated) return;
       setState(() {
         _loading = false;
         _failed = true;
@@ -124,7 +154,8 @@ class _AssetBalanceHistoryDialogState
             Expanded(
               child: ListView(
                 children: [
-                  if (_rows.isEmpty && !_loading && !_failed)
+                  if (_invalidated) const Text('利用者が変更されました。履歴を閉じて開き直してください。'),
+                  if (!_invalidated && _rows.isEmpty && !_loading && !_failed)
                     const Text('残高履歴はありません。'),
                   for (final row in _rows)
                     Semantics(

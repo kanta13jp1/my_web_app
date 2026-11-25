@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>紅富士と雲海・芦ノ湖フライトシネマ // Procedural Mt. Fuji &amp; Sea of Clouds (Pure WebGL2)</title>
+<style>
+  :root { --serif: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", Georgia, serif; --mono: ui-monospace, Consolas, monospace; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #070914; color: #fff; font-family: var(--serif); }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  .title-card {
+    position: absolute; top: 38px; right: 44px; text-align: right; pointer-events: none;
+    transition: opacity 0.4s ease;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
+  }
+  .title-card.hide { opacity: 0; }
+  .title-card h1 { font-size: 36px; font-weight: 500; letter-spacing: 0.28em; color: #fff7ed; }
+  .title-card p { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.24em; color: rgba(254, 243, 199, 0.85); margin-top: 6px; }
+  .pill-bar {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-wrap: wrap; gap: 7px; align-items: center;
+    background: rgba(8, 11, 22, 0.70); border: 1px solid rgba(254, 215, 170, 0.30);
+    border-radius: 999px; padding: 5px 14px; backdrop-filter: blur(8px);
+    font-family: var(--mono); transition: opacity 0.35s ease;
+  }
+  .pill-bar.minimal { opacity: 0.22; }
+  .pill-bar.minimal:hover { opacity: 1; }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    color: #f1f5f9; background: rgba(18, 24, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 999px;
+    padding: 4px 11px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: #fb923c; color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #ea580c, #fb923c); border-color: #fed7aa; color: #160904; }
+  .cbtn.act-bl { background: linear-gradient(90deg, #0284c7, #38bdf8); border-color: #bae6fd; color: #04101c; }
+  .cbtn.act-nt { background: linear-gradient(90deg, #4338ca, #818cf8); border-color: #c7d2fe; color: #fff; }
+  .sl { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #fed7aa; }
+  input[type="range"] { width: 84px; accent-color: #fb923c; cursor: pointer; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="koto">
+<canvas id="gl" width="960" height="540"></canvas>
+
+<div class="title-card" id="titleCard">
+  <h1>紅富士</h1>
+  <p>MOUNT FUJI · LAKE ASHI · SEA OF CLOUDS</p>
+</div>
+
+<div class="pill-bar" id="pillBar">
+  <button class="cbtn act" id="tDawn">🌅 紅富士（朝焼け）</button>
+  <button class="cbtn" id="tDay">⛰ 蒼天（快晴）</button>
+  <button class="cbtn" id="tNight">🌌 星空＆天の川</button>
+  <div class="sl"><span>雲海</span><input type="range" id="cloudSl" min="0" max="100" value="58" aria-label="雲海密度" /></div>
+  <button class="cbtn" id="btnHud">🎬 HUDゼロ</button>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  const VS = `#version 300 es
+  out vec2 vUV;
+  void main() {
+    vec2 p = vec2((gl_VertexID & 1) * 4 - 1, (gl_VertexID & 2) * 2 - 1);
+    vUV = p * 0.5 + 0.5;
+    gl_Position = vec4(p, 0.0, 1.0);
+  }`;
+
+  // Full-screen Pure WebGL2 Raymarched Mt. Fuji + Lake Ashi Reflection + Layered Volumetric Sea of Clouds + Rayleigh Sky + Milky Way
+  const FS = `#version 300 es
+  precision highp float;
+  in vec2 vUV;
+  uniform float uTime;
+  uniform float uPhase; // 0 = Dawn Red Fuji, 1 = Azure Day, 2 = Starry Milky Way
+  uniform float uCloud;
+  uniform vec2 uLook;   // yaw, pitch
+  uniform vec3 uCamOff; // free flight offset
+  out vec4 outCol;
+
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p) {
+    vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+    return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+  }
+  float fbm2(vec2 p) {
+    mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+    return 0.62 * noise(p) + 0.38 * noise(rot * p * 2.08);
+  }
+  float fbm(vec2 p) {
+    float v = 0.0, a = 0.5;
+    mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+    for (int i = 0; i < 3; i++) { v += a * noise(p); p = rot * p * 2.05; a *= 0.5; }
+    return v;
+  }
+
+  // Realistic Mt. Fuji radial elevation profile + Hoei crater ridge + surrounding Hakone hills
+  float terrainH(vec2 p) {
+    vec2 fp = p - vec2(0.0, -18.0);
+    float r = length(fp);
+    // Iconic hyperbolic volcanic cone with flat summit crater & subtle Hoei flank shoulder
+    float cone = 7.4 * exp(-pow(r * 0.095, 1.48));
+    float crater = smoothstep(0.95, 0.0, r) * 0.55;
+    float ridges = (fbm2(fp * 0.42) - 0.5) * 0.42 * smoothstep(0.4, 3.0, r) * exp(-r * 0.06);
+    float hoei = 0.55 * exp(-length(fp - vec2(2.8, 2.2)) * 0.72);
+    float fuji = max(0.0, cone - crater + ridges + hoei);
+
+    // Hakone caldera ridges framing Lake Ashi mirror basin on left & right foreground
+    float hWave = 0.55 + 0.45 * sin(p.x * 0.28 + p.y * 0.16) * cos(p.y * 0.21 - p.x * 0.14);
+    float bank = smoothstep(4.2, 13.5, abs(p.x)) * (0.48 + 0.88 * hWave) * smoothstep(-10.0, 2.0, p.y);
+    return max(fuji, bank);
+  }
+
+  vec3 terrainNorm(vec2 p) {
+    vec2 e = vec2(0.08, 0.0);
+    return normalize(vec3(terrainH(p-e.xy)-terrainH(p+e.xy), 2.0*e.x, terrainH(p-e.yx)-terrainH(p+e.yx)));
+  }
+
+  vec3 skyColor(vec3 rd, float phase, float time) {
+    float y = max(0.0, rd.y);
+    vec3 dawnTop = vec3(0.09, 0.14, 0.34), dawnMid = vec3(0.72, 0.34, 0.42), dawnHor = vec3(1.0, 0.62, 0.38);
+    vec3 dayTop  = vec3(0.10, 0.36, 0.78), dayMid  = vec3(0.38, 0.68, 0.94), dayHor  = vec3(0.84, 0.92, 0.98);
+    vec3 ngtTop  = vec3(0.015, 0.025, 0.07), ngtMid = vec3(0.04, 0.07, 0.17), ngtHor = vec3(0.09, 0.14, 0.28);
+
+    float t1 = clamp(phase, 0.0, 1.0), t2 = clamp(phase - 1.0, 0.0, 1.0);
+    vec3 top = mix(mix(dawnTop, dayTop, t1), ngtTop, t2);
+    vec3 mid = mix(mix(dawnMid, dayMid, t1), ngtMid, t2);
+    vec3 hor = mix(mix(dawnHor, dayHor, t1), ngtHor, t2);
+
+    vec3 col = mix(hor, mid, smoothstep(0.0, 0.26, y));
+    col = mix(col, top, smoothstep(0.22, 0.75, y));
+
+    vec3 sunDir = normalize(mix(mix(vec3(0.58, 0.12, -0.80), vec3(0.45, 0.56, -0.68), t1), vec3(-0.35, 0.48, -0.80), t2));
+    float sd = max(dot(rd, sunDir), 0.0);
+    vec3 sunCol = mix(mix(vec3(1.0, 0.64, 0.32), vec3(1.0, 0.96, 0.88), t1), vec3(0.82, 0.90, 1.0), t2);
+    col += sunCol * (pow(sd, 12.0) * 0.45 + pow(sd, 240.0) * 1.4);
+
+    // Milky Way & Stars at night
+    if (t2 > 0.05 && rd.y > 0.02) {
+      vec2 suv = rd.xz / (rd.y + 0.35);
+      float band = exp(-abs(suv.x * 0.65 - suv.y * 0.55 - 0.18) * 3.4);
+      float mw = fbm(suv * 3.2) * band;
+      col += vec3(0.32, 0.44, 0.78) * mw * t2 * 0.85;
+      vec2 sg = floor(suv * 120.0);
+      float st = step(0.992, hash(sg)) * (0.55 + 0.45 * sin(time * 2.6 + hash(sg) * 30.0));
+      col += vec3(0.92, 0.96, 1.0) * st * t2 * smoothstep(0.02, 0.16, rd.y);
+    }
+    return col;
+  }
+
+  vec3 shadeTerrain(vec3 p, vec3 rd, float dist, float phase) {
+    vec3 N = terrainNorm(p.xz);
+    float t1 = clamp(phase, 0.0, 1.0), t2 = clamp(phase - 1.0, 0.0, 1.0);
+    vec3 sunDir = normalize(mix(mix(vec3(0.65, 0.18, 0.72), vec3(0.45, 0.62, 0.62), t1), vec3(-0.35, 0.52, 0.78), t2));
+    vec3 sunCol = mix(mix(vec3(1.55, 0.56, 0.34), vec3(1.25, 1.18, 1.08), t1), vec3(0.38, 0.52, 0.88), t2);
+    vec3 ambCol = mix(mix(vec3(0.28, 0.22, 0.36), vec3(0.34, 0.48, 0.70), t1), vec3(0.08, 0.12, 0.24), t2);
+
+    // Snowline with wind-swept streaks on upper Fuji
+    float snowNoise = fbm(p.xz * 0.85) * 1.1;
+    float snow = smoothstep(3.35, 4.45, p.y + snowNoise * 0.65) * smoothstep(0.45, 0.78, N.y);
+    vec3 rockCol = mix(vec3(0.11, 0.14, 0.16), vec3(0.22, 0.16, 0.18), smoothstep(0.8, 3.2, p.y));
+    vec3 snowCol = mix(vec3(1.0, 0.82, 0.76), vec3(0.96, 0.98, 1.0), t1); // Red Fuji alpenglow on snow!
+    vec3 alb = mix(rockCol, snowCol, snow);
+
+    float diff = max(dot(N, sunDir), 0.0);
+    vec3 col = alb * (ambCol + sunCol * diff);
+    // Warm crimson alpenglow accent on Red Fuji dawn
+    col += vec3(0.62, 0.16, 0.12) * snow * diff * (1.0 - t1) * 0.65;
+
+    float fog = 1.0 - exp(-dist * 0.022);
+    return mix(col, skyColor(rd, phase, uTime), clamp(fog, 0.0, 0.88));
+  }
+
+  float raymarch(vec3 ro, vec3 rd, out float hitDist, bool fast) {
+    float t = 0.6;
+    int maxSteps = fast ? 30 : 48;
+    float minStep = fast ? 0.34 : 0.22;
+    float stepScale = fast ? 0.64 : 0.54;
+    for (int i = 0; i < 48; i++) {
+      if (i >= maxSteps) break;
+      vec3 p = ro + rd * t;
+      float h = terrainH(p.xz);
+      float d = p.y - h;
+      if (d < 0.04) { hitDist = t; return 1.0; }
+      t += max(minStep, d * stepScale);
+      if (t > 44.0) break;
+    }
+    hitDist = 44.0;
+    return 0.0;
+  }
+
+  void main() {
+    vec2 p = (vUV * 2.0 - 1.0) * vec2(1280.0 / 720.0, 1.0);
+    vec3 ro = vec3(sin(uTime * 0.18) * 1.6, 2.25 + sin(uTime * 0.25) * 0.18, 8.8) + uCamOff;
+    float cy = cos(uLook.x), sy = sin(uLook.x), cp = cos(uLook.y), sp = sin(uLook.y);
+    vec3 fwd = normalize(vec3(sy * cp, sp - 0.03, -cy * cp));
+    vec3 right = normalize(cross(fwd, vec3(0.0, 1.0, 0.0)));
+    vec3 up = cross(right, fwd);
+    vec3 rd = normalize(fwd * 1.55 + right * p.x + up * p.y);
+
+    vec3 col = skyColor(rd, uPhase, uTime);
+    float hd;
+    float hit = raymarch(ro, rd, hd, false);
+    if (hit > 0.5) {
+      col = shadeTerrain(ro + rd * hd, rd, hd, uPhase);
+    }
+
+    // Lake Ashi Mirror Reflection Plane at y = 0.56 (creates crystal-clear Upside-Down Red Fuji / 逆さ富士!)
+    if (rd.y < -0.002) {
+      float wt = (0.56 - ro.y) / rd.y;
+      if (wt > 0.0 && wt < hd) {
+        vec3 wp = ro + rd * wt;
+        float rip = (fbm2(wp.xz * 2.6 + vec2(uTime * 0.5, -uTime * 0.35)) - 0.5) * 0.028;
+        vec3 rrd = normalize(vec3(rd.x + rip, abs(rd.y) + 0.012, rd.z + rip));
+        vec3 rcol = skyColor(rrd, uPhase, uTime);
+        float rhd;
+        if (raymarch(wp + vec3(0.0, 0.08, 0.0), rrd, rhd, true) > 0.5) {
+          rcol = shadeTerrain(wp + rrd * rhd, rrd, rhd, uPhase);
+        }
+        float fres = 0.42 + 0.58 * pow(1.0 - max(0.0, -rd.y), 2.5);
+        vec3 waterDeep = mix(vec3(0.06, 0.09, 0.18), vec3(0.02, 0.04, 0.10), clamp(uPhase - 1.0, 0.0, 1.0));
+        col = mix(waterDeep, rcol * 0.94, fres);
+      }
+    }
+
+    // Volumetric Layered Sea of Clouds gliding around Mt. Fuji base (y = 1.05..2.0)
+    if (uCloud > 0.02) {
+      float t1 = clamp(uPhase, 0.0, 1.0), t2 = clamp(uPhase - 1.0, 0.0, 1.0);
+      vec3 clDay = vec3(0.98, 0.99, 1.0), clDawn = vec3(1.0, 0.72, 0.56), clNgt = vec3(0.24, 0.32, 0.56);
+      vec3 clCol = mix(mix(clDawn, clDay, t1), clNgt, t2);
+      float acc = 0.0;
+      for (int i = 0; i < 3; i++) {
+        float cyLayer = 0.85 + float(i) * 0.42;
+        if (abs(rd.y) > 0.004) {
+          float ct = (cyLayer - ro.y) / rd.y;
+          if (ct > 2.5 && ct < min(hd, 32.0)) {
+            vec3 cp3 = ro + rd * ct;
+            float n = fbm(cp3.xz * 0.17 + vec2(uTime * 0.16 * (1.0 + float(i)*0.25), float(i) * 2.1));
+            float ring = smoothstep(5.5, 13.0, length(cp3.xz - vec2(0.0, -18.0))) * smoothstep(2.0, 9.0, ct);
+            acc += smoothstep(0.42, 0.82, n) * ring * uCloud * 0.44;
+          }
+        }
+      }
+      col = mix(col, clCol, clamp(acc, 0.0, 0.86));
+    }
+
+    // Filmic ACES + subtle vignette
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    float vig = 1.0 - dot(vUV - 0.5, vUV - 0.5) * 0.35;
+    outCol = vec4(pow(clamp(col * vig, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+  }`;
+
+  function sh(t, s) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  const vao = gl.createVertexArray();
+
+  const uTime = gl.getUniformLocation(prog, 'uTime');
+  const uPhase = gl.getUniformLocation(prog, 'uPhase');
+  const uCloud = gl.getUniformLocation(prog, 'uCloud');
+  const uLook = gl.getUniformLocation(prog, 'uLook');
+  const uCamOff = gl.getUniformLocation(prog, 'uCamOff');
+
+  let phase = 0.0, tgtPhase = 0.0, cloud = 0.42;
+  let yaw = 0.0, pitch = -0.06, camOff = [0, -0.85, 0];
+  let simT = 0, hudHidden = false, dragging = false, lx = 0, ly = 0;
+  const keys = {};
+
+  const tBtns = [
+    { el: document.getElementById('tDawn'), cls: 'act', p: 0 },
+    { el: document.getElementById('tDay'), cls: 'act-bl', p: 1 },
+    { el: document.getElementById('tNight'), cls: 'act-nt', p: 2 },
+  ];
+  function setTime(idx) {
+    tgtPhase = tBtns[idx].p;
+    tBtns.forEach((b, i) => { b.el.classList.remove('act', 'act-bl', 'act-nt'); if (i === idx) b.el.classList.add(b.cls); });
+    window.NeonAudio?.sfx('chime', 0.85 + idx * 0.18);
+  }
+  tBtns.forEach((b, i) => b.el.addEventListener('click', () => setTime(i)));
+  document.getElementById('cloudSl').addEventListener('input', (e) => { cloud = Number(e.target.value) / 100; });
+  document.getElementById('btnHud').addEventListener('click', (e) => {
+    hudHidden = !hudHidden;
+    document.getElementById('titleCard').classList.toggle('hide', hudHidden);
+    document.getElementById('pillBar').classList.toggle('minimal', hudHidden);
+    e.currentTarget.textContent = hudHidden ? '🎬 タイトル表示' : '🎬 HUDゼロ';
+  });
+
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    yaw = Math.max(-0.85, Math.min(0.85, yaw + (e.clientX - lx) * 0.004));
+    pitch = Math.max(-0.32, Math.min(0.45, pitch - (e.clientY - ly) * 0.003));
+    lx = e.clientX; ly = e.clientY;
+  });
+  window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('紅富士→蒼天→天の川を切替 · ドラッグ: 視点回転 · WASD/矢印: 空撮移動 · HUDゼロ対応');
+  });
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    simT += dt;
+    phase += (tgtPhase - phase) * Math.min(1, dt * 2.4);
+
+    const spd = 4.2 * dt;
+    if (keys['KeyW'] || keys['ArrowUp']) camOff[2] = Math.max(-10, camOff[2] - spd);
+    if (keys['KeyS'] || keys['ArrowDown']) camOff[2] = Math.min(5, camOff[2] + spd);
+    if (keys['KeyA'] || keys['ArrowLeft']) camOff[0] = Math.max(-6, camOff[0] - spd);
+    if (keys['KeyD'] || keys['ArrowRight']) camOff[0] = Math.min(6, camOff[0] + spd);
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(prog);
+    gl.uniform1f(uTime, simT);
+    gl.uniform1f(uPhase, phase);
+    gl.uniform1f(uCloud, cloud);
+    gl.uniform2f(uLook, yaw, pitch);
+    gl.uniform3fv(uCamOff, camOff);
+    gl.bindVertexArray(vao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>

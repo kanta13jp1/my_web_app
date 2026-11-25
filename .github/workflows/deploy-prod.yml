@@ -47,7 +47,7 @@ on:
           - web_only
 
 concurrency:
-  group: deploy-prod
+  group: deploy-production
   # Running deployments are never cancelled; GitHub may replace one pending run.
   # Release operators must inspect exact SHA and deployment state before retrying.
   cancel-in-progress: false
@@ -76,7 +76,7 @@ jobs:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
     needs: ci
-    if: always() && vars.PRODUCTION_DEPLOY_HOLD == 'false' && (needs.ci.result == 'success' || needs.ci.result == 'skipped')
+    if: ${{ !cancelled() && vars.PRODUCTION_DEPLOY_HOLD == 'false' && ((github.event_name == 'push' && needs.ci.result == 'skipped') || (github.event_name == 'workflow_dispatch' && needs.ci.result == 'success')) }}
     timeout-minutes: 45
     environment:
       name: production
@@ -642,6 +642,9 @@ jobs:
           # Internal Issue #1352 decision-chain writer. Gateway JWT verification
           # plus an exact service-role bearer check is enforced in-function.
           deploy_function decision-events
+          # Issue #2659 RLHF bad-output -> GitHub Issue (AI-Feedback) webhook.
+          # Database Webhooks verify HMAC signatures; browser calls verify auth.getUser().
+          deploy_function rlhf-feedback-webhook --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
           deploy_function core-hub --no-verify-jwt
@@ -689,8 +692,10 @@ jobs:
           deploy_function viral-video-ad-generator --no-verify-jwt
           deploy_function memory-search-hub --no-verify-jwt
           deploy_function mcp-well-known --no-verify-jwt
+          deploy_function did-mcp-proxy --no-verify-jwt
+          deploy_function external-ai-webhook --no-verify-jwt
 
-          # Total: 33 functions deployed (ハードキャップ50本に対し33本 — 余裕17本)
+          # Total: 36 functions deployed (ハードキャップ50本に対し36本 — 余裕14本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -745,17 +750,43 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+      - name: Validate Sentry DSN before build
+        if: steps.changes.outputs.web == 'true'
+        shell: bash
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          from urllib.parse import urlparse
+
+          raw = os.environ.get("SENTRY_DSN", "").strip()
+          if not raw:
+              print("::warning::SENTRY_DSN is empty; Flutter Web will build with Sentry disabled.")
+              sys.exit(0)
+          if any(ch.isspace() for ch in raw):
+              print("::error::SENTRY_DSN contains whitespace and is malformed (check GitHub Secret SENTRY_DSN).")
+              sys.exit(1)
+          parsed = urlparse(raw)
+          path_ok = any(seg for seg in parsed.path.split("/"))
+          if parsed.scheme not in ("http", "https") or not parsed.hostname or not parsed.username or not path_ok:
+              print("::error::SENTRY_DSN is not a valid Sentry DSN URI (check GitHub Secret SENTRY_DSN).")
+              sys.exit(1)
+          print(f"OK: SENTRY_DSN URI structure validated (scheme={parsed.scheme}, host={parsed.hostname}).")
+          PY
+
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
           flutter build web \
             --release \
+            --source-maps \
             --pwa-strategy=none \
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
+            "--dart-define=SUPABASE_URL=$SUPABASE_URL" \
+            "--dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=${{ steps.ai_university_catalog.outputs.provider_count }} \
@@ -763,14 +794,20 @@ jobs:
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
-            --dart-define=POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN \
-            --dart-define=POSTHOG_HOST=$POSTHOG_HOST \
+            "--dart-define=POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN" \
+            "--dart-define=POSTHOG_HOST=$POSTHOG_HOST" \
+            "--dart-define=SENTRY_DSN=$SENTRY_DSN" \
+            --dart-define=SENTRY_ENVIRONMENT=production \
+            --dart-define=SENTRY_RELEASE=${{ steps.version.outputs.version }}+${{ github.run_number }} \
+            "--dart-define=SENTRY_TRACES_SAMPLE_RATE_PERCENT=$SENTRY_TRACES_SAMPLE_RATE_PERCENT" \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
           POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE_PERCENT: ${{ vars.SENTRY_TRACES_SAMPLE_RATE_PERCENT || '10' }}
 
       - name: Render public Supabase URL into web shell
         if: steps.changes.outputs.web == 'true'
@@ -785,10 +822,52 @@ jobs:
           cp web/release-notes.json build/web/release-notes.json
           cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
+      - name: Optimize bundled web fonts (subset NotoSansJP & NotoColorEmoji)
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1 || ! dpkg -s fonts-noto-cjk >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools fonts-noto-cjk
+          fi
+          /usr/bin/python3 scripts/optimize_web_fonts.py --build-dir build/web --repo-root . --require-fonts
+
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
+
+      - name: Setup Node for web assets and Firebase CLI
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Cache Playwright Chromium for OGP cards
+        id: playwright_cache
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Generate and verify build-time OGP and X social cards
+        if: steps.changes.outputs.web == 'true'
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright_cache.outputs.cache-hit }}
+        run: |
+          if [ ! -d node_modules/@playwright/test ]; then
+            npm ci --ignore-scripts
+          fi
+          # ubuntu-latest ships /usr/bin/google-chrome; Playwright browser download is a cached fallback only.
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/google-chrome-stable ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            if [ "$PLAYWRIGHT_CACHE_HIT" != "true" ]; then
+              npx playwright install --with-deps chromium
+            else
+              npx playwright install-deps chromium
+            fi
+          fi
+          node scripts/generate_ogp_cards.mjs --out-dir build/web
 
       - name: Prerender per-route static HTML + sitemap (SEO)
         if: steps.changes.outputs.web == 'true'
@@ -814,17 +893,54 @@ jobs:
             --root-dir build/web \
             --public-routes web/seo/public-routes.json
 
-      - name: Setup Node for Firebase CLI
+      - name: Package verified Sea Shelter 3D assets
         if: steps.changes.outputs.web == 'true'
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        uses: ./.github/actions/prepare-sea-shelter-arena
         with:
-          node-version: "24"
-          cache: npm
+          web-root: build/web
+
+      - name: Upload Sentry sourcemaps and register release
+        if: steps.changes.outputs.web == 'true'
+        continue-on-error: true
+        shell: bash
+        env:
+          SENTRY_URL: ${{ vars.SENTRY_URL || 'https://us.sentry.io' }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_RELEASE: ${{ steps.version.outputs.version }}+${{ github.run_number }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ] || [ -z "$SENTRY_ORG" ] || [ -z "$SENTRY_PROJECT" ]; then
+            echo "::notice::Sentry release/sourcemap upload skipped (SENTRY_AUTH_TOKEN / SENTRY_ORG / SENTRY_PROJECT not fully configured)."
+            exit 0
+          fi
+          shopt -s nullglob
+          SENTRY_BUNDLE_FILES=(
+            build/web/main.dart.js
+            build/web/main.dart.js.map
+            build/web/main.dart.js_*.part.js
+            build/web/main.dart.js_*.part.js.map
+          )
+          shopt -u nullglob
+          if [ "${#SENTRY_BUNDLE_FILES[@]}" -eq 0 ]; then
+            echo "::notice::Sentry sourcemap upload skipped (no Flutter JS/sourcemap artifacts matched in build/web)."
+            exit 0
+          fi
+          npx --yes @sentry/cli releases new "$SENTRY_RELEASE"
+          npx --yes @sentry/cli sourcemaps inject "${SENTRY_BUNDLE_FILES[@]}"
+          npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" "${SENTRY_BUNDLE_FILES[@]}"
+          npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto --ignore-missing || echo "::warning::Sentry releases set-commits failed for $SENTRY_RELEASE"
+          npx --yes @sentry/cli releases finalize "$SENTRY_RELEASE"
+          npx --yes @sentry/cli releases deploys "$SENTRY_RELEASE" new -e production
+
+      - name: Strip sourcemap files before Firebase deploy
+        if: steps.changes.outputs.web == 'true'
+        shell: bash
+        run: find build/web -name "*.map" -type f -delete
 
       - name: Deploy to Firebase Hosting (Production)
         if: steps.changes.outputs.web == 'true'
         id: firebase_cli_deploy
-        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
         shell: bash
         run: |
           set -euo pipefail
@@ -839,10 +955,30 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          npx -y firebase-tools@latest deploy \
+          deploy_status=0
+          npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
-            --json > "$output_file"
+            --json > "$output_file" || deploy_status=$?
+          if [ "$deploy_status" -ne 0 ]; then
+            echo "::error::Firebase Hosting deployment failed (exit $deploy_status)."
+            diagnostic_status=0
+            python3 - "$output_file" <<'PY' || diagnostic_status=$?
+          import json
+          import sys
+          from scripts.security_review_input import redact_secrets_with_count
+
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              document = json.load(stream)
+          detail = document.get("error") or document.get("message") or "No error message returned"
+          message = detail.get("message", "No error message returned") if isinstance(detail, dict) else str(detail)
+          sys.stderr.write(redact_secrets_with_count(str(message))[0][:2000] + "\n")
+          PY
+            if [ "$diagnostic_status" -ne 0 ]; then
+              echo "::error::Firebase returned no readable JSON diagnostic."
+            fi
+            exit "$deploy_status"
+          fi
 
           cat "$output_file"
 
@@ -858,20 +994,38 @@ jobs:
 
       - name: Verify deploy reflects current commit
         if: steps.changes.outputs.web == 'true'
-        continue-on-error: true
+        env:
+          DEPLOY_URL: ${{ steps.firebase_cli_deploy.outputs.details_url }}
+          EXPECTED: ${{ github.sha }}
+          PUBLIC_MANIFEST: https://my-web-app-b67f4.web.app/version.json
         run: |
-          EXPECTED="${{ github.sha }}"
-          SITE="https://my-web-app-b67f4.web.app/version.json"
-          for i in 1 2 3 4; do
-            sleep 15
-            DEPLOYED=$(curl -sf "$SITE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
-            if [ "$DEPLOYED" = "$EXPECTED" ]; then
-              echo "Deploy verified: $EXPECTED is live"
-              exit 0
+          if [[ ! "$DEPLOY_URL" =~ ^https://[a-z0-9-]+\.web\.app/?$ ]]; then
+            echo "::error::Missing or invalid Firebase Hosting deployment URL."
+            exit 1
+          fi
+          # Require both the actual Hosting destination and the Issue's public
+          # entry point. A different project must never count as public proof.
+          for SITE in "${DEPLOY_URL%/}/version.json" "$PUBLIC_MANIFEST"; do
+            VERIFIED=false
+            for i in 1 2 3 4; do
+              sleep 15
+              if RESPONSE=$(curl -fsS --connect-timeout 5 --max-time 10 -H "Cache-Control: no-cache" "${SITE}?expected=${EXPECTED}&attempt=${i}"); then
+                DEPLOYED=$(printf '%s' "$RESPONSE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
+              else
+                DEPLOYED=""
+              fi
+              if [ "$DEPLOYED" = "$EXPECTED" ]; then
+                VERIFIED=true
+                break
+              fi
+              echo "  attempt $i: deployed=$DEPLOYED expected=$EXPECTED"
+            done
+            if [ "$VERIFIED" != true ]; then
+              echo "::error::Deploy verification failed: a required public manifest does not match $EXPECTED."
+              exit 1
             fi
-            echo "  attempt $i: deployed=$DEPLOYED expected=$EXPECTED"
           done
-          echo "::warning::Deploy verification: production shows $DEPLOYED, expected $EXPECTED. A later queued run may have superseded this one."
+          echo "Deploy verified: $EXPECTED is live at both required endpoints."
 
       - name: Push Release Tag
         if: steps.changes.outputs.web == 'true'
@@ -983,6 +1137,40 @@ jobs:
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
           } >> $GITHUB_STEP_SUMMARY
+
+  # Status only: no production environment, secrets, or external calls.
+  deployment-status:
+    name: Explain skipped or cancelled deployment
+    needs: [ci, deploy]
+    if: always() && (needs.deploy.result == 'skipped' || needs.deploy.result == 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Summarize deployment state
+        shell: bash
+        env:
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          CI_RESULT: ${{ needs.ci.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          HOLD_VALUE: ${{ vars.PRODUCTION_DEPLOY_HOLD }}
+        run: |
+          set -euo pipefail
+          {
+            if [[ "$DEPLOY_RESULT" == "skipped" ]]; then
+              echo '## この実行の配信ジョブは未実行'
+              if [[ "${HOLD_VALUE,,}" != "false" ]]; then
+                echo '配信保留が解除されていません。'
+              elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$CI_RESULT" != "success" ]]; then
+                echo '手動配信に必要な CI が成功していません。'
+              else
+                echo '配信条件または実行状態を確認してください。'
+              fi
+            elif [[ "$DEPLOY_RESULT" == "cancelled" ]]; then
+              echo '## 配信ジョブは中断されました'
+              echo '中断前に一部が反映された可能性があり、配信先の状態は未確定です。公開版と実行履歴を確認し、結果不明の操作を再送しないでください。'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # -----------------------------------------------------------------
   # 通知ジョブ

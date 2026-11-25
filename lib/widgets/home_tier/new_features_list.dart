@@ -23,28 +23,27 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
 
   Future<void> _load() async {
     try {
-      var rows = await Supabase.instance.client
+      final dynamic rowsRaw = await Supabase.instance.client
           .from('feature_releases')
           .select('feature_route, feature_label, description, released_at')
-          .gte(
-            'released_at',
-            DateTime.now().subtract(const Duration(days: 14)).toIso8601String(),
-          )
           .order('released_at', ascending: false)
           .limit(6);
-      var fallback = false;
-      if (rows.isEmpty) {
-        // 直近14日が空でもセクションが死なないよう、最新リリースを表示する
-        rows = await Supabase.instance.client
-            .from('feature_releases')
-            .select('feature_route, feature_label, description, released_at')
-            .order('released_at', ascending: false)
-            .limit(3);
-        fallback = rows.isNotEmpty;
-      }
+      final allRows = (rowsRaw is List ? rowsRaw : const <dynamic>[])
+          .whereType<Map<String, dynamic>>()
+          .toList(growable: false);
+      final cutoff = DateTime.now().subtract(const Duration(days: 14));
+      final recentRows = allRows.where((row) {
+        final releasedAt =
+            DateTime.tryParse(row['released_at']?.toString() ?? '');
+        return releasedAt != null && !releasedAt.isBefore(cutoff);
+      }).toList(growable: false);
+      // 直近14日が空でもセクションが死なないよう、最新リリースを表示する
+      final fallback = recentRows.isEmpty && allRows.isNotEmpty;
+      final displayRows =
+          recentRows.isNotEmpty ? recentRows : allRows.take(3).toList();
       if (mounted) {
         setState(() {
-          _items = List<Map<String, dynamic>>.from(rows);
+          _items = displayRows;
           _showingLatestFallback = fallback;
           _loading = false;
         });

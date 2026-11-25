@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_payroll_deductions.dart';
+import 'package:my_web_app/widgets/asset_payslip_review_dialog.dart';
 import '../../integration_test/payslip_review_fixture.dart';
 
 Finder saveButton() => find.widgetWithText(FilledButton, '記載内容を本人確認済みにする');
@@ -133,6 +134,56 @@ void main() {
     (store.data['deductions'] as Map)['employees_pension_insurance'] = 99;
     await showPayslipReview(tester, store);
     expect(find.textContaining('項目名違いが競合'), findsOneWidget);
+    expect(
+      tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).onChanged,
+      isNull,
+    );
+    expect(tester.widget<FilledButton>(saveButton()).onPressed, isNull);
+    expect(store.writes, 0);
+  });
+
+  testWidgets(
+      'future pay_date blocks dialog confirmation and alias labels avoid unknown classification',
+      (tester) async {
+    final store = SyntheticPayslipReviewStore();
+    cleanUp(tester, store);
+    store.data = <String, dynamic>{
+      ...store.data,
+      'pay_date': '2026-11-25',
+      'gross_amount': 598307,
+      'net_amount': 452815,
+      'social_insurance_total': 86992,
+      'deductions': <String, dynamic>{
+        '健康保険料': 28224,
+        '介護保険料': 4536,
+        'employee_pension_insurance': 51240,
+        '雇用保険料': 2992,
+        '所得税': 29800,
+        '住民税': 28700,
+      },
+    };
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AssetPayslipReviewDialog(
+            store: store,
+            payslipId: 'synthetic-statement',
+            asOfDate: DateTime(2026, 11, 23),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('支給日が未来日のため、着金確認前は本人確認済みにできません。'),
+      findsOneWidget,
+    );
+    expect(find.text('未分類控除：0項目'), findsOneWidget);
+    expect(find.text('所得税：29800'), findsOneWidget);
+    expect(find.text('健康保険（別名）：28224'), findsOneWidget);
+    expect(find.text('厚生年金（別名）：51240'), findsOneWidget);
+    expect(find.textContaining('その他（健康保険料）'), findsNothing);
     expect(
       tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).onChanged,
       isNull,

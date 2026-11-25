@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "description": "Standardized local Supabase CLI and Flutter Web development defaults (#2724). Non-secret loopback template; hydrate runtime client credentials locally from supabase status into .env.development.",
+  "flutter_config_path": ".fvm/fvm_config.json",
+  "target_flutter_version": "3.38.10",
+  "supabase_config_path": "supabase/config.toml",
+  "env_output_file": ".env.development",
+  "defaults": {
+    "ENVIRONMENT": "development",
+    "FLUTTER_TARGET_VERSION": "3.38.10",
+    "SUPABASE_URL": "http://127.0.0.1:54321",
+    "SUPABASE_PUBLISHABLE_KEY": "",
+    "SUPABASE_LOCAL_STUDIO_URL": "http://127.0.0.1:54323",
+    "SUPABASE_LOCAL_INBUCKET_URL": "http://127.0.0.1:54324",
+    "SUPABASE_LOCAL_DB_PORT": "54322",
+    "SUPABASE_LOCAL_SHADOW_PORT": "54320",
+    "PUBLIC_SITE_URL": "http://127.0.0.1:3000",
+    "ENABLE_AI_FEATURES": "true",
+    "ENABLE_ANALYTICS": "false",
+    "DEBUG_MODE": "true"
+  }
+}

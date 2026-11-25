@@ -271,9 +271,9 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertEqual(result["action"], "healthy")
         self.assertEqual(result["reason"], "latest-success")
 
-    def test_notion_and_deploy_workflows_are_monitored(self) -> None:
+    def test_deploy_monitored_and_notion_sync_unscheduled(self) -> None:
         targets = {target.key: target for target in TARGETS}
-        self.assertEqual(targets["notion-sync"].event, "schedule")
+        self.assertNotIn("notion-sync", targets)
         self.assertEqual(targets["deploy-prod"].event, "push")
 
     def test_health_monitor_tolerates_github_schedule_throttling(self) -> None:

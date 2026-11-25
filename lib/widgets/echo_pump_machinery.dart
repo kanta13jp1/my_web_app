@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'echo_pump_inventory.dart';
+import 'echo_pump_motor_art.dart';
 
 const _mint = Color(0xFF9BE0CF);
 const _amber = Color(0xFFFFC785);
@@ -91,6 +92,13 @@ class _MachineryState extends AnimatedWidgetBaseState<EchoPumpMachinery> {
                   widget.drained ? '排水完了' : '冠水中',
                   widget.drained,
                 ),
+                _status(
+                  Icons.settings,
+                  !widget.repaired
+                      ? 'ポンプ要修理'
+                      : (widget.powered ? 'ポンプ通電' : 'ポンプ停止'),
+                  widget.repaired && widget.powered,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -112,6 +120,16 @@ class _MachineryState extends AnimatedWidgetBaseState<EchoPumpMachinery> {
                               water,
                               widget.powered,
                             ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 185,
+                          top: 91,
+                          width: 170,
+                          height: 168,
+                          child: EchoPumpMotorArt(
+                            repaired: widget.repaired,
+                            powered: widget.powered,
                           ),
                         ),
                         Positioned(

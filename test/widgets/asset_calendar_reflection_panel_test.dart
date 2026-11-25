@@ -31,37 +31,39 @@ class FakeRepository implements AssetCalendarReflectionStore {
 
 void main() {
   testWidgets(
-      'badges distinguish drinking dining and reading using words and color',
-      (tester) async {
-    final kinds = {
-      AssetReflectionKind.dining,
-      AssetReflectionKind.drinkingOut,
-      AssetReflectionKind.reading,
-    };
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 60,
-            height: 84,
-            child: AssetReflectionDayBadge(kinds: kinds),
+    'badges distinguish drinking dining and reading using words and color',
+    (tester) async {
+      final kinds = {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+        AssetReflectionKind.reading,
+      };
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 60,
+              height: 84,
+              child: AssetReflectionDayBadge(kinds: kinds),
+            ),
           ),
         ),
-      ),
-    );
-    expect(find.text('外食\n外飲み\n読書'), findsOneWidget);
-    expect(
-      AssetReflectionDayBadge.backgroundFor(kinds),
-      const Color(0xFFFECACA),
-    );
-    expect(
-      AssetReflectionDayBadge.backgroundFor({AssetReflectionKind.reading}),
-      const Color(0xFFBBF7D0),
-    );
-    expect(tester.takeException(), isNull);
-  });
-  testWidgets('selected day reading detail and period changes stay scoped',
-      (tester) async {
+      );
+      expect(find.text('外食\n外飲み\n読書'), findsOneWidget);
+      expect(
+        AssetReflectionDayBadge.backgroundFor(kinds),
+        const Color(0xFFFECACA),
+      );
+      expect(
+        AssetReflectionDayBadge.backgroundFor({AssetReflectionKind.reading}),
+        const Color(0xFFBBF7D0),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('selected day reading detail and period changes stay scoped', (
+    tester,
+  ) async {
     final repository = FakeRepository();
     Widget app(DateTime selected, DateTime start) => MaterialApp(
           home: Scaffold(
@@ -93,6 +95,35 @@ void main() {
     expect(find.textContaining('Confirmed reading memo'), findsNothing);
     expect(find.text('読書 0日'), findsOneWidget);
 
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('tobacco remains labelled beside dining at mobile width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 46,
+            height: 84,
+            child: AssetReflectionDayBadge(
+              kinds: {
+                AssetReflectionKind.dining,
+                AssetReflectionKind.tobaccoPurchase,
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('外食\nたばこ購入'), findsOneWidget);
+    expect(
+      AssetReflectionDayBadge.backgroundFor({
+        AssetReflectionKind.dining,
+        AssetReflectionKind.tobaccoPurchase,
+      }),
+      const Color(0xFFCBD5E1),
+    );
     expect(tester.takeException(), isNull);
   });
 }

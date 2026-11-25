@@ -83,9 +83,14 @@ class QualityGateTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            "run: flutter test --coverage --concurrency=2",
+            "run: python scripts/run_vm_test_shard.py --total-shards=2",
             workflow,
         )
+        shard_runner = (root / "scripts" / "run_vm_test_shard.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("'--coverage'", shard_runner)
+        self.assertIn("'--concurrency=2'", shard_runner)
 
     def test_analyzer_lock_is_shared_across_worktrees(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -289,6 +294,38 @@ class QualityGateTest(unittest.TestCase):
             evidence = json.loads((root / "evidence/result.json").read_text(encoding="utf-8"))
             self.assertEqual(evidence["status"], "code_findings")
             self.assertIsNone(evidence["fallback"])
+            error_report = root / "evidence/analyzer-error-report.md"
+            self.assertTrue(error_report.is_file())
+            report_text = error_report.read_text(encoding="utf-8")
+            self.assertIn("# Static Analysis Error Report", report_text)
+            self.assertIn("error - lib/a.dart:1", report_text)
+
+    def test_successful_analyzer_run_removes_stale_error_report(self) -> None:
+        primary = CommandResult(0, 0.2, False, "not_needed", "No issues found!\n")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            artifact_dir = root / "evidence"
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+            stale_report = artifact_dir / "analyzer-error-report.md"
+            stale_report.write_text("# stale\n", encoding="utf-8")
+            with (
+                patch("quality_gate.execute_gate", return_value=(primary, "acquired")),
+                patch("quality_gate.tool_version", side_effect=["Flutter test", "Dart test"]),
+            ):
+                code = run_analyzer_gate(
+                    GateCommand(
+                        "flutter analyze",
+                        ["flutter", "analyze"],
+                        "flutter",
+                        serialize_analyzer=True,
+                        capture_output=True,
+                    ),
+                    root,
+                    Path("evidence"),
+                )
+
+            self.assertEqual(code, 0)
+            self.assertFalse(stale_report.exists())
 
 
 if __name__ == "__main__":

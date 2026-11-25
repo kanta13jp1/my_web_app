@@ -56,6 +56,29 @@ class FakeOutput implements EchoPumpAudioOutput {
 void main() {
   late FakeOutput output;
   late EchoPumpAudio audio;
+  test('door cues respect mute and cancelled effects', () async {
+    final output = FakeOutput();
+    final audio = EchoPumpAudio(output: output);
+    audio.cue(EchoPumpCue.doorOpen);
+    await audio.settled;
+    expect(output.effects, isEmpty);
+    audio.setEnabled(true);
+    await audio.settled;
+    audio.cue(EchoPumpCue.doorOpen);
+    await audio.settled;
+    expect(output.effects, [EchoPumpCue.doorOpen]);
+    await audio.suspendEffects();
+    audio.cue(EchoPumpCue.doorClose);
+    await audio.settled;
+    expect(output.effectPlaying, isFalse);
+    expect(output.effects, [EchoPumpCue.doorOpen]);
+    audio.resumeEffects();
+    audio.cue(EchoPumpCue.doorClose);
+    await audio.settled;
+    expect(output.effects.last, EchoPumpCue.doorClose);
+    audio.dispose();
+  });
+
   setUp(() {
     output = FakeOutput();
     audio = EchoPumpAudio(output: output);

@@ -1,0 +1,25 @@
+# Sensitive environment & credential files
+.env
+.env.*
+!.env.example
+**/credentials*.json
+**/client_secret*.json
+**/*.pem
+**/*.key
+**/storage_state.json
+
+# Private personal/financial vault directories
+attachments/
+receipts/
+payslips/
+financial_records/
+bank_statements/
+
+# Generated tool caches and build outputs
+.dart_tool/
+build/
+.ci-logs/
+coverage/
+__pycache__/
+*.pyc
+.venv/

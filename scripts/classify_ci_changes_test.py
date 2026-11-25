@@ -63,6 +63,81 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertFalse(result["web"])
         self.assertFalse(result["deployable"])
 
+    def test_business_browser_config_requires_checks_without_deployment(self) -> None:
+        for path in [
+            "playwright.config.ts", "playwright.business-execution.config.ts",
+            "package.json", "package-lock.json",
+            "test/e2e/business_execution.spec.ts",
+            "test/fixtures/business_execution_app.dart",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["flutter"])
+                self.assertFalse(result["web"])
+                self.assertFalse(result["deployable"])
+
+    def test_fixture_infrastructure_changes_cannot_skip_its_browser_gate(self) -> None:
+        for path in [
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+            "scripts/serve_business_execution_fixture.py",
+            "scripts/serve_business_execution_fixture_test.py",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["business_execution"])
+                self.assertTrue(result["flutter"])
+                self.assertFalse(result["deployable"])
+
+    def test_lock_test_only_change_runs_its_own_required_chrome_step(self) -> None:
+        result = classify(["test/web/business_execution_lock_test.dart"])
+        self.assertTrue(result["business_execution"])
+        self.assertTrue(result["flutter"])
+        self.assertFalse(result["web"])
+        self.assertFalse(result["deployable"])
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split(
+            "      - name: Run business execution browser lock tests\n", 1,
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("id: business_execution_locks", step)
+        self.assertIn("if: steps.changes.outputs.business_execution == 'true'", step)
+        self.assertIn(
+            "run: flutter test --platform chrome "
+            "test/web/business_execution_lock_test.dart", step,
+        )
+        self.assertIn("continue-on-error: false", step)
+        self.assertNotIn("steps.changes.outputs.web", step)
+        smoke = workflow.split(
+            "      - name: Run web import smoke tests\n", 1,
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("if: steps.changes.outputs.web == 'true'", smoke)
+        self.assertNotIn("business_execution_lock_test.dart", smoke)
+
+    def test_fixture_sdk_and_asset_dependencies_require_browser_gate(self) -> None:
+        for path in [
+            ".github/actions/setup-flutter-sdk/action.yml",
+            ".github/actions/setup-flutter-sdk/install.sh",
+            "assets/fonts/test.ttf",
+            "assets/images/test.png",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["business_execution"])
+                self.assertTrue(result["flutter"])
+        self.assertFalse(classify([
+            "assets/data/tiger_remediation_status.json",
+        ])["business_execution"])
+
+    def test_unrelated_flutter_changes_do_not_build_business_fixture(self) -> None:
+        for path in [
+            "lib/pages/reading_page.dart",
+            "test/services/unrelated_test.dart",
+        ]:
+            with self.subTest(path=path):
+                self.assertFalse(classify([path])["business_execution"])
+
     def test_app_code_needs_flutter_and_web(self) -> None:
         result = classify(["lib/pages/ai_university_page.dart"])
 
@@ -151,6 +226,63 @@ class ClassifyCiChangesTest(unittest.TestCase):
 
     def test_force_all_enables_every_group(self) -> None:
         self.assertTrue(all(classify([], force_all=True).values()))
+
+    def test_web_seo_assets_scope_matches_only_font_seo_ogp_inputs(self) -> None:
+        for path in (
+            "web/index.html",
+            "web/seo/public-routes.json",
+            "assets/legal/privacy_policy.md",
+            "assets/landing_journey/03-prioritized.webp",
+            "scripts/optimize_web_fonts.py",
+            "scripts/prerender_seo_routes.py",
+            "scripts/generate_sitemap.py",
+            "scripts/generate_ogp_cards.mjs",
+            "scripts/ogp_cards.json",
+            "test/scripts/test_optimize_web_fonts.py",
+            "test/scripts/test_prerender_seo_routes.py",
+            "test/web/seo_shell_handoff.test.cjs",
+            "test/web/generate_ogp_cards.test.mjs",
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+        ):
+            with self.subTest(included=path):
+                self.assertTrue(classify([path])["web_seo_assets"])
+
+        for path in (
+            "lib/pages/reading_page.dart",
+            "supabase/functions/ai-hub/index.ts",
+            "supabase/migrations/20261101000000_test.sql",
+            "docs/README.md",
+            "assets/data/tiger_remediation_status.json",
+            ".github/workflows/dependency-license-audit.yml",
+        ):
+            with self.subTest(excluded=path):
+                self.assertFalse(classify([path])["web_seo_assets"])
+
+    def test_high_risk_review_deps_scope_matches_only_lock_and_review_inputs(
+        self,
+    ) -> None:
+        for path in (
+            "scripts/requirements-high-risk-security-review.txt",
+            "scripts/run_dual_security_review.py",
+            "scripts/test_run_dual_security_review.py",
+            ".github/workflows/high-risk-dual-security-review.yml",
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+        ):
+            with self.subTest(included=path):
+                self.assertTrue(classify([path])["high_risk_review_deps"])
+
+        for path in (
+            "lib/pages/reading_page.dart",
+            "web/index.html",
+            "docs/README.md",
+            "supabase/functions/ai-hub/index.ts",
+        ):
+            with self.subTest(excluded=path):
+                self.assertFalse(classify([path])["high_risk_review_deps"])
 
 
 if __name__ == "__main__":

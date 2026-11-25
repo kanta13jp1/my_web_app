@@ -2,39 +2,41 @@
   "schemaVersion": 1,
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
-  "sourceAsOf": "2026-10-14",
-  "sourceDocumentSha256": "03edbbbf341fca773c9b2bf713eb896c2d5daae9510c7645923f55fc8cfae0ba",
-  "candidateRowCount": 405,
+  "sourceAsOf": "2026-11-18",
+  "sourceDocumentSha256": "cf5caad9b1faa9df6bb3c1b2aa6ed25799c0a3818c1c8b06831229a8dc6bad7a",
+  "candidateRowCount": 485,
   "officialEndorsements": {
-    "totalCount": 390,
-    "incumbentCount": 160,
-    "newcomerCount": 219,
-    "formerCount": 11,
-    "prefectureCount": 41,
-    "prefecturalCount": 111,
-    "municipalCount": 279
+    "totalCount": 462,
+    "incumbentCount": 183,
+    "newcomerCount": 267,
+    "formerCount": 12,
+    "prefectureCount": 44,
+    "prefecturalCount": 129,
+    "municipalCount": 333
   },
   "recommendations": {
-    "totalCount": 15
+    "totalCount": 23,
+    "mayoralCount": 3
   },
+  "mayoralEndorsementCount": 0,
   "prefectures": [
     {
       "prefecture": "北海道",
-      "totalCount": 7,
+      "totalCount": 11,
       "incumbentCount": 2,
-      "newcomerCount": 5,
-      "formerCount": 0,
-      "prefecturalCount": 0,
-      "municipalCount": 7
+      "newcomerCount": 8,
+      "formerCount": 1,
+      "prefecturalCount": 1,
+      "municipalCount": 10
     },
     {
       "prefecture": "青森",
-      "totalCount": 6,
-      "incumbentCount": 2,
-      "newcomerCount": 3,
+      "totalCount": 4,
+      "incumbentCount": 1,
+      "newcomerCount": 2,
       "formerCount": 1,
       "prefecturalCount": 2,
-      "municipalCount": 4
+      "municipalCount": 2
     },
     {
       "prefecture": "秋田",
@@ -56,12 +58,12 @@
     },
     {
       "prefecture": "福島",
-      "totalCount": 1,
-      "incumbentCount": 0,
-      "newcomerCount": 1,
-      "formerCount": 0,
-      "prefecturalCount": 1,
-      "municipalCount": 0
+      "totalCount": 5,
+      "incumbentCount": 2,
+      "newcomerCount": 2,
+      "formerCount": 1,
+      "prefecturalCount": 2,
+      "municipalCount": 3
     },
     {
       "prefecture": "茨城",
@@ -83,48 +85,48 @@
     },
     {
       "prefecture": "群馬",
-      "totalCount": 3,
+      "totalCount": 4,
       "incumbentCount": 2,
-      "newcomerCount": 1,
+      "newcomerCount": 2,
       "formerCount": 0,
       "prefecturalCount": 1,
-      "municipalCount": 2
+      "municipalCount": 3
     },
     {
       "prefecture": "埼玉",
-      "totalCount": 5,
-      "incumbentCount": 2,
-      "newcomerCount": 2,
+      "totalCount": 17,
+      "incumbentCount": 6,
+      "newcomerCount": 10,
       "formerCount": 1,
-      "prefecturalCount": 1,
-      "municipalCount": 4
+      "prefecturalCount": 5,
+      "municipalCount": 12
     },
     {
       "prefecture": "千葉",
-      "totalCount": 22,
+      "totalCount": 24,
       "incumbentCount": 2,
-      "newcomerCount": 18,
-      "formerCount": 2,
-      "prefecturalCount": 5,
-      "municipalCount": 17
+      "newcomerCount": 22,
+      "formerCount": 0,
+      "prefecturalCount": 6,
+      "municipalCount": 18
     },
     {
       "prefecture": "東京",
-      "totalCount": 43,
-      "incumbentCount": 30,
-      "newcomerCount": 11,
+      "totalCount": 53,
+      "incumbentCount": 31,
+      "newcomerCount": 20,
       "formerCount": 2,
       "prefecturalCount": 0,
-      "municipalCount": 43
+      "municipalCount": 53
     },
     {
       "prefecture": "神奈川",
-      "totalCount": 39,
+      "totalCount": 43,
       "incumbentCount": 11,
-      "newcomerCount": 28,
+      "newcomerCount": 32,
       "formerCount": 0,
-      "prefecturalCount": 11,
-      "municipalCount": 28
+      "prefecturalCount": 13,
+      "municipalCount": 30
     },
     {
       "prefecture": "新潟",
@@ -146,74 +148,83 @@
     },
     {
       "prefecture": "石川",
-      "totalCount": 4,
+      "totalCount": 5,
       "incumbentCount": 1,
-      "newcomerCount": 3,
+      "newcomerCount": 4,
       "formerCount": 0,
-      "prefecturalCount": 1,
+      "prefecturalCount": 2,
       "municipalCount": 3
     },
     {
       "prefecture": "福井",
-      "totalCount": 6,
+      "totalCount": 7,
       "incumbentCount": 4,
-      "newcomerCount": 2,
+      "newcomerCount": 3,
       "formerCount": 0,
       "prefecturalCount": 1,
-      "municipalCount": 5
-    },
-    {
-      "prefecture": "長野",
-      "totalCount": 6,
-      "incumbentCount": 0,
-      "newcomerCount": 6,
-      "formerCount": 0,
-      "prefecturalCount": 3,
-      "municipalCount": 3
-    },
-    {
-      "prefecture": "岐阜",
-      "totalCount": 13,
-      "incumbentCount": 3,
-      "newcomerCount": 10,
-      "formerCount": 0,
-      "prefecturalCount": 6,
-      "municipalCount": 7
-    },
-    {
-      "prefecture": "静岡",
-      "totalCount": 9,
-      "incumbentCount": 5,
-      "newcomerCount": 4,
-      "formerCount": 0,
-      "prefecturalCount": 3,
       "municipalCount": 6
     },
     {
+      "prefecture": "山梨",
+      "totalCount": 1,
+      "incumbentCount": 0,
+      "newcomerCount": 1,
+      "formerCount": 0,
+      "prefecturalCount": 0,
+      "municipalCount": 1
+    },
+    {
+      "prefecture": "長野",
+      "totalCount": 5,
+      "incumbentCount": 0,
+      "newcomerCount": 5,
+      "formerCount": 0,
+      "prefecturalCount": 3,
+      "municipalCount": 2
+    },
+    {
+      "prefecture": "岐阜",
+      "totalCount": 15,
+      "incumbentCount": 3,
+      "newcomerCount": 11,
+      "formerCount": 1,
+      "prefecturalCount": 6,
+      "municipalCount": 9
+    },
+    {
+      "prefecture": "静岡",
+      "totalCount": 10,
+      "incumbentCount": 5,
+      "newcomerCount": 5,
+      "formerCount": 0,
+      "prefecturalCount": 3,
+      "municipalCount": 7
+    },
+    {
       "prefecture": "愛知",
-      "totalCount": 47,
-      "incumbentCount": 24,
-      "newcomerCount": 23,
+      "totalCount": 65,
+      "incumbentCount": 37,
+      "newcomerCount": 28,
       "formerCount": 0,
       "prefecturalCount": 18,
-      "municipalCount": 29
+      "municipalCount": 47
     },
     {
       "prefecture": "三重",
       "totalCount": 5,
-      "incumbentCount": 2,
-      "newcomerCount": 3,
+      "incumbentCount": 3,
+      "newcomerCount": 2,
       "formerCount": 0,
       "prefecturalCount": 4,
       "municipalCount": 1
     },
     {
       "prefecture": "滋賀",
-      "totalCount": 6,
+      "totalCount": 5,
       "incumbentCount": 2,
-      "newcomerCount": 4,
+      "newcomerCount": 3,
       "formerCount": 0,
-      "prefecturalCount": 3,
+      "prefecturalCount": 2,
       "municipalCount": 3
     },
     {
@@ -227,29 +238,29 @@
     },
     {
       "prefecture": "大阪",
-      "totalCount": 18,
+      "totalCount": 20,
       "incumbentCount": 9,
-      "newcomerCount": 9,
+      "newcomerCount": 11,
       "formerCount": 0,
       "prefecturalCount": 0,
-      "municipalCount": 18
+      "municipalCount": 20
     },
     {
       "prefecture": "兵庫",
-      "totalCount": 14,
-      "incumbentCount": 2,
-      "newcomerCount": 10,
+      "totalCount": 16,
+      "incumbentCount": 1,
+      "newcomerCount": 13,
       "formerCount": 2,
-      "prefecturalCount": 1,
-      "municipalCount": 13
+      "prefecturalCount": 2,
+      "municipalCount": 14
     },
     {
       "prefecture": "奈良",
-      "totalCount": 6,
+      "totalCount": 7,
       "incumbentCount": 2,
-      "newcomerCount": 4,
+      "newcomerCount": 5,
       "formerCount": 0,
-      "prefecturalCount": 1,
+      "prefecturalCount": 2,
       "municipalCount": 5
     },
     {
@@ -269,6 +280,15 @@
       "formerCount": 0,
       "prefecturalCount": 0,
       "municipalCount": 1
+    },
+    {
+      "prefecture": "島根",
+      "totalCount": 1,
+      "incumbentCount": 1,
+      "newcomerCount": 0,
+      "formerCount": 0,
+      "prefecturalCount": 1,
+      "municipalCount": 0
     },
     {
       "prefecture": "岡山",
@@ -298,13 +318,22 @@
       "municipalCount": 1
     },
     {
-      "prefecture": "香川",
-      "totalCount": 21,
-      "incumbentCount": 12,
-      "newcomerCount": 9,
+      "prefecture": "徳島",
+      "totalCount": 2,
+      "incumbentCount": 0,
+      "newcomerCount": 2,
       "formerCount": 0,
-      "prefecturalCount": 7,
-      "municipalCount": 14
+      "prefecturalCount": 2,
+      "municipalCount": 0
+    },
+    {
+      "prefecture": "香川",
+      "totalCount": 26,
+      "incumbentCount": 14,
+      "newcomerCount": 12,
+      "formerCount": 0,
+      "prefecturalCount": 9,
+      "municipalCount": 17
     },
     {
       "prefecture": "愛媛",
@@ -326,12 +355,12 @@
     },
     {
       "prefecture": "福岡",
-      "totalCount": 21,
+      "totalCount": 23,
       "incumbentCount": 2,
-      "newcomerCount": 19,
+      "newcomerCount": 21,
       "formerCount": 0,
-      "prefecturalCount": 8,
-      "municipalCount": 13
+      "prefecturalCount": 9,
+      "municipalCount": 14
     },
     {
       "prefecture": "佐賀",
@@ -344,12 +373,12 @@
     },
     {
       "prefecture": "長崎",
-      "totalCount": 9,
-      "incumbentCount": 4,
+      "totalCount": 10,
+      "incumbentCount": 5,
       "newcomerCount": 5,
       "formerCount": 0,
       "prefecturalCount": 3,
-      "municipalCount": 6
+      "municipalCount": 7
     },
     {
       "prefecture": "熊本",
@@ -371,21 +400,21 @@
     },
     {
       "prefecture": "宮崎",
-      "totalCount": 19,
+      "totalCount": 18,
       "incumbentCount": 5,
-      "newcomerCount": 13,
+      "newcomerCount": 12,
       "formerCount": 1,
       "prefecturalCount": 4,
-      "municipalCount": 15
+      "municipalCount": 14
     },
     {
-      "prefecture": "沖縄",
+      "prefecture": "鹿児島",
       "totalCount": 1,
       "incumbentCount": 0,
       "newcomerCount": 1,
       "formerCount": 0,
-      "prefecturalCount": 0,
-      "municipalCount": 1
+      "prefecturalCount": 1,
+      "municipalCount": 0
     }
   ]
 }

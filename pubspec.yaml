@@ -16,7 +16,7 @@ dependencies:
     sdk: flutter
   # Keep generated Mockito signatures compatible with the current client API.
   supabase_flutter: 2.14.2
-  posthog_flutter: ^5.44.2
+  posthog_flutter: ^5.53.0
   crypto: ^3.0.7
   cupertino_icons: ^1.0.6
   web: ^1.1.0
@@ -62,6 +62,8 @@ dependencies:
   printing: 5.14.3                 # PDF印刷 (選挙KPIレポート出力)
   sentry_flutter: ^9.30.0
   rrule: ^0.2.18
+  chord_pro: ^0.8.0                # ChordPro 6 記法パース・移調 (MIT)
+  guitar_chord_library: ^0.1.0     # ギターコード押弦辞書 (Apache-2.0)
 
 dev_dependencies:
   flutter_driver:

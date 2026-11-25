@@ -10,9 +10,11 @@ class AssetPayrollDeductionsSection extends StatefulWidget {
     super.key,
     required this.client,
     required this.initialYear,
+    this.nowProvider,
   });
   final SupabaseClient client;
   final int initialYear;
+  final DateTime Function()? nowProvider;
 
   @override
   State<AssetPayrollDeductionsSection> createState() =>
@@ -24,6 +26,8 @@ class _AssetPayrollDeductionsSectionState
   late int _year;
   bool _reviewing = false;
   late Future<PayrollDeductionsYear> _load;
+
+  DateTime _currentDate() => widget.nowProvider?.call() ?? DateTime.now();
 
   @override
   void initState() {
@@ -48,14 +52,20 @@ class _AssetPayrollDeductionsSectionState
 
   Future<void> _review(String ownerId, String id) async {
     if (_reviewing || widget.client.auth.currentUser?.id != ownerId) return;
+    final asOfDate = _currentDate();
     setState(() => _reviewing = true);
     try {
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (_) => AssetPayslipReviewDialog(
-          store: SupabasePayslipReviewStore(widget.client, ownerId),
+          store: SupabasePayslipReviewStore(
+            widget.client,
+            ownerId,
+            asOfDate: asOfDate,
+          ),
           payslipId: id,
+          asOfDate: asOfDate,
         ),
       );
     } finally {
@@ -138,6 +148,7 @@ class _AssetPayrollDeductionsSectionState
                   year: _year,
                   rows: result.rows,
                   onReview: _reviewing ? null : (id) => _review(ownerId, id),
+                  asOfDate: _currentDate(),
                 ),
               ],
             );

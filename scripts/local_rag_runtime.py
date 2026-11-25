@@ -91,7 +91,47 @@ def read_jsonl_text(path: Path) -> str:
     return "\n".join(parts)
 
 
-def load_documents(vector_db_path: str) -> list[Document]:
+DEFAULT_MEMORY_LIMIT_MB = 8192
+MAX_CONSTRAINED_MEMORY_MB = 8192
+DEFAULT_MAX_DOCS = 200
+DEFAULT_MAX_DOC_CHARS = 32768
+
+
+def enforce_memory_budget(memory_limit_mb: int) -> tuple[int, int, int]:
+    """Clamp RAM limit to the 8GB constrained ceiling and derive safe bounds."""
+    raw = int(memory_limit_mb) if memory_limit_mb else DEFAULT_MEMORY_LIMIT_MB
+    effective_limit = (
+        DEFAULT_MEMORY_LIMIT_MB
+        if raw <= 0
+        else min(MAX_CONSTRAINED_MEMORY_MB, raw)
+    )
+    max_doc_chars = min(DEFAULT_MAX_DOC_CHARS, max(2048, effective_limit * 4))
+    max_docs = min(DEFAULT_MAX_DOCS, max(20, effective_limit // 32))
+    return effective_limit, max_docs, max_doc_chars
+
+
+def _read_bounded_text(path: Path, max_chars: int) -> tuple[str, bool]:
+    """Read text bounded by max_chars so large corpora do not exhaust 8GB RAM."""
+    byte_cap = max(4096, max_chars * 4)
+    raw_bytes = b""
+    with path.open("rb") as fh:
+        raw_bytes = fh.read(byte_cap + 1)
+    was_truncated = len(raw_bytes) > byte_cap
+    if was_truncated:
+        raw_bytes = raw_bytes[:byte_cap]
+    text = raw_bytes.decode("utf-8", errors="ignore")
+    if len(text) > max_chars:
+        text = text[:max_chars]
+        was_truncated = True
+    return text, was_truncated
+
+
+def load_documents(
+    vector_db_path: str,
+    *,
+    max_docs: int = DEFAULT_MAX_DOCS,
+    max_doc_chars: int = DEFAULT_MAX_DOC_CHARS,
+) -> tuple[list[Document], int]:
     source = Path(vector_db_path).expanduser()
     if not source.exists():
         raise FileNotFoundError(f"vector DB path not found: {source}")
@@ -100,19 +140,28 @@ def load_documents(vector_db_path: str) -> list[Document]:
         item for item in sorted(source.rglob("*"))
         if item.is_file() and item.suffix.lower() in TEXT_EXTENSIONS
     ]
+    truncated_docs = 0
+    if len(files) > max_docs:
+        truncated_docs += len(files) - max_docs
+        files = files[:max_docs]
     documents: list[Document] = []
     for index, path in enumerate(files, start=1):
         try:
             suffix = path.suffix.lower()
-            if suffix == ".json":
+            if suffix == ".json" and path.stat().st_size <= max_doc_chars * 4:
                 text = read_json_text(path)
-            elif suffix == ".jsonl":
+            elif suffix == ".jsonl" and path.stat().st_size <= max_doc_chars * 4:
                 text = read_jsonl_text(path)
             else:
-                text = path.read_text(encoding="utf-8", errors="ignore")
+                text, clipped = _read_bounded_text(path, max_doc_chars)
+                if clipped:
+                    truncated_docs += 1
         except Exception as exc:
             text = f"Skipped unreadable document: {exc}"
         text = text.lstrip("\ufeff")
+        if len(text) > max_doc_chars:
+            text = text[:max_doc_chars]
+            truncated_docs += 1
         if text.strip():
             documents.append(
                 Document(
@@ -124,7 +173,7 @@ def load_documents(vector_db_path: str) -> list[Document]:
             )
     if not documents:
         raise ValueError(f"no readable documents under vector DB path: {source}")
-    return documents
+    return documents, truncated_docs
 
 
 def rank_documents(query: str, documents: list[Document]) -> list[tuple[float, Document]]:
@@ -168,10 +217,13 @@ def run_rag(
     model_path: str,
     vector_db_path: str,
     engine: str,
-    memory_limit_mb: int,
-    network_blocked: bool,
+    memory_limit_mb: int = DEFAULT_MEMORY_LIMIT_MB,
+    network_blocked: bool = True,
 ) -> dict[str, Any]:
     started = time.perf_counter()
+    effective_limit, max_docs, max_doc_chars = enforce_memory_budget(
+        memory_limit_mb,
+    )
     model = Path(model_path).expanduser()
     if not model.exists():
         return {
@@ -180,22 +232,32 @@ def run_rag(
             "message": f"local model path not found: {model}",
             "offline_only": True,
             "network_blocked": network_blocked,
+            "memory_limit_mb": effective_limit,
+            "memory_guard_passed": True,
         }
 
     tracemalloc.start()
-    documents = load_documents(vector_db_path)
-    ranked = rank_documents(query, documents)
-    current_bytes, peak_bytes = tracemalloc.get_traced_memory()
-    del current_bytes
-    memory_peak_mb = int((peak_bytes / 1024 / 1024) + 0.999)
-    tracemalloc.stop()
+    try:
+        documents, truncated_docs = load_documents(
+            vector_db_path,
+            max_docs=max_docs,
+            max_doc_chars=max_doc_chars,
+        )
+        ranked = rank_documents(query, documents)
+        current_bytes, peak_bytes = tracemalloc.get_traced_memory()
+        del current_bytes
+        memory_peak_mb = int((peak_bytes / 1024 / 1024) + 0.999)
+    finally:
+        tracemalloc.stop()
 
-    if memory_peak_mb > memory_limit_mb:
+    if memory_peak_mb > effective_limit:
         return {
             "success": False,
             "status": "memoryLimitExceeded",
-            "message": f"peak {memory_peak_mb} MB exceeds {memory_limit_mb} MB",
+            "message": f"peak {memory_peak_mb} MB exceeds {effective_limit} MB",
             "memory_peak_mb": memory_peak_mb,
+            "memory_limit_mb": effective_limit,
+            "memory_guard_passed": False,
             "offline_only": True,
             "network_blocked": network_blocked,
         }
@@ -221,6 +283,9 @@ def run_rag(
         "offline_only": True,
         "network_blocked": network_blocked,
         "memory_peak_mb": memory_peak_mb,
+        "memory_limit_mb": effective_limit,
+        "memory_guard_passed": True,
+        "truncated_docs": truncated_docs,
         "latency_ms": int((time.perf_counter() - started) * 1000),
         "citations": citations,
     }

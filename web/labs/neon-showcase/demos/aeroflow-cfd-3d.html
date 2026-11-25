@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>AEROFLOW // 3D Real-Time Wind Tunnel & CFD Studio (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --bg: #050811;
+    --panel: rgba(9, 15, 29, 0.92);
+    --border: rgba(56, 189, 248, 0.20);
+    --text0: #f0f7ff;
+    --text1: #9bb3d1;
+    --text2: #5c7596;
+    --cyan: #38bdf8;
+    --emerald: #00f5a0;
+    --gold: #fbbf24;
+    --orange: #fb923c;
+    --crimson: #ff3366;
+    --violet: #a855f7;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", "Inter", -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background: radial-gradient(circle at 52% 45%, #0c1730 0%, #04070f 75%);
+    color: var(--text0);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    width: 1280px;
+    height: 720px;
+    display: grid;
+    grid-template-rows: 42px 1fr 28px;
+    padding: 6px;
+    gap: 6px;
+    position: relative;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(8,15,31,0.97), rgba(12,21,42,0.97));
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .dot-live {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan), 0 0 18px rgba(56,189,248,0.65);
+  }
+  .brand-txt {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+  }
+  .brand-txt span { color: var(--cyan); }
+  .tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--cyan);
+    background: rgba(56,189,248,0.12);
+    border: 1px solid rgba(56,189,248,0.3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .kpis {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi { display: flex; flex-direction: column; line-height: 1.15; }
+  .kpi .k { font-size: 8px; color: var(--text2); letter-spacing: 0.6px; }
+  .kpi .v { font-size: 11.5px; font-weight: 800; }
+  .kpi .v.cyan { color: var(--cyan); }
+  .kpi .v.green { color: var(--emerald); }
+  .kpi .v.gold { color: var(--gold); }
+  .kpi .v.red { color: var(--orange); }
+
+  .craft-tabs { display: flex; gap: 5px; }
+  .cbtn-top {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--text1);
+    background: rgba(14,24,46,0.88);
+    border: 1px solid rgba(148,163,184,0.22);
+    border-radius: 5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .cbtn-top.act-cyan {
+    color: #03111f;
+    background: linear-gradient(90deg, #38bdf8, #00f5a0);
+    border-color: #7dd3fc;
+    box-shadow: 0 0 12px rgba(56,189,248,0.48);
+  }
+  .cbtn-top.act-violet {
+    color: #fff;
+    background: linear-gradient(90deg, #6366f1, #38bdf8);
+    border-color: #a5b4fc;
+    box-shadow: 0 0 14px rgba(99,102,241,0.52);
+  }
+  .cbtn-top.act-orange {
+    color: #fff;
+    background: linear-gradient(90deg, #ea580c, #f43f5e);
+    border-color: #fdba74;
+    box-shadow: 0 0 14px rgba(249,115,22,0.55);
+  }
+  .cbtn-top.pressed { transform: scale(0.95); filter: brightness(1.3); }
+
+  /* ===== MAIN GRID ===== */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 266px 724px 266px;
+    gap: 6px;
+    min-height: 0;
+  }
+  .col { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.42);
+  }
+  .phdr {
+    height: 26px;
+    min-height: 26px;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(56,189,248,0.12);
+    background: rgba(6,12,26,0.78);
+    font-family: var(--mono);
+  }
+  .ptitle {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.75px;
+    color: #cde4ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ptitle .d { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 7px var(--cyan); }
+  .pmeta { font-size: 9px; color: var(--text1); font-variant-numeric: tabular-nums; }
+  .cwrap { flex: 1; position: relative; min-height: 0; }
+  canvas.fill { width: 100%; height: 100%; display: block; }
+
+  /* Left Column: Aero Metrics + Cp Chart */
+  .aero-metrics {
+    padding: 7px 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .mcard {
+    background: rgba(14, 24, 46, 0.80);
+    border: 1px solid rgba(56,189,248,0.16);
+    border-radius: 5px;
+    padding: 6px 8px;
+  }
+  .mcard .k { font-size: 8px; color: var(--text2); display: block; letter-spacing: 0.5px; }
+  .mcard .v { font-size: 13.5px; font-weight: 800; color: var(--text0); margin-top: 2px; display: block; }
+  .mcard .s { font-size: 8px; color: var(--emerald); margin-top: 1px; display: block; }
+
+  .cp-panel { flex: 1.05; min-height: 0; }
+  .polar-panel { flex: 1.0; min-height: 0; }
+
+  /* Center Hero 3D Wind Tunnel */
+  .hero-panel {
+    flex: 1;
+    border-color: rgba(56,189,248,0.34);
+    box-shadow: 0 0 32px rgba(14,165,233,0.14);
+  }
+  .gl-top {
+    position: absolute;
+    top: 33px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; z-index: 4;
+  }
+  .gl-card {
+    background: rgba(5, 11, 24, 0.82);
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-family: var(--mono);
+  }
+  .gl-card .t { font-size: 10.5px; font-weight: 800; color: #f0f9ff; letter-spacing: 0.6px; }
+  .gl-card .s { font-size: 8.5px; color: var(--cyan); margin-top: 2px; }
+  .cbar-box {
+    background: rgba(5, 11, 24, 0.84);
+    border: 1px solid rgba(148,163,184,0.24);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-family: var(--mono);
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .cbar-lbl { display: flex; justify-content: space-between; font-size: 7.5px; color: var(--text1); gap: 14px; }
+  .cbar-grad {
+    width: 158px; height: 7px; border-radius: 3px;
+    background: linear-gradient(90deg, #1d4ed8, #06b6d4, #00f5a0, #fbbf24, #ff3366);
+  }
+
+  .gl-banner {
+    position: absolute;
+    top: 82px; left: 50%; transform: translateX(-50%);
+    z-index: 6;
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 800; letter-spacing: 0.7px;
+    padding: 6px 14px; border-radius: 6px; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+  }
+  .gl-banner.b-cyan {
+    opacity: 1; color: #ecfeff; background: rgba(5,16,28,0.92);
+    border: 1.5px solid #38bdf8; box-shadow: 0 0 24px rgba(56,189,248,0.48);
+  }
+  .gl-banner.b-gold {
+    opacity: 1; color: #fffbeb; background: rgba(20,14,6,0.92);
+    border: 1.5px solid #fbbf24; box-shadow: 0 0 24px rgba(251,191,36,0.48);
+  }
+  .gl-banner.b-orange {
+    opacity: 1; color: #fff7ed; background: rgba(24,10,8,0.92);
+    border: 1.5px solid #fb923c; box-shadow: 0 0 26px rgba(249,115,22,0.55);
+  }
+
+  .gl-bot {
+    position: absolute;
+    bottom: 9px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; z-index: 4;
+  }
+  .gpills { display: flex; gap: 6px; }
+  .gpill {
+    background: rgba(5, 11, 24, 0.85);
+    border: 1px solid rgba(56,189,248,0.24);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-family: var(--mono);
+  }
+  .gpill .k { font-size: 7.5px; color: var(--text2); display: block; }
+  .gpill .v { font-size: 10.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Right Column: PIV Wake Scanner + Controls */
+  .piv-panel { flex: 1.15; min-height: 0; }
+  .param-panel { flex: 1.05; min-height: 0; }
+  .param-body {
+    padding: 7px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: var(--mono);
+  }
+  .slider-row { display: flex; flex-direction: column; gap: 3px; }
+  .sl-top { display: flex; justify-content: space-between; font-size: 9px; color: var(--text1); }
+  .sl-top b { color: var(--cyan); }
+  .sl-track {
+    height: 6px; border-radius: 3px;
+    background: rgba(30, 41, 59, 0.9);
+    overflow: hidden;
+  }
+  .sl-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38bdf8, #00f5a0);
+    width: 60%;
+  }
+  .toggle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-top: auto;
+  }
+  .tctrl {
+    font-family: var(--mono);
+    font-size: 8.8px;
+    font-weight: 800;
+    padding: 7px 5px;
+    border-radius: 5px;
+    border: 1px solid rgba(148,163,184,0.26);
+    background: rgba(14,24,46,0.85);
+    color: var(--text1);
+    cursor: pointer;
+    text-align: center;
+  }
+  .tctrl.on-gold {
+    background: rgba(251,191,36,0.20);
+    border-color: #fbbf24;
+    color: #fef08a;
+    box-shadow: 0 0 12px rgba(251,191,36,0.35);
+  }
+  .tctrl.on-cyan {
+    background: rgba(56,189,248,0.20);
+    border-color: #38bdf8;
+    color: #e0f2fe;
+    box-shadow: 0 0 12px rgba(56,189,248,0.35);
+  }
+  .tctrl.pressed { transform: scale(0.95); filter: brightness(1.4); }
+
+  /* Bottom Bar */
+  .bottombar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 156px;
+    gap: 6px;
+    align-items: center;
+  }
+  .ppill {
+    height: 26px;
+    background: rgba(8,15,30,0.92);
+    border: 1px solid rgba(148,163,184,0.16);
+    border-radius: 5px;
+    padding: 0 9px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--mono); font-size: 9px; color: var(--text2);
+    position: relative; overflow: hidden;
+  }
+  .ppill .prog { position: absolute; left:0; top:0; bottom:0; width:0%; background: rgba(56,189,248,0.16); z-index:0; }
+  .ppill span { position: relative; z-index: 1; }
+  .ppill.act-cyan { border-color: rgba(56,189,248,0.75); color: #f0f9ff; font-weight: 700; }
+  .ppill.act-gold { border-color: rgba(251,191,36,0.82); color: #fef3c7; font-weight: 700; }
+  .ppill.act-gold .prog { background: rgba(251,191,36,0.20); }
+  .ppill.act-violet { border-color: rgba(129,140,248,0.85); color: #eef2ff; font-weight: 700; }
+  .ppill.act-violet .prog { background: rgba(99,102,241,0.24); }
+  .ppill.act-orange { border-color: rgba(251,146,60,0.88); color: #ffedd5; font-weight: 700; }
+  .ppill.act-orange .prog { background: rgba(249,115,22,0.24); }
+
+  .clock {
+    height: 26px;
+    background: rgba(8,15,30,0.92);
+    border: 1px solid rgba(56,189,248,0.28);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9.5px; font-weight: 800; color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+  }
+  .vcursor { position: absolute; width: 18px; height: 18px; pointer-events: none; z-index: 50; transform: translate(-2px,-2px); opacity: 0; }
+  .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fbbf24; pointer-events: none; z-index: 49; opacity: 0; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="wind">
+<div class="app" id="appRoot">
+  <header class="topbar">
+    <div class="brand">
+      <div class="dot-live"></div>
+      <div class="brand-txt">AEROFLOW <span>// 3D CFD WIND TUNNEL</span></div>
+      <div class="tag">SINGLE HTML · 0 LIBS · NO THREE.JS / ANSYS / 3D MODELS</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="k">AIRSPEED</span><span class="v cyan" id="kSpeed">260 km/h</span></div>
+      <div class="kpi"><span class="k">MACH NO.</span><span class="v gold" id="kMach">M 0.21</span></div>
+      <div class="kpi"><span class="k">DRAG Cd</span><span class="v" id="kCd">0.242</span></div>
+      <div class="kpi"><span class="k">DOWNFORCE / LOAD</span><span class="v green" id="kForce">14.2 kN</span></div>
+    </div>
+    <div class="craft-tabs">
+      <button class="cbtn-top act-cyan" id="tabF1">01 F1 HYPERCAR</button>
+      <button class="cbtn-top" id="tabJet">02 MACH 2.4 JET</button>
+      <button class="cbtn-top" id="tabShip">03 STARSHIP M8.5</button>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <!-- LEFT COLUMN -->
+    <section class="col">
+      <div class="panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d"></span>AERODYNAMIC FORCE BALANCE</div>
+          <div class="pmeta" id="reMeta">Re 6.4e6</div>
+        </div>
+        <div class="aero-metrics">
+          <div class="mcard"><span class="k">DRAG COEFF Cd</span><span class="v" id="mCd">0.242</span><span class="s" id="mCdSub">LOW DRAG OPT</span></div>
+          <div class="mcard"><span class="k">LIFT / DOWNFORCE</span><span class="v" id="mCl" style="color:#00f5a0">-1.84 Cl</span><span class="s" id="mClSub">1.45G GRIP</span></div>
+          <div class="mcard"><span class="k">AERO EFFICIENCY</span><span class="v" id="mEff" style="color:#38bdf8">4.18 L/D</span><span class="s" style="color:#9bb3d1">LAMINAR 88%</span></div>
+          <div class="mcard"><span class="k">STAGNATION TEMP</span><span class="v" id="mTemp" style="color:#fbbf24">304 K</span><span class="s" id="mTempSub">AMBIENT FLOW</span></div>
+        </div>
+      </div>
+
+      <div class="panel cp-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold);box-shadow:0 0 7px var(--gold)"></span>SURFACE PRESSURE Cp PROFILE</div>
+          <div class="pmeta">CHORD x/c</div>
+        </div>
+        <div class="cwrap"><canvas id="cpCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel polar-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--emerald);box-shadow:0 0 7px var(--emerald)"></span>LIVE FORCE &amp; THERMAL TIMELINE</div>
+          <div class="pmeta" id="loadMeta">LIVE CFD</div>
+        </div>
+        <div class="cwrap"><canvas id="polarCanvas" class="fill"></canvas></div>
+      </div>
+    </section>
+
+    <!-- CENTER 3D WIND TUNNEL HERO -->
+    <section class="col">
+      <div class="panel hero-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--cyan)"></span><span id="glTitle">PURE WEBGL2 3D AERODYNAMIC STREAMLINES &amp; VORTEX SOLVER</span></div>
+          <div class="pmeta">136 3D RIBBONS · 5,712 FLOW SEGMENTS</div>
+        </div>
+        <div class="cwrap">
+          <canvas id="glCanvas" class="fill"></canvas>
+
+          <div class="gl-top">
+            <div class="gl-card">
+              <div class="t" id="glCraftName">F1 GROUND-EFFECT HYPERCAR // SUBSONIC TUNNEL</div>
+              <div class="s" id="glCraftSub">DRAG TO ORBIT 360° · SCROLL TO ZOOM · 100% PROCEDURAL MESH</div>
+            </div>
+            <div class="cbar-box">
+              <div class="cbar-lbl"><span>LOW Cp / V-MIN</span><span id="cbarMid">VELOCITY</span><span>HIGH Cp / PEAK</span></div>
+              <div class="cbar-grad"></div>
+            </div>
+          </div>
+
+          <div class="gl-banner" id="glBanner">◈ SURFACE Cp PRESSURE HEATMAP ENGAGED · 360 KM/H MAX TUNNEL</div>
+
+          <div class="gl-bot">
+            <div class="gpills">
+              <div class="gpill"><span class="k">FLOW REGIME</span><span class="v" id="gRegime" style="color:#38bdf8">SUBSONIC LAMINAR</span></div>
+              <div class="gpill"><span class="k">ANGLE OF ATTACK</span><span class="v" id="gAoa" style="color:#eef7ff">2.4°</span></div>
+              <div class="gpill"><span class="k">VORTEX WAKE</span><span class="v" id="gWake" style="color:#00f5a0">DOUBLE HELIX</span></div>
+            </div>
+            <div class="gpill"><span class="k">CAMERA ORBIT</span><span class="v" id="gCam" style="color:#9bb3d1">AZ 36° · EL 21°</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <section class="col">
+      <div class="panel piv-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--violet);box-shadow:0 0 7px var(--violet)"></span>2D PIV CROSS-SECTION VORTICITY</div>
+          <div class="pmeta" id="pivMeta">Y-Z WAKE</div>
+        </div>
+        <div class="cwrap"><canvas id="pivCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel param-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold)"></span>TUNNEL SOLVER PARAMETERS</div>
+          <div class="pmeta">INTERACTIVE</div>
+        </div>
+        <div class="param-body">
+          <div class="slider-row">
+            <div class="sl-top"><span>TUNNEL VELOCITY</span><b id="slVelVal">260 km/h</b></div>
+            <div class="sl-track"><div class="sl-fill" id="slVelFill" style="width:45%"></div></div>
+          </div>
+          <div class="slider-row">
+            <div class="sl-top"><span>PITCH / ANGLE OF ATTACK</span><b id="slAoaVal">+2.4°</b></div>
+            <div class="sl-track"><div class="sl-fill" id="slAoaFill" style="width:22%;background:linear-gradient(90deg,#fbbf24,#fb923c)"></div></div>
+          </div>
+          <div class="slider-row">
+            <div class="sl-top"><span>VORTEX TURBULENCE INTENSITY</span><b id="slTurbVal">38%</b></div>
+            <div class="sl-track"><div class="sl-fill" id="slTurbFill" style="width:38%;background:linear-gradient(90deg,#a855f7,#ff3366)"></div></div>
+          </div>
+          <div class="slider-row">
+            <div class="sl-top"><span>THERMAL / MACH SHOCK LOAD</span><b id="slThermVal">LOW</b></div>
+            <div class="sl-track"><div class="sl-fill" id="slThermFill" style="width:12%;background:linear-gradient(90deg,#f59e0b,#ff3366)"></div></div>
+          </div>
+
+          <div class="toggle-grid">
+            <button class="tctrl" id="btnHeatmap">◈ Cp HEATMAP</button>
+            <button class="tctrl on-cyan" id="btnRibbons">〰 STREAMLINES</button>
+            <button class="tctrl" id="btnMachCone">⊿ SHOCK CONE</button>
+            <button class="tctrl on-cyan" id="btnVortex">🌀 VORTICES</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottombar">
+    <div class="ppill act-cyan" id="ph0"><div class="prog" id="pr0"></div><span>01 F1 HYPERCAR FLOW</span><span>0–6s</span></div>
+    <div class="ppill" id="ph1"><div class="prog" id="pr1"></div><span>02 Cp HEATMAP 360KM/H</span><span>6–12s</span></div>
+    <div class="ppill" id="ph2"><div class="prog" id="pr2"></div><span>03 MACH 2.4 SHOCK CONE</span><span>12–18s</span></div>
+    <div class="ppill" id="ph3"><div class="prog" id="pr3"></div><span>04 STARSHIP M8.5 RE-ENTRY</span><span>18–24s</span></div>
+    <div class="clock" id="clockEl">GEMINI 4 NEON · 00.0s</div>
+  </footer>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(202611196);
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (u) => { const t = clamp(u, 0, 1); return t * t * (3 - 2 * t); };
+
+  // ===== WEBGL2 SETUP =====
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) { console.error('WebGL2 unavailable'); return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  function mat4Persp(fovy, asp, near, far) {
+    const f = 1 / Math.tan(fovy * 0.5), nf = 1 / (near - far);
+    return new Float32Array([f/asp,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+  }
+  function mat4Look(eye, ctr, up) {
+    let zx=eye[0]-ctr[0], zy=eye[1]-ctr[1], zz=eye[2]-ctr[2];
+    let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+    const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+  function mat4Pitch(angleRad, ty = 0) {
+    const c = Math.cos(angleRad), s = Math.sin(angleRad);
+    // Rotation around Z (pitching craft flying along -X -> +X wind!)
+    return new Float32Array([
+      c, s, 0, 0,
+     -s, c, 0, 0,
+      0, 0, 1, 0,
+      0, ty, 0, 1
+    ]);
+  }
+
+  // ===== SHADERS =====
+  // 1) 3D Metallic Craft + Scientific Cp Pressure / Hypersonic Thermal Heatmap Shader!
+  const craftProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec3 aNorm;
+    layout(location=2) in vec3 aCol;
+    uniform mat4 uModel;
+    uniform mat4 uVP;
+    out vec3 vPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+    void main() {
+      vec4 wp = uModel * vec4(aPos, 1.0);
+      vPos = wp.xyz;
+      vNorm = normalize(mat3(uModel) * aNorm);
+      vCol = aCol;
+      gl_Position = uVP * wp;
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+    uniform vec3 uCamPos;
+    uniform float uHeatMix;    // 0 = metallic studio lighting, 1 = scientific Cp Pressure Heatmap!
+    uniform float uReentry;    // 0..1 hypersonic glowing underside plasma heatshield!
+    uniform float uTime;
+    out vec4 fragColor;
+
+    vec3 turboRamp(float t) {
+      t = clamp(t, 0.0, 1.0);
+      vec3 c0 = vec3(0.08, 0.25, 0.85); // Deep suction blue
+      vec3 c1 = vec3(0.02, 0.80, 0.92); // Low pressure cyan
+      vec3 c2 = vec3(0.05, 0.95, 0.58); // Neutral emerald
+      vec3 c3 = vec3(0.98, 0.78, 0.14); // High pressure gold
+      vec3 c4 = vec3(1.00, 0.16, 0.34); // Stagnation crimson peak
+      if (t < 0.25) return mix(c0, c1, t / 0.25);
+      if (t < 0.50) return mix(c1, c2, (t - 0.25) / 0.25);
+      if (t < 0.75) return mix(c2, c3, (t - 0.50) / 0.25);
+      return mix(c3, c4, (t - 0.75) / 0.25);
+    }
+
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vPos);
+      // Overhead Wind Tunnel Lightbars + Rim Backlight
+      vec3 L1 = normalize(vec3(0.2, 1.0, 0.4));
+      vec3 L2 = normalize(vec3(-0.8, 0.4, -0.6));
+      float d1 = max(dot(N, L1), 0.0);
+      float d2 = max(dot(N, L2), 0.0);
+      vec3 H = normalize(L1 + V);
+      float spec = pow(max(dot(N, H), 0.0), 48.0);
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 2.8);
+
+      // Studio Wind Tunnel Metallic Lighting
+      vec3 studio = vCol * (0.28 + d1 * 0.85 + d2 * 0.32)
+                  + vec3(0.75, 0.92, 1.0) * spec * 0.72
+                  + vec3(0.22, 0.78, 1.0) * fres * 0.65;
+
+      // Scientific Surface Pressure Cp Computation (wind flows along +X, so N.x < 0 is windward stagnation!)
+      float windFacing = clamp(-N.x, -1.0, 1.0);
+      float cp = clamp(0.46 + windFacing * 0.58 + (vPos.x < -0.6 ? 0.14 : 0.0) - max(0.0, N.y) * 0.24, 0.0, 1.0);
+      // Add subtle iso-pressure contour lines on heatmap!
+      float iso = smoothstep(0.92, 0.985, abs(sin(cp * 31.4159)));
+      vec3 heat = turboRamp(cp) * (0.58 + d1 * 0.55) + vec3(0.9, 0.96, 1.0) * iso * 0.28 + turboRamp(cp) * fres * 0.45;
+
+      vec3 col = mix(studio, heat, uHeatMix);
+
+      // Hypersonic Mach 8.5 Re-entry Glowing Heatshield Belly & Leading Edge!
+      if (uReentry > 0.01) {
+        float shieldFace = clamp(-N.y * 0.85 - N.x * 0.65, 0.0, 1.0);
+        float flicker = 0.88 + 0.12 * sin(uTime * 18.0 + vPos.x * 6.0);
+        vec3 plasmaHeat = mix(vec3(0.95, 0.20, 0.04), vec3(1.0, 0.78, 0.25), pow(shieldFace, 1.5));
+        col = mix(col, col * 0.78, uReentry * 0.5) + plasmaHeat * pow(shieldFace, 1.7) * uReentry * 1.15 * flicker;
+      }
+
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // 2) Translucent Volumetric Mach Shockwave Cone / Hypersonic Bow Shock Shader!
+  const shockProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec3 aNorm;
+    layout(location=2) in vec3 aCol; // aCol.x = u (0 apex .. 1 base)
+    uniform mat4 uVP;
+    out vec3 vPos;
+    out vec3 vNorm;
+    out float vU;
+    void main() {
+      vPos = aPos;
+      vNorm = normalize(aNorm);
+      vU = aCol.x;
+      gl_Position = uVP * vec4(aPos, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vPos;
+    in vec3 vNorm;
+    in float vU;
+    uniform vec3 uCamPos;
+    uniform float uTime;
+    uniform float uAlpha;
+    uniform vec3 uColorA;
+    uniform vec3 uColorB;
+    out vec4 fragColor;
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vPos);
+      float rim = pow(1.0 - abs(dot(N, V)), 1.65);
+      float wave = 0.72 + 0.28 * sin(vU * 26.0 - uTime * 16.0);
+      float fade = smoothstep(0.0, 0.15, vU) * (1.0 - smoothstep(0.65, 1.0, vU));
+      vec3 col = mix(uColorA, uColorB, vU) * (0.75 + rim * 1.35) * wave;
+      fragColor = vec4(col, fade * (0.16 + rim * 0.62) * uAlpha);
+    }
+  `);
+
+  // 3) Luminous Additive Lines & Streamlines Shader
+  const lineProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() { vCol = aCol; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() { fragColor = vCol; }
+  `);
+
+  // 4) Glowing Flow Tracer Particles / Re-entry Plasma Sparks
+  const ptProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    layout(location=2) in float aSize;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() {
+      vCol = aCol;
+      gl_Position = uVP * vec4(aPos, 1.0);
+      gl_PointSize = clamp(aSize * (3.6 / max(0.8, gl_Position.w)), 2.0, 32.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      vec2 d = gl_PointCoord - 0.5;
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float g = exp(-r2 * 14.0);
+      fragColor = vec4(vCol.rgb * (1.0 + g * 0.7), vCol.a * g);
+    }
+  `);
+
+  // ===== PROCEDURAL 3D CRAFT MESH BUILDERS (ZERO 3D MODELS!) =====
+  // Orientation: Craft nose points toward -X (into incoming wind flowing -X -> +X!)
+  function buildMesh(tris) {
+    const buf = new Float32Array(tris.length * 3 * 9);
+    let o = 0;
+    for (const t of tris) {
+      const e1x=t.v1[0]-t.v0[0], e1y=t.v1[1]-t.v0[1], e1z=t.v1[2]-t.v0[2];
+      const e2x=t.v2[0]-t.v0[0], e2y=t.v2[1]-t.v0[1], e2z=t.v2[2]-t.v0[2];
+      let nx=e1y*e2z-e1z*e2y, ny=e1z*e2x-e1x*e2z, nz=e1x*e2y-e1y*e2x;
+      const l=Math.hypot(nx,ny,nz)||1; nx/=l; ny/=l; nz/=l;
+      for (const v of [t.v0,t.v1,t.v2]) {
+        buf[o++]=v[0]; buf[o++]=v[1]; buf[o++]=v[2];
+        buf[o++]=nx; buf[o++]=ny; buf[o++]=nz;
+        buf[o++]=t.c[0]; buf[o++]=t.c[1]; buf[o++]=t.c[2];
+      }
+    }
+    const vao = gl.createVertexArray();
+    const vbo = gl.createBuffer();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, buf, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 36, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 36, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 36, 24);
+    gl.bindVertexArray(null);
+    return { vao, count: tris.length * 3 };
+  }
+
+  function addBox(tris, cx, cy, cz, sx, sy, sz, c) {
+    const x0=cx-sx, x1=cx+sx, y0=cy-sy, y1=cy+sy, z0=cz-sz, z1=cz+sz;
+    const f=[
+      [[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],
+      [[x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0]],
+      [[x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0]],
+      [[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]],
+      [[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1]],
+      [[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],
+    ];
+    for (const q of f) {
+      tris.push({v0:q[0],v1:q[1],v2:q[2],c});
+      tris.push({v0:q[0],v1:q[2],v2:q[3],c});
+    }
+  }
+
+  function addCylX(tris, x0, x1, y, z, r0, r1, segs, c) {
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i/segs)*Math.PI*2, a1 = ((i+1)/segs)*Math.PI*2;
+      const p00 = [x0, y+Math.cos(a0)*r0, z+Math.sin(a0)*r0];
+      const p01 = [x0, y+Math.cos(a1)*r0, z+Math.sin(a1)*r0];
+      const p10 = [x1, y+Math.cos(a0)*r1, z+Math.sin(a0)*r1];
+      const p11 = [x1, y+Math.cos(a1)*r1, z+Math.sin(a1)*r1];
+      tris.push({v0:p00,v1:p10,v2:p11,c});
+      tris.push({v0:p00,v1:p11,v2:p01,c});
+    }
+  }
+
+  function addWheel(tris, cx, cy, cz, r, w, cTire, cRim) {
+    const segs = 18;
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i/segs)*Math.PI*2, a1 = ((i+1)/segs)*Math.PI*2;
+      const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+      const z0 = cz - w*0.5, z1 = cz + w*0.5;
+      // Outer tread
+      tris.push({v0:[cx+c0*r,cy+s0*r,z0], v1:[cx+c0*r,cy+s0*r,z1], v2:[cx+c1*r,cy+s1*r,z1], c:cTire});
+      tris.push({v0:[cx+c0*r,cy+s0*r,z0], v1:[cx+c1*r,cy+s1*r,z1], v2:[cx+c1*r,cy+s1*r,z0], c:cTire});
+      // Rim discs
+      tris.push({v0:[cx,cy,z1], v1:[cx+c0*r*0.7,cy+s0*r*0.7,z1], v2:[cx+c1*r*0.7,cy+s1*r*0.7,z1], c:cRim});
+      tris.push({v0:[cx,cy,z0], v1:[cx+c1*r*0.7,cy+s1*r*0.7,z0], v2:[cx+c0*r*0.7,cy+s0*r*0.7,z0], c:cRim});
+    }
+  }
+
+  // CRAFT 0: Sleek Formula-1 Ground-Effect Hypercar!
+  function buildF1Mesh() {
+    const tris = [];
+    const bodySilver = [0.68, 0.76, 0.88];
+    const carbon = [0.16, 0.21, 0.30];
+    const cyanAcc = [0.06, 0.82, 0.98];
+    const rimGold = [0.95, 0.72, 0.18];
+
+    // Sculpted tapered nosecone (-1.65 -> -0.55)
+    addCylX(tris, -1.68, -0.55, 0.24, 0, 0.08, 0.24, 10, bodySilver);
+    // Monocoque cockpit + sculpted airbox intake + dorsal fin
+    addBox(tris, 0.05, 0.30, 0, 0.65, 0.19, 0.24, bodySilver);
+    addBox(tris, 0.32, 0.56, 0, 0.34, 0.14, 0.12, bodySilver);
+    addBox(tris, 0.82, 0.48, 0, 0.38, 0.12, 0.03, cyanAcc); // shark fin
+    // Sculpted wide aerodynamic sidepods + underfloor Venturi tunnels!
+    for (const s of [-1, 1]) {
+      addBox(tris, 0.18, 0.24, s*0.36, 0.56, 0.14, 0.18, bodySilver);
+      addBox(tris, 0.80, 0.22, s*0.24, 0.38, 0.12, 0.12, carbon);
+      // Carbon floor edge skirt
+      addBox(tris, 0.15, 0.09, s*0.50, 0.88, 0.025, 0.14, carbon);
+      // Front & Rear F1 Wheels
+      addWheel(tris, -0.96, 0.24, s*0.60, 0.24, 0.20, carbon, rimGold);
+      addWheel(tris,  0.98, 0.27, s*0.64, 0.27, 0.26, carbon, rimGold);
+    }
+    // Multi-element Front Wing + Endplates
+    addBox(tris, -1.56, 0.12, 0, 0.16, 0.025, 0.76, cyanAcc);
+    addBox(tris, -1.42, 0.17, 0, 0.10, 0.022, 0.72, carbon);
+    for (const s of [-1, 1]) addBox(tris, -1.50, 0.19, s*0.76, 0.20, 0.09, 0.02, bodySilver);
+    // High-Downforce Dual-Plane Rear Wing + DRS Endplates
+    addBox(tris, 1.38, 0.74, 0, 0.16, 0.03, 0.52, cyanAcc);
+    addBox(tris, 1.44, 0.84, 0, 0.10, 0.025, 0.52, bodySilver);
+    for (const s of [-1, 1]) addBox(tris, 1.38, 0.64, s*0.52, 0.20, 0.24, 0.022, carbon);
+    // Rear diffuser & swan-neck pillar
+    addBox(tris, 1.24, 0.44, 0, 0.08, 0.28, 0.03, carbon);
+    return buildMesh(tris);
+  }
+
+  // CRAFT 1: Mach 2.4 Hypersonic Stealth Delta-Wing Jet!
+  function buildJetMesh() {
+    const tris = [];
+    const hull = [0.62, 0.70, 0.84];
+    const dark = [0.18, 0.24, 0.36];
+    const canopy = [0.98, 0.72, 0.16];
+    const glow = [0.22, 0.88, 1.0];
+
+    // Sleek supersonic needle fuselage
+    addCylX(tris, -2.15, -0.75, 0.46, 0, 0.02, 0.24, 12, hull);
+    addCylX(tris, -0.75,  1.25, 0.46, 0, 0.24, 0.28, 12, hull);
+    // Glowing bubble canopy
+    addCylX(tris, -0.95, -0.15, 0.64, 0, 0.04, 0.14, 10, canopy);
+    // Swept Mach 2.4 Delta Wings + Canted Twin V-Tails + Twin Afterburner Nozzles
+    for (const s of [-1, 1]) {
+      const noseW = [-0.75, 0.44, s*0.22];
+      const tipF  = [ 0.75, 0.40, s*1.48];
+      const tipB  = [ 1.12, 0.40, s*1.42];
+      const rootB = [ 1.15, 0.44, s*0.26];
+      const topR  = [ 0.25, 0.52, s*0.24];
+      if (s > 0) {
+        tris.push({v0:noseW,v1:tipF,v2:topR,c:hull});
+        tris.push({v0:topR,v1:tipF,v2:tipB,c:hull});
+        tris.push({v0:topR,v1:tipB,v2:rootB,c:dark});
+        tris.push({v0:noseW,v1:topR,v2:tipF,c:dark});
+      } else {
+        tris.push({v0:noseW,v1:topR,v2:tipF,c:hull});
+        tris.push({v0:topR,v1:tipB,v2:tipF,c:hull});
+        tris.push({v0:topR,v1:rootB,v2:tipB,c:dark});
+        tris.push({v0:noseW,v1:tipF,v2:topR,c:dark});
+      }
+      // Forward Canards
+      addBox(tris, -0.98, 0.48, s*0.44, 0.22, 0.02, 0.24, glow);
+      // Twin canted vertical stabilizers
+      addBox(tris, 1.04, 0.78, s*0.36, 0.34, 0.34, 0.03, dark);
+      // Twin afterburner exhausts
+      addCylX(tris, 1.18, 1.48, 0.45, s*0.16, 0.13, 0.10, 10, glow);
+    }
+    return buildMesh(tris);
+  }
+
+  // CRAFT 2: Starship-Class Stainless Steel Orbital Booster (Hypersonic Belly-Flop Re-entry!)
+  function buildStarshipMesh() {
+    const tris = [];
+    const steel = [0.76, 0.82, 0.90];
+    const tiles = [0.14, 0.16, 0.22]; // black ceramic thermal heatshield belly
+    const flap  = [0.22, 0.28, 0.38];
+
+    // Cylindrical stainless upper stage + ogive nosecone
+    addCylX(tris, -1.88, -1.22, 0.62, 0, 0.04, 0.30, 16, steel);
+    addCylX(tris, -1.22, -0.68, 0.62, 0, 0.30, 0.42, 16, steel);
+    addCylX(tris, -0.68,  1.45, 0.62, 0, 0.42, 0.42, 16, steel);
+    // Black ceramic heatshield underside strip
+    addBox(tris, 0.15, 0.24, 0, 1.25, 0.08, 0.34, tiles);
+    // Forward & Aft Aero Control Flaps!
+    for (const s of [-1, 1]) {
+      addBox(tris, -1.08, 0.62, s*0.58, 0.32, 0.035, 0.26, flap);
+      addBox(tris,  1.06, 0.62, s*0.74, 0.48, 0.04,  0.38, flap);
+    }
+    // Engine skirt ring
+    addCylX(tris, 1.44, 1.62, 0.62, 0, 0.40, 0.34, 14, tiles);
+    return buildMesh(tris);
+  }
+
+  // Build Smooth-Normal Volumetric Translucent 3D Mach Shock Cone / Re-Entry Bow Shock Mesh (ZERO facets!)
+  function buildConeMesh(xApex, xBase, rApex, rBase, yOff, segs = 48, rings = 18, bowCurve = false) {
+    const verts = [];
+    function pushV(x, y, z, nx, ny, nz, u) {
+      verts.push(x, y, z, nx, ny, nz, u, 0, 0);
+    }
+    for (let r = 0; r < rings; r++) {
+      const u0 = r / rings, u1 = (r + 1) / rings;
+      const x0 = lerp(xApex, xBase, u0), x1 = lerp(xApex, xBase, u1);
+      const rad0 = bowCurve ? Math.sqrt(u0) * rBase + rApex : lerp(rApex, rBase, u0);
+      const rad1 = bowCurve ? Math.sqrt(u1) * rBase + rApex : lerp(rApex, rBase, u1);
+      const dr = (rad1 - rad0) / Math.max(0.01, x1 - x0);
+      const nLen = Math.hypot(dr, 1.0);
+      const nx = -dr / nLen, nr = 1.0 / nLen;
+      for (let i = 0; i < segs; i++) {
+        const a0 = (i/segs)*Math.PI*2, a1 = ((i+1)/segs)*Math.PI*2;
+        const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+        const p00 = [x0, yOff+c0*rad0, s0*rad0, nx, c0*nr, s0*nr, u0];
+        const p01 = [x0, yOff+c1*rad0, s1*rad0, nx, c1*nr, s1*nr, u0];
+        const p10 = [x1, yOff+c0*rad1, s0*rad1, nx, c0*nr, s0*nr, u1];
+        const p11 = [x1, yOff+c1*rad1, s1*rad1, nx, c1*nr, s1*nr, u1];
+        for (const v of [p00, p10, p11, p00, p11, p01]) pushV(v[0],v[1],v[2],v[3],v[4],v[5],v[6]);
+      }
+    }
+    const vao = gl.createVertexArray();
+    const vbo = gl.createBuffer();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 36, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 36, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 36, 24);
+    gl.bindVertexArray(null);
+    return { vao, count: verts.length / 9 };
+  }
+
+  const craftMeshes = [buildF1Mesh(), buildJetMesh(), buildStarshipMesh()];
+  const machConeMesh = buildConeMesh(-2.22, 2.35, 0.04, 1.75, 0.46, 36, 14, false);
+  const bowShockMesh = buildConeMesh(-2.12, 2.45, 0.14, 1.85, 0.48, 36, 14, true);
+
+  // Build Wind Tunnel Floor Illuminated Grid & Side Reference Guides
+  const floorSegs = [];
+  function pushFloor(x0,y0,z0, x1,y1,z1, r,g,b,a) {
+    floorSegs.push(x0,y0,z0, r,g,b,a, x1,y1,z1, r,g,b,a);
+  }
+  for (let i = -10; i <= 10; i++) {
+    const x = i * 0.45;
+    pushFloor(x, 0.0, -2.6, x, 0.0, 2.6, 0.22, 0.56, 0.92, i === 0 ? 0.32 : 0.15);
+  }
+  for (let j = -6; j <= 6; j++) {
+    const z = j * 0.42;
+    pushFloor(-4.5, 0.0, z, 4.5, 0.0, z, 0.22, 0.56, 0.92, j === 0 ? 0.34 : 0.15);
+  }
+  // Overhead wind tunnel lightbars
+  for (const lz of [-1.4, 0.0, 1.4]) {
+    pushFloor(-3.4, 2.35, lz, 3.4, 2.35, lz, 0.45, 0.85, 1.0, 0.26);
+  }
+  const floorVao = gl.createVertexArray();
+  const floorVbo = gl.createBuffer();
+  gl.bindVertexArray(floorVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, floorVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(floorSegs), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // Dynamic 3D Aerodynamic Streamlines Buffer (168 3D streamlines x 44 segments!)
+  const NUM_STREAM = 136;
+  const STREAM_SEGS = 42;
+  const MAX_LINE_V = NUM_STREAM * STREAM_SEGS * 2 + 400;
+  const lineBuf = new Float32Array(MAX_LINE_V * 7);
+  const lineVao = gl.createVertexArray();
+  const lineVbo = gl.createBuffer();
+  gl.bindVertexArray(lineVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, lineBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // Seed 136 3D Streamline Rake Inlets ahead of the craft (multi-tier vertical & spanwise rake!)
+  const seeds = [];
+  for (let iy = 0; iy < 8; iy++) {
+    for (let iz = 0; iz < 17; iz++) {
+      const y0 = 0.08 + iy * 0.145 + (rng() - 0.5) * 0.02;
+      const z0 = (iz - 8) * 0.115 + (rng() - 0.5) * 0.02;
+      seeds.push({ y0, z0, phase: rng() * 6.283, isTip: Math.abs(Math.abs(z0) - 0.56) < 0.22 });
+    }
+  }
+
+  // Dynamic Glowing Tracer Particles riding the 3D streamlines!
+  const MAX_PTS = 420;
+  const ptBuf = new Float32Array(MAX_PTS * 8);
+  const ptVao = gl.createVertexArray();
+  const ptVbo = gl.createBuffer();
+  gl.bindVertexArray(ptVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, ptVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, ptBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 32, 28);
+  gl.bindVertexArray(null);
+
+  // ===== SIMULATION & 24s CHOREOGRAPHY STATE =====
+  let simTime = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  let craftIdx = 0;       // 0=F1, 1=Mach 2.4 Jet, 2=Starship Mach 8.5
+  let heatMix = 0.0, targetHeat = 0.0;
+  let shockAlpha = 0.0, targetShock = 0.0;
+  let reentryMix = 0.0, targetReentry = 0.0;
+  let showRibbons = true, showVortex = true;
+  let windKmh = 260, targetWind = 260;
+  let machNo = 0.21, targetMach = 0.21;
+  let aoaDeg = 2.4, targetAoa = 2.4;
+
+  let camAz = 2.42, camEl = 0.30, camDist = 4.95;
+  let dragging = false, lastMX = 0, lastMY = 0;
+
+  let banner = { text: '', cls: '', ttl: 0 };
+  let curX = 640, curY = 360, curOp = 0, cPulse = 0, pressedId = null;
+  const trig = { heat: false, jet: false, ship: false };
+
+  const forceHist = [];
+  const tempHist = [];
+  for (let i = 0; i < 64; i++) {
+    forceHist.push(13.8 + Math.sin(i * 0.25) * 0.6);
+    tempHist.push(302 + Math.cos(i * 0.2) * 3);
+  }
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const rr = document.getElementById('appRoot').getBoundingClientRect();
+    return { x: r.left - rr.left + r.width * 0.5, y: r.top - rr.top + r.height * 0.5 };
+  }
+
+  function selectCraft(idx) {
+    craftIdx = idx;
+    if (idx === 0) {
+      targetWind = 260; targetMach = 0.21; targetAoa = 2.4;
+      targetShock = 0.0; targetReentry = 0.0;
+    } else if (idx === 1) {
+      targetWind = 2940; targetMach = 2.40; targetAoa = 5.2;
+      targetHeat = 0.22; targetShock = 1.0; targetReentry = 0.0;
+      banner = { text: '◈ MACH 2.4 SUPERSONIC JET · 3D PRANDTL-GLAUERT SHOCK CONE', cls: 'b-cyan', ttl: 4.5 };
+    } else if (idx === 2) {
+      targetWind = 10400; targetMach = 8.50; targetAoa = 24.0;
+      targetHeat = 0.12; targetShock = 1.0; targetReentry = 1.0;
+      banner = { text: '⚠ ORBITAL BOOSTER RE-ENTRY · MACH 8.5 BOW SHOCK PLASMA (1,840 K)', cls: 'b-orange', ttl: 4.8 };
+    }
+  }
+
+  let autoTour = isRecording;
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 2.8);
+
+    if (autoTour) {
+    const pHeat = btnCenter('btnHeatmap');
+    const pJet  = btnCenter('tabJet');
+    const pShip = btnCenter('tabShip');
+
+    if (t < 4.6) {
+      curOp = 0;
+    } else if (t < 5.95) {
+      curOp = ease((t - 4.6) / 0.55);
+      const u = ease((t - 4.6) / 1.3);
+      curX = lerp(740, pHeat.x, u);
+      curY = lerp(420, pHeat.y, u);
+    } else if (t < 6.45) {
+      curOp = 1; curX = pHeat.x; curY = pHeat.y;
+      pressedId = 'btnHeatmap';
+      if (!trig.heat) {
+        trig.heat = true; cPulse = 1.0;
+        targetHeat = 1.0; targetWind = 360; targetMach = 0.29; targetAoa = 4.0;
+        banner = { text: '◈ SURFACE Cp PRESSURE HEATMAP ENGAGED · 360 KM/H MAX TUNNEL', cls: 'b-gold', ttl: 4.2 };
+      }
+    } else if (t < 10.6) {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 11.95) {
+      curOp = ease((t - 10.6) / 0.55);
+      const u = ease((t - 10.6) / 1.3);
+      curX = lerp(pHeat.x, pJet.x, u);
+      curY = lerp(pHeat.y, pJet.y, u);
+    } else if (t < 12.45) {
+      curOp = 1; curX = pJet.x; curY = pJet.y;
+      pressedId = 'tabJet';
+      if (!trig.jet) { trig.jet = true; cPulse = 1.0; selectCraft(1); }
+    } else if (t < 16.6) {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 17.95) {
+      curOp = ease((t - 16.6) / 0.55);
+      const u = ease((t - 16.6) / 1.3);
+      curX = lerp(pJet.x, pShip.x, u);
+      curY = lerp(pJet.y, pShip.y, u);
+    } else if (t < 18.45) {
+      curOp = 1; curX = pShip.x; curY = pShip.y;
+      pressedId = 'tabShip';
+      if (!trig.ship) { trig.ship = true; cPulse = 1.0; selectCraft(2); }
+    } else {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    }
+    } else { curOp = 0; }
+
+    // Iconic Front-3/4 Wind Tunnel Inspection Orbit across all 3 Crafts!
+    if (!dragging) {
+      if (t < 6.0) {
+        // Front-3/4 F1 Hero angle -> sweeping smoothly toward dramatic aerodynamic side profile!
+        const u = t / 6.0;
+        camAz = lerp(2.42, 1.78, ease(u));
+        camEl = lerp(0.30, 0.22, u);
+        camDist = lerp(4.95, 4.65, Math.sin(u * Math.PI));
+      } else if (t < 12.0) {
+        // Sweep across F1 Cp Pressure Heatmap side profile -> rear wing vortices!
+        const u = (t - 6.0) / 6.0;
+        camAz = lerp(1.78, 0.85, ease(u));
+        camEl = lerp(0.22, 0.38, Math.sin(u * Math.PI));
+        camDist = lerp(4.78, 4.48, Math.sin(u * Math.PI));
+      } else if (t < 18.0) {
+        // Sweeping Front-3/4 Showcase of Mach 2.4 Stealth Delta Jet & Smooth Prandtl-Glauert Shock Cone!
+        const u = (t - 12.0) / 6.0;
+        camAz = lerp(2.48, 1.45, ease(u));
+        camEl = lerp(0.32, 0.24, Math.sin(u * Math.PI));
+        camDist = lerp(5.15, 4.78, Math.sin(u * Math.PI));
+      } else {
+        // Dramatic Side-3/4 Belly-Flop View of Starship Mach 8.5 Hypersonic Bow-Shock Re-Entry!
+        const u = (t - 18.0) / 6.0;
+        camAz = lerp(2.38, 1.32, ease(u));
+        camEl = lerp(0.22, 0.30, ease(u));
+        camDist = lerp(5.30, 5.02, ease(u));
+      }
+    }
+  }
+
+  let histAccum = 0;
+  function stepSim(dt) {
+    simTime += dt;
+    runChoreography(simTime, dt);
+    heatMix    += (targetHeat    - heatMix)    * Math.min(1, dt * 3.4);
+    shockAlpha += (targetShock   - shockAlpha) * Math.min(1, dt * 3.0);
+    reentryMix += (targetReentry - reentryMix) * Math.min(1, dt * 3.0);
+    windKmh    += (targetWind    - windKmh)    * Math.min(1, dt * 3.2);
+    machNo     += (targetMach    - machNo)     * Math.min(1, dt * 3.2);
+    aoaDeg     += (targetAoa     - aoaDeg)     * Math.min(1, dt * 3.2);
+    if (banner.ttl > 0) banner.ttl = Math.max(0, banner.ttl - dt);
+
+    histAccum += dt;
+    if (histAccum >= 0.14) {
+      histAccum -= 0.14;
+      const fVal = craftIdx === 0 ? (11 + (windKmh - 200) * 0.055) : (craftIdx === 1 ? 36.5 : 48.0);
+      const tVal = 300 + machNo * machNo * 21.5;
+      forceHist.push(fVal + Math.sin(simTime * 3.2) * 0.9); if (forceHist.length > 64) forceHist.shift();
+      tempHist.push(tVal + Math.cos(simTime * 2.5) * 14);   if (tempHist.length > 64) tempHist.shift();
+    }
+  }
+
+  // ===== REAL-TIME 3D CFD STREAMLINE & WINGTIP VORTEX SOLVER =====
+  function velocityColor(vNorm, isReentry) {
+    const t = clamp(vNorm, 0, 1);
+    if (isReentry > 0.35) {
+      // Incandescent hypersonic re-entry plasma palette (gold -> fiery orange -> violet wake)
+      if (t < 0.4) return [0.98, 0.32 + t*1.2, 0.12];
+      if (t < 0.75) return [1.0, 0.78, 0.25 + (t-0.4)*1.5];
+      return [0.78, 0.45, 1.0];
+    }
+    if (t < 0.35) { const k = t/0.35; return [0.06, 0.65 + k*0.30, 1.0 - k*0.25]; }
+    if (t < 0.70) { const k = (t-0.35)/0.35; return [0.06 + k*0.92, 0.95 - k*0.18, 0.75 - k*0.60]; }
+    const k = (t-0.70)/0.30;
+    return [0.98, 0.77 - k*0.58, 0.15 + k*0.28];
+  }
+
+  function renderWebGL() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.floor(glCanvas.clientWidth * dpr);
+    const h = Math.floor(glCanvas.clientHeight * dpr);
+    if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
+
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0.018, 0.030, 0.062, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    const eye = [
+      Math.cos(camAz) * Math.cos(camEl) * camDist,
+      Math.sin(camEl) * camDist + 0.55,
+      Math.sin(camAz) * Math.cos(camEl) * camDist
+    ];
+    const proj = mat4Persp(0.68, w / Math.max(1, h), 0.1, 40.0);
+    const view = mat4Look(eye, [0.15, 0.48, 0.0], [0, 1, 0]);
+    const vp = mat4Mul(proj, view);
+
+    // 1. Draw Illuminated Wind Tunnel Floor Grid & Lightbars
+    gl.useProgram(lineProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+    gl.bindVertexArray(floorVao);
+    gl.drawArrays(gl.LINES, 0, floorSegs.length / 7);
+
+    // 2. Draw Active 3D Craft (with Live Pitch Angle of Attack + Metallic / Cp Heatmap / Re-entry Shader!)
+    const pitchRad = (craftIdx === 2 ? -aoaDeg * 0.014 : -aoaDeg * 0.010);
+    const craftModel = mat4Pitch(pitchRad, craftIdx === 0 ? 0.0 : 0.18);
+    const mesh = craftMeshes[craftIdx];
+    gl.useProgram(craftProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(craftProg, 'uModel'), false, craftModel);
+    gl.uniformMatrix4fv(gl.getUniformLocation(craftProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(craftProg, 'uCamPos'), eye);
+    gl.uniform1f(gl.getUniformLocation(craftProg, 'uHeatMix'), heatMix);
+    gl.uniform1f(gl.getUniformLocation(craftProg, 'uReentry'), reentryMix);
+    gl.uniform1f(gl.getUniformLocation(craftProg, 'uTime'), simTime);
+    gl.bindVertexArray(mesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+
+    // 3. Build 136 Real-Time 3D Aerodynamic Streamlines + Swirling Double-Helix Trailing Vortices!
+    gl.depthMask(false);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+    let lv = 0, pv = 0;
+    const flowSpd = 1.6 + Math.min(4.5, machNo * 1.4);
+    const bodyHalfZ = craftIdx === 0 ? 0.72 : (craftIdx === 1 ? 1.35 : 0.78);
+    const bodyHeight = craftIdx === 0 ? 0.78 : (craftIdx === 1 ? 0.85 : 1.05);
+
+    if (showRibbons) {
+      for (let sIdx = 0; sIdx < seeds.length; sIdx++) {
+        const sd = seeds[sIdx];
+        let prevX = -3.4, prevY = sd.y0, prevZ = sd.z0;
+        let prevCol = [0.1, 0.75, 1.0], prevA = 0.0;
+
+        for (let k = 1; k <= STREAM_SEGS; k++) {
+          const u = k / STREAM_SEGS;
+          const x = lerp(-3.4, 4.1, u);
+
+          // Analytical potential-flow deflection around craft nose, canopy & wings!
+          const spanMask = Math.exp(-Math.pow(sd.z0 / (bodyHalfZ * 1.12), 2.0));
+          const verticalMask = Math.exp(-Math.pow((sd.y0 - 0.36) / 0.58, 2.0));
+          const noseDist = x + 1.45;
+          const bodyEnv = Math.exp(-Math.pow((x - 0.05) / 1.45, 2.0)) * spanMask * verticalMask;
+
+          // Upwash over front wing / nose + strong downforce wash behind rear wing!
+          let dy = bodyEnv * (0.48 + (craftIdx === 2 ? 0.38 : 0.14));
+          let dz = Math.sign(sd.z0 || 1) * bodyEnv * 0.24 * Math.exp(-Math.abs(sd.z0) * 1.2);
+
+          // Mach 2.4 Shockwave Kink / Mach 8.5 Bow Shock Deflection!
+          if (shockAlpha > 0.1) {
+            const coneR = Math.max(0.05, (x + 2.15) * (craftIdx === 2 ? 0.62 : 0.42));
+            const rAxis = Math.hypot(sd.y0 - 0.48, sd.z0);
+            const shockHit = Math.exp(-Math.pow((rAxis - coneR) * 4.5, 2.0)) * (x > -2.1 ? 1.0 : 0.0);
+            dy += shockHit * 0.18 * shockAlpha * Math.sign(sd.y0 - 0.44);
+            dz += shockHit * 0.22 * shockAlpha * Math.sign(sd.z0 || 1);
+          }
+
+          // Swirling Counter-Rotating 3D Wingtip Trailing Vortices behind x > 0.85!
+          let vBoost = bodyEnv * 0.72;
+          if (showVortex && x > 0.75) {
+            const wake = clamp((x - 0.75) / 2.8, 0.0, 1.0);
+            const tipSign = sd.z0 >= 0 ? 1 : -1;
+            const tipZ = tipSign * (craftIdx === 0 ? 0.56 : (craftIdx === 1 ? 1.12 : 0.58));
+            const tipY = craftIdx === 0 ? 0.64 : 0.55;
+            const distTip = Math.hypot(sd.z0 - tipZ, sd.y0 - tipY);
+            if (distTip < 0.55) {
+              const swirlR = Math.max(0.06, distTip * (0.72 + wake * 0.55));
+              const spinAng = wake * (7.5 + machNo * 1.4) * tipSign - simTime * flowSpd * 2.2 * tipSign + sd.phase;
+              const swirlW = Math.exp(-distTip * 3.8) * Math.min(1, wake * 2.5);
+              dy = lerp(dy, (tipY - sd.y0) + Math.sin(spinAng) * swirlR, swirlW);
+              dz = lerp(dz, (tipZ - sd.z0) + Math.cos(spinAng) * swirlR, swirlW);
+              vBoost += swirlW * 0.65;
+            }
+          }
+
+          const y = Math.max(0.04, sd.y0 + dy);
+          const z = sd.z0 + dz;
+
+          // Traveling animated luminous pulse racing along every streamline!
+          const pulsePhase = ((u * 2.6 - simTime * flowSpd * 0.48 + sd.phase * 0.3) % 1.0 + 1.0) % 1.0;
+          const pulse = Math.exp(-Math.pow((pulsePhase - 0.5) * 7.0, 2.0));
+          const edgeFade = Math.sin(u * Math.PI);
+          const col = velocityColor(0.18 + vBoost + pulse * 0.24, reentryMix);
+          const alpha = (0.12 + pulse * 0.58 + vBoost * 0.22) * edgeFade * (sd.isTip ? 1.18 : 0.86);
+
+          if (k > 1 && lv + 2 < MAX_LINE_V) {
+            let o = lv * 7;
+            lineBuf[o++]=prevX; lineBuf[o++]=prevY; lineBuf[o++]=prevZ; lineBuf[o++]=prevCol[0]; lineBuf[o++]=prevCol[1]; lineBuf[o++]=prevCol[2]; lineBuf[o++]=prevA;
+            lineBuf[o++]=x;     lineBuf[o++]=y;     lineBuf[o++]=z;     lineBuf[o++]=col[0];     lineBuf[o++]=col[1];     lineBuf[o++]=col[2];     lineBuf[o++]=alpha;
+            lv += 2;
+          }
+
+          // Place bright tracer particle right on the traveling pulse peak!
+          if (pulse > 0.84 && pv < MAX_PTS && (sIdx % 2 === 0)) {
+            let po = pv * 8;
+            ptBuf[po++]=x; ptBuf[po++]=y; ptBuf[po++]=z;
+            ptBuf[po++]=col[0]; ptBuf[po++]=col[1]; ptBuf[po++]=col[2]; ptBuf[po++]=alpha * 1.15;
+            ptBuf[po++]=(reentryMix > 0.4 ? 10.0 : 6.8) * dpr;
+            pv++;
+          }
+
+          prevX = x; prevY = y; prevZ = z; prevCol = col; prevA = alpha;
+        }
+      }
+    }
+
+    // Draw Streamlines
+    if (lv > 0) {
+      gl.useProgram(lineProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, lv * 7));
+      gl.drawArrays(gl.LINES, 0, lv);
+    }
+
+    // Draw Glowing Tracer / Plasma Particles
+    if (pv > 0) {
+      gl.useProgram(ptProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ptProg, 'uVP'), false, vp);
+      gl.bindVertexArray(ptVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, ptVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, ptBuf.subarray(0, pv * 8));
+      gl.drawArrays(gl.POINTS, 0, pv);
+    }
+
+    // 4. Draw Volumetric Translucent 3D Mach Shock Cone / Mach 8.5 Re-entry Bow Shock!
+    if (shockAlpha > 0.03) {
+      const sMesh = craftIdx === 2 ? bowShockMesh : machConeMesh;
+      const colA = craftIdx === 2 ? [1.0, 0.85, 0.35] : [0.55, 0.92, 1.0];
+      const colB = craftIdx === 2 ? [1.0, 0.22, 0.45] : [0.45, 0.38, 1.0];
+      gl.useProgram(shockProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(shockProg, 'uVP'), false, vp);
+      gl.uniform3fv(gl.getUniformLocation(shockProg, 'uCamPos'), eye);
+      gl.uniform1f(gl.getUniformLocation(shockProg, 'uTime'), simTime);
+      gl.uniform1f(gl.getUniformLocation(shockProg, 'uAlpha'), shockAlpha);
+      gl.uniform3fv(gl.getUniformLocation(shockProg, 'uColorA'), colA);
+      gl.uniform3fv(gl.getUniformLocation(shockProg, 'uColorB'), colB);
+      gl.bindVertexArray(sMesh.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, sMesh.count);
+    }
+
+    gl.depthMask(true);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(null);
+  }
+
+  // ===== 2D CANVASES: Cp PRESSURE PROFILE, FORCE TIMELINE, & 2D PIV WAKE VORTICITY =====
+  const cpCanvas = document.getElementById('cpCanvas');
+  const cpCtx = cpCanvas.getContext('2d');
+  const polCanvas = document.getElementById('polarCanvas');
+  const polCtx = polCanvas.getContext('2d');
+  const pivCanvas = document.getElementById('pivCanvas');
+  const pivCtx = pivCanvas.getContext('2d');
+
+  function renderCpChart() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = cpCanvas.clientWidth, H = cpCanvas.clientHeight;
+    if (cpCanvas.width !== Math.floor(W*dpr) || cpCanvas.height !== Math.floor(H*dpr)) {
+      cpCanvas.width = Math.floor(W*dpr); cpCanvas.height = Math.floor(H*dpr);
+    }
+    cpCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cpCtx.clearRect(0, 0, W, H);
+
+    const padL = 26, padR = 10, padT = 12, padB = 18;
+    const cw = W - padL - padR, ch = H - padT - padB;
+    cpCtx.strokeStyle = 'rgba(56,189,248,0.10)';
+    cpCtx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = padT + (ch * i) / 4;
+      cpCtx.beginPath(); cpCtx.moveTo(padL, y); cpCtx.lineTo(W - padR, y); cpCtx.stroke();
+    }
+
+    // Upper surface suction curve (cyan) vs Lower pressure curve (gold/crimson)
+    const drawCurve = (fn, col, fillCol) => {
+      cpCtx.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const u = i / 40;
+        const v = clamp(fn(u), 0.05, 0.96);
+        const x = padL + u * cw, y = padT + (1 - v) * ch;
+        if (i === 0) cpCtx.moveTo(x, y); else cpCtx.lineTo(x, y);
+      }
+      cpCtx.strokeStyle = col; cpCtx.lineWidth = 1.8; cpCtx.stroke();
+    };
+    const boost = 0.14 * Math.min(2, machNo) + 0.04 * Math.sin(simTime * 3.5);
+    drawCurve(u => 0.85 * Math.exp(-u * 3.5) + 0.15 + boost * 0.4 * Math.sin(u * 9 + simTime), '#fbbf24');
+    drawCurve(u => 0.18 + 0.62 * Math.sin(u * Math.PI) * (0.8 + heatMix * 0.25) - boost * 0.15, '#38bdf8');
+
+    cpCtx.font = '8px "Cascadia Code", Consolas, monospace';
+    cpCtx.fillStyle = '#5c7596'; cpCtx.fillText('+Cp', 4, 18); cpCtx.fillText('-Cp', 4, H - 20);
+    cpCtx.fillStyle = '#fbbf24'; cpCtx.fillText('● WINDWARD', padL + 4, H - 5);
+    cpCtx.fillStyle = '#38bdf8'; cpCtx.fillText('● SUCTION', padL + 84, H - 5);
+  }
+
+  function renderPolarChart() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = polCanvas.clientWidth, H = polCanvas.clientHeight;
+    if (polCanvas.width !== Math.floor(W*dpr) || polCanvas.height !== Math.floor(H*dpr)) {
+      polCanvas.width = Math.floor(W*dpr); polCanvas.height = Math.floor(H*dpr);
+    }
+    polCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    polCtx.clearRect(0, 0, W, H);
+
+    const padL = 8, padR = 8, padT = 12, padB = 18;
+    const cw = W - padL - padR, ch = H - padT - padB;
+    const xOf = (i) => padL + (i / (forceHist.length - 1)) * cw;
+
+    const plotArea = (arr, maxV, stroke, gradTop) => {
+      const g = polCtx.createLinearGradient(0, padT, 0, padT + ch);
+      g.addColorStop(0, gradTop); g.addColorStop(1, 'rgba(0,0,0,0)');
+      polCtx.beginPath();
+      arr.forEach((v, i) => {
+        const y = padT + (1 - clamp(v / maxV, 0, 1)) * ch;
+        if (i === 0) polCtx.moveTo(xOf(i), y); else polCtx.lineTo(xOf(i), y);
+      });
+      polCtx.lineTo(xOf(arr.length-1), padT+ch); polCtx.lineTo(xOf(0), padT+ch); polCtx.closePath();
+      polCtx.fillStyle = g; polCtx.fill();
+      polCtx.beginPath();
+      arr.forEach((v, i) => {
+        const y = padT + (1 - clamp(v / maxV, 0, 1)) * ch;
+        if (i === 0) polCtx.moveTo(xOf(i), y); else polCtx.lineTo(xOf(i), y);
+      });
+      polCtx.strokeStyle = stroke; polCtx.lineWidth = 1.6; polCtx.stroke();
+    };
+    plotArea(forceHist, 55, '#00f5a0', 'rgba(0,245,160,0.30)');
+    plotArea(tempHist, 2100, '#fb923c', 'rgba(251,146,60,0.36)');
+
+    polCtx.font = '8px "Cascadia Code", Consolas, monospace';
+    polCtx.fillStyle = '#00f5a0'; polCtx.fillText('● AERO LOAD kN', 10, H - 5);
+    polCtx.fillStyle = '#fb923c'; polCtx.fillText('● STAG TEMP K', 110, H - 5);
+  }
+
+  function renderPivScanner() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = pivCanvas.clientWidth, H = pivCanvas.clientHeight;
+    if (pivCanvas.width !== Math.floor(W*dpr) || pivCanvas.height !== Math.floor(H*dpr)) {
+      pivCanvas.width = Math.floor(W*dpr); pivCanvas.height = Math.floor(H*dpr);
+    }
+    pivCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pivCtx.clearRect(0, 0, W, H);
+
+    // Dual counter-rotating wingtip vortex velocity vector field (Y-Z cross-section behind craft!)
+    const cx = W * 0.5, cy = H * 0.52;
+    const v1 = [cx - 56, cy - 6], v2 = [cx + 56, cy - 6];
+
+    // Glowing vortex core halos
+    for (const [vx, vy, col] of [[v1[0],v1[1],'rgba(56,189,248,0.45)'], [v2[0],v2[1],'rgba(255,51,102,0.45)']]) {
+      const rg = pivCtx.createRadialGradient(vx, vy, 2, vx, vy, 44);
+      rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
+      pivCtx.fillStyle = rg;
+      pivCtx.beginPath(); pivCtx.arc(vx, vy, 44, 0, Math.PI * 2); pivCtx.fill();
+    }
+
+    // Crisp PIV vector arrows!
+    const cols = 13, rows = 9;
+    const spX = (W - 24) / (cols - 1), spY = (H - 30) / (rows - 1);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const px = 12 + c * spX, py = 14 + r * spY;
+        const d1x = px - v1[0], d1y = py - v1[1], r1 = Math.hypot(d1x, d1y) + 12;
+        const d2x = px - v2[0], d2y = py - v2[1], r2 = Math.hypot(d2x, d2y) + 12;
+        // Counter-rotating tangent vectors
+        const ux = (-d1y / (r1*r1) + d2y / (r2*r2)) * 420;
+        const uy = ( d1x / (r1*r1) - d2x / (r2*r2)) * 420;
+        const mag = Math.hypot(ux, uy);
+        const len = clamp(mag * (0.85 + machNo * 0.14), 3, 13);
+        const ang = Math.atan2(uy, ux) + Math.sin(simTime * 4 + c + r) * 0.08;
+
+        const hot = clamp(mag / 11, 0, 1);
+        pivCtx.strokeStyle = hot > 0.55 ? '#fbbf24' : (px < cx ? '#38bdf8' : '#ff5c85');
+        pivCtx.lineWidth = 1.25;
+        pivCtx.beginPath();
+        pivCtx.moveTo(px, py);
+        pivCtx.lineTo(px + Math.cos(ang)*len, py + Math.sin(ang)*len);
+        pivCtx.stroke();
+      }
+    }
+
+    pivCtx.font = '8px "Cascadia Code", Consolas, monospace';
+    pivCtx.fillStyle = '#7dd3fc'; pivCtx.fillText('CCW VORTEX', 14, H - 6);
+    pivCtx.fillStyle = '#ff6b90'; pivCtx.fillText('CW VORTEX', W - 64, H - 6);
+  }
+
+  // ===== DOM SYNC =====
+  function renderDOM() {
+    const cd = craftIdx === 0 ? (0.242 - heatMix * 0.014) : (craftIdx === 1 ? 0.168 : 1.140);
+    const cl = craftIdx === 0 ? (-1.84 - (windKmh - 260) * 0.004) : (craftIdx === 1 ? 0.92 : 1.65);
+    const forceKN = forceHist[forceHist.length - 1];
+    const stagTemp = Math.round(tempHist[tempHist.length - 1]);
+
+    document.getElementById('kSpeed').textContent = `${Math.round(windKmh).toLocaleString()} km/h`;
+    document.getElementById('kMach').textContent = `M ${machNo.toFixed(2)}`;
+    document.getElementById('kCd').textContent = cd.toFixed(3);
+    document.getElementById('kForce').textContent = `${forceKN.toFixed(1)} kN`;
+    document.getElementById('mCd').textContent = cd.toFixed(3);
+    document.getElementById('mCdSub').textContent = craftIdx === 0 ? 'LOW DRAG OPT' : (craftIdx === 1 ? 'WAVE DRAG' : 'HIGH DRAG BRAKE');
+    document.getElementById('mCl').textContent = `${cl.toFixed(2)} Cl`;
+    document.getElementById('mClSub').textContent = craftIdx === 0 ? '1.45G GRIP' : (craftIdx === 1 ? 'MACH 2.4 LIFT' : 'BELLY-FLOP TRIM');
+    document.getElementById('mEff').textContent = `${(craftIdx === 0 ? 4.18 : (craftIdx === 1 ? 5.48 : 1.45)).toFixed(2)} L/D`;
+    document.getElementById('mTemp').textContent = `${stagTemp.toLocaleString()} K`;
+    document.getElementById('mTemp').style.color = stagTemp > 900 ? '#ff5c85' : '#fbbf24';
+    document.getElementById('mTempSub').textContent = stagTemp > 1100 ? 'PLASMA HEATSHIELD' : (machNo > 1.2 ? 'SONIC HEATING' : 'AMBIENT FLOW');
+
+    document.getElementById('tabF1').className   = craftIdx === 0 ? 'cbtn-top act-cyan'   : 'cbtn-top';
+    document.getElementById('tabJet').className  = craftIdx === 1 ? 'cbtn-top act-violet' : 'cbtn-top';
+    document.getElementById('tabShip').className = craftIdx === 2 ? 'cbtn-top act-orange' : 'cbtn-top';
+
+    const names = [
+      'F1 GROUND-EFFECT HYPERCAR // SUBSONIC TUNNEL',
+      'MACH 2.4 STEALTH DELTA JET // SUPERSONIC SHOCK',
+      'ORBITAL BOOSTER // MACH 8.5 HYPERSONIC RE-ENTRY'
+    ];
+    document.getElementById('glCraftName').textContent = names[craftIdx];
+    document.getElementById('gRegime').textContent = craftIdx === 0 ? (heatMix > 0.5 ? 'MAX DOWNFORCE Cp' : 'SUBSONIC LAMINAR')
+      : (craftIdx === 1 ? 'SUPERSONIC MACH 2.4' : 'HYPERSONIC PLASMA');
+    document.getElementById('gRegime').style.color = craftIdx === 2 ? '#fb923c' : (craftIdx === 1 ? '#a5b4fc' : '#38bdf8');
+    document.getElementById('gAoa').textContent = `+${aoaDeg.toFixed(1)}°`;
+    document.getElementById('gWake').textContent = craftIdx === 2 ? 'BOW SHOCK PLASMA' : (craftIdx === 1 ? 'MACH CONE + WAKE' : 'DOUBLE HELIX');
+    document.getElementById('gCam').textContent = `AZ ${Math.round((camAz * 180 / Math.PI) % 360)}° · EL ${Math.round(camEl * 180 / Math.PI)}°`;
+    document.getElementById('clockEl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s`;
+
+    // Sliders
+    document.getElementById('slVelVal').textContent = `${Math.round(windKmh).toLocaleString()} km/h`;
+    document.getElementById('slVelFill').style.width = `${clamp((Math.log10(Math.max(100, windKmh)) - 2) / 2.1 * 100, 15, 100).toFixed(0)}%`;
+    document.getElementById('slAoaVal').textContent = `+${aoaDeg.toFixed(1)}°`;
+    document.getElementById('slAoaFill').style.width = `${clamp(aoaDeg / 28 * 100, 8, 100).toFixed(0)}%`;
+    const turb = Math.round(32 + heatMix * 24 + machNo * 4.5);
+    document.getElementById('slTurbVal').textContent = `${Math.min(98, turb)}%`;
+    document.getElementById('slTurbFill').style.width = `${Math.min(98, turb)}%`;
+    document.getElementById('slThermVal').textContent = stagTemp > 1100 ? 'EXTREME (1840K)' : (machNo > 1.2 ? 'MODERATE' : 'LOW');
+    document.getElementById('slThermFill').style.width = `${clamp((stagTemp - 280) / 1600 * 100, 10, 100).toFixed(0)}%`;
+
+    document.getElementById('btnHeatmap').className = heatMix > 0.4 ? 'tctrl on-gold' : 'tctrl';
+    document.getElementById('btnMachCone').className = shockAlpha > 0.4 ? 'tctrl on-cyan' : 'tctrl';
+    for (const id of ['btnHeatmap','tabJet','tabShip']) {
+      document.getElementById(id).classList.toggle('pressed', pressedId === id);
+    }
+
+    const elB = document.getElementById('glBanner');
+    if (banner.ttl > 0) { elB.textContent = banner.text; elB.className = `gl-banner ${banner.cls}`; }
+    else elB.className = 'gl-banner';
+
+    const phs = [
+      { id:'ph0', pr:'pr0', s:0,  e:6,  c:'act-cyan' },
+      { id:'ph1', pr:'pr1', s:6,  e:12, c:'act-gold' },
+      { id:'ph2', pr:'pr2', s:12, e:18, c:'act-violet' },
+      { id:'ph3', pr:'pr3', s:18, e:24, c:'act-orange' },
+    ];
+    for (const p of phs) {
+      const el = document.getElementById(p.id), pr = document.getElementById(p.pr);
+      const act = simTime >= p.s && simTime < p.e;
+      const pct = simTime < p.s ? 0 : (simTime >= p.e ? 100 : ((simTime - p.s)/(p.e - p.s))*100);
+      el.className = act ? `ppill ${p.c}` : 'ppill';
+      pr.style.width = `${pct.toFixed(1)}%`;
+    }
+
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.6 + (1-cPulse)*1.1).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  // Interactive Controls
+  document.getElementById('tabF1').addEventListener('click', () => { targetHeat = 0.0; selectCraft(0); });
+  document.getElementById('tabJet').addEventListener('click', () => selectCraft(1));
+  document.getElementById('tabShip').addEventListener('click', () => selectCraft(2));
+  document.getElementById('btnHeatmap').addEventListener('click', () => { targetHeat = targetHeat > 0.5 ? 0.0 : 1.0; });
+  document.getElementById('btnRibbons').addEventListener('click', () => { showRibbons = !showRibbons; });
+  document.getElementById('btnMachCone').addEventListener('click', () => { targetShock = targetShock > 0.5 ? 0.0 : 1.0; });
+  document.getElementById('btnVortex').addEventListener('click', () => { showVortex = !showVortex; });
+
+  glCanvas.addEventListener('mousedown', (e) => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    camAz -= (e.clientX - lastMX) * 0.008;
+    camEl = clamp(camEl + (e.clientY - lastMY) * 0.006, 0.08, 1.15);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  glCanvas.addEventListener('wheel', (e) => {
+    camDist = clamp(camDist + e.deltaY * 0.003, 3.0, 8.5);
+  }, { passive: true });
+
+  // Init & Main Loop
+  renderDOM();
+  renderCpChart();
+  renderPolarChart();
+  renderPivScanner();
+  renderWebGL();
+
+  window.stepAero = function(dt) {
+    stepSim(dt);
+    renderDOM();
+    renderCpChart();
+    renderPolarChart();
+    renderPivScanner();
+    renderWebGL();
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; targetHeat = 0; selectCraft(0); }
+      });
+    });
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+      last = now;
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; targetHeat = 0; selectCraft(0); }
+      window.stepAero(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>

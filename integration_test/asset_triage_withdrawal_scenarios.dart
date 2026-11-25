@@ -78,7 +78,7 @@ Future<void> _tapAmount(WidgetTester tester, int amount) async {
 
 Future<void> _captureEvidence(
   WidgetTester tester,
-  Future<void> Function(WidgetTester, String)? capture,
+  Future<void> Function(WidgetTester, String, Finder)? capture,
   String name, {
   bool task = false,
 }) async {
@@ -91,12 +91,12 @@ Future<void> _captureEvidence(
     tester.element(target),
     alignment: 0.5,
   );
-  await capture(tester, name);
+  await capture(tester, name, target);
 }
 
 void main({
   Size? evidenceViewport,
-  Future<void> Function(WidgetTester, String)? captureEvidence,
+  Future<void> Function(WidgetTester, String, Finder)? captureEvidence,
 }) {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();

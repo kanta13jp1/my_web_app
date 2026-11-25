@@ -18,6 +18,24 @@ import {
   GaReadinessActionError,
   handleGaReadinessAction,
 } from "./ga_readiness.ts";
+import { handlePromptEvolutionAction } from "./prompt_evolution.ts";
+import { createSupabasePromptEvolutionDb } from "./prompt_evolution_supabase.ts";
+import {
+  createSupabaseAltSupplyDb,
+  handleAltSupplyAction,
+} from "./alt_supply.ts";
+import {
+  createSupabaseVisionBenchmarkDb,
+  handleVisionBenchmarkAction,
+} from "./vision_benchmark.ts";
+import {
+  createSupabaseAiCostMonitorDb,
+  handleAiCostAction,
+} from "./ai_cost_monitor.ts";
+import {
+  createSupabaseLlmHealthcheckDb,
+  handleLlmHealthcheckAction,
+} from "./llm_healthcheck.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -227,12 +245,35 @@ serve(async (req: Request) => {
 
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const body = req.method === "POST"
-      ? await req.json() as Record<string, unknown>
-      : {};
-    const action = String(
-      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
-    );
+    const rawBody = req.method === "POST" ? await req.text() : "";
+    let body: Record<string, unknown> = {};
+    if (rawBody.trim() !== "") {
+      try {
+        body = JSON.parse(rawBody) as Record<string, unknown>;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+    }
+    const {
+      handleDevReviewAction,
+      resolveAppHubAction,
+    } = await import("./dev_review_tracking.ts");
+    const action = resolveAppHubAction(req.url, body);
+    if (action === "dev_review.github_webhook") {
+      const { createSupabaseDevReviewStore } = await import(
+        "./dev_review_tracking_supabase.ts"
+      );
+      const sig = req.headers.get("x-hub-signature-256") ?? "";
+      const res = await handleDevReviewAction({
+        action,
+        body,
+        rawBody,
+        signatureHeader: sig,
+        userId: "",
+        store: createSupabaseDevReviewStore(admin),
+      });
+      return json(res.body, res.status);
+    }
     const userId = await getUserId(req);
 
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -1015,6 +1056,27 @@ serve(async (req: Request) => {
         return json({ success: true, entry });
       }
 
+      // --- Development Review Approval & GitHub Tracking (#2743) ---
+      case "dev_review.session.list":
+      case "dev_review.session.create":
+      case "dev_review.item.update":
+      case "dev_review.github.sync":
+      case "dev_review.phase.advance": {
+        const { handleDevReviewAction } = await import(
+          "./dev_review_tracking.ts"
+        );
+        const { createSupabaseDevReviewStore } = await import(
+          "./dev_review_tracking_supabase.ts"
+        );
+        const res = await handleDevReviewAction({
+          action,
+          body,
+          userId,
+          store: createSupabaseDevReviewStore(admin),
+        });
+        return json(res.body, res.status);
+      }
+
       // --- Agent GPA Evaluations (#1124 Phase 1) ---
       case "agent.evaluate_gpa":
       case "agent.list_gpa_recent": {
@@ -1027,10 +1089,251 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      // --- Evolutionary Prompt Optimization Pipeline (#2723) ---
+      case "agent.evaluate_gpa_batch":
+      case "agent.evolve_prompts_from_gpa":
+      case "agent.list_prompt_evolutions": {
+        const result = await handlePromptEvolutionAction({
+          action,
+          body,
+          userId,
+          db: createSupabasePromptEvolutionDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
       // --- GA Launch Readiness Gate (#1640) ---
       case "agent.list_ga_axes": {
         const gaReadiness = handleGaReadinessAction(action);
         return json({ success: true, ga_readiness: gaReadiness });
+      }
+
+      // --- Generic Format Importer & JSONB Custom Attributes (#2741) ---
+      case "format_importer.list":
+      case "format_importer.preview":
+      case "format_importer.import":
+      case "format_importer.define_attribute":
+      case "format_importer.update_record_attributes":
+      case "format_importer.export": {
+        const { FormatImporterError, handleFormatImporterAction } =
+          await import("./format_importer.ts");
+        try {
+          const result = await handleFormatImporterAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof FormatImporterError) {
+            return json({ error: err.message }, err.status);
+          }
+          throw err;
+        }
+      }
+
+      // --- Realtime Concurrent Lock & Conflict Detection (#2744) ---
+      case "realtime_lock.list":
+      case "realtime_lock.create":
+      case "realtime_lock.save":
+      case "realtime_lock.simulate_batch_update": {
+        const { RealtimeLockError, handleRealtimeLockAction } = await import(
+          "./realtime_lock.ts"
+        );
+        try {
+          const result = await handleRealtimeLockAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof RealtimeLockError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
+
+      // --- Isolated Offline Secure Mode Audit (#2753) ---
+      case "offline_secure_mode.audit_list":
+      case "offline_secure_mode.audit_record": {
+        const {
+          createSupabaseOfflineAuditStore,
+          DEFAULT_MEMORY_LIMIT_MB,
+          listOfflineSecureModeAuditLogs,
+          parseOfflineSecureModePolicy,
+          recordOfflineSecureModeAudit,
+        } = await import("../_shared/offline_secure_mode_guard.ts");
+        const store = createSupabaseOfflineAuditStore(admin);
+        if (action === "offline_secure_mode.audit_list") {
+          const rawLimit = Number(body.limit ?? 20);
+          const limit = Number.isFinite(rawLimit) && rawLimit > 0
+            ? Math.min(100, Math.floor(rawLimit))
+            : 20;
+          const logs = await listOfflineSecureModeAuditLogs(
+            store,
+            userId,
+            limit,
+          );
+          return json({
+            success: true,
+            action,
+            memory_limit_mb: DEFAULT_MEMORY_LIMIT_MB,
+            logs,
+          });
+        }
+        const policy = parseOfflineSecureModePolicy(body);
+        const statusText = typeof body.status === "string" &&
+            body.status.trim()
+          ? body.status.trim()
+          : policy.externalApiBlocked
+          ? "external_api_blocked"
+          : "online_allowed";
+        const recorded = await recordOfflineSecureModeAudit(store, {
+          userId,
+          action: typeof body.audit_action === "string" &&
+              body.audit_action.trim()
+            ? body.audit_action.trim()
+            : "settings.update",
+          provider: typeof body.provider === "string" && body.provider.trim()
+            ? body.provider.trim()
+            : policy.inferenceEngine,
+          policy,
+          status: statusText,
+        });
+        return json({ success: true, action, ...recorded });
+      }
+
+      // --- Alternative Supply & Import Risk Monitor (#2756) ---
+      case "alt_supply.list":
+      case "alt_supply.seed_defaults":
+      case "alt_supply.create":
+      case "alt_supply.update": {
+        const result = await handleAltSupplyAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAltSupplyDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- AI Vision Benchmark Monitoring (#2758) ---
+      case "vision_benchmark.list":
+      case "vision_benchmark.record": {
+        const result = await handleVisionBenchmarkAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseVisionBenchmarkDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- Third-party AI API Cost Monitor (#2760) ---
+      case "ai_cost.list_usage":
+      case "ai_cost.daily_summary":
+      case "ai_cost.record_usage":
+      case "ai_cost.check_budget": {
+        const result = await handleAiCostAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAiCostMonitorDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- Agricultural Policy Timeline & Knowledge Graph (#2755) ---
+      case "agri_policy.list":
+      case "agri_policy.seed_defaults":
+      case "agri_policy.create":
+      case "agri_policy.update": {
+        const { AgriPolicyActionError, handleAgriPolicyAction } = await import(
+          "./agri_policy.ts"
+        );
+        try {
+          const result = await handleAgriPolicyAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AgriPolicyActionError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
+
+      // --- New LLM Provider API Healthcheck & Monitoring (#2762) ---
+      case "llm_healthcheck.list_endpoints":
+      case "llm_healthcheck.upsert_endpoint":
+      case "llm_healthcheck.delete_endpoint":
+      case "llm_healthcheck.seed_defaults":
+      case "llm_healthcheck.run_probe":
+      case "llm_healthcheck.list_logs":
+      case "llm_healthcheck.summary": {
+        const result = await handleLlmHealthcheckAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseLlmHealthcheckDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- AI Functional Emotion Feedback & NotebookLM KB (#2766) ---
+      case "ai_emotion_feedback.list":
+      case "ai_emotion_feedback.submit":
+      case "ai_emotion_feedback.seed_defaults":
+      case "ai_emotion_feedback.export_notebooklm_intake": {
+        const {
+          createSupabaseAiEmotionFeedbackDb,
+          handleAiEmotionFeedbackAction,
+        } = await import("./ai_emotion_feedback.ts");
+        const result = await handleAiEmotionFeedbackAction({
+          action,
+          body,
+          userId,
+          deps: { db: createSupabaseAiEmotionFeedbackDb(admin) },
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- Q2 2026 AI Investment Trend Batch (#2761) ---
+      case "ai_investment.list":
+      case "ai_investment.seed_defaults":
+      case "ai_investment.ingest":
+      case "ai_investment.verify_entry": {
+        const { AiInvestmentError, handleAiInvestmentAction } = await import(
+          "./ai_investment.ts"
+        );
+        try {
+          const result = await handleAiInvestmentAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AiInvestmentError) {
+            return json({ error: err.message }, err.status);
+          }
+          throw err;
+        }
       }
 
       default:
