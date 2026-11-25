@@ -47,6 +47,8 @@ void main() {
   testWidgets(
       'toggles secure mode, displays 8GB RAM guard, and persists audit trail',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1024, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final auditGateway = _FakeAuditGateway();
     await tester.pumpWidget(
       MaterialApp(
