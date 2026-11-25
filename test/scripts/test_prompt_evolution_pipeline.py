@@ -115,9 +115,11 @@ class PromptEvolutionPipelineTest(unittest.TestCase):
         self.assertNotIn("secrets.SUPABASE_SERVICE_ROLE_KEY", text)
         self.assertIn("test_prompt_evolution_pipeline.py", text)
         self.assertIn("needs.evaluate-and-evolve.outputs.pr_eligible == 'true'", text)
-        self.assertIn("gh pr create", text)
-        self.assertIn("## High-risk Ultrareview Gate", text)
-        self.assertIn("## Minimal E2E Gate", text)
+        self.assertIn('"gh"', text)
+        self.assertIn('"create"', text)
+        self.assertIn("## Reviewer Checklist", text)
+        self.assertNotIn("High-Risk-Ultrareview-Exception", text)
+        self.assertNotIn("E2E-Exception", text)
         # Ensure shell positional parameters use braced form if present
         self.assertIsNone(re.search(r"(?<!\w)\$([0-9]+)(?![0-9A-Za-z_}])", text))
 
