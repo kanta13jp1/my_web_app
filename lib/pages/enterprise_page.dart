@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
 import 'package:my_web_app/features/rag_query_routing/rag_query_routing_container.dart';
@@ -75,6 +76,22 @@ class _EnterprisePageState extends State<EnterprisePage> {
         foregroundColor: Colors.white,
         title: const Text('自分株式会社 for Teams'),
         actions: [
+          IconButton(
+            key: const Key('open_dev_review_tracking_btn'),
+            icon: const Icon(Icons.fact_check_outlined),
+            tooltip: '開発レビュー承認トラッキング',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=dev-review-tracking',
+                  ),
+                  builder: (_) => const DevReviewTrackingContainer(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.admin_panel_settings_outlined),
             tooltip: 'テナント SSO / SCIM 管理 (WorkOS)',
