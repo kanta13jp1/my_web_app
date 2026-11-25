@@ -4,6 +4,7 @@ import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.da
 import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
+import 'package:my_web_app/features/income_insurance_sim/income_insurance_sim_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
 import 'package:my_web_app/features/rag_query_routing/rag_query_routing_container.dart';
 import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
@@ -265,6 +266,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('農政改革タイムライン・ナレッジグラフ'),
                     ),
                     body: const AgriPolicyTimelineContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.calculate_outlined),
+            tooltip: '収入保険・代替モデル比較シミュレーター',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=income-insurance-sim',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('収入保険・代替モデル比較シミュレーター'),
+                    ),
+                    body: const IncomeInsuranceSimContainer(),
                   ),
                 ),
               );
