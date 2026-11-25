@@ -77,6 +77,9 @@ class _EnterprisePageState extends State<EnterprisePage> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=workos-scim',
+                  ),
                   builder: (final BuildContext _) => Scaffold(
                     appBar: AppBar(
                       title: const Text('テナント SSO / SCIM 管理 (WorkOS)'),
