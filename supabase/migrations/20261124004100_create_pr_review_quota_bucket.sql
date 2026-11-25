@@ -198,6 +198,10 @@ BEGIN
       RAISE EXCEPTION 'Authentication required'
         USING ERRCODE = '42501';
     END IF;
+    IF p_owner_user_id IS NOT NULL AND p_owner_user_id <> v_uid THEN
+      RAISE EXCEPTION 'Cannot specify another owner_user_id'
+        USING ERRCODE = '42501';
+    END IF;
     v_owner := v_uid;
   ELSE
     v_owner := coalesce(p_owner_user_id, v_uid);
@@ -434,6 +438,10 @@ BEGIN
       RAISE EXCEPTION 'Authentication required'
         USING ERRCODE = '42501';
     END IF;
+    IF p_owner_user_id IS NOT NULL AND p_owner_user_id <> v_uid THEN
+      RAISE EXCEPTION 'Cannot specify another owner_user_id'
+        USING ERRCODE = '42501';
+    END IF;
     v_owner := v_uid;
   ELSE
     v_owner := coalesce(p_owner_user_id, v_uid);
@@ -452,7 +460,7 @@ BEGIN
     AND quota_date = v_today
   RETURNING * INTO v_bucket;
 
-  IF v_bucket.id IS NULL THEN
+  IF NOT FOUND THEN
     RETURN jsonb_build_object(
       'reconciled', false,
       'reason', 'bucket_not_found',
