@@ -86,12 +86,26 @@ class GateTests(unittest.TestCase):
     def test_binary_header_mentioned_in_source_is_not_a_binary_change(self):
         gate.validate_scope(['a.py'], '+message = "Binary files are unsupported"')
 
-    def test_safe_exact_names_allows_gitattributes_only(self):
+    def test_safe_exact_names_allows_gitattributes_and_cursorignore(self):
         gate.validate_scope(
-            ['.gitattributes', '.githooks/pre-push'],
+            [
+                '.gitattributes',
+                '.githooks/pre-push',
+                '.cursorignore',
+                'my_web_app.code-workspace',
+                '.cursor/rules/flutter_supabase_cross_stack.mdc',
+            ],
             'diff --git a/.gitattributes b/.gitattributes\n+docs/QUARTERLY_ROADMAP.md merge=union\n',
         )
-        for rejected in (['Makefile'], ['.htaccess'], ['.env'], ['scripts/pre-push'], ['pre-push']):
+        for rejected in (
+            ['Makefile'],
+            ['.htaccess'],
+            ['.env'],
+            ['scripts/pre-push'],
+            ['pre-push'],
+            ['.cursor/settings.secret'],
+            ['app.exe'],
+        ):
             with self.subTest(paths=rejected), self.assertRaises(ValueError):
                 gate.validate_scope(rejected, '+plain')
 

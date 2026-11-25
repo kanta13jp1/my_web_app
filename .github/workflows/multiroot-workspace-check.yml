@@ -1,0 +1,54 @@
+name: Multi-Root Workspace Check
+
+on:
+  pull_request:
+    paths:
+      - ".cursor/rules/*.mdc"
+      - ".cursorignore"
+      - ".github/workflows/multiroot-workspace-check.yml"
+      - ".vscode/*.json"
+      - "config/multiroot_workspace_spec.json"
+      - "docs/MULTIROOT_WORKSPACE_SETUP.md"
+      - "my_web_app.code-workspace"
+      - "scripts/ai_review_gate.py"
+      - "scripts/ai_review_gate_test.py"
+      - "scripts/multiroot_workspace_manager.py"
+      - "test/scripts/test_multiroot_workspace_manager.py"
+  workflow_dispatch:
+
+concurrency:
+  group: multiroot-workspace-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Verify multi-root workspace spec and allowlist gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run unit tests, self-test, and workspace checks
+        run: |
+          set -euo pipefail
+          python3 -B test/scripts/test_multiroot_workspace_manager.py -v
+          python3 -B scripts/ai_review_gate_test.py -v
+          python3 -B scripts/multiroot_workspace_manager.py --self-test
+          if [ -f "my_web_app.code-workspace" ]; then
+            python3 -B scripts/multiroot_workspace_manager.py --check-generated
+          else
+            python3 -B scripts/multiroot_workspace_manager.py --check-spec
+          fi
