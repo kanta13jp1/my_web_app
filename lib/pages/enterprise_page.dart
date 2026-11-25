@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
 import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -85,6 +86,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('テナント SSO / SCIM 管理 (WorkOS)'),
                     ),
                     body: const WorkosScimContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.verified_user_outlined),
+            tooltip: 'IdP グループ RBAC / SSO 権限管理',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=idp-rbac',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('IdP グループ RBAC / SSO 権限管理'),
+                    ),
+                    body: const OrgIdpRbacContainer(),
                   ),
                 ),
               );
