@@ -32,6 +32,10 @@ import {
   createSupabaseAiCostMonitorDb,
   handleAiCostAction,
 } from "./ai_cost_monitor.ts";
+import {
+  createSupabaseLlmHealthcheckDb,
+  handleLlmHealthcheckAction,
+} from "./llm_healthcheck.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1271,6 +1275,41 @@ serve(async (req: Request) => {
           }
           throw err;
         }
+      }
+
+      // --- New LLM Provider API Healthcheck & Monitoring (#2762) ---
+      case "llm_healthcheck.list_endpoints":
+      case "llm_healthcheck.upsert_endpoint":
+      case "llm_healthcheck.delete_endpoint":
+      case "llm_healthcheck.seed_defaults":
+      case "llm_healthcheck.run_probe":
+      case "llm_healthcheck.list_logs":
+      case "llm_healthcheck.summary": {
+        const result = await handleLlmHealthcheckAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseLlmHealthcheckDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
+      // --- AI Functional Emotion Feedback & NotebookLM KB (#2766) ---
+      case "ai_emotion_feedback.list":
+      case "ai_emotion_feedback.submit":
+      case "ai_emotion_feedback.seed_defaults":
+      case "ai_emotion_feedback.export_notebooklm_intake": {
+        const {
+          createSupabaseAiEmotionFeedbackDb,
+          handleAiEmotionFeedbackAction,
+        } = await import("./ai_emotion_feedback.ts");
+        const result = await handleAiEmotionFeedbackAction({
+          action,
+          body,
+          userId,
+          deps: { db: createSupabaseAiEmotionFeedbackDb(admin) },
+        });
+        return json(result.body, result.status);
       }
 
       // --- Q2 2026 AI Investment Trend Batch (#2761) ---
