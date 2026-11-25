@@ -368,6 +368,7 @@ const List<String> kAllAppRoutes = <String>[
   '/virtual-organization',
   '/virtual-pet',
   '/virtual-whiteboard',
+  '/vision-benchmark',
   '/voice-memo',
   '/vs-amazon',
   '/vs-animaworks',
