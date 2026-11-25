@@ -129,6 +129,10 @@ export const AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
   "provider.chat",
   "provider.chat_auto",
   "edge_llm.invoke",
+  "agent.safety_checkpoint.evaluate",
+  "agent.safety_checkpoint.list",
+  "agent.safety_checkpoint.approve",
+  "agent.safety_checkpoint.reject",
 ]);
 
 export const SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
