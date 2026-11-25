@@ -1048,6 +1048,33 @@ serve(async (req: Request) => {
         return json({ success: true, ga_readiness: gaReadiness });
       }
 
+      // --- Realtime Concurrent Lock & Conflict Detection (#2744) ---
+      case "realtime_lock.list":
+      case "realtime_lock.create":
+      case "realtime_lock.save":
+      case "realtime_lock.simulate_batch_update": {
+        const { RealtimeLockError, handleRealtimeLockAction } = await import(
+          "./realtime_lock.ts"
+        );
+        try {
+          const result = await handleRealtimeLockAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof RealtimeLockError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
