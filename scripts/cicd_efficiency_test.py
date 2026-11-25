@@ -290,6 +290,30 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("  schedule:", workflow)
         self.assertIn("  workflow_dispatch:", workflow)
 
+    def test_ci_scopes_fonttools_apt_and_high_risk_pip_download(self) -> None:
+        workflow = self.read(".github/workflows/ci.yml")
+        high_risk_step = step(
+            workflow, "Verify high-risk security review dependency lock"
+        )
+        self.assertIn(
+            "if: steps.changes.outputs.high_risk_review_deps == 'true'",
+            high_risk_step,
+        )
+        self.assertIn("requirements-high-risk-security-review.txt", high_risk_step)
+
+        font_seo_step = step(
+            workflow, "Verify web font subsetting and SEO shell handoff tests"
+        )
+        self.assertIn(
+            "if: steps.changes.outputs.web_seo_assets == 'true'",
+            font_seo_step,
+        )
+        self.assertIn("python3-fonttools", font_seo_step)
+        self.assertIn("test_optimize_web_fonts.py", font_seo_step)
+        self.assertIn("test_prerender_seo_routes.py", font_seo_step)
+        self.assertIn("seo_shell_handoff.test.cjs", font_seo_step)
+        self.assertIn("generate_ogp_cards.test.mjs", font_seo_step)
+
 
 SHELL_SHA256 = {
     'Deploy to Firebase Hosting (Production)': 'f6114d733c4fa1b54834278237892a33c6a9eced9376ead99eca582af273016f',
