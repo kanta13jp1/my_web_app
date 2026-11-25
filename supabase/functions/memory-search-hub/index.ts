@@ -301,28 +301,51 @@ function toResult(doc: ScoredMemoryDocument) {
   };
 }
 
-async function memorySearch(body: Body) {
+async function memorySearch(body: Body, ctx: McpAuthContext | null = null) {
   const query = asString(body.query);
   if (!query) return jsonResponse({ error: "query required" }, 400);
   const topK = asPositiveInt(body.top_k, 5, 20);
+  const {
+    createSupabaseOfflineAuditStore,
+    parseOfflineSecureModePolicy,
+    recordAuthorizedOfflineAudit,
+    shouldBlockExternalProviderCall,
+  } = await import("../_shared/offline_secure_mode_guard.ts");
+  const offlinePolicy = parseOfflineSecureModePolicy(body);
+  const externalBlocked = shouldBlockExternalProviderCall(offlinePolicy);
 
   const docs = await loadRecentDocuments();
   const bm25 = rankBm25(query, docs, 50);
   let vector: ScoredMemoryDocument[] = [];
-  try {
-    vector = (await vectorSearch(adminClient(), query, 20)).map((match) => ({
-      ...match,
-      updated_at: null,
-    }));
-  } catch (error) {
-    console.warn("memory.search vector stage skipped", error);
+  if (!externalBlocked) {
+    try {
+      vector = (await vectorSearch(adminClient(), query, 20)).map((match) => ({
+        ...match,
+        updated_at: null,
+      }));
+    } catch (error) {
+      console.warn("memory.search vector stage skipped", error);
+    }
   }
 
   const results = mergeHybridResults(bm25, vector, topK);
+  await recordAuthorizedOfflineAudit(
+    createSupabaseOfflineAuditStore(adminClient()),
+    ctx,
+    body.user_id,
+    {
+      action: "memory.search",
+      provider: externalBlocked ? offlinePolicy.inferenceEngine : "gemini",
+      policy: offlinePolicy,
+      status: externalBlocked ? "external_api_blocked" : "offline_policy_log",
+    },
+  );
   return jsonResponse({
     success: true,
     action: "memory.search",
     query,
+    offline_isolated: externalBlocked,
+    memory_limit_mb: offlinePolicy.memoryLimitMb,
     stages: {
       bm25_candidates: bm25.length,
       vector_candidates: vector.length,
@@ -532,9 +555,18 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     }
   }
 
+  const {
+    createSupabaseOfflineAuditStore,
+    parseOfflineSecureModePolicy,
+    recordAuthorizedOfflineAudit,
+    shouldBlockExternalProviderCall,
+  } = await import("../_shared/offline_secure_mode_guard.ts");
+  const offlinePolicy = parseOfflineSecureModePolicy(body);
+  const externalBlocked = shouldBlockExternalProviderCall(offlinePolicy);
+
   const bm25 = rankBm25(query, docs, 50);
   let vector: ScoredMemoryDocument[] = [];
-  if (!kgLoadError) {
+  if (!kgLoadError && !externalBlocked) {
     try {
       vector = await kgVectorSearch(client, query, sourceTypes, 20);
     } catch (error) {
@@ -554,7 +586,9 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     : "ok";
   let answer = extractiveAnswer(query, citations);
 
-  if (citations.length > 0) {
+  if (externalBlocked) {
+    if (answerStatus === "ok") answerStatus = "offline_extractive";
+  } else if (citations.length > 0) {
     try {
       const generatedAnswer = await generateLlmRagAnswer(
         body,
@@ -587,6 +621,17 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     citation_count: citations.length,
     latency_ms: Math.round(performance.now() - startedAt),
   });
+  await recordAuthorizedOfflineAudit(
+    createSupabaseOfflineAuditStore(client),
+    ctx,
+    body.user_id,
+    {
+      action: "memory.rag.query",
+      provider: externalBlocked ? offlinePolicy.inferenceEngine : "ai-hub",
+      policy: offlinePolicy,
+      status: externalBlocked ? "external_api_blocked" : answerStatus,
+    },
+  );
 
   return jsonResponse({
     success: true,
@@ -596,6 +641,9 @@ async function memoryRagQuery(body: Body, ctx: McpAuthContext | null) {
     citations,
     trace_id: traceId,
     answer_status: answerStatus,
+    offline_isolated: externalBlocked,
+    external_api_blocked: externalBlocked,
+    memory_limit_mb: offlinePolicy.memoryLimitMb,
     sources: sourceTypes,
     stages: {
       kg_documents: docs.length,
@@ -751,6 +799,52 @@ async function memoryStats() {
   });
 }
 
+async function memoryOfflineAudit(
+  action: string,
+  body: Body,
+  ctx: McpAuthContext | null,
+) {
+  const {
+    createSupabaseOfflineAuditStore,
+    DEFAULT_MEMORY_LIMIT_MB,
+    listOfflineSecureModeAuditLogs,
+    parseOfflineSecureModePolicy,
+    recordOfflineSecureModeAudit,
+    resolveOfflineAuditUserId,
+  } = await import("../_shared/offline_secure_mode_guard.ts");
+  const identity = resolveOfflineAuditUserId(ctx, body.user_id);
+  if (!identity.ok) {
+    return jsonResponse({ error: identity.error }, identity.status);
+  }
+  const userId = identity.userId;
+  const store = createSupabaseOfflineAuditStore(adminClient());
+  if (action === "memory.offline_audit_logs") {
+    const logs = await listOfflineSecureModeAuditLogs(
+      store,
+      userId,
+      asPositiveInt(body.limit, 20, 100),
+    );
+    return jsonResponse({
+      success: true,
+      action,
+      user_id: userId,
+      memory_limit_mb: DEFAULT_MEMORY_LIMIT_MB,
+      logs,
+    });
+  }
+  const policy = parseOfflineSecureModePolicy(body);
+  const status = asString(body.status) ||
+    (policy.externalApiBlocked ? "external_api_blocked" : "online_allowed");
+  const result = await recordOfflineSecureModeAudit(store, {
+    userId,
+    action: asString(body.audit_action) || "settings.update",
+    provider: asString(body.provider) || policy.inferenceEngine,
+    policy,
+    status,
+  });
+  return jsonResponse({ success: true, action, user_id: userId, ...result });
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -767,6 +861,8 @@ serve(async (req: Request) => {
         "memory.rag.query",
         "rag.query",
         "memory-search-hub.rag.query",
+        "memory.offline_audit_logs",
+        "memory.offline_audit.record",
       ]),
     );
   }
@@ -792,12 +888,16 @@ serve(async (req: Request) => {
     let response: Response;
     switch (action) {
       case "memory.search":
-        response = await memorySearch(body);
+        response = await memorySearch(body, ctx);
         break;
       case "memory.rag.query":
       case "rag.query":
       case "memory-search-hub.rag.query":
         response = await memoryRagQuery(body, ctx);
+        break;
+      case "memory.offline_audit_logs":
+      case "memory.offline_audit.record":
+        response = await memoryOfflineAudit(action, body, ctx);
         break;
       case "memory.query_route":
         response = await memoryQueryRoute(body);

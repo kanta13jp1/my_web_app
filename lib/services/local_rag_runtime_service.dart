@@ -33,7 +33,7 @@ class LocalRagCitation {
     required this.score,
   });
 
-  factory LocalRagCitation.fromMap(Map<String, dynamic> map) {
+  factory LocalRagCitation.fromMap(Map<String, Object?> map) {
     return LocalRagCitation(
       sourceId: map['source_id']?.toString().trim() ?? '',
       title: map['title']?.toString().trim() ?? '',
@@ -43,8 +43,8 @@ class LocalRagCitation {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'source_id': sourceId,
       'title': title,
       'path': path,
@@ -92,9 +92,11 @@ class LocalRagRuntimeResponse {
   final bool offlineOnly;
   final bool networkBlocked;
   final int? memoryPeakMb;
+  final int? memoryLimitMb;
+  final bool memoryGuardPassed;
   final List<LocalRagCitation> citations;
   final PleiasCitationParseResult citationText;
-  final Map<String, dynamic> raw;
+  final Map<String, Object?> raw;
 
   const LocalRagRuntimeResponse({
     required this.text,
@@ -107,16 +109,18 @@ class LocalRagRuntimeResponse {
     required this.citationText,
     required this.raw,
     this.memoryPeakMb,
+    this.memoryLimitMb,
+    this.memoryGuardPassed = true,
   });
 
-  factory LocalRagRuntimeResponse.fromMap(Map<String, dynamic> map) {
+  factory LocalRagRuntimeResponse.fromMap(Map<String, Object?> map) {
     final citationsRaw = map['citations'];
     final citations = citationsRaw is List
         ? citationsRaw
             .whereType<Map>()
             .map(
               (item) => LocalRagCitation.fromMap(
-                Map<String, dynamic>.from(item),
+                Map<String, Object?>.from(item),
               ),
             )
             .toList()
@@ -131,14 +135,16 @@ class LocalRagRuntimeResponse {
       offlineOnly: map['offline_only'] != false,
       networkBlocked: map['network_blocked'] == true,
       memoryPeakMb: _asInt(map['memory_peak_mb']),
+      memoryLimitMb: _asInt(map['memory_limit_mb']),
+      memoryGuardPassed: map['memory_guard_passed'] != false,
       citations: citations,
       citationText: parsePleiasCitationText(text),
       raw: map,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'text': text,
       'engine': engine,
       'model': model,
@@ -146,6 +152,8 @@ class LocalRagRuntimeResponse {
       'offline_only': offlineOnly,
       'network_blocked': networkBlocked,
       if (memoryPeakMb != null) 'memory_peak_mb': memoryPeakMb,
+      if (memoryLimitMb != null) 'memory_limit_mb': memoryLimitMb,
+      'memory_guard_passed': memoryGuardPassed,
       'citations': citations.map((item) => item.toJson()).toList(),
       'citation_source_ids': citationText.sourceIds,
     };
@@ -187,6 +195,12 @@ class LocalRagRuntimeService {
       'vector_db_path': settings.localVectorDbPath,
       'engine': settings.inferenceEngine,
       'temperature': 0,
+      'memory_limit_mb': settings.memoryLimitMb
+          .clamp(
+            OfflineSecureModeSettings.minMemoryLimitMb,
+            OfflineSecureModeSettings.defaultMemoryLimitMb,
+          )
+          .toInt(),
       'offline_only': true,
       'network_policy': 'offline_only',
       if (sessionId != null && sessionId.trim().isNotEmpty)
@@ -216,9 +230,9 @@ class LocalRagRuntimeService {
     return response;
   }
 
-  Future<Map<String, dynamic>> _post(
+  Future<Map<String, Object?>> _post(
     String endpoint,
-    Map<String, dynamic> body,
+    Map<String, Object?> body,
   ) async {
     final uri = Uri.parse(endpoint);
     final response = await http
@@ -231,13 +245,13 @@ class LocalRagRuntimeService {
         )
         .timeout(timeout);
     final decoded = jsonDecode(response.body);
-    if (decoded is Map<String, dynamic>) {
+    if (decoded is Map<String, Object?>) {
       return decoded;
     }
     if (decoded is Map) {
-      return Map<String, dynamic>.from(decoded);
+      return Map<String, Object?>.from(decoded);
     }
-    return <String, dynamic>{
+    return <String, Object?>{
       'success': false,
       'message': 'Unexpected local RAG response',
       'status_code': response.statusCode,
