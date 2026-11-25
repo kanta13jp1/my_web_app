@@ -180,7 +180,7 @@ Deno.test("notifySlackWithDiscordFailover fails over when Slack env is unset", a
         : undefined,
     fetcher: (url) => {
       calls.push(String(url));
-      return Promise.resolve(new Response("ok", { status: 204 }));
+      return Promise.resolve(new Response(null, { status: 204 }));
     },
   });
 
@@ -332,6 +332,7 @@ Deno.test("handleCoreHubRequest slack.notify fails over across outage modes", as
     }),
     {
       serviceRoleKey: srk,
+      createAdminClient: () => ({} as never),
       getEnv: (name) => envMap[name],
       fetcher: (input) => {
         const url = String(input);
@@ -339,7 +340,7 @@ Deno.test("handleCoreHubRequest slack.notify fails over across outage modes", as
         if (url.includes("slack.example")) {
           return Promise.resolve(new Response("unavailable", { status: 503 }));
         }
-        return Promise.resolve(new Response("ok", { status: 204 }));
+        return Promise.resolve(new Response(null, { status: 204 }));
       },
       reportError: () => {},
     },
@@ -360,6 +361,7 @@ Deno.test("handleCoreHubRequest slack.notify fails over across outage modes", as
     }),
     {
       serviceRoleKey: srk,
+      createAdminClient: () => ({} as never),
       getEnv: (name) => envMap[name],
       fetcher: (input) => {
         if (String(input).includes("discord.example")) {
@@ -383,6 +385,7 @@ Deno.test("handleCoreHubRequest slack.notify fails over across outage modes", as
     }),
     {
       serviceRoleKey: srk,
+      createAdminClient: () => ({} as never),
       getEnv: (name) => envMap[name],
       fetcher: () => Promise.resolve(new Response("err", { status: 500 })),
       reportError: () => {},
@@ -397,8 +400,9 @@ Deno.test("handleCoreHubRequest slack.notify fails over across outage modes", as
     }),
     {
       serviceRoleKey: srk,
+      createAdminClient: () => ({} as never),
       getEnv: (name) => envMap[name],
-      fetcher: () => Promise.resolve(new Response("ok", { status: 204 })),
+      fetcher: () => Promise.resolve(new Response(null, { status: 204 })),
       reportError: () => {},
     },
   );
