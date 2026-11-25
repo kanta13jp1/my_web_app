@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
 import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
+import 'package:my_web_app/features/ai_emotion_feedback/ai_emotion_feedback_container.dart';
 import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
 import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
 import 'package:my_web_app/features/format_importer/format_importer_container.dart';
@@ -285,6 +286,26 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('収入保険・代替モデル比較シミュレーター'),
                     ),
                     body: const IncomeInsuranceSimContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_emotion_feedback_action'),
+            icon: const Icon(Icons.psychology_alt_outlined),
+            tooltip: 'AI 感情フィードバック収集',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-emotion-feedback',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AI 感情フィードバック収集'),
+                    ),
+                    body: const AiEmotionFeedbackContainer(),
                   ),
                 ),
               );
