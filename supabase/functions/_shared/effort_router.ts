@@ -105,6 +105,36 @@ const LOCAL_EFFORT_MATRIX: EffortConfig[] = [
     default_effort: "medium",
     rationale: "Memory linting may need semantic judgment.",
   },
+  {
+    action: "flutter_ui_routine",
+    default_effort: "low",
+    rationale:
+      "Routine Flutter widget layout, styling, and copy updates use fast low-cost models.",
+  },
+  {
+    action: "flutter_widget_copy",
+    default_effort: "low",
+    rationale:
+      "Deterministic Flutter localization and static text updates stay on the low-cost lane.",
+  },
+  {
+    action: "supabase_migration_design",
+    default_effort: "xhigh",
+    rationale:
+      "PostgreSQL schema, RLS, and trigger invariants require top reasoning models.",
+  },
+  {
+    action: "supabase_rls_architecture",
+    default_effort: "xhigh",
+    rationale:
+      "Row-level security boundary design and privilege checks require frontier reasoning.",
+  },
+  {
+    action: "root_cause_analysis",
+    default_effort: "xhigh",
+    rationale:
+      "Multi-layer production root-cause investigation escalates to high-reasoning models.",
+  },
 ];
 
 let cachedClient: SupabaseClient | null = null;
@@ -396,4 +426,197 @@ export function selectDynamicLlmRoute(
     rationale: `${local.rationale}${suffix}`.trim(),
     source: "local",
   };
+}
+
+export interface AgentLoopTelemetryEvent {
+  model: string;
+  taskType?: string;
+  status?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  thinkingTokens?: number;
+  estimatedCostUsd?: number;
+  occurredAt?: string;
+}
+
+export interface AgentLoopGuardPolicy {
+  maxConsecutiveRetries?: number;
+  maxCallsPerMinute?: number;
+  maxSessionTokens?: number;
+  costAlertUsd?: number;
+  autoHaltOnLoop?: boolean;
+}
+
+export interface ModelTokenCostBreakdown {
+  model: string;
+  callCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  thinkingTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+  costSharePct: number;
+}
+
+export interface AgentLoopHaltDecision {
+  shouldHalt: boolean;
+  triggers: string[];
+  maxConsecutiveFailures: number;
+  maxConsecutiveSameTask: number;
+  peakCallsPerMinute: number;
+  totalTokens: number;
+  totalCostUsd: number;
+  haltReason: string;
+}
+
+const FAILURE_EVENT_STATUSES = new Set([
+  "error",
+  "failed",
+  "timeout",
+  "rate_limited",
+  "blocked",
+]);
+
+export function summarizePerModelTokenCosts(
+  events: readonly AgentLoopTelemetryEvent[],
+): ModelTokenCostBreakdown[] {
+  const byModel = new Map<string, ModelTokenCostBreakdown>();
+  let grandTotalCost = 0;
+
+  for (const event of events) {
+    const model = event.model.trim() || "unknown";
+    const inTok = Math.max(0, Math.trunc(event.inputTokens ?? 0));
+    const outTok = Math.max(0, Math.trunc(event.outputTokens ?? 0));
+    const thinkTok = Math.max(0, Math.trunc(event.thinkingTokens ?? 0));
+    const cost = Math.max(0, Number(event.estimatedCostUsd ?? 0));
+    const existing = byModel.get(model) ?? {
+      model,
+      callCount: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      thinkingTokens: 0,
+      totalTokens: 0,
+      estimatedCostUsd: 0,
+      costSharePct: 0,
+    };
+    existing.callCount += 1;
+    existing.inputTokens += inTok;
+    existing.outputTokens += outTok;
+    const prevThink = existing.thinkingTokens;
+    const nxtThk = prevThink + thinkTok;
+    existing.thinkingTokens = nxtThk;
+    const nextSum = existing.totalTokens + inTok + outTok + thinkTok;
+    existing.totalTokens = nextSum;
+    existing.estimatedCostUsd =
+      Math.round((existing.estimatedCostUsd + cost) * 1_000_000) / 1_000_000;
+    byModel.set(model, existing);
+    grandTotalCost += cost;
+  }
+
+  return Array.from(byModel.values())
+    .map((row) => ({
+      ...row,
+      costSharePct: grandTotalCost > 0
+        ? Math.round((row.estimatedCostUsd / grandTotalCost) * 10000) / 100
+        : 0,
+    }))
+    .sort((a, b) =>
+      b.estimatedCostUsd !== a.estimatedCostUsd
+        ? b.estimatedCostUsd - a.estimatedCostUsd
+        : b.totalTokens - a.totalTokens
+    );
+}
+
+export function detectAgentLoopHalt(
+  events: readonly AgentLoopTelemetryEvent[],
+  policy: AgentLoopGuardPolicy = {},
+  remainingBudgetUsd?: number,
+): AgentLoopHaltDecision {
+  const maxRetries = Math.max(1, Math.trunc(policy.maxConsecutiveRetries ?? 5));
+  const maxCpm = Math.max(1, Math.trunc(policy.maxCallsPerMinute ?? 12));
+  const tokCap = Math.max(100, Math.trunc(policy.maxSessionTokens ?? 120000));
+  const costAlertUsd = Math.max(0.000001, Number(policy.costAlertUsd ?? 10.0));
+  const autoHaltEnabled = policy.autoHaltOnLoop !== false;
+
+  let consecutiveFailures = 0;
+  let maxConsecutiveFailures = 0;
+  let consecutiveSameTask = 0;
+  let maxConsecutiveSameTask = 0;
+  let prevSig = "";
+  let tokSum = 0;
+  let totalCostUsd = 0;
+  const minuteCounts = new Map<string, number>();
+
+  for (const event of events) {
+    const inTok = Math.max(0, Math.trunc(event.inputTokens ?? 0));
+    const outTok = Math.max(0, Math.trunc(event.outputTokens ?? 0));
+    const thinkTok = Math.max(0, Math.trunc(event.thinkingTokens ?? 0));
+    tokSum += inTok + outTok + thinkTok;
+    totalCostUsd += Math.max(0, Number(event.estimatedCostUsd ?? 0));
+
+    const status = (event.status ?? "").trim().toLowerCase();
+    if (FAILURE_EVENT_STATUSES.has(status)) {
+      consecutiveFailures += 1;
+      if (consecutiveFailures > maxConsecutiveFailures) {
+        maxConsecutiveFailures = consecutiveFailures;
+      }
+    } else {
+      consecutiveFailures = 0;
+    }
+
+    const sig = `${event.model.trim()}::${(event.taskType ?? "").trim()}`;
+    if (sig === prevSig) {
+      consecutiveSameTask += 1;
+    } else {
+      consecutiveSameTask = 1;
+      prevSig = sig;
+    }
+    if (consecutiveSameTask > maxConsecutiveSameTask) {
+      maxConsecutiveSameTask = consecutiveSameTask;
+    }
+
+    const ts = (event.occurredAt ?? "").trim();
+    if (ts.length >= 16) {
+      const minuteKey = ts.slice(0, 16);
+      minuteCounts.set(minuteKey, (minuteCounts.get(minuteKey) ?? 0) + 1);
+    }
+  }
+
+  let peakCallsPerMinute = 0;
+  for (const count of minuteCounts.values()) {
+    if (count > peakCallsPerMinute) peakCallsPerMinute = count;
+  }
+
+  const triggers: string[] = [];
+  if (maxConsecutiveFailures >= maxRetries || maxConsecutiveSameTask >= maxRetries) {
+    triggers.push("consecutive_retry_loop");
+  }
+  if (tokSum >= tokCap) {
+    triggers.push("token_burn_spike");
+  }
+  if (peakCallsPerMinute >= maxCpm) {
+    triggers.push("call_rate_spike");
+  }
+  if (
+    (typeof remainingBudgetUsd === "number" &&
+      Number.isFinite(remainingBudgetUsd) &&
+      remainingBudgetUsd <= 0) ||
+    totalCostUsd >= costAlertUsd
+  ) {
+    triggers.push("budget_cap_exceeded");
+  }
+
+  const shouldHalt = autoHaltEnabled && triggers.length > 0;
+  const haltResult: AgentLoopHaltDecision = {
+    shouldHalt,
+    triggers,
+    maxConsecutiveFailures,
+    maxConsecutiveSameTask,
+    peakCallsPerMinute,
+    totalTokens: 0,
+    totalCostUsd: Math.round(totalCostUsd * 1_000_000) / 1_000_000,
+    haltReason: shouldHalt ? triggers.join(", ") : "",
+  };
+  haltResult.totalTokens = tokSum;
+  return haltResult;
 }

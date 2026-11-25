@@ -183,6 +183,45 @@ class DynamicLlmRouterTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, content)
 
+    def test_flutter_ui_vs_supabase_rca_routing_and_loop_auto_halt(self) -> None:
+        config = router.load_routing_config(ROOT / "config" / "llm_routing_rules.json")
+        guidelines = ROOT / "docs" / "MODEL_ROUTING_GUIDELINES.md"
+        self.assertTrue(guidelines.is_file())
+
+        flutter_ui = router.route_task(config, category="flutter_ui_routine")
+        self.assertEqual(flutter_ui.tier, "trivial")
+        self.assertEqual(flutter_ui.model, "claude-haiku-4-5")
+        self.assertFalse(flutter_ui.is_frontier)
+
+        supabase_rls = router.route_task(config, category="supabase_rls_architecture")
+        self.assertEqual(supabase_rls.tier, "critical")
+        self.assertEqual(supabase_rls.model, "claude-opus-4-7")
+        self.assertTrue(supabase_rls.is_frontier)
+
+        loop_events = [
+            {
+                "event_id": f"loop-{i}",
+                "occurred_at": "2026-11-25T03:00:00Z",
+                "provider": "anthropic",
+                "model": "claude-opus-4-7",
+                "task_type": "root_cause_analysis",
+                "status": "error",
+                "input_tokens": 25000,
+                "output_tokens": 5000,
+                "estimated_cost_usd": 0.45,
+            }
+            for i in range(5)
+        ]
+        summary = router.analyze_routing_telemetry(loop_events, config)
+        self.assertEqual(len(summary["token_cost_breakdown"]), 1)
+        self.assertEqual(summary["token_cost_breakdown"][0]["total_tokens"], 150000)
+        self.assertTrue(summary["loop_guard"]["should_halt"])
+        self.assertIn("consecutive_retry_loop", summary["loop_guard"]["triggers"])
+        self.assertIn("token_burn_spike", summary["loop_guard"]["triggers"])
+        self.assertTrue(
+            any(a["reason"] == "abnormal_agent_loop_detected" for a in summary["alerts"])
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
