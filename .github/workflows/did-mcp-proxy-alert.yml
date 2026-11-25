@@ -1,0 +1,99 @@
+name: D-ID MCP Proxy Monitor & Alert
+
+on:
+  schedule:
+    # 毎日 09:00 JST (00:00 UTC) に D-ID MCP プロキシ統合テストとアラート評価を dry-run 実行
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without sending live webhook notifications (true/false)'
+        required: false
+        default: 'true'
+      prompt:
+        description: 'Agent prompt to map into D-ID MCP tools/call invocation'
+        required: false
+        default: 'Inspect D-ID MCP endpoint docs for talks generation'
+
+concurrency:
+  group: did-mcp-proxy-alert-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  did-mcp-proxy-monitor:
+    name: Monitor D-ID MCP Proxy & Bridge
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run D-ID MCP bridge unit tests
+        run: python3 -B test/scripts/test_did_mcp_agent_bridge.py -v
+
+      - name: Run D-ID MCP bridge self-test
+        run: python3 -B scripts/did_mcp_agent_bridge.py --self-test
+
+      - name: Execute D-ID MCP bridge evaluation
+        id: mcp_bridge
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          AGENT_PROMPT: ${{ github.event.inputs.prompt || 'Inspect D-ID MCP endpoint docs for talks generation' }}
+          DID_MCP_ALERT_WEBHOOK_URL: ${{ secrets.DID_MCP_ALERT_WEBHOOK_URL || vars.DID_MCP_ALERT_WEBHOOK_URL || '' }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ] && [ -n "${DID_MCP_ALERT_WEBHOOK_URL}" ]; then
+            python3 -B scripts/did_mcp_agent_bridge.py \
+              --prompt "${AGENT_PROMPT}" \
+              --webhook-url "${DID_MCP_ALERT_WEBHOOK_URL}" \
+              --json-out "did_mcp_proxy_report.json" \
+              --markdown-out "did_mcp_proxy_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --live
+          else
+            python3 -B scripts/did_mcp_agent_bridge.py \
+              --prompt "${AGENT_PROMPT}" \
+              --json-out "did_mcp_proxy_report.json" \
+              --markdown-out "did_mcp_proxy_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --dry-run
+          fi
+
+      - name: Upload D-ID MCP proxy report artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: did-mcp-proxy-report
+          path: |
+            did_mcp_proxy_report.json
+            did_mcp_proxy_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append workflow summary
+        env:
+          BRIDGE_MODE: ${{ steps.mcp_bridge.outputs.mode }}
+          SELECTED_TOOL: ${{ steps.mcp_bridge.outputs.selected_tool }}
+          ALERT_COUNT: ${{ steps.mcp_bridge.outputs.alert_count }}
+          RATE_LIMITED_COUNT: ${{ steps.mcp_bridge.outputs.rate_limited_count }}
+        run: |
+          {
+            echo "## D-ID MCP Proxy Monitor (#2662)"
+            echo "- Mode: \`${BRIDGE_MODE}\`"
+            echo "- Selected Tool: \`${SELECTED_TOOL}\`"
+            echo "- Rate Limited (429): \`${RATE_LIMITED_COUNT}\` | Alerts: \`${ALERT_COUNT}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

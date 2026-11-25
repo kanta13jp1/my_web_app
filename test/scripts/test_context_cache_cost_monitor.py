@@ -205,6 +205,81 @@ class ContextCacheCostMonitorTests(unittest.TestCase):
         self.assertEqual(parsed["self_test"], "passed")
         self.assertTrue(parsed["dry_run"])
         self.assertTrue(parsed["warm_turn"]["cache_hit"])
+        self.assertEqual(parsed["ttl_1h_turn"]["cache_ttl"], "1h")
+        self.assertEqual(parsed["recache_over_1h"]["status"], "expired_recache_required")
+
+    def test_1h_ttl_payload_2x_write_latency_savings_and_over_1h_recache(self) -> None:
+        docs = [
+            {"doc_id": "log-1", "title": "CI Archive", "content": "Long build log trace..."},
+        ]
+        payload_1h = monitor.build_cached_prompt_payload(
+            provider="anthropic",
+            model_id="claude-sonnet-4",
+            system_instructions="Invariant rules",
+            invariant_documents=docs,
+            conversation_turns=[{"role": "user", "content": "Continue"}],
+            cache_ttl="1h",
+        )
+        self.assertEqual(payload_1h["cache_ttl"], "1h")
+        self.assertEqual(payload_1h["anthropic_beta_header"], monitor.ANTHROPIC_EXTENDED_TTL_BETA_HEADER)
+        self.assertEqual(payload_1h["system"][-1]["cache_control"], {"type": "ephemeral", "ttl": "1h"})
+
+        cold_1h = monitor.measure_cache_usage(
+            request_id="req-1h-cold",
+            user_id="user-1",
+            workflow_key="multi-hour-migration",
+            model_id="claude-sonnet-4",
+            cache_write_tokens=10_000,
+            cache_read_tokens=0,
+            uncached_input_tokens=200,
+            output_tokens=100,
+            cache_ttl="1h",
+            latency_ms=2000.0,
+            baseline_latency_ms=2000.0,
+        )
+        self.assertEqual(cold_1h["cache_write_multiplier"], 2.0)
+        self.assertEqual(cold_1h["rate_card_version"], monitor.RATE_CARD_1H_VERSION)
+
+        warm_1h = monitor.measure_cache_usage(
+            request_id="req-1h-warm",
+            user_id="user-1",
+            workflow_key="multi-hour-migration",
+            model_id="claude-sonnet-4",
+            cache_write_tokens=0,
+            cache_read_tokens=10_000,
+            uncached_input_tokens=200,
+            output_tokens=100,
+            cache_ttl="1h",
+            latency_ms=400.0,
+            baseline_latency_ms=2000.0,
+        )
+        self.assertEqual(warm_1h["latency_saved_ms"], 1600.0)
+        self.assertEqual(warm_1h["latency_reduction_ratio"], 0.8)
+
+        summary = monitor.aggregate_usage_by_workflow_and_user([cold_1h, warm_1h])
+        self.assertEqual(summary[0]["ttl_1h_count"], 2)
+        self.assertEqual(summary[0]["avg_latency_ms"], 1200.0)
+        self.assertEqual(summary[0]["avg_latency_reduction_ratio"], 0.4)
+
+        recache = monitor.plan_long_running_recache(
+            model_id="claude-sonnet-4",
+            session_started_at="2026-11-25T08:00:00Z",
+            last_refreshed_at="2026-11-25T08:00:00Z",
+            now_iso="2026-11-25T09:10:00Z",
+            recache_seq=2,
+            system_instructions="Invariant rules",
+            invariant_documents=docs,
+            conversation_summary="Completed migration step 1-3.",
+            completed_steps=["step1", "step2", "step3"],
+            pending_step="step4_verify",
+        )
+        self.assertEqual(recache["status"], "expired_recache_required")
+        self.assertTrue(recache["exceeded_one_hour_task"])
+        self.assertEqual(recache["recache_seq"], 3)
+        self.assertEqual(
+            recache["payload"]["system"][-1]["cache_control"],
+            {"type": "ephemeral", "ttl": "1h"},
+        )
 
 
 if __name__ == "__main__":

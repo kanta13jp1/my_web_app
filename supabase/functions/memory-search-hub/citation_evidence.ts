@@ -1,3 +1,4 @@
+import { parseNativeCitations } from "./native_citation_parser.ts";
 import { tokenize } from "./search/bm25.ts";
 
 const MAX_PREVIEW_CHARS = 1600;
@@ -239,10 +240,12 @@ export function hasOnlyValidCitationMarkers(
   citationCount: number,
 ): boolean {
   if (citationCount <= 0) return false;
-  const markers = Array.from(answer.matchAll(/\[(\d+)\]/g));
-  if (markers.length === 0) return false;
-  return markers.every((marker) => {
-    const citationNumber = Number(marker[1]);
+  const parsed = parseNativeCitations(answer);
+  if (parsed.reference_ids.length === 0) return false;
+  return parsed.reference_ids.every((rawId) => {
+    const match = /^(?:(?:doc|source)[-_])?(\d+)$/i.exec(rawId.trim());
+    if (!match) return false;
+    const citationNumber = Number(match[1]);
     return Number.isInteger(citationNumber) &&
       citationNumber >= 1 &&
       citationNumber <= citationCount;

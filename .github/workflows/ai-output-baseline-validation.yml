@@ -1,0 +1,103 @@
+name: AI Output Baseline Validation
+
+on:
+  schedule:
+    # 毎日 11:19 JST (02:19 UTC) にベースライン出力ブレ検証を実行
+    - cron: '19 2 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without external alert delivery (true/false)'
+        required: false
+        default: 'true'
+      drift_threshold:
+        description: 'Maximum allowed baseline mismatch rate (e.g. 0.25)'
+        required: false
+        default: '0.25'
+
+concurrency:
+  group: ai-output-baseline-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  validate-ai-baseline:
+    name: Validate deterministic AI output baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run deterministic validator unit tests
+        run: python3 -B test/scripts/test_validate_ai_output_baseline.py -v
+
+      - name: Run deterministic validator self-test
+        run: python3 -B scripts/validate_ai_output_baseline.py --self-test
+
+      - name: Run baseline prompt drift suite
+        id: baseline_check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          DRIFT_THRESHOLD: ${{ github.event.inputs.drift_threshold || '0.25' }}
+          AUDIT_WEBHOOK_URL: ${{ secrets.AI_OUTPUT_AUDIT_WEBHOOK_URL || vars.AI_OUTPUT_AUDIT_WEBHOOK_URL || '' }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ] && [ -n "${AUDIT_WEBHOOK_URL}" ]; then
+            python3 -B scripts/validate_ai_output_baseline.py \
+              --drift-threshold "${DRIFT_THRESHOLD}" \
+              --json-out "ai_output_baseline_report.json" \
+              --markdown-out "ai_output_baseline_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --live \
+              --webhook-url "${AUDIT_WEBHOOK_URL}"
+          else
+            python3 -B scripts/validate_ai_output_baseline.py \
+              --drift-threshold "${DRIFT_THRESHOLD}" \
+              --json-out "ai_output_baseline_report.json" \
+              --markdown-out "ai_output_baseline_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --dry-run
+          fi
+
+      - name: Upload baseline validation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ai-output-baseline-validation-report
+          path: |
+            ai_output_baseline_report.json
+            ai_output_baseline_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append workflow summary
+        env:
+          BASELINE_STATUS: ${{ steps.baseline_check.outputs.status }}
+          CASES_MATCHED: ${{ steps.baseline_check.outputs.cases_matched }}
+          CASES_TOTAL: ${{ steps.baseline_check.outputs.cases_total }}
+          DRIFT_RATE: ${{ steps.baseline_check.outputs.drift_rate }}
+          AVG_DRIFT_SCORE: ${{ steps.baseline_check.outputs.avg_drift_score }}
+          ANOMALY_DETECTED: ${{ steps.baseline_check.outputs.anomaly_detected }}
+        run: |
+          {
+            echo "## AI Output Baseline Validation (#2657)"
+            echo "- Status: \`${BASELINE_STATUS}\`"
+            echo "- Matched Cases: \`${CASES_MATCHED}/${CASES_TOTAL}\`"
+            echo "- Drift Rate: \`${DRIFT_RATE}\`"
+            echo "- Avg Drift Score: \`${AVG_DRIFT_SCORE}\`"
+            echo "- Anomaly Detected: \`${ANOMALY_DETECTED}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

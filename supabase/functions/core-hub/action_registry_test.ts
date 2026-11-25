@@ -19,6 +19,7 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "design.audit.upsert",
     "design.rollout.upsert",
     "discord.notify",
+    "external_diff.batch_scan",
     "notification.broadcast_release",
     "notify.feature_request",
     "slack.notify",
@@ -33,6 +34,11 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "async_job.status",
     "async_job.update_status",
     "design.screens.list",
+    "external_diff.alert.acknowledge",
+    "external_diff.alert.list",
+    "external_diff.rule.list",
+    "external_diff.rule.upsert",
+    "external_diff.snapshot_and_detect",
     "feature_request.analyze_attachment",
     "feature_request.existing_issues",
     "feature_request.list",
@@ -65,23 +71,25 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
   ],
 };
 
-Deno.test("all 52 dispatcher actions have one explicit auth policy", async () => {
-  const actual: Record<CoreHubAuthPolicy, string[]> = {
-    anonymous: [],
-    service_role: [],
-    user: [],
-  };
-  for (
-    const [action, definition] of Object.entries(
-      CORE_HUB_ACTION_REGISTRY,
-    )
-  ) {
-    actual[definition.auth].push(action);
-  }
-  for (const actions of Object.values(actual)) actions.sort();
+Deno.test(
+  "all 58 dispatcher actions have one explicit auth policy",
+  async () => {
+    const actual: Record<CoreHubAuthPolicy, string[]> = {
+      anonymous: [],
+      service_role: [],
+      user: [],
+    };
+    for (
+      const [action, definition] of Object.entries(
+        CORE_HUB_ACTION_REGISTRY,
+      )
+    ) {
+      actual[definition.auth].push(action);
+    }
+    for (const actions of Object.values(actual)) actions.sort();
 
-  assertEquals(actual, EXPECTED_ACTIONS);
-  assertEquals(Object.keys(CORE_HUB_ACTION_REGISTRY).length, 52);
+    assertEquals(actual, EXPECTED_ACTIONS);
+    assertEquals(Object.keys(CORE_HUB_ACTION_REGISTRY).length, 58);
 
   const indexSource = await Deno.readTextFile(
     new URL("./index.ts", import.meta.url),

@@ -1,0 +1,60 @@
+name: Markdown Memory Audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/markdown-memory-audit.yml"
+      - "scripts/ci_markdown_memory.py"
+      - "scripts/hooks/auto-capture.sh"
+      - "test/scripts/test_ci_markdown_memory.py"
+  workflow_dispatch:
+
+concurrency:
+  group: markdown-memory-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  verify_markdown_memory:
+    name: Verify crash-safe Markdown memory and git-blame audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify shell syntax, unit tests, and auto-capture hook in temp repo
+        run: |
+          set -euo pipefail
+          bash -n scripts/hooks/auto-capture.sh
+          python3 -B test/scripts/test_ci_markdown_memory.py -v
+          python3 -B scripts/ci_markdown_memory.py --self-test
+          TMP_REPO="$(mktemp -d)"
+          trap 'rm -rf "$TMP_REPO"' EXIT
+          git -C "$TMP_REPO" init
+          git -C "$TMP_REPO" config user.name "gha-smoke"
+          git -C "$TMP_REPO" config user.email "gha-smoke@example.invalid"
+          bash scripts/hooks/auto-capture.sh \
+            --repo-root "$TMP_REPO" \
+            --memory-file "memory/ci_agent_ledger/smoke.md" \
+            --agent "gha-smoke" \
+            --decision "verify_headless_capture" \
+            --tool "ci_markdown_memory" \
+            --outcome "passed" \
+            --summary "Verified auto-capture and git-blame tracking in headless CI" \
+            --commit
+          bash scripts/hooks/auto-capture.sh \
+            --repo-root "$TMP_REPO" \
+            --memory-file "memory/ci_agent_ledger/smoke.md" \
+            --audit-blame >> "$GITHUB_STEP_SUMMARY"
