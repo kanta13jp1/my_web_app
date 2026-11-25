@@ -174,7 +174,7 @@ jobs:
             fi
             commit_sha="$(gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}" --jq '.head.sha' || echo "${GITHUB_SHA}")"
             gh api "repos/${REPO_SLUG}/pulls/${INPUT_PR_NUMBER}/files?per_page=100" --jq '.[].filename' > tmp/cursor-sdk/changed_files.txt || true
-            gh pr diff "${INPUT_PR_NUMBER}" --repo "${REPO_SLUG}" > tmp/cursor-sdk/pr.diff || true
+            gh pr diff --repo "${REPO_SLUG}" -- "${INPUT_PR_NUMBER}" > tmp/cursor-sdk/pr.diff || true
           fi
 
           if [ -n "${INPUT_RUN_ID}" ]; then
