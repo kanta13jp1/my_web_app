@@ -1,0 +1,113 @@
+name: 障害報告（フロントエンド）
+description: 画面表示・操作不能・配信後の Flutter Web の不具合や障害を報告する
+title: "[Incident][Frontend] "
+labels: ["bug", "flutter-web"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        フロントエンド（Flutter Web）の不具合・障害の報告フォームです。手順は [`docs/INCIDENT_ESCALATION_RUNBOOK.md`](https://github.com/kanta13jp1/my_web_app/blob/main/docs/INCIDENT_ESCALATION_RUNBOOK.md) を参照してください。
+
+        スクリーンショットや動画に、個人情報・金融情報・トークンが写り込んでいないか確認してから添付してください。
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重大度の目安（docs/ONCALL_INCIDENT_SOP.md §1）
+      description: 迷ったら一段上を選んでください。最終判断は担当者が行います。
+      options:
+        - SEV1（広範に利用不能・データ毀損や秘密情報露出の恐れ）
+        - SEV2（主要機能の一部が劣化・回避が難しい）
+        - SEV3（軽微・回避策あり）
+    validations:
+      required: true
+  - type: input
+    id: occurred_at
+    attributes:
+      label: 発生時刻（タイムゾーン付き）
+      placeholder: 例 2026-11-26 03:30 JST
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: 発生した画面（ルートまたは URL パス）
+      description: クエリ文字列に個人情報が含まれる場合は除いてください。
+      placeholder: 例 /enterprise
+    validations:
+      required: true
+  - type: dropdown
+    id: symptom
+    attributes:
+      label: 症状の種類
+      multiple: true
+      options:
+        - 白画面・読み込みが終わらない
+        - 表示崩れ・文字切れ・重なり
+        - 操作できない（ボタン・入力・スクロール）
+        - エラー表示
+        - 画面遷移の不具合
+        - アクセシビリティ（読み上げ・キーボード・コントラスト）
+        - その他
+    validations:
+      required: true
+  - type: input
+    id: build_version
+    attributes:
+      label: アプリのバージョン（わかる場合は /version.json の commit）
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境（ブラウザ・OS・画面サイズ・端末）
+      placeholder: |
+        ブラウザ:
+        OS:
+        画面サイズ:
+        端末:
+    validations:
+      required: true
+  - type: dropdown
+    id: status_check
+    attributes:
+      label: 公式 Status ページの確認結果（配信・API に起因する可能性がある場合）
+      description: https://status.firebase.google.com/ と https://status.supabase.com/ を確認してください。
+      options:
+        - 未確認
+        - 該当するインシデントの掲載なし
+        - 該当するインシデントが掲載されている（URLを下の欄に記載）
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: 期待する動作 / 実際の動作
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: コンソールエラー（秘匿情報を除く）
+      render: text
+  - type: textarea
+    id: tried
+    attributes:
+      label: 試した対処と結果（調査の段階）
+      description: キャッシュ削除・別ブラウザ・公式ドキュメント・コミュニティ・AI 支援など
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 確認事項
+      options:
+        - label: 既存の Issue と docs/incident-reports を検索し、重複していないことを確認しました
+          required: true
+        - label: 秘匿情報・個人情報を含めていません
+          required: true
