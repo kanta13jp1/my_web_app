@@ -36,9 +36,12 @@ class SyncCompressedPromptTest(unittest.TestCase):
                 ".githooks/pre-push",
                 "scripts/check_remote_synced.py",
             ):
+                src = ROOT / rel
+                if not src.exists():
+                    continue
                 dst = tmp / rel
                 dst.parent.mkdir(parents=True, exist_ok=True)
-                dst.write_bytes((ROOT / rel).read_bytes())
+                dst.write_bytes(src.read_bytes())
 
             self.assertEqual(sync_mod.main(["--repo-root", str(tmp), "--write"]), 0)
             self.assertEqual(sync_mod.main(["--repo-root", str(tmp), "--check", "--strict-metrics"]), 0)
@@ -93,9 +96,17 @@ class SyncCompressedPromptTest(unittest.TestCase):
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.write_bytes((ROOT / rel).read_bytes())
 
-            rebase_audit = sync_mod.verify_rebase_sync_protocol(tmp)
+            rebase_audit = sync_mod.verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)
             self.assertFalse(rebase_audit["ok"])
             self.assertTrue(any(".githooks/pre-push missing" in v for v in rebase_audit["violations"]))
+
+            hook = tmp / ".githooks" / "pre-push"
+            hook.write_text(
+                "#!/usr/bin/env bash\npython -B scripts/sync_compressed_prompt.py --check\n# origin/main git pull --rebase origin main\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            self.assertTrue(sync_mod.verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)["ok"])
 
             json_out = tmp / "sync.json"
             md_out = tmp / "sync.md"

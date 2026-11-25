@@ -111,7 +111,11 @@ def verify_ci_analyze_contract(repo_root: Path) -> dict[str, Any]:
     }
 
 
-def verify_rebase_sync_protocol(repo_root: Path) -> dict[str, Any]:
+def verify_rebase_sync_protocol(
+    repo_root: Path,
+    *,
+    require_pre_push_hook: bool = False,
+) -> dict[str, Any]:
     """Verify pre-push `git pull --rebase` protocol across prompt docs and opt-in git hooks."""
     violations: list[str] = []
 
@@ -125,7 +129,8 @@ def verify_rebase_sync_protocol(repo_root: Path) -> dict[str, Any]:
 
     pre_push_path = repo_root / ".githooks" / "pre-push"
     if not pre_push_path.exists():
-        violations.append(".githooks/pre-push missing")
+        if require_pre_push_hook:
+            violations.append(".githooks/pre-push missing")
     else:
         pp_text = _read_lf(pre_push_path)
         if "sync_compressed_prompt.py" not in pp_text:
@@ -233,12 +238,20 @@ def render_compressed_prompt(repo_root: Path) -> tuple[str, dict[str, Any]]:
     return doc, metadata
 
 
-def check_sync_state(repo_root: Path, *, strict_metrics: bool = False) -> dict[str, Any]:
+def check_sync_state(
+    repo_root: Path,
+    *,
+    strict_metrics: bool = False,
+    require_pre_push_hook: bool = False,
+) -> dict[str, Any]:
     """Validate parity between `.github/COMPRESSED_PROMPT_V3.md`, `COMPRESSED_PROMPT.md`, hooks, and CI."""
     violations: list[str] = []
 
     analyze_contract = verify_ci_analyze_contract(repo_root)
-    rebase_contract = verify_rebase_sync_protocol(repo_root)
+    rebase_contract = verify_rebase_sync_protocol(
+        repo_root,
+        require_pre_push_hook=require_pre_push_hook,
+    )
     violations.extend(analyze_contract["violations"])
     violations.extend(rebase_contract["violations"])
 
@@ -336,9 +349,20 @@ def run_self_test(repo_root: Path) -> dict[str, Any]:
             "scripts/check_remote_synced.py",
         ):
             src = repo_root / rel
+            if not src.exists():
+                continue
             dst = tmp / rel
             dst.parent.mkdir(parents=True, exist_ok=True)
             dst.write_bytes(src.read_bytes())
+
+        if not (tmp / ".githooks" / "pre-push").exists():
+            assert verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)["ok"] is False
+            (tmp / ".githooks" / "pre-push").write_text(
+                "#!/usr/bin/env bash\npython -B scripts/sync_compressed_prompt.py --check\n# origin/main git pull --rebase\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+        assert verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)["ok"] is True
 
         doc, _ = render_compressed_prompt(tmp)
         (tmp / "COMPRESSED_PROMPT.md").write_text(doc, encoding="utf-8", newline="\n")
@@ -351,7 +375,7 @@ def run_self_test(repo_root: Path) -> dict[str, Any]:
         assert drift["in_sync"] is False
         assert any("out of sync" in v for v in drift["violations"])
 
-    return {"self_test": "passed", "checks": 2, "v3_checksum": result["expected_v3_checksum"]}
+    return {"self_test": "passed", "checks": 3, "v3_checksum": result["expected_v3_checksum"]}
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -362,6 +386,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     mode.add_argument("--write", action="store_true", default=False)
     mode.add_argument("--dry-run", action="store_true", default=False)
     parser.add_argument("--strict-metrics", action="store_true", default=False)
+    parser.add_argument("--require-pre-push-hook", action="store_true", default=False)
     parser.add_argument("--json-out", type=Path, default=None)
     parser.add_argument("--markdown-out", type=Path, default=None)
     parser.add_argument("--github-output", type=Path, default=None)
@@ -387,7 +412,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    result = check_sync_state(root, strict_metrics=args.strict_metrics)
+    result = check_sync_state(
+        root,
+        strict_metrics=args.strict_metrics,
+        require_pre_push_hook=args.require_pre_push_hook,
+    )
     summary_lines = [
         "### Compressed Prompt Sync Check (#2680)",
         f"- Status: `{result['status']}` | In Sync: `{result['in_sync']}`",
