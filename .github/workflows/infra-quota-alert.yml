@@ -1,0 +1,153 @@
+name: Infra Quota Billing Alert
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/infra-quota-alert.yml"
+      - "scripts/infra_quota_estimator.py"
+      - "test/scripts/test_infra_quota_estimator.py"
+      - "docs/infra-quota-limits.json"
+      - "docs/infra-usage-snapshot.json"
+      - "docs/INFRA_QUOTA_AND_BILLING_GUIDE.md"
+  schedule:
+    # 毎週月曜 10:17 JST (01:17 UTC): 利用枠の閾値評価 (週次)
+    - cron: "17 1 * * 1"
+    # 毎月 1 日 09:37 JST (00:37 UTC): 月次の利用状況・予測コストレビュー
+    - cron: "37 0 1 * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run without opening GitHub Issues (true/false)"
+        required: false
+        default: "true"
+      monthly_review:
+        description: "Also open the monthly review issue (true/false)"
+        required: false
+        default: "false"
+      alert_threshold_pct:
+        description: "Alert threshold in percent of the plan limit"
+        required: false
+        default: "80"
+
+concurrency:
+  group: infra-quota-alert-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  verify:
+    name: Unit tests and dry-run evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run estimator unit tests
+        run: python3 -B test/scripts/test_infra_quota_estimator.py -v
+
+      - name: Evaluate usage snapshot (read-only dry run)
+        run: |
+          python3 -B scripts/infra_quota_estimator.py \
+            --json-out infra_quota_report.json \
+            --markdown-out infra_quota_report.md
+
+      - name: Upload evaluation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: infra-quota-verify-report
+          path: |
+            infra_quota_report.json
+            infra_quota_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+  alert:
+    name: Evaluate quotas and open alert or monthly review issue
+    needs: verify
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Evaluate thresholds and upsert issues
+        id: evaluate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          MONTHLY_REVIEW_INPUT: ${{ github.event.inputs.monthly_review || 'false' }}
+          ALERT_THRESHOLD_PCT: ${{ github.event.inputs.alert_threshold_pct || '80' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          args=(
+            --alert-threshold-pct "${ALERT_THRESHOLD_PCT}"
+            --github-output "${GITHUB_OUTPUT}"
+            --json-out infra_quota_report.json
+            --markdown-out infra_quota_report.md
+          )
+          if [ "${EVENT_NAME}" = "schedule" ] || { [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ]; }; then
+            args+=(--create-issue)
+          fi
+          if [ "${SCHEDULE_CRON}" = "37 0 1 * *" ] || [ "${MONTHLY_REVIEW_INPUT}" = "true" ]; then
+            args+=(--monthly-review)
+          fi
+          python3 -B scripts/infra_quota_estimator.py "${args[@]}"
+
+      - name: Upload evaluation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: infra-quota-alert-report
+          path: |
+            infra_quota_report.json
+            infra_quota_report.md
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Append workflow summary
+        if: always()
+        env:
+          QUOTA_STATUS: ${{ steps.evaluate.outputs.status }}
+          ALERT_COUNT: ${{ steps.evaluate.outputs.alert_count }}
+          OWNER_ACTION: ${{ steps.evaluate.outputs.owner_action_required }}
+          ESTIMATED_USD: ${{ steps.evaluate.outputs.estimated_monthly_usd }}
+        run: |
+          {
+            echo "## Infra Quota Billing Alert (#2767)"
+            echo "- Status: \`${QUOTA_STATUS}\` (alerts=\`${ALERT_COUNT}\`, owner_action_required=\`${OWNER_ACTION}\`)"
+            echo "- Paid-plan estimate at current usage: \`USD ${ESTIMATED_USD}\` (estimate, not an invoice)"
+            if [ -f infra_quota_report.md ]; then
+              echo
+              cat infra_quota_report.md
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
