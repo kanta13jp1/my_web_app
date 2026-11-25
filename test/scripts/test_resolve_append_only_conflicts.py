@@ -36,9 +36,9 @@ class ResolveAppendOnlyConflictsTests(unittest.TestCase):
             and not line.lstrip().startswith("#")
             and "merge=union" in line.split()[1:]
         ]
-        patterns_to_verify = union_patterns or list(resolver.APPEND_ONLY_PATH_PATTERNS)
-        self.assertGreaterEqual(len(patterns_to_verify), 5)
-        for pattern in patterns_to_verify:
+        self.assertGreaterEqual(len(union_patterns), 5)
+        self.assertEqual(set(union_patterns), set(resolver.APPEND_ONLY_PATH_PATTERNS))
+        for pattern in union_patterns:
             regex = (
                 "^"
                 + re.escape(pattern)
@@ -48,12 +48,12 @@ class ResolveAppendOnlyConflictsTests(unittest.TestCase):
             matched = [path for path in tracked if re.match(regex, path)]
             self.assertTrue(
                 matched,
-                f"Append-only pattern {pattern!r} matched no tracked files",
+                f".gitattributes merge=union pattern {pattern!r} matched no tracked files",
             )
             for path in matched:
                 self.assertTrue(
                     resolver.is_append_only_path(path),
-                    f"Allowlist missing append-only tracked path {path}",
+                    f"Allowlist missing .gitattributes tracked path {path}",
                 )
 
     def test_resolves_two_way_conflict_retaining_both_additions(self) -> None:
