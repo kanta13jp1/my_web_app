@@ -21,6 +21,10 @@ import {
 import { handlePromptEvolutionAction } from "./prompt_evolution.ts";
 import { createSupabasePromptEvolutionDb } from "./prompt_evolution_supabase.ts";
 import {
+  createSupabaseAltSupplyDb,
+  handleAltSupplyAction,
+} from "./alt_supply.ts";
+import {
   createSupabaseVisionBenchmarkDb,
   handleVisionBenchmarkAction,
 } from "./vision_benchmark.ts";
@@ -1200,6 +1204,20 @@ serve(async (req: Request) => {
           status: statusText,
         });
         return json({ success: true, action, ...recorded });
+      }
+
+      // --- Alternative Supply & Import Risk Monitor (#2756) ---
+      case "alt_supply.list":
+      case "alt_supply.seed_defaults":
+      case "alt_supply.create":
+      case "alt_supply.update": {
+        const result = await handleAltSupplyAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAltSupplyDb(admin),
+        });
+        return json(result.body, result.status);
       }
 
       // --- AI Vision Benchmark Monitoring (#2758) ---
