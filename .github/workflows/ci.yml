@@ -218,6 +218,7 @@ jobs:
           scripts/test_decision_event_migration.py
 
       - name: Verify high-risk security review dependency lock
+        if: steps.changes.outputs.high_risk_review_deps == 'true'
         shell: bash
         run: |
           mkdir -p "${RUNNER_TEMP}/high-risk-security-review-wheels"
@@ -501,6 +502,7 @@ jobs:
         continue-on-error: false  # migration 構文エラーはCIブロック
 
       - name: Verify web font subsetting and SEO shell handoff tests
+        if: steps.changes.outputs.web_seo_assets == 'true'
         run: |
           if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
             sudo apt-get update
