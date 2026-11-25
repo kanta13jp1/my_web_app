@@ -1,0 +1,105 @@
+name: Dynamic LLM Routing Verification
+
+on:
+  pull_request:
+    paths:
+      - 'config/llm_routing_rules.json'
+      - 'scripts/dynamic_llm_router.py'
+      - 'scripts/ai_model_telemetry_report.py'
+      - 'supabase/functions/_shared/effort_router.ts'
+      - 'supabase/functions/_shared/claude_model_router_test.ts'
+      - 'test/scripts/test_dynamic_llm_router.py'
+      - 'test/scripts/test_ai_model_telemetry_report.py'
+      - '.github/workflows/dynamic-llm-router.yml'
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Optional task category for dry-run routing check'
+        required: false
+        default: 'code_review'
+      complexity:
+        description: 'Optional complexity tier override (trivial/standard/complex/critical)'
+        required: false
+        default: ''
+
+concurrency:
+  group: dynamic-llm-router-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  verify-routing:
+    name: Validate dynamic LLM routing config and telemetry checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run dynamic LLM router and telemetry unit tests
+        run: |
+          set -euo pipefail
+          python3 -B test/scripts/test_dynamic_llm_router.py -v
+          python3 -B test/scripts/test_ai_model_telemetry_report.py -v
+          python3 -B scripts/dynamic_llm_router.py --self-test
+
+      - name: Validate routing config sync and sample telemetry separation
+        id: router
+        env:
+          TASK_CATEGORY: ${{ github.event.inputs.category || 'code_review' }}
+          TASK_COMPLEXITY: ${{ github.event.inputs.complexity || '' }}
+        run: |
+          set -euo pipefail
+          args=(
+            scripts/dynamic_llm_router.py
+            --validate-config
+            --check-ts-sync
+            --category "${TASK_CATEGORY}"
+            --telemetry-input docs/ai-bench/results/model_usage_events.sample.jsonl
+            --dry-run
+            --json-out dynamic_llm_router_report.json
+            --markdown-out dynamic_llm_router_report.md
+            --github-output "${GITHUB_OUTPUT}"
+          )
+          if [ -n "${TASK_COMPLEXITY}" ]; then
+            args+=(--complexity "${TASK_COMPLEXITY}")
+          fi
+          python3 -B "${args[@]}"
+
+      - name: Upload dynamic LLM router report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dynamic-llm-router-report
+          path: |
+            dynamic_llm_router_report.json
+            dynamic_llm_router_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append step summary
+        if: always()
+        env:
+          CONFIG_VALID: ${{ steps.router.outputs.config_valid }}
+          SELECTED_TIER: ${{ steps.router.outputs.selected_tier }}
+          SELECTED_MODEL: ${{ steps.router.outputs.selected_model }}
+          TELEMETRY_EVENTS: ${{ steps.router.outputs.telemetry_events }}
+        run: |
+          {
+            echo "## Dynamic LLM Routing Verification"
+            echo "- Config Valid: \`${CONFIG_VALID}\`"
+            echo "- Selected Tier / Model: \`${SELECTED_TIER}\` / \`${SELECTED_MODEL}\`"
+            echo "- Sample Telemetry Events: \`${TELEMETRY_EVENTS}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
