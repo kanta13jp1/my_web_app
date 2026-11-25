@@ -52,8 +52,8 @@ CREATE INDEX IF NOT EXISTS idx_pr_review_quota_events_outcome_time
 ALTER TABLE public.pr_review_quota_buckets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pr_review_quota_events ENABLE ROW LEVEL SECURITY;
 
-REVOKE ALL ON TABLE public.pr_review_quota_buckets FROM PUBLIC, anon;
-GRANT SELECT, INSERT, UPDATE ON TABLE public.pr_review_quota_buckets TO authenticated;
+REVOKE ALL ON TABLE public.pr_review_quota_buckets FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.pr_review_quota_buckets TO authenticated;
 GRANT ALL ON TABLE public.pr_review_quota_buckets TO service_role;
 
 REVOKE ALL ON TABLE public.pr_review_quota_events FROM PUBLIC, anon;
@@ -68,19 +68,7 @@ CREATE POLICY pr_review_quota_buckets_select_own
   USING ((select auth.uid()) = owner_user_id);
 
 DROP POLICY IF EXISTS pr_review_quota_buckets_insert_own ON public.pr_review_quota_buckets;
-CREATE POLICY pr_review_quota_buckets_insert_own
-  ON public.pr_review_quota_buckets
-  FOR INSERT
-  TO authenticated
-  WITH CHECK ((select auth.uid()) = owner_user_id);
-
 DROP POLICY IF EXISTS pr_review_quota_buckets_update_own ON public.pr_review_quota_buckets;
-CREATE POLICY pr_review_quota_buckets_update_own
-  ON public.pr_review_quota_buckets
-  FOR UPDATE
-  TO authenticated
-  USING ((select auth.uid()) = owner_user_id)
-  WITH CHECK ((select auth.uid()) = owner_user_id);
 
 DROP POLICY IF EXISTS pr_review_quota_events_select_own ON public.pr_review_quota_events;
 CREATE POLICY pr_review_quota_events_select_own
@@ -146,11 +134,19 @@ BEGIN
         USING ERRCODE = '42501';
     END IF;
     IF TG_OP = 'INSERT' THEN
-      NEW.owner_user_id := auth.uid();
+      RAISE EXCEPTION 'Direct insert to pr_review_quota_buckets requires service_role'
+        USING ERRCODE = '42501';
     ELSIF NEW.id IS DISTINCT FROM OLD.id
        OR NEW.owner_user_id IS DISTINCT FROM OLD.owner_user_id
-       OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
-      RAISE EXCEPTION 'Immutable columns id, owner_user_id, created_at cannot be modified'
+       OR NEW.created_at IS DISTINCT FROM OLD.created_at
+       OR NEW.quota_date IS DISTINCT FROM OLD.quota_date
+       OR NEW.plan_tier IS DISTINCT FROM OLD.plan_tier
+       OR NEW.pr_review_daily_limit IS DISTINCT FROM OLD.pr_review_daily_limit
+       OR NEW.pr_reviews_used IS DISTINCT FROM OLD.pr_reviews_used
+       OR NEW.pr_review_model_calls_used IS DISTINCT FROM OLD.pr_review_model_calls_used
+       OR NEW.pr_reviews_skipped IS DISTINCT FROM OLD.pr_reviews_skipped
+       OR NEW.last_skipped_at IS DISTINCT FROM OLD.last_skipped_at THEN
+      RAISE EXCEPTION 'Protected quota bucket columns cannot be modified directly'
         USING ERRCODE = '42501';
     END IF;
   END IF;
