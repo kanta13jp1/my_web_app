@@ -36,6 +36,10 @@ import {
   createSupabaseLlmHealthcheckDb,
   handleLlmHealthcheckAction,
 } from "./llm_healthcheck.ts";
+import {
+  createSupabaseAiEmotionDb,
+  handleAiEmotionAction,
+} from "./ai_emotion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1294,6 +1298,20 @@ serve(async (req: Request) => {
         return json(result.body, result.status);
       }
 
+      // --- AI Functional Emotion Logging & Dashboard (#2764) ---
+      case "ai_emotion.list":
+      case "ai_emotion.seed_defaults":
+      case "ai_emotion.classify_and_log":
+      case "ai_emotion.summary": {
+        const result = await handleAiEmotionAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAiEmotionDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
       // --- AI Functional Emotion Feedback & NotebookLM KB (#2766) ---
       case "ai_emotion_feedback.list":
       case "ai_emotion_feedback.submit":
@@ -1364,7 +1382,6 @@ serve(async (req: Request) => {
           throw err;
         }
       }
-
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
 import 'package:my_web_app/features/ai_compliance/ai_compliance_container.dart';
 import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
+import 'package:my_web_app/features/ai_emotion_dashboard/ai_emotion_dashboard_container.dart';
 import 'package:my_web_app/features/ai_emotion_feedback/ai_emotion_feedback_container.dart';
 import 'package:my_web_app/features/ai_investment_batch/ai_investment_batch_container.dart';
 import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
@@ -371,6 +372,26 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('AIモデル コンプライアンス・セキュリティ検証'),
                     ),
                     body: const AiComplianceContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_emotion_action'),
+            icon: const Icon(Icons.psychology_alt_outlined),
+            tooltip: 'AI機能的感情ステータス監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=functional-emotion',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AI機能的感情ステータス監視'),
+                    ),
+                    body: const AiEmotionDashboardContainer(),
                   ),
                 ),
               );
