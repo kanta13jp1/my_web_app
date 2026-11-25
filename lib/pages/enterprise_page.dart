@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
+import 'package:my_web_app/features/ai_compliance/ai_compliance_container.dart';
 import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
 import 'package:my_web_app/features/ai_emotion_feedback/ai_emotion_feedback_container.dart';
 import 'package:my_web_app/features/ai_investment_batch/ai_investment_batch_container.dart';
@@ -349,6 +350,27 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('AI 感情フィードバック収集'),
                     ),
                     body: const AiEmotionFeedbackContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('open_ai_compliance_btn'),
+            icon: const Icon(Icons.gpp_good_outlined),
+            tooltip: 'AIモデル コンプライアンス検証',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-compliance',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AIモデル コンプライアンス・セキュリティ検証'),
+                    ),
+                    body: const AiComplianceContainer(),
                   ),
                 ),
               );
