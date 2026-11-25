@@ -28,6 +28,14 @@ import {
   resolveAuthenticatedUserId,
 } from "./action_access_policy.ts";
 import {
+  DEFAULT_BUDGET_TIER_PROVIDERS,
+  isProviderPaymentRequired,
+  ProviderPaymentCooldownTracker,
+  QUOTA_FALLBACK_CHAIN,
+  selectEligibleProviders,
+  shouldSkipProviderForBilling,
+} from "./provider_payment_cooldown.ts";
+import {
   AI_CHARACTER_PREAMBLE,
   buildAiSystemPrompt,
   prependCharacter,
@@ -692,15 +700,7 @@ const TIER_PROVIDERS: Record<Tier, string[]> = {
   // 焼き尽くし 2 連続 503。高速推論ホスト(groq/cerebras)を先頭に置く。
   // key 未設定のプロバイダは callSingleProvider が即 fail するので無害。
   free: ["groq", "cerebras", "deepseek", "siliconflow", "novita_ai"],
-  budget: [
-    "sambanova",
-    "arcee_ai",
-    "minimax",
-    "deepinfra",
-    "together_ai",
-    "fireworks_ai",
-    "moonshot",
-  ],
+  budget: [...DEFAULT_BUDGET_TIER_PROVIDERS],
   performance: [
     "google",
     "openai",
@@ -778,21 +778,7 @@ function isProviderOutputLengthLimited(reason: string | null): boolean {
     normalized === "maxoutputtokens";
 }
 
-function isProviderPaymentRequired(
-  status: number,
-  responseText: string,
-): boolean {
-  const text = responseText.toLowerCase();
-  return status === 402 ||
-    text.includes("paid_plan_required") ||
-    text.includes("payment_required") ||
-    text.includes("insufficient_quota") ||
-    text.includes("positive balance") ||
-    text.includes("add balance") ||
-    text.includes("top-up") ||
-    text.includes("billing") ||
-    text.includes("credit");
-}
+const providerPaymentCooldown = new ProviderPaymentCooldownTracker();
 
 async function callSingleProvider(
   providerId: string,
@@ -813,6 +799,18 @@ async function callSingleProvider(
 > {
   const cfg = PROVIDER_CONFIGS[providerId];
   if (!cfg) return { ok: false, error: "unknown provider", isRetriable: false };
+  const billingSkip = shouldSkipProviderForBilling(
+    providerId,
+    providerPaymentCooldown,
+    Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+  );
+  if (billingSkip.skip) {
+    return {
+      ok: false,
+      error: `paidPlanRequired: ${providerId}: skipped (${billingSkip.reason})`,
+      isRetriable: true,
+    };
+  }
   const apiKey = Deno.env.get(cfg.envKey) ?? "";
   if (!apiKey) {
     return { ok: false, error: "apiKeyRequired", isRetriable: false };
@@ -862,6 +860,9 @@ async function callSingleProvider(
     }
     if (!resp.ok) {
       const paymentRequired = isProviderPaymentRequired(resp.status, respText);
+      if (paymentRequired) {
+        providerPaymentCooldown.markExhausted(providerId);
+      }
       const isRetriable = paymentRequired || resp.status === 429 ||
         resp.status >= 500;
       return {
@@ -7308,6 +7309,22 @@ serve(async (req: Request) => {
         if (!userId && !isServiceRoleRequest(req)) {
           return json({ error: "Unauthorized" }, 401);
         }
+        const directBillingSkip = shouldSkipProviderForBilling(
+          providerId,
+          providerPaymentCooldown,
+          Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+        );
+        if (directBillingSkip.skip) {
+          return json({
+            success: false,
+            status: "paidPlanRequired",
+            provider: providerId,
+            cooldown_skipped: true,
+            skip_reason: directBillingSkip.reason,
+            message:
+              `${cfg.displayName} はプロバイダー側で課金残高不足のため一時スキップ中です。`,
+          });
+        }
         if (userId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7449,6 +7466,7 @@ serve(async (req: Request) => {
           if (!resp.ok) {
             // Free tier / 課金制限検知
             if (isProviderPaymentRequired(resp.status, respText)) {
+              providerPaymentCooldown.markExhausted(providerId);
               await logProviderChat({
                 success: false,
                 statusCode: resp.status,
@@ -8132,10 +8150,12 @@ serve(async (req: Request) => {
             usedInputTokens = result.inputTokens;
             usedOutputTokens = result.outputTokens;
           } else if (result.isRetriable) {
-            // Quota/rate-limit: try fallback chain (anthropic → google → openai)
-            const fallbackChain = ["anthropic", "google", "openai"].filter(
-              (p) => p !== providerId && p in PROVIDER_CONFIGS,
-            );
+            // Quota/rate-limit: try eligible fallback chain (google/nebius prioritized)
+            const fallbackChain = selectEligibleProviders(
+              QUOTA_FALLBACK_CHAIN,
+              providerPaymentCooldown,
+              Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+            ).filter((p) => p !== providerId && p in PROVIDER_CONFIGS);
             for (const fbPid of fallbackChain) {
               const fbResult = await callSingleProvider(
                 fbPid,
@@ -8202,9 +8222,11 @@ serve(async (req: Request) => {
             outerLoop:
             for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
               const tier = TIER_ORDER[ti];
-              const providers = TIER_PROVIDERS[tier].filter((p) =>
-                p in PROVIDER_CONFIGS
-              );
+              const providers = selectEligibleProviders(
+                TIER_PROVIDERS[tier],
+                providerPaymentCooldown,
+                Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+              ).filter((p) => p in PROVIDER_CONFIGS);
               for (const pid of providers) {
                 const result = await callSingleProvider(
                   pid,
