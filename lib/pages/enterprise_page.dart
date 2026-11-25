@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/format_importer/format_importer_container.dart';
 import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
 import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
 import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
@@ -106,6 +107,25 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       title: const Text('IdP グループ RBAC / SSO 権限管理'),
                     ),
                     body: const OrgIdpRbacContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.import_export_outlined),
+            tooltip: '汎用フォーマット取込 / JSONB属性管理',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=format-importer',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('汎用フォーマット取込 / JSONB属性管理'),
+                    ),
+                    body: const FormatImporterContainer(),
                   ),
                 ),
               );
