@@ -97,6 +97,12 @@ import {
 import { AssetChatActionError, handleAssetChatAction } from "./asset_chat.ts";
 import { createSupabaseAssetChatStore } from "./asset_chat_supabase.ts";
 import {
+  ANTHROPIC_EXTENDED_CACHE_TTL_BETA,
+  buildAnthropicCachedBodySync,
+  handlePromptCacheAction,
+  type PromptCacheDb,
+} from "./prompt_cache_1h.ts";
+import {
   handleSafetyCheckpointAction,
   type SafetyCheckpointDb,
 } from "./safety_checkpoints.ts";
@@ -443,13 +449,15 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     envKey: "ANTHROPIC_API_KEY",
     chatUrl: "https://api.anthropic.com/v1/messages",
     defaultModel: "claude-haiku-4-5-20251001",
-    buildBody: (messages, model) => ({
-      model,
-      max_tokens: 512,
-      messages: (messages as { role: string; content: string }[]).filter(
-        (m) => m.role !== "system",
-      ),
-    }),
+    extraHeaders: {
+      "anthropic-beta": ANTHROPIC_EXTENDED_CACHE_TTL_BETA,
+    },
+    buildBody: (messages, model) =>
+      buildAnthropicCachedBodySync({
+        model,
+        messages: messages as { role: string; content: string }[],
+        cacheTtl: "1h",
+      }),
     parseResponse: (data) => String(pick(data, "content", 0, "text") ?? ""),
   },
   // Google Gemini は Bearer ではなく ?key=xxx クエリ認証 — provider.chat で特殊分岐
@@ -5038,6 +5046,20 @@ serve(async (req: Request) => {
         });
       }
 
+      case "prompt_cache.build_payload":
+      case "prompt_cache.record_metric":
+      case "prompt_cache.monitor_summary":
+      case "prompt_cache.check_renewal": {
+        const res = await handlePromptCacheAction({
+          db: admin as unknown as PromptCacheDb,
+          action,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
       case "my_agent.chat": {
         const message = asString(body.message) || "この画像を分析してください";
         const responseMode = asString(body.response_mode) || "text";
@@ -6843,41 +6865,69 @@ serve(async (req: Request) => {
       }
 
       case "mario.jev_decide": {
-        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        if (req.method !== "POST") {
+          return json({ error: "method_not_allowed" }, 405);
+        }
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         if (shouldBlockExternalProviderCall(offlinePolicy)) {
-          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: "typesafe",
+            }),
+            409,
+          );
         }
-        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        const account = userId
+          ? await admin.auth.admin.getUserById(userId)
+          : null;
         try {
-          return json(await decideMario({
-            userId: account?.error ? null : account?.data.user?.id ?? null,
-            anonymous: account?.data.user?.is_anonymous !== false,
-            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
-            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
-            reserve: async (id) => {
-              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
-              if (error) throw new Error("quota_unavailable");
-              return data === true;
-            },
-          }));
+          return json(
+            await decideMario({
+              userId: account?.error ? null : account?.data.user?.id ?? null,
+              anonymous: account?.data.user?.is_anonymous !== false,
+              allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(
+                ",",
+              ).map((s) => s.trim()).filter(Boolean),
+              apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+              body,
+              reserve: async (id) => {
+                const { data, error } = await admin.rpc(
+                  "reserve_jev_mario_call",
+                  { p_user_id: id },
+                );
+                if (error) throw new Error("quota_unavailable");
+                return data === true;
+              },
+            }),
+          );
         } catch (error) {
-          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          if (error instanceof MarioError) {
+            return json({ error: error.code }, error.status);
+          }
           return json({ error: "provider_unavailable" }, 503);
         }
       }
 
       case "expense.jev_search":
       case "expense.jev_suggest": {
-        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        if (req.method !== "POST") {
+          return json({ error: "method_not_allowed" }, 405);
+        }
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         if (shouldBlockExternalProviderCall(offlinePolicy)) {
-          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
-            action, provider: "typesafe",
-          }), 409);
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: "typesafe",
+            }),
+            409,
+          );
         }
         // Re-read the authenticated account; anonymous sessions must not spend.
-        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        const account = userId
+          ? await admin.auth.admin.getUserById(userId)
+          : null;
         try {
           const result = await classifyJevExpense({
             semanticSearch: action === "expense.jev_search",
@@ -6886,10 +6936,15 @@ serve(async (req: Request) => {
             body,
             apiKey: Deno.env.get("JEV_API_KEY") ?? "",
             reserve: async (id) => {
-              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
-                p_user_id: id,
-              });
-              if (error) throw new Error("quota_unavailable");
+              const { data, error } = await admin.rpc(
+                "reserve_jev_expense_call",
+                {
+                  p_user_id: id,
+                },
+              );
+              if (error) {
+                throw new Error("quota_unavailable");
+              }
               return data === true;
             },
           });
@@ -7379,10 +7434,9 @@ serve(async (req: Request) => {
               remaining: dailyQuota.remaining ?? 0,
               quota_date: dailyQuota.quotaDate,
               reset_at: dailyQuota.resetAt,
-              message:
-                `本日のプラン別AI利用上限(${
-                  dailyQuota.dailyLimit ?? 0
-                }回)に達しました。`,
+              message: `本日のプラン別AI利用上限(${
+                dailyQuota.dailyLimit ?? 0
+              }回)に達しました。`,
             }, 429);
           }
         }
@@ -7789,10 +7843,9 @@ serve(async (req: Request) => {
               remaining: dailyQuota.remaining ?? 0,
               quota_date: dailyQuota.quotaDate,
               reset_at: dailyQuota.resetAt,
-              message:
-                `本日のプラン別AI利用上限(${
-                  dailyQuota.dailyLimit ?? 0
-                }回)に達しました。`,
+              message: `本日のプラン別AI利用上限(${
+                dailyQuota.dailyLimit ?? 0
+              }回)に達しました。`,
             }, 429);
           }
         }
