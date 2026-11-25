@@ -2,7 +2,10 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   DEFAULT_CLAUDE_HAIKU_MODEL,
   DEFAULT_CLAUDE_SONNET_MODEL,
+  mapComplexityToEffort,
+  mapEffortToComplexity,
   selectClaudeModelForEffort,
+  selectDynamicLlmRoute,
 } from "./effort_router.ts";
 import { calculateApiCost } from "./task_budget.ts";
 
@@ -50,4 +53,28 @@ Deno.test("Claude model costs use the current official standard token rates", ()
     calculateApiCost(DEFAULT_CLAUDE_SONNET_MODEL, 1_000_000, 1_000_000),
     12,
   );
+});
+
+Deno.test("dynamic router scales from trivial to critical and honors budget/circuit-breaker", () => {
+  assertEquals(mapComplexityToEffort("critical"), "xhigh");
+  assertEquals(mapEffortToComplexity("low"), "trivial");
+
+  const routine = selectDynamicLlmRoute({ action: "ai.assistant.chat" });
+  assertEquals(routine.tier, "trivial");
+  assertEquals(routine.model, "claude-haiku-4-5");
+
+  const critical = selectDynamicLlmRoute({
+    action: "ai.notebooklm.distill",
+  });
+  assertEquals(critical.tier, "critical");
+  assertEquals(critical.model, "claude-opus-4-7");
+
+  const downgraded = selectDynamicLlmRoute({
+    action: "ai.notebooklm.distill",
+    remainingBudgetUsd: 2.0,
+    unhealthyModels: ["claude-sonnet-4-6"],
+  });
+  assertEquals(downgraded.tier, "complex");
+  assertEquals(downgraded.downgradedByBudget, true);
+  assertEquals(downgraded.model, "gpt-5.4");
 });
