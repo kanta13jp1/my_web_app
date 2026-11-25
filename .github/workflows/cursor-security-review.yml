@@ -90,6 +90,7 @@ jobs:
             git diff --no-ext-diff --unified=0 "${PR_BASE_SHA}...${PR_HEAD_SHA}" > tmp/cursor-security-review/pr.diff || true
             python3 -B scripts/cursor_security_review.py \
               --dry-run \
+              --strict-blocking \
               --pr-number "${PR_NUMBER}" \
               --commit-sha "${PR_HEAD_SHA}" \
               --changed-files tmp/cursor-security-review/changed_files.txt \

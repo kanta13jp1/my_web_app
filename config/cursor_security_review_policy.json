@@ -100,7 +100,7 @@
       "severity": "critical",
       "blocking": true,
       "path_regex": "^\\.github/workflows/.*\\.ya?ml$",
-      "line_regex": "github\\.event\\.pull_request\\.head\\.(?:ref|sha)",
+      "line_regex": "pull_request_target",
       "cwe": "CWE-269",
       "title": "Workflow checks out untrusted pull_request_target head ref",
       "recommendation": "Keep privileged workflows on immutable default-branch commits and pass PR metadata safely via explicit read-only verification."
