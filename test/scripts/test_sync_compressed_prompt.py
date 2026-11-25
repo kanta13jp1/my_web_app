@@ -17,6 +17,7 @@ import sync_compressed_prompt as sync_mod  # noqa: E402
 
 class SyncCompressedPromptTest(unittest.TestCase):
     def test_repository_sync_and_contracts_pass(self) -> None:
+        self.assertTrue((ROOT / ".githooks" / "pre-push").is_file())
         state = sync_mod.check_sync_state(ROOT, strict_metrics=False)
         self.assertTrue(state["in_sync"], state["violations"])
         self.assertTrue(state["ci_analyze_strict"])
@@ -96,9 +97,10 @@ class SyncCompressedPromptTest(unittest.TestCase):
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.write_bytes((ROOT / rel).read_bytes())
 
-            rebase_audit = sync_mod.verify_rebase_sync_protocol(tmp, require_pre_push_hook=True)
+            rebase_audit = sync_mod.verify_rebase_sync_protocol(tmp)
             self.assertFalse(rebase_audit["ok"])
             self.assertTrue(any(".githooks/pre-push missing" in v for v in rebase_audit["violations"]))
+            self.assertFalse(sync_mod.check_sync_state(tmp)["in_sync"])
 
             hook = tmp / ".githooks" / "pre-push"
             hook.write_text(
@@ -116,6 +118,7 @@ class SyncCompressedPromptTest(unittest.TestCase):
                     "--repo-root",
                     str(ROOT),
                     "--check",
+                    "--require-pre-push-hook",
                     "--json-out",
                     str(json_out),
                     "--markdown-out",
