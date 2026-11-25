@@ -1,0 +1,108 @@
+name: 障害報告（インフラ）
+description: Hosting・Edge Functions・CI/CD・ドメイン・クォータなどインフラの不具合や障害を報告する
+title: "[Incident][Infra] "
+labels: ["bug", "infra"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        インフラまわりの不具合・障害の報告フォームです。手順は [`docs/INCIDENT_ESCALATION_RUNBOOK.md`](https://github.com/kanta13jp1/my_web_app/blob/main/docs/INCIDENT_ESCALATION_RUNBOOK.md) を参照してください。
+
+        設定変更・課金変更・権限の緩和で回避しないでください。環境変数や鍵の値は貼らないでください。
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重大度の目安（docs/ONCALL_INCIDENT_SOP.md §1）
+      description: 迷ったら一段上を選んでください。最終判断は担当者が行います。
+      options:
+        - SEV1（広範に利用不能・データ毀損や秘密情報露出の恐れ）
+        - SEV2（主要機能の一部が劣化・回避が難しい）
+        - SEV3（軽微・回避策あり）
+    validations:
+      required: true
+  - type: input
+    id: occurred_at
+    attributes:
+      label: 発生時刻（タイムゾーン付き）
+      placeholder: 例 2026-11-26 03:30 JST
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: 対象のインフラ
+      multiple: true
+      options:
+        - Firebase Hosting（本番配信）
+        - Supabase Edge Functions
+        - Supabase（API・プラットフォーム全般）
+        - GitHub Actions（CI・デプロイ）
+        - ドメイン・DNS・証明書
+        - クォータ・課金・利用上限
+        - その他
+    validations:
+      required: true
+  - type: dropdown
+    id: status_check
+    attributes:
+      label: 公式 Status ページの確認結果
+      description: https://status.firebase.google.com/ / https://status.supabase.com/ / https://www.githubstatus.com/ のうち該当するものを確認してください。
+      options:
+        - 未確認
+        - 該当するインシデントの掲載なし
+        - 該当するインシデントが掲載されている（URLを下の欄に記載）
+    validations:
+      required: true
+  - type: input
+    id: status_url
+    attributes:
+      label: 関連する Status のインシデント URL / 失敗した CI run の URL
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影響範囲
+      description: 影響を受ける機能・環境・時間帯（個人を特定する情報は書かない）
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: 直近の変更（デプロイ・設定・マージ）
+      description: 最後に成功したデプロイと現在のリビジョンがわかれば記載してください。
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順・確認方法
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: 期待する動作 / 実際の動作
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: エラーコード・秘匿情報を除いたログ
+      render: text
+  - type: textarea
+    id: tried
+    attributes:
+      label: 試した対処と結果（調査の段階）
+      description: 自前確認 → 公式ドキュメント → コミュニティ → AI 支援 → 外部サポート のどこまで進めたか
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 確認事項
+      options:
+        - label: 既存の Issue と docs/incident-reports を検索し、重複していないことを確認しました
+          required: true
+        - label: 秘匿情報・個人情報を含めていません
+          required: true
+        - label: 障害を回避する目的で課金・権限・セキュリティ設定を変更していません
+          required: true

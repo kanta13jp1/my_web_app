@@ -9,3 +9,12 @@ contact_links:
   - name: CI/CD ステータス
     url: https://github.com/kanta13jp1/my_web_app/actions
     about: GitHub Actions の実行状態を確認
+  - name: Supabase 公式 Status
+    url: https://status.supabase.com/
+    about: 認証・DB・Edge Functions の障害時は、起票前に公式のインシデント掲載を確認
+  - name: Firebase 公式 Status
+    url: https://status.firebase.google.com/
+    about: Hosting など Firebase の障害時は、起票前に公式のインシデント掲載を確認
+  - name: GitHub 公式 Status
+    url: https://www.githubstatus.com/
+    about: CI・デプロイの失敗時は、起票前に GitHub Actions のインシデント掲載を確認
