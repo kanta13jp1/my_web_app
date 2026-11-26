@@ -15,6 +15,7 @@ import {
   renderBlogListMarkdown,
   renderBlogMarkdown,
   renderBlogNotFoundHtml,
+  stripBlogFrontmatter,
 } from "./blog_view.ts";
 
 function sampleRow(overrides: Partial<BlogPostRow> = {}) {
@@ -110,6 +111,18 @@ Deno.test("renderBlogNotFoundHtml mentions not found", () => {
   const html = renderBlogNotFoundHtml("zzz");
   assertStringIncludes(html, "not found");
   assertStringIncludes(html, "未公開");
+});
+
+Deno.test("stripBlogFrontmatter removes leading YAML while preserving mid-article hr", () => {
+  const raw = "---\ntitle: \"Sample\"\npublished: false\n---\n\n# 見出し\n\n---\n\n本文";
+  assertEquals(stripBlogFrontmatter(raw), "# 見出し\n\n---\n\n本文");
+  const html = renderBlogHtml(sampleRow({ content: raw }));
+  assert(!html.includes("published: false"));
+  assertStringIncludes(html, "無料で1件AI体験を試す");
+  assertStringIncludes(html, "https://my-web-app-b67f4.web.app/blog");
+  const payload = blogPostToPayload(sampleRow({ content: raw, content_preview: null }));
+  assertEquals(payload.content, "# 見出し\n\n---\n\n本文");
+  assertEquals(payload.excerpt, "# 見出し --- 本文");
 });
 
 Deno.test("renderBlogListHtml / Markdown list each post", () => {
