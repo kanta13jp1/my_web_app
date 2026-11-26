@@ -190,17 +190,17 @@ void main() {
   testWidgets('explicit route labels reach view click and checkout unchanged',
       (tester) async {
     final gateway = _FakeGateway(product: _product(), signedIn: true);
-    await _pump(
-      tester,
-      gateway,
-      attributionUri: Uri.parse(
-        '/shop/hexciv?utm_source=X&utm_campaign=h4_h7_pitch'
-        '&utm_content=growth_game_t30_r1',
-      ),
-    );
-    await tester.runAsync(
-      () => viewRecorded.future.timeout(const Duration(seconds: 5)),
-    );
+    await tester.runAsync(() async {
+      await _pump(
+        tester,
+        gateway,
+        attributionUri: Uri.parse(
+          '/shop/hexciv?utm_source=X&utm_campaign=h4_h7_pitch'
+          '&utm_content=growth_game_t30_r1',
+        ),
+      );
+      await viewRecorded.future.timeout(const Duration(seconds: 5));
+    });
     await tester.ensureVisible(find.text('¥500 で購入'));
     await tester.runAsync(() async {
       await tester.tap(find.text('¥500 で購入'));

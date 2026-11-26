@@ -298,6 +298,26 @@ void main() {
       },
     );
 
+    test(
+      'buildShopProductRoute preserves unavailable attribution state',
+      () {
+        final cases = [
+          '/shop?shop_attribution=unavailable',
+          '/shop?utm_source=x&utm_content=bad/value',
+          '/shop?utm_source=x&utm_source=y',
+        ];
+        for (final raw in cases) {
+          final route = buildShopProductRoute('hexciv-win64', Uri.parse(raw));
+          final parsed = Uri.parse(route);
+          expect(parsed.path, '/shop/product');
+          expect(parsed.queryParameters, <String, String>{
+            'product_id': 'hexciv-win64',
+            ShopAttribution.unavailableQueryKey: 'unavailable',
+          });
+        }
+      },
+    );
+
     testWidgets(
       'DigitalProductStorePage forwards UTM parameters to product route',
       (tester) async {

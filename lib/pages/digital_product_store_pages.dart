@@ -22,8 +22,14 @@ Future<bool> _launchShopUrl(Uri uri, bool external) {
 ///
 /// 流入計測用の `utm_source` / `utm_campaign` / `utm_content` が付与されている場合、
 /// 一覧から商品カードを開いた後も属性を失わないようクエリへ引き継ぐ。
+/// 無効または重複した属性パラメータは `shop_attribution=unavailable` として保持する。
 String buildShopProductRoute(String productId, Uri currentUri) {
   final params = <String, String>{'product_id': productId};
+  final attribution = ShopAttribution.fromUri(currentUri);
+  if (!attribution.isValid) {
+    params[ShopAttribution.unavailableQueryKey] = 'unavailable';
+    return Uri(path: '/shop/product', queryParameters: params).toString();
+  }
   for (final key in const ['utm_source', 'utm_campaign', 'utm_content']) {
     final raw = currentUri.queryParameters[key]?.trim();
     if (raw != null && raw.isNotEmpty) {
