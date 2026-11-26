@@ -27,16 +27,23 @@ class AdminGrowthAchievementSummaryCard extends StatelessWidget {
       (
         '今日',
         DateTime.now()
-            .copyWith(hour: 0, minute: 0, second: 0)
+            .copyWith(hour: 0, minute: 0, second: 0, millisecond: 0)
+            .toUtc()
             .toIso8601String(),
       ),
       (
         '今週',
-        DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
+        DateTime.now()
+            .subtract(const Duration(days: 7))
+            .toUtc()
+            .toIso8601String(),
       ),
       (
         '今月',
-        DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+        DateTime.now()
+            .subtract(const Duration(days: 30))
+            .toUtc()
+            .toIso8601String(),
       ),
       ('すべて', '2020-01-01T00:00:00Z'),
     ];
