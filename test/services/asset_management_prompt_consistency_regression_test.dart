@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
@@ -46,8 +45,8 @@ void main() {
     test(
         'paid fixed cost is excluded from unpaid warnings and invalidates cache',
         () {
-      final before = _buildReport(paidAccountIds: const <String>{});
-      final after = _buildReport(paidAccountIds: const <String>{'acom'});
+      final before = _buildReport(paidAccountNames: const <String>{});
+      final after = _buildReport(paidAccountNames: const <String>{'acom'});
 
       final deterministicBefore =
           summaryService.buildDeterministicSummary(before);
@@ -109,7 +108,7 @@ void main() {
 
 AssetManagementInsightReport _buildReport({
   double acomBalance = -500000,
-  Set<String> paidAccountIds = const <String>{},
+  Set<String> paidAccountNames = const <String>{},
   Map<String, double> monthlyPaymentOverrides = const <String, double>{
     'acom': 15000,
   },
@@ -123,7 +122,7 @@ AssetManagementInsightReport _buildReport({
       'アコム': acomBalance,
     },
     baseDate: DateTime(2026, 9, 6),
-    paidAccountIds: paidAccountIds,
+    paidAccountNames: paidAccountNames,
     monthlyPaymentOverrides: monthlyPaymentOverrides,
     annualRateOverrides: annualRateOverrides,
     paymentSourceAccountIds: const <String, String>{'acom': 'bank'},
