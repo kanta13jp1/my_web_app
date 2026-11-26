@@ -14,6 +14,7 @@ import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/markdown_block_service.dart';
 import '../services/note_comments_service.dart';
+import '../services/note_hierarchy_service.dart';
 import '../services/note_version_history_service.dart';
 import '../services/note_prompt_library_service.dart';
 import '../services/note_semantic_search_service.dart';
@@ -34,6 +35,7 @@ import '../widgets/note_editor/block_reorder_sheet.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
 import '../widgets/note_editor/inline_slash_block_menu.dart';
 import '../widgets/note_editor/note_backlinks_panel.dart';
+import '../widgets/note_editor/note_hierarchy_bar.dart';
 import '../widgets/note_editor/note_range_select_page.dart';
 import '../widgets/note_tags_field.dart';
 import '../widgets/note_version_history_sheet.dart';
@@ -44,6 +46,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? noteId;
   final String? initialTitle;
   final String? initialContent;
+  final String? initialParentNoteId;
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
   final NoteSemanticSearchDataSource? semanticSearchService;
@@ -55,6 +58,7 @@ class NoteEditorPage extends StatefulWidget {
     this.noteId,
     this.initialTitle,
     this.initialContent,
+    this.initialParentNoteId,
     this.supabaseClient,
     this.aiService,
     this.semanticSearchService,
@@ -187,6 +191,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   InlineSlashMatch? _inlineSlashMatch;
   bool _showBlockInsertPalette = false;
   List<NoteSummary> _workspaceNoteSummaries = const <NoteSummary>[];
+  String? _parentNoteId;
   int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
@@ -250,6 +255,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _semanticSearchService =
         widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _currentNoteId = widget.noteId;
+    _parentNoteId = widget.initialParentNoteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
         TextEditingController(text: widget.initialContent ?? '');
@@ -614,7 +620,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       if (user == null) return;
       final dynamic rows = await _supabase
           .from('notes')
-          .select('id, title, content, updated_at')
+          .select('id, title, content, updated_at, parent_note_id')
           .eq('user_id', user.id)
           .eq('is_archived', false)
           .order('updated_at', ascending: false)
@@ -635,6 +641,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             content: content,
             updatedAt:
                 updatedRaw == null ? null : DateTime.tryParse(updatedRaw),
+            parentNoteId: item['parent_note_id']?.toString(),
           ),
         );
       }
@@ -689,6 +696,92 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
     if (mounted) {
       unawaited(_loadWorkspaceNoteSummaries());
+    }
+  }
+
+  Future<void> _createSubpage() async {
+    final String? parentId = _currentNoteId;
+    if (parentId == null || parentId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('先に現在のノートを保存してからサブページを追加してください。')),
+        );
+      }
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          initialParentNoteId: parentId,
+          supabaseClient: _supabase,
+          aiService: _aiService,
+        ),
+      ),
+    );
+    if (mounted) {
+      unawaited(_loadWorkspaceNoteSummaries());
+    }
+  }
+
+  Future<void> _openParentNotePicker() async {
+    final String? picked = await showParentNotePickerSheet(
+      context,
+      currentNoteId: _currentNoteId ?? '',
+      currentParentId: _parentNoteId,
+      allNotes: _workspaceNoteSummaries,
+    );
+    if (picked == null || !mounted) return;
+    final String? normalized = picked.isEmpty ? null : picked;
+    if (normalized == _parentNoteId) return;
+    await _updateParentNote(normalized);
+  }
+
+  Future<void> _updateParentNote(String? nextParentId) async {
+    final String noteId = _currentNoteId ?? '';
+    if (!NoteHierarchyService.canSetParent(
+      noteId: noteId,
+      newParentNoteId: nextParentId,
+      allNotes: _workspaceNoteSummaries,
+    )) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('循環参照または階層上限のため親ページに設定できません。')),
+        );
+      }
+      return;
+    }
+
+    if (noteId.isEmpty) {
+      if (mounted) {
+        setState(() => _parentNoteId = nextParentId);
+      }
+      return;
+    }
+
+    final User? user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      final dynamic parentValue = nextParentId == null
+          ? null
+          : (int.tryParse(nextParentId) ?? nextParentId);
+      await _supabase
+          .from('notes')
+          .update(<String, dynamic>{
+            'parent_note_id': parentValue,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', noteId)
+          .eq('user_id', user.id);
+      if (!mounted) return;
+      setState(() => _parentNoteId = nextParentId);
+      unawaited(_loadWorkspaceNoteSummaries());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('親ページの更新に失敗しました: $e')),
+        );
+      }
     }
   }
 
@@ -1637,7 +1730,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       final data = await _supabase
           .from('notes')
           .select(
-            'title, content, reminder_date, is_favorite, is_pinned, tags, updated_at',
+            'title, content, reminder_date, is_favorite, is_pinned, tags, updated_at, parent_note_id',
           )
           .eq('id', id)
           .single();
@@ -1657,6 +1750,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           _isFavorite = _boolFromValue(data['is_favorite']);
           _isPinned = _boolFromValue(data['is_pinned']);
           _tags = NoteTagService.normalize(data['tags']);
+          _parentNoteId = data['parent_note_id']?.toString();
         });
         _markStatePersisted(
           title: _titleController.text.trim(),
@@ -1810,6 +1904,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'tags': tags,
             'is_archived': false,
             'is_pinned': isPinned,
+            if (_parentNoteId != null && _parentNoteId!.isNotEmpty)
+              'parent_note_id': int.tryParse(_parentNoteId!) ?? _parentNoteId,
           })
           .select('id')
           .maybeSingle();
@@ -2987,6 +3083,20 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     children: [
                       _buildReminderBanner(context),
                       if (showSlashBar) _buildSlashCommandBar(context),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _titleController,
+                        builder: (context, titleValue, _) {
+                          return NoteHierarchyBar(
+                            currentNoteId: _currentNoteId,
+                            parentNoteId: _parentNoteId,
+                            currentTitle: titleValue.text,
+                            allNotes: _workspaceNoteSummaries,
+                            onOpenNote: _openLinkedNote,
+                            onAddSubpage: _createSubpage,
+                            onChangeParent: _openParentNotePicker,
+                          );
+                        },
+                      ),
                       TextField(
                         key: const Key('note_editor_title_field'),
                         controller: _titleController,

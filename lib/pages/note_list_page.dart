@@ -12,7 +12,9 @@ import '../services/inbox_capture_service.dart';
 import '../services/note_semantic_search_service.dart';
 import '../services/note_tag_hierarchy_service.dart';
 import '../services/note_tag_service.dart';
+import '../services/note_wiki_link_service.dart';
 import '../services/public_memo_service.dart';
+import '../widgets/note_hierarchy_tree_view.dart';
 import 'note_editor_page.dart';
 
 enum _NoteCardAction {
@@ -93,6 +95,8 @@ class _NoteListPageState extends State<NoteListPage> {
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
   bool _showInboxOnly = false;
+  bool _showHierarchyTree = false;
+  final Set<String> _expandedTreeNoteIds = <String>{};
   List<Map<String, dynamic>> _notes = [];
   List<_LocalDraftEntry> _draftEntries = [];
   Set<String> _publishedNoteIds = <String>{};
@@ -607,7 +611,7 @@ class _NoteListPageState extends State<NoteListPage> {
           .select(
             'id, title, content, created_at, updated_at, is_pinned, is_favorite, '
             'reminder_date, tags, capture_status, capture_source, inbox_saved_at, '
-            'notebook_collection_id',
+            'notebook_collection_id, parent_note_id',
           )
           .eq('user_id', userId)
           .eq('is_archived', false)
@@ -1919,9 +1923,12 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SegmentedButton<_NoteListView>(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                SegmentedButton<_NoteListView>(
                 showSelectedIcon: false,
                 segments: const [
                   ButtonSegment<_NoteListView>(
@@ -1957,6 +1964,16 @@ class _NoteListPageState extends State<NoteListPage> {
                 onSelectionChanged: (selection) =>
                     _setListView(selection.single),
               ),
+              FilterChip(
+                key: const Key('note_list_tree_view_toggle'),
+                avatar: const Icon(Icons.account_tree_outlined, size: 16),
+                label: const Text('階層ツリー'),
+                selected: _showHierarchyTree,
+                onSelected: (bool selected) {
+                  setState(() => _showHierarchyTree = selected);
+                },
+              ),
+              ],
             ),
           ),
           if (tagOptions.isNotEmpty)
@@ -2115,8 +2132,38 @@ class _NoteListPageState extends State<NoteListPage> {
                           ],
                         ),
                       )
-                    : ListView(
-                        padding: const EdgeInsets.all(16),
+                    : (_showHierarchyTree && visibleNotes.isNotEmpty)
+                        ? NoteHierarchyTreeView(
+                            notes: visibleNotes
+                                .map(
+                                  (Map<String, dynamic> note) => NoteSummary(
+                                    id: _noteId(note),
+                                    title: _noteTitle(note),
+                                    content: note['content'] as String? ?? '',
+                                    parentNoteId:
+                                        note['parent_note_id']?.toString(),
+                                  ),
+                                )
+                                .toList(growable: false),
+                            expandedIds: _expandedTreeNoteIds,
+                            onToggleExpand: (String id) {
+                              setState(() {
+                                if (!_expandedTreeNoteIds.remove(id)) {
+                                  _expandedTreeNoteIds.add(id);
+                                }
+                              });
+                            },
+                            onOpenNote: (NoteSummary note) =>
+                                _navigateToEditor(context, note.id),
+                            onAddSubpage: (NoteSummary note) =>
+                                _navigateToEditor(
+                              context,
+                              null,
+                              parentNoteId: note.id,
+                            ),
+                          )
+                        : ListView(
+                            padding: const EdgeInsets.all(16),
                         children: [
                           if (inboxEntries.isNotEmpty) ...[
                             _buildSectionHeader(
@@ -2206,13 +2253,19 @@ class _NoteListPageState extends State<NoteListPage> {
     );
   }
 
-  Future<void> _navigateToEditor(BuildContext context, [String? noteId]) async {
+  Future<void> _navigateToEditor(
+    BuildContext context, [
+    String? noteId,
+  ], {
+    String? parentNoteId,
+  }) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           noteId: noteId,
+          initialParentNoteId: parentNoteId,
           supabaseClient: _supabase,
           semanticSearchService: _semanticSearchService,
         ),
