@@ -18,6 +18,7 @@ abstract interface class MemoReactionService {
 class PublicMemoService implements MemoReactionService {
   static const String publicMemoShareSignal = 'public_memo_share';
   static const String publicMemoCopySignal = 'public_memo_copy';
+  static const String publicMemoCloneSignal = 'public_memo_clone';
 
   final SupabaseClient _supabase;
 
@@ -136,7 +137,8 @@ class PublicMemoService implements MemoReactionService {
     DateTime? now,
   }) async {
     if (signalKey != publicMemoShareSignal &&
-        signalKey != publicMemoCopySignal) {
+        signalKey != publicMemoCopySignal &&
+        signalKey != publicMemoCloneSignal) {
       throw ArgumentError.value(
         signalKey,
         'signalKey',
@@ -227,6 +229,41 @@ class PublicMemoService implements MemoReactionService {
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to publish memo',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  /// Clones a public memo into the authenticated user's own workspace notes.
+  Future<String?> clonePublicMemoToNote({
+    required PublicMemo memo,
+    required String userId,
+  }) async {
+    try {
+      final dynamic inserted = await _supabase
+          .from('notes')
+          .insert(<String, dynamic>{
+            'user_id': userId,
+            'created_by': userId,
+            'title': memo.title,
+            'content': memo.content ?? '',
+            'capture_status': 'organized',
+            'capture_source': 'template_clone',
+            'tags': <String>['template-clone'],
+          })
+          .select('id')
+          .single();
+      if (inserted is Map) {
+        final Object? rawId = inserted['id'];
+        final String normalized = rawId == null ? '' : rawId.toString().trim();
+        return normalized.isEmpty ? null : normalized;
+      }
+      return null;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to clone public memo to note',
         error: e,
         stackTrace: stackTrace,
       );
