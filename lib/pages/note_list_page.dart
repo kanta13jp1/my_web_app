@@ -2156,11 +2156,7 @@ class _NoteListPageState extends State<NoteListPage> {
                             onOpenNote: (NoteSummary note) =>
                                 _navigateToEditor(context, note.id),
                             onAddSubpage: (NoteSummary note) =>
-                                _navigateToEditor(
-                              context,
-                              null,
-                              parentNoteId: note.id,
-                            ),
+                                _navigateToEditor(context, null, note.id),
                           )
                         : ListView(
                             padding: const EdgeInsets.all(16),
@@ -2256,9 +2252,8 @@ class _NoteListPageState extends State<NoteListPage> {
   Future<void> _navigateToEditor(
     BuildContext context, [
     String? noteId,
-  ], {
     String? parentNoteId,
-  }) async {
+  ]) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
