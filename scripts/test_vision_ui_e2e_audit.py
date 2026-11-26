@@ -27,7 +27,7 @@ class VisionUiE2eAuditTest(unittest.TestCase):
         self.assertEqual(cap.long_edge_px, 2560)
         self.assertFalse(cap.exceeds_high_res_limit)
         # ceil(1440/28)=52, ceil(2560/28)=92 -> 52 * 92 = 4784
-        self.assertEqual(cap.estimated_vision_tokens, 4784)
+        self.assertEqual(cap.estimated_vision_units, 4784)
 
     def test_flags_downscaling_and_over_limit_long_edge(self) -> None:
         report = audit.evaluate_audit_run(
@@ -43,7 +43,7 @@ class VisionUiE2eAuditTest(unittest.TestCase):
                 ),
             ],
             findings=[],
-            budget_config=audit.TaskBudgetConfig(max_total_tokens=20000),
+            budget_config=audit.TaskBudgetConfig(max_total_units=20000),
         )
         self.assertEqual(report.downscale_violations, 1)
         self.assertEqual(report.over_limit_captures, 1)
@@ -63,11 +63,11 @@ class VisionUiE2eAuditTest(unittest.TestCase):
                 ),
             ],
             findings=[],
-            budget_config=audit.TaskBudgetConfig(max_total_tokens=4000),
+            budget_config=audit.TaskBudgetConfig(max_total_units=4000),
             prompt_overhead_per_capture=500,
         )
         self.assertTrue(report.budget_exceeded)
-        self.assertEqual(report.total_estimated_tokens, 5284)
+        self.assertEqual(report.total_estimated_units, 5284)
 
     def test_dry_run_cli_generates_json_and_issue_markdown(self) -> None:
         payload = {
@@ -104,7 +104,7 @@ class VisionUiE2eAuditTest(unittest.TestCase):
                 [
                     "--input",
                     str(in_path),
-                    "--budget-tokens",
+                    "--budget-units",
                     "64000",
                     "--out-json",
                     str(out_json),
