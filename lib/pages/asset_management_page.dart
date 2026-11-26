@@ -66,6 +66,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
+import '../utils/asset_trend_tooltip_builder.dart';
 import '../widgets/asset_payment_reminder_gate.dart';
 import 'package:my_web_app/services/asset_must_task_repository.dart';
 import 'package:my_web_app/utils/asset_must_task_deadline.dart';
@@ -42492,53 +42493,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  List<LineTooltipItem> _getTooltipItems(List<LineBarSpot> spots) {
-    final dateIndex = spots.first.spotIndex;
-    if (dateIndex >= _sortedDates.length) return [];
-    final date = _sortedDates[dateIndex];
-    final assetsOnDate =
-        _effectiveAssetDataByDate[date] ?? _assetData[date] ?? {};
-    double total = 0;
-    assetsOnDate.forEach((_, value) => total += value);
-    final formattedDate = DateFormat('yyyy/MM/dd').format(DateTime.parse(date));
-    final formattedTotal = NumberFormat.simpleCurrency(
-      locale: 'ja_JP',
-    ).format(total);
-    final tooltips = <LineTooltipItem>[
-      LineTooltipItem(
-        '$formattedDate\n',
-        const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          height: 1.5,
-        ),
-      ),
-      if (_isStacked)
-        LineTooltipItem(
-          '総資産: $formattedTotal\n',
-          const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            height: 1.5,
-          ),
-        ),
-    ];
-    final sortedAssets = assetsOnDate.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    for (var entry in sortedAssets) {
-      final color = _colors[_assetTypes.indexOf(entry.key) % _colors.length];
-      final formattedValue = NumberFormat.simpleCurrency(
-        locale: 'ja_JP',
-      ).format(entry.value);
-      tooltips.add(
-        LineTooltipItem(
-          '${entry.key}: $formattedValue',
-          TextStyle(color: color, fontWeight: FontWeight.bold, height: 1.5),
-        ),
-      );
-    }
-    return tooltips;
+  List<LineTooltipItem?> _getTooltipItems(List<LineBarSpot> spots) {
+    return buildAssetTrendTooltipItems(
+      spots: spots,
+      sortedDates: _sortedDates,
+      effectiveAssetDataByDate: _effectiveAssetDataByDate,
+      assetData: _assetData,
+      assetTypes: _assetTypes,
+      colors: _colors,
+      isStacked: _isStacked,
+    );
   }
 
   IconData _getIconForAsset(String type) {
