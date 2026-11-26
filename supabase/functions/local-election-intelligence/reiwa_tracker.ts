@@ -386,15 +386,26 @@ export function computeReiwaDiff(
     !currCandMap.has(c.profileUrl)
   );
 
-  const hasChanges = stableStringify(previous) !== stableStringify(current);
+  const localMembersDelta = current.localMembers - previous.localMembers;
+  const scheduledCandidatesDelta = current.scheduledCandidates -
+    previous.scheduledCandidates;
+  const activePrefectureDelta = current.activePrefectureCount -
+    previous.activePrefectureCount;
+
+  const hasChanges = localMembersDelta !== 0 ||
+    scheduledCandidatesDelta !== 0 ||
+    activePrefectureDelta !== 0 ||
+    prefectureDeltas.length > 0 ||
+    addedMembers.length > 0 ||
+    removedMembers.length > 0 ||
+    addedCandidates.length > 0 ||
+    removedCandidates.length > 0;
 
   return {
     hasChanges,
-    localMembersDelta: current.localMembers - previous.localMembers,
-    scheduledCandidatesDelta: current.scheduledCandidates -
-      previous.scheduledCandidates,
-    activePrefectureDelta: current.activePrefectureCount -
-      previous.activePrefectureCount,
+    localMembersDelta,
+    scheduledCandidatesDelta,
+    activePrefectureDelta,
     prefectureDeltas,
     addedMembers,
     removedMembers,
