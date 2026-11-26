@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/note.dart';
 import 'package:my_web_app/services/note_hierarchy_service.dart';
 import 'package:my_web_app/services/note_wiki_link_service.dart';
 
@@ -112,6 +113,40 @@ void main() {
         expanded.map((n) => '${n.note.id}:${n.depth}').toList(),
         <String>['1:0', '2:1', '3:0'],
       );
+    });
+
+    test('Note.fromJson and Note.toJson round-trip int, String, and null parent_note_id', () {
+      final Map<String, dynamic> baseJson = <String, dynamic>{
+        'id': 10,
+        'user_id': 'user-1',
+        'title': '子ノート',
+        'content': '本文',
+        'created_at': '2026-11-27T00:00:00.000Z',
+        'updated_at': '2026-11-27T00:00:00.000Z',
+      };
+
+      final Note fromInt = Note.fromJson(<String, dynamic>{
+        ...baseJson,
+        'parent_note_id': 42,
+      });
+      expect(fromInt.parentNoteId, 42);
+      expect(fromInt.toJson()['parent_note_id'], 42);
+
+      final Note fromString = Note.fromJson(<String, dynamic>{
+        ...baseJson,
+        'parent_note_id': '42',
+      });
+      expect(fromString.parentNoteId, 42);
+      expect(fromString.toJson()['parent_note_id'], 42);
+
+      final Note cleared = Note.fromJson(<String, dynamic>{
+        ...baseJson,
+        'parent_note_id': null,
+      });
+      expect(cleared.parentNoteId, isNull);
+      final Map<String, dynamic> clearedJson = cleared.toJson();
+      expect(clearedJson.containsKey('parent_note_id'), isTrue);
+      expect(clearedJson['parent_note_id'], isNull);
     });
   });
 }

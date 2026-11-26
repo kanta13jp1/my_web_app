@@ -91,7 +91,7 @@ class Note {
       'capture_source': captureSource,
       'inbox_saved_at': inboxSavedAt?.toIso8601String(),
       'tags': tags,
-      if (parentNoteId != null) 'parent_note_id': parentNoteId,
+      'parent_note_id': parentNoteId,
     };
   }
 

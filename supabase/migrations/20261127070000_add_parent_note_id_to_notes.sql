@@ -19,6 +19,11 @@ CREATE INDEX IF NOT EXISTS idx_notes_user_parent_updated
   ON public.notes (user_id, parent_note_id, updated_at DESC)
   WHERE parent_note_id IS NOT NULL;
 
+-- SECURITY INVOKER (default) is intentional: under authenticated RLS,
+-- foreign-tenant parent rows are filtered out cleanly (NOT FOUND -> uniform
+-- 'Invalid parent_note_id' SQLSTATE 23514 without a cross-tenant existence oracle),
+-- while v_parent_user_id IS DISTINCT FROM NEW.user_id enforces the same tenant
+-- boundary even under service_role without privilege escalation.
 CREATE OR REPLACE FUNCTION public.validate_note_parent_hierarchy()
 RETURNS trigger
 LANGUAGE plpgsql

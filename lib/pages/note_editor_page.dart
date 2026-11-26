@@ -185,6 +185,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool? _persistedIsFavorite;
   bool? _persistedIsPinned;
   List<String>? _persistedTags;
+  String? _persistedParentNoteId;
   DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
   bool? _isSlashCommandBarExpanded;
@@ -522,6 +523,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required bool isFavorite,
     required bool isPinned,
     required List<String> tags,
+    required String? parentNoteId,
   }) {
     _persistedTitle = title;
     _persistedContent = content;
@@ -529,6 +531,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _persistedIsFavorite = isFavorite;
     _persistedIsPinned = isPinned;
     _persistedTags = NoteTagService.normalize(tags);
+    _persistedParentNoteId = parentNoteId;
   }
 
   /// サーバー側の内容を一度でも取得できているか。取得できていない状態で
@@ -544,13 +547,20 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required bool isFavorite,
     required bool isPinned,
     required List<String> tags,
+    required String? parentNoteId,
   }) {
     return _persistedTitle == title &&
         _persistedContent == content &&
         _persistedReminderIso == reminderIso &&
         _persistedIsFavorite == isFavorite &&
         _persistedIsPinned == isPinned &&
-        NoteTagService.equals(_persistedTags, tags);
+        NoteTagService.equals(_persistedTags, tags) &&
+        _persistedParentNoteId == parentNoteId;
+  }
+
+  dynamic _serializedParentNoteId(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    return int.tryParse(raw) ?? raw;
   }
 
   void _detachTextListeners() {
@@ -762,20 +772,25 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final User? user = _supabase.auth.currentUser;
     if (user == null) return;
     try {
-      final dynamic parentValue = nextParentId == null
-          ? null
-          : (int.tryParse(nextParentId) ?? nextParentId);
-      await _supabase
-          .from('notes')
-          .update(<String, dynamic>{
-            'parent_note_id': parentValue,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', noteId)
-          .eq('user_id', user.id);
-      if (!mounted) return;
-      setState(() => _parentNoteId = nextParentId);
-      unawaited(_loadWorkspaceNoteSummaries());
+      await _autoSaveService.runExclusive(() async {
+        if (!mounted || _supabase.auth.currentUser?.id != user.id) return;
+        await _supabase
+            .from('notes')
+            .update(<String, dynamic>{
+              'parent_note_id': _serializedParentNoteId(nextParentId),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', noteId)
+            .eq('user_id', user.id);
+        if (!mounted) return;
+        setState(() {
+          _parentNoteId = nextParentId;
+          _persistedParentNoteId = nextParentId;
+        });
+      });
+      if (mounted) {
+        unawaited(_loadWorkspaceNoteSummaries());
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -815,6 +830,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           isFavorite: _isFavorite,
           isPinned: _isPinned,
           tags: _tags,
+          parentNoteId: _parentNoteId,
         );
 
     if (matchesServer || (_currentNoteId == null && !hasAnyInput)) {
@@ -1759,6 +1775,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           isFavorite: _isFavorite,
           isPinned: _isPinned,
           tags: _tags,
+          parentNoteId: _parentNoteId,
         );
         _syncObservedText();
       }
@@ -1851,6 +1868,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isFavorite = _isFavorite;
     final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
+    final parentNoteId = _parentNoteId;
 
     if (!allowEmpty && !_hasPersistableState && _currentNoteId == null) {
       return;
@@ -1872,6 +1890,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         isFavorite: isFavorite,
         isPinned: isPinned,
         tags: tags,
+        parentNoteId: parentNoteId,
       )) {
         _autoSaveService.markAsSaved();
         await _clearDraftFromLocal(alsoClearNewDraft: widget.noteId == null);
@@ -1886,6 +1905,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'is_favorite': isFavorite,
             'is_pinned': isPinned,
             'tags': tags,
+            'parent_note_id': _serializedParentNoteId(parentNoteId),
             // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
             // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
             'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -1904,8 +1924,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'tags': tags,
             'is_archived': false,
             'is_pinned': isPinned,
-            if (_parentNoteId != null && _parentNoteId!.isNotEmpty)
-              'parent_note_id': int.tryParse(_parentNoteId!) ?? _parentNoteId,
+            if (parentNoteId != null && parentNoteId.isNotEmpty)
+              'parent_note_id': _serializedParentNoteId(parentNoteId),
           })
           .select('id')
           .maybeSingle();
@@ -1945,6 +1965,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       isFavorite: isFavorite,
       isPinned: isPinned,
       tags: tags,
+      parentNoteId: parentNoteId,
     );
 
     final currentMatchesSavedRequest = _matchesPersistedState(
@@ -1954,6 +1975,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       isFavorite: _isFavorite,
       isPinned: _isPinned,
       tags: _tags,
+      parentNoteId: _parentNoteId,
     );
     if (currentMatchesSavedRequest) {
       _autoSaveService.markAsSaved();
@@ -3405,6 +3427,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isFavorite = _isFavorite;
     final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
+    final parentNoteId = _parentNoteId;
     if (_matchesPersistedState(
           title: title,
           content: content,
@@ -3412,6 +3435,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           isFavorite: isFavorite,
           isPinned: isPinned,
           tags: tags,
+          parentNoteId: parentNoteId,
         ) &&
         !_autoSaveService.hasPendingOperations) {
       return;
@@ -3432,6 +3456,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               'is_favorite': isFavorite,
               'is_pinned': isPinned,
               'tags': tags,
+              'parent_note_id': _serializedParentNoteId(parentNoteId),
               'updated_at': DateTime.now().toUtc().toIso8601String(),
             })
             .eq('id', noteId)
