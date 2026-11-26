@@ -257,8 +257,7 @@ class PublicMemoService implements MemoReactionService {
           .single();
       if (inserted is Map) {
         final Object? rawId = inserted['id'];
-        final String normalized =
-            rawId == null ? '' : rawId.toString().trim();
+        final String normalized = rawId == null ? '' : rawId.toString().trim();
         return normalized.isEmpty ? null : normalized;
       }
       return null;
