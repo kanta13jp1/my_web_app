@@ -106,8 +106,9 @@ class ArtifactKvStorageService {
             : existing;
 
     _records[storeKey] = winner;
-    if (_onPersist != null && identical(winner, candidate)) {
-      await _onPersist!(winner);
+    final onPersist = _onPersist;
+    if (onPersist != null && identical(winner, candidate)) {
+      await onPersist(winner);
     }
     return winner;
   }
