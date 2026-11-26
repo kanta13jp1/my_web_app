@@ -880,7 +880,7 @@ Deno.test(
   async () => {
     const { store, candidates } = createMemoryStore();
     const baseline = parseReiwaMemberPageHtml(
-      REAL_REIWA_HTML,
+      REAL_REIWA_MEMBER_CORE_HTML,
     ) as ReiwaMemberSnapshot;
     const target = baseline.members[0];
     const updated: ReiwaMemberSnapshot = {
