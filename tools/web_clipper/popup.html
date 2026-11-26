@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>自分株式会社 Web Clipper</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div>
+          <h1 class="title">自分株式会社 Web Clipper</h1>
+          <p class="subtitle">1クリックでノートへ保存</p>
+        </div>
+        <span id="engineBadge" class="badge">準備中</span>
+      </header>
+
+      <section class="panel">
+        <div class="field">
+          <label for="clipMode">保存モード</label>
+          <select id="clipMode">
+            <option value="article">記事本文（Markdown）</option>
+            <option value="selection">選択テキスト</option>
+            <option value="bookmark">URLブックマーク</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="clipTitle">タイトル</label>
+          <input id="clipTitle" type="text" maxlength="200" placeholder="ページタイトル" />
+        </div>
+
+        <div class="field">
+          <label for="clipTags">タグ（カンマまたは空白区切り）</label>
+          <input id="clipTags" type="text" placeholder="web-clip, 調査" value="web-clip" />
+        </div>
+
+        <label class="checkbox-row">
+          <input id="saveToInbox" type="checkbox" checked />
+          <span>Inbox（未整理）として保存する</span>
+        </label>
+
+        <div class="field">
+          <label for="clipPreview">保存プレビュー</label>
+          <textarea id="clipPreview" rows="6" readonly></textarea>
+        </div>
+
+        <button id="saveButton" class="primary-button" type="button">
+          自分株式会社に保存
+        </button>
+      </section>
+
+      <details id="settingsPanel" class="settings">
+        <summary>APIキー設定（自分API）</summary>
+        <div class="settings-body">
+          <p class="help-text">
+            自分株式会社の
+            <a
+              href="https://my-web-app-b67f4.web.app/jibun-api"
+              target="_blank"
+              rel="noreferrer"
+            >/jibun-api</a>
+            で <code>notes.write</code> スコープ付きキー（<code>jibun_sk_...</code>）を発行してください。
+          </p>
+          <div class="field">
+            <label for="apiKeyInput">APIキー</label>
+            <input
+              id="apiKeyInput"
+              type="password"
+              autocomplete="off"
+              placeholder="jibun_sk_..."
+            />
+          </div>
+          <div class="button-row">
+            <button id="saveKeyButton" class="secondary-button" type="button">キーを保存</button>
+            <button id="testKeyButton" class="secondary-button" type="button">接続テスト</button>
+          </div>
+        </div>
+      </details>
+
+      <p id="statusMessage" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

@@ -7,6 +7,7 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
 import '../services/growth_acquisition_service.dart';
 
@@ -67664,7 +67665,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
       _hasImportSupport ? '既存データをそのまま移行' : '${_info.name} から30秒で乗り換え開始';
 
   String get _switchStepBody => _hasImportSupport
-      ? '${_info.name} のデータをインポートしながら、今の資産を崩さず移行できます。'
+      ? '${_info.name} からの移行前に、ログイン不要のブラウザ移行診断でノート数・添付容量を確認してから安全にインポートできます（無料枠はテキスト無制限・添付 100 MiB まで）。'
       : 'まずは無料で始めて、必要な作業だけを1か所に集約できます。';
 
   @override
@@ -67692,6 +67693,12 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 _buildOutcomeCards(),
                 _buildPainPoints(),
                 _buildFeatureTable(),
+                if (_hasImportSupport)
+                  MigrationParitySection(
+                    competitorKey: widget.competitorKey,
+                    competitorName: _info.name,
+                    accentColor: _info.accentColor,
+                  ),
                 _buildSwitchPlan(context),
                 _buildRelatedComparisons(context),
                 ComparisonCtaPanel(
