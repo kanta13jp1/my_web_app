@@ -4,7 +4,7 @@
  * Pure synthetic arithmetic only: performs no API billing calls or network requests.
  */
 
-export const THRESHOLD_TOKENS = 272000;
+export const BOUNDARY_LIMIT = 272000;
 
 export const FROZEN_RATES_UPDATED = '2026-09-26';
 
@@ -228,7 +228,7 @@ export function parseNonNegativeInt(value, fieldLabel) {
 }
 
 function computeNumerators(totalInput, cachedRead, cachedWrite, output, applyThreshold) {
-  const isLong = applyThreshold && totalInput > BigInt(THRESHOLD_TOKENS);
+  const isLong = applyThreshold && totalInput > BigInt(BOUNDARY_LIMIT);
   const im = isLong ? 2n : 1n;
   const omNum = isLong ? 3n : 2n;
   const uncached = totalInput - cachedRead - cachedWrite;
@@ -277,7 +277,7 @@ export function calculateAstraCost(rawInput) {
   return {
     tier: actual.isLong ? 'long-context' : 'standard',
     tierLabel: actual.isLong ? '長文単価（272,000超過：入力・キャッシュ2倍 / 出力1.5倍）' : '通常単価（272,000以下）',
-    thresholdTokens: THRESHOLD_TOKENS,
+    boundaryLimit: BOUNDARY_LIMIT,
     frozenRatesUpdated: FROZEN_RATES_UPDATED,
     counts: {
       totalInput: toSafeCount(totalInput),

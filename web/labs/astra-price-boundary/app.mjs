@@ -8,7 +8,7 @@ import {
 const totalInputEl = document.getElementById('total-input');
 const cachedReadEl = document.getElementById('cached-read');
 const cachedWriteEl = document.getElementById('cached-write');
-const outputTokensEl = document.getElementById('output-tokens');
+const outputCountEl = document.getElementById('output-count');
 
 const calcBtn = document.getElementById('calc-btn');
 const selfcheckBtn = document.getElementById('selfcheck-btn');
@@ -60,7 +60,7 @@ function runCalculation() {
       totalInput: totalInputEl.value,
       cachedRead: cachedReadEl.value,
       cachedWrite: cachedWriteEl.value,
-      output: outputTokensEl.value,
+      output: outputCountEl.value,
     });
     resultEl.textContent = [
       `適用単価: ${calc.tierLabel}`,
@@ -121,7 +121,7 @@ document.querySelectorAll('.presets button[data-total]').forEach((btn) => {
     totalInputEl.value = btn.dataset.total ?? '0';
     cachedReadEl.value = btn.dataset.read ?? '0';
     cachedWriteEl.value = btn.dataset.write ?? '0';
-    outputTokensEl.value = btn.dataset.output ?? '0';
+    outputCountEl.value = btn.dataset.output ?? '0';
     runCalculation();
   });
 });

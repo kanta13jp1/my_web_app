@@ -14,6 +14,7 @@ test('exact boundary 272000 vs one-token over 272001', () => {
     output: 1000,
   });
   assert.equal(atBoundary.tier, 'standard');
+  assert.equal(atBoundary.boundaryLimit, 272000);
   assert.equal(atBoundary.actualUsd, '2.77');
   assert.equal(atBoundary.thresholdIgnoredUsd, '2.77');
   assert.equal(atBoundary.underestimateUsd, '0');
