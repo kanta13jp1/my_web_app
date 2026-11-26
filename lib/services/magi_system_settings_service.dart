@@ -39,7 +39,7 @@ class MagiSystemSettings {
   static const bool defaultEnabled = true;
   static const String defaultMelchiorModel = 'gpt-4o-mini';
   static const String defaultBalthasarModel = 'claude-sonnet-4-6';
-  static const String defaultCasperModel = 'gemini-2.5-flash';
+  static const String defaultCasperModel = 'gemini-4-hydrogen';
   static const String defaultSynthesisModel = 'claude-sonnet-4-6';
 
   final bool enabled;
