@@ -162,27 +162,38 @@ class _PostBody extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(
-                Icons.calendar_today_outlined,
-                size: 13,
-                color: Color(0xFF4B5563),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 13,
+                    color: Color(0xFF4B5563),
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      dateLabel,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF4B5563),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text(
-                dateLabel,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF4B5563),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(width: 16),
               if (post['status'] == 'draft')
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(4),
@@ -209,7 +220,9 @@ class _PostBody extends StatelessWidget {
           const Divider(height: 32, color: Color(0xFFE5E7EB)),
           // Content
           if (content.trim().isNotEmpty)
-            MarkdownPreview(data: content)
+            SelectionArea(
+              child: MarkdownPreview(data: content, selectable: false),
+            )
           else
             const Text(
               'コンテンツがありません',

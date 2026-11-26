@@ -16,8 +16,14 @@ String extractBlogExcerpt(
   final plain = content
       .replaceAll(RegExp(r'^#{1,6}\s.*$', multiLine: true), '')
       .replaceAll(RegExp(r'```[\s\S]*?```'), '')
-      .replaceAll(RegExp(r'`([^`]*)`'), r'$1')
-      .replaceAll(RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1')
+      .replaceAllMapped(
+        RegExp(r'`([^`]*)`'),
+        (m) => m.group(1) ?? '',
+      )
+      .replaceAllMapped(
+        RegExp(r'\[([^\]]*)\]\([^)]*\)'),
+        (m) => m.group(1) ?? '',
+      )
       .replaceAll(RegExp(r'[*_~>#-]'), '')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();

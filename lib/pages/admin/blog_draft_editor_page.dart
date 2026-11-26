@@ -426,9 +426,7 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               label: Text(
-                p == 'app'
-                    ? '公式ブログ'
-                    : (p == 'devto' ? 'dev.to' : 'Qiita'),
+                p == 'app' ? '公式ブログ' : (p == 'devto' ? 'dev.to' : 'Qiita'),
                 style: const TextStyle(height: 1.5),
               ),
               selected: _targetPlatforms.contains(p),

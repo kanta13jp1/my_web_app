@@ -92,13 +92,19 @@ void main() {
   testWidgets('renders empty and error states without crashing',
       (tester) async {
     await tester.pumpWidget(
-      buildApp(loader: (_) async => null),
+      buildApp(
+        postId: 'post-empty',
+        loader: (_) async => null,
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('記事が見つかりません'), findsOneWidget);
 
     await tester.pumpWidget(
-      buildApp(loader: (_) async => throw Exception('network timeout')),
+      buildApp(
+        postId: 'post-error',
+        loader: (_) async => throw Exception('network timeout'),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('記事の読み込みに失敗しました'), findsOneWidget);
