@@ -37,6 +37,13 @@ export const WORKER_INVOKE_LIMIT_PER_MINUTE = 10;
 export const WORKER_RESPONSE_MAX_BYTES = 64 * 1024;
 export const NOTE_TITLE_MAX_LENGTH = 200;
 export const NOTE_CONTENT_MAX_LENGTH = 100_000;
+export const NOTE_CAPTURE_STATUSES = ["inbox", "organized"] as const;
+export type NoteCaptureStatus = (typeof NOTE_CAPTURE_STATUSES)[number];
+export const NOTE_CAPTURE_SOURCES = ["api", "web_clipper", "editor"] as const;
+export type NoteCaptureSource = (typeof NOTE_CAPTURE_SOURCES)[number];
+export const NOTE_MAX_TAGS = 20;
+export const NOTE_TAG_MAX_LENGTH = 40;
+export const NOTE_SOURCE_KEY_MAX_LENGTH = 160;
 const SLOW_REQUEST_THRESHOLD_MS = 5_000;
 export const JIBUN_API_WEBHOOK_EVENTS = [
   "note.created",
@@ -75,6 +82,24 @@ export function normalizeScopes(input: unknown): JibunApiScope[] | null {
     }
   }
   return out.length > 0 ? out : null;
+}
+
+export function normalizeNoteTags(input: unknown): string[] | null {
+  if (!Array.isArray(input)) return null;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input) {
+    if (typeof raw !== "string") return null;
+    const tag = raw.trim();
+    if (tag === "") continue;
+    if (tag.length > NOTE_TAG_MAX_LENGTH) return null;
+    if (!seen.has(tag)) {
+      seen.add(tag);
+      out.push(tag);
+      if (out.length > NOTE_MAX_TAGS) return null;
+    }
+  }
+  return out;
 }
 
 function base64UrlEncode(bytes: Uint8Array): string {
@@ -388,7 +413,14 @@ export interface JibunApiStore {
   ): Promise<NoteRow[]>;
   createNote(
     userId: string,
-    note: { title: string; content: string },
+    note: {
+      title: string;
+      content: string;
+      tags?: string[];
+      captureStatus?: NoteCaptureStatus;
+      captureSource?: NoteCaptureSource;
+      sourceKey?: string;
+    },
   ): Promise<NoteRow>;
   listUserTasks(limit: number): Promise<Record<string, unknown>[]>;
   listAchievements(limit: number): Promise<Record<string, unknown>[]>;
@@ -615,9 +647,25 @@ export function createSupabaseJibunApiStore(
       return (data ?? []) as NoteRow[];
     },
     async createNote(userId, note) {
+      const insertRow: Record<string, unknown> = {
+        user_id: userId,
+        created_by: userId,
+        title: note.title,
+        content: note.content,
+      };
+      if (note.tags !== undefined) insertRow.tags = note.tags;
+      if (note.captureStatus !== undefined) {
+        insertRow.capture_status = note.captureStatus;
+      }
+      if (note.captureSource !== undefined) {
+        insertRow.capture_source = note.captureSource;
+      }
+      if (note.sourceKey !== undefined) {
+        insertRow.source_key = note.sourceKey;
+      }
       const { data, error } = await admin
         .from("notes")
-        .insert({ user_id: userId, title: note.title, content: note.content })
+        .insert(insertRow)
         .select("id, title, content, created_at, updated_at")
         .single();
       if (error) throw new Error(error.message);
@@ -1521,7 +1569,85 @@ async function dispatchExternalApiAction(
           workerId: null,
         };
       }
-      const note = await store.createNote(userId, { title, content });
+      let tags: string[] | undefined;
+      if (body.tags !== undefined) {
+        const normalizedTags = normalizeNoteTags(body.tags);
+        if (normalizedTags === null) {
+          return {
+            response: json({
+              error: `tags must be an array of at most ${NOTE_MAX_TAGS} strings (1-${NOTE_TAG_MAX_LENGTH} chars each)`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        tags = normalizedTags;
+      }
+      let captureStatus: NoteCaptureStatus | undefined;
+      if (body.capture_status !== undefined) {
+        if (
+          typeof body.capture_status !== "string" ||
+          !(NOTE_CAPTURE_STATUSES as readonly string[]).includes(
+            body.capture_status,
+          )
+        ) {
+          return {
+            response: json({
+              error: `capture_status must be one of: ${NOTE_CAPTURE_STATUSES.join(", ")}`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        captureStatus = body.capture_status as NoteCaptureStatus;
+      }
+      let captureSource: NoteCaptureSource | undefined;
+      if (body.capture_source !== undefined) {
+        if (
+          typeof body.capture_source !== "string" ||
+          !(NOTE_CAPTURE_SOURCES as readonly string[]).includes(
+            body.capture_source,
+          )
+        ) {
+          return {
+            response: json({
+              error: `capture_source must be one of: ${NOTE_CAPTURE_SOURCES.join(", ")}`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        captureSource = body.capture_source as NoteCaptureSource;
+      }
+      let sourceKey: string | undefined;
+      if (body.source_key !== undefined) {
+        if (typeof body.source_key !== "string") {
+          return {
+            response: json({
+              error: `source_key must be a string (1-${NOTE_SOURCE_KEY_MAX_LENGTH} chars)`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        const trimmedSourceKey = body.source_key.trim();
+        if (
+          trimmedSourceKey === "" ||
+          trimmedSourceKey.length > NOTE_SOURCE_KEY_MAX_LENGTH
+        ) {
+          return {
+            response: json({
+              error: `source_key must be a string (1-${NOTE_SOURCE_KEY_MAX_LENGTH} chars)`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        sourceKey = trimmedSourceKey;
+      }
+      const note = await store.createNote(userId, {
+        title,
+        content,
+        ...(tags !== undefined ? { tags } : {}),
+        ...(captureStatus !== undefined ? { captureStatus } : {}),
+        ...(captureSource !== undefined ? { captureSource } : {}),
+        ...(sourceKey !== undefined ? { sourceKey } : {}),
+      });
       fireWebhooks(
         store,
         userId,
