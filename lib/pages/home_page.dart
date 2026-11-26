@@ -84,6 +84,7 @@ import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
+import '../widgets/home_feature_request_failure_snackbar.dart';
 import '../utils/home_calendar_visible_range.dart';
 import '../utils/home_cashflow_bundle_loader.dart';
 import '../services/route_visibility_observer.dart';
@@ -371,13 +372,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
   ) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(failure.userMessage),
-        action: SnackBarAction(
-          label: failure.retryLabel,
-          onPressed: () => unawaited(retry()),
-        ),
+      buildHomeFeatureRequestFailureSnackBar(
+        failure: failure,
         backgroundColor: Theme.of(context).colorScheme.error,
+        onRetry: () => unawaited(retry()),
       ),
     );
   }
