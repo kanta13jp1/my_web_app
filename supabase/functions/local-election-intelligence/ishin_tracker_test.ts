@@ -877,3 +877,38 @@ Deno.test(
     assertEquals(classifyPostArchetype(lead), "data_report");
   },
 );
+
+Deno.test(
+  "persistIshinSnapshot suppresses HITL candidate when only areaLabel changes with zero count or roster delta",
+  async () => {
+    const { store, candidates } = createMemoryStore();
+    const baseline = buildIshinMemberSnapshot(
+      make47PagesFixture(303, false),
+    ) as IshinMemberSnapshot;
+    const targetMember = baseline.members[0];
+    const updated: IshinMemberSnapshot = {
+      ...baseline,
+      members: baseline.members.map((m) =>
+        m.detailUrl === targetMember.detailUrl
+          ? {
+            ...m,
+            areaLabel: m.areaLabel === "糸島市" ? "那珂川市" : "糸島市",
+          }
+          : m
+      ),
+    };
+
+    await persistIshinSnapshot(store, baseline, "2026-11-25T05:31:50.000Z");
+    const next = await persistIshinSnapshot(
+      store,
+      updated,
+      "2026-11-26T05:13:50.000Z",
+    );
+
+    assertEquals(next.snapshotCreated, true);
+    assertEquals(next.hasChanges, false);
+    assertEquals(next.candidateCount, 0);
+    assertEquals(next.candidatesCreated, 0);
+    assertEquals(candidates.length, 0);
+  },
+);
