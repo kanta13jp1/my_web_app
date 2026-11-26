@@ -6,35 +6,35 @@
  * or low confidence, while tracking routing and escalation telemetry.
  */
 
-export type ModelTier = 'free' | 'budget' | 'performance' | 'premium';
+export type ModelTier = "free" | "budget" | "performance" | "premium";
 
-export type TaskDifficulty = 'trivial' | 'standard' | 'complex' | 'critical';
+export type TaskDifficulty = "trivial" | "standard" | "complex" | "critical";
 
 export type EscalationReason =
-  | 'provider_error'
-  | 'timeout'
-  | 'low_confidence'
-  | 'rate_limited';
+  | "provider_error"
+  | "timeout"
+  | "low_confidence"
+  | "rate_limited";
 
 export const MODEL_TIER_ORDER: readonly ModelTier[] = [
-  'free',
-  'budget',
-  'performance',
-  'premium',
+  "free",
+  "budget",
+  "performance",
+  "premium",
 ] as const;
 
 export const TIER_LABELS = {
-  free: 'Free',
-  budget: 'Budget',
-  performance: 'Performance',
-  premium: 'Premium',
+  free: "Free",
+  budget: "Budget",
+  performance: "Performance",
+  premium: "Premium",
 } as const satisfies Record<ModelTier, string>;
 
 export const DIFFICULTY_DEFAULT_TIER = {
-  trivial: 'free',
-  standard: 'budget',
-  complex: 'performance',
-  critical: 'premium',
+  trivial: "free",
+  standard: "budget",
+  complex: "performance",
+  critical: "premium",
 } as const satisfies Record<TaskDifficulty, ModelTier>;
 
 export interface TierRouteRequest {
@@ -121,7 +121,7 @@ export function selectInitialTier(request: TierRouteRequest): ModelTier {
 
 export function resolveNextTier(
   currentTier: ModelTier,
-  maxTier: ModelTier = 'premium',
+  maxTier: ModelTier = "premium",
 ): ModelTier | null {
   const nextIdx = tierIndex(currentTier) + 1;
   if (nextIdx >= MODEL_TIER_ORDER.length) {
@@ -138,13 +138,13 @@ function classifyFailure(
   minConfidence: number,
 ): EscalationReason | null {
   if (!outcome.success) {
-    return outcome.reason ?? 'provider_error';
+    return outcome.reason ?? "provider_error";
   }
   if (
     outcome.confidence !== undefined &&
     outcome.confidence < minConfidence
   ) {
-    return 'low_confidence';
+    return "low_confidence";
   }
   return null;
 }
@@ -189,7 +189,7 @@ export class TieredModelRouter {
     executor: TierExecutor,
   ): Promise<TieredRouteResult> {
     const initialTier = selectInitialTier(request);
-    const maxTier = request.maxTier ?? 'premium';
+    const maxTier = request.maxTier ?? "premium";
     const minConfidence = request.minConfidence ?? 0.6;
     const allowEscalation = request.allowEscalation ?? true;
 
@@ -264,15 +264,14 @@ export class TieredModelRouter {
   }
 
   getTelemetry(): TieredRoutingTelemetry {
-    const escalationRate =
-      this.totalRequests === 0
-        ? 0
-        : Number((this.escalatedRequests / this.totalRequests).toFixed(4));
+    const rate = this.totalRequests === 0
+      ? 0
+      : Number((this.escalatedRequests / this.totalRequests).toFixed(4));
     return {
       totalRequests: this.totalRequests,
       succeededRequests: this.succeededRequests,
       escalatedRequests: this.escalatedRequests,
-      escalationRate,
+      escalationRate: rate,
       perTier: {
         free: { ...this.perTier.free },
         budget: { ...this.perTier.budget },
