@@ -160,8 +160,8 @@ Future<List<HomeCalendarComposedDay<TTask>>> loadHomeCalendarDays<TTask>({
   final monthAnchor = range.monthAnchor;
   final startDay = range.startDay;
   final endDay = range.endDay;
-  final resolvedAbstinenceByDate = abstinenceByDate ??
-      await fetchAbstinenceByDate(startDay, endDay);
+  final resolvedAbstinenceByDate =
+      abstinenceByDate ?? await fetchAbstinenceByDate(startDay, endDay);
 
   final days = <HomeCalendarComposedDay<TTask>>[];
   final todayDate = DateTime(now.year, now.month, now.day);
@@ -179,8 +179,7 @@ Future<List<HomeCalendarComposedDay<TTask>>> loadHomeCalendarDays<TTask>({
         dailyStatusByDate[dateKey] ?? const HomeCalendarDailyStatusInput();
     final morningDone = dayStatus.morningBriefingDone;
     final balanceDone = dayStatus.balanceCheckDone;
-    final pendingCriticalTaskCountForDay =
-        pendingCriticalTaskMap[dateKey] ?? 0;
+    final pendingCriticalTaskCountForDay = pendingCriticalTaskMap[dateKey] ?? 0;
     final tasks = List<TTask>.from(tasksByDate[dateKey] ?? <TTask>[]);
     final cashflow =
         cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
