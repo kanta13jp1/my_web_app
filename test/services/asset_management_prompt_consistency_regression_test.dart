@@ -46,7 +46,8 @@ void main() {
         'paid fixed cost is excluded from unpaid warnings and invalidates cache',
         () {
       final before = _buildReport(paidAccountNames: const <String>{});
-      final after = _buildReport(paidAccountNames: const <String>{'acom'});
+      final after =
+          _buildReport(paidAccountNames: const <String>{'acom_card_loan'});
 
       final deterministicBefore =
           summaryService.buildDeterministicSummary(before);
@@ -62,10 +63,10 @@ void main() {
     test('zero-amount canceled subscription is excluded from cashflow prompt',
         () {
       final report = _buildReport(
-        monthlyPaymentOverrides: const <String, double>{'acom': 0},
+        monthlyPaymentOverrides: const <String, double>{'acom_card_loan': 0},
       );
       final prompt = promptBuilder.buildDetailedAdvicePrompt(report);
-      expect(prompt, isNot(contains('項目:アコム / 金額:0円')));
+      expect(prompt, isNot(contains('項目:アコムカードローン / 金額:0円')));
       expect(
         report.actionItems.where(
           (AssetManagementInsightActionItem item) =>
@@ -79,16 +80,16 @@ void main() {
         'overridden annual rate (15.0% vs 18.0%) updates prompt and invalidates cache',
         () {
       final defaultReport = _buildReport(
-        annualRateOverrides: const <String, double>{'acom': 0.18},
+        annualRateOverrides: const <String, double>{'acom_card_loan': 0.18},
       );
       final overriddenReport = _buildReport(
-        annualRateOverrides: const <String, double>{'acom': 0.15},
+        annualRateOverrides: const <String, double>{'acom_card_loan': 0.15},
       );
 
       final overriddenPrompt =
           promptBuilder.buildDetailedAdvicePrompt(overriddenReport);
-      expect(overriddenPrompt, contains('年利:15.00%'));
-      expect(overriddenPrompt, isNot(contains('年利:18.00%')));
+      expect(overriddenPrompt, contains('年利:15.0%'));
+      expect(overriddenPrompt, isNot(contains('年利:18.0%')));
       expectCacheInvalidated(defaultReport, overriddenReport);
     });
 
@@ -110,7 +111,7 @@ AssetManagementInsightReport _buildReport({
   double acomBalance = -500000,
   Set<String> paidAccountNames = const <String>{},
   Map<String, double> monthlyPaymentOverrides = const <String, double>{
-    'acom': 15000,
+    'acom_card_loan': 15000,
   },
   Map<String, double> annualRateOverrides = const <String, double>{},
 }) {
@@ -119,13 +120,15 @@ AssetManagementInsightReport _buildReport({
   final workbook = planner.buildWorkbook(
     latestSnapshot: <String, double>{
       'bank': 100000,
-      'アコム': acomBalance,
+      'アコムカードローン': acomBalance,
     },
     baseDate: DateTime(2026, 9, 6),
     paidAccountNames: paidAccountNames,
     monthlyPaymentOverrides: monthlyPaymentOverrides,
     annualRateOverrides: annualRateOverrides,
-    paymentSourceAccountIds: const <String, String>{'acom': 'bank'},
+    paymentSourceAccountIds: const <String, String>{
+      'acom_card_loan': 'bank',
+    },
   );
   return insight.buildReport(workbook: workbook);
 }
