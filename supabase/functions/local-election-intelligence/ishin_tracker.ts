@@ -487,16 +487,29 @@ export function computeIshinDiff(
     !prevBlankSet.has(p)
   );
 
-  const hasChanges = stableStringify(previous) !== stableStringify(current);
+  const localAssemblyDelta = current.localAssemblyMembers -
+    previous.localAssemblyMembers;
+  const governorsAndMayorsDelta = current.governorsAndMayors -
+    previous.governorsAndMayors;
+  const activePrefectureDelta = current.activePrefectureCount -
+    previous.activePrefectureCount;
+
+  const hasChanges = localAssemblyDelta !== 0 ||
+    governorsAndMayorsDelta !== 0 ||
+    activePrefectureDelta !== 0 ||
+    prefectureDeltas.length > 0 ||
+    addedMembers.length > 0 ||
+    removedMembers.length > 0 ||
+    addedMayors.length > 0 ||
+    removedMayors.length > 0 ||
+    newlyFilledPrefectures.length > 0 ||
+    newlyBlankPrefectures.length > 0;
 
   return {
     hasChanges,
-    localAssemblyDelta: current.localAssemblyMembers -
-      previous.localAssemblyMembers,
-    governorsAndMayorsDelta: current.governorsAndMayors -
-      previous.governorsAndMayors,
-    activePrefectureDelta: current.activePrefectureCount -
-      previous.activePrefectureCount,
+    localAssemblyDelta,
+    governorsAndMayorsDelta,
+    activePrefectureDelta,
     prefectureDeltas,
     addedMembers,
     removedMembers,
