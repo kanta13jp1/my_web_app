@@ -39,7 +39,7 @@ import {
 import {
   buildAccountAcquisitionLine,
   buildAnalyticsImportMetadata,
-  parseXAnalyticsCsv,
+  parseXAnalyticsCsvWithDiagnostics,
 } from "./x_analytics_import.ts";
 import {
   buildArchetypeTopicInteractionLine,
@@ -1474,13 +1474,23 @@ async function importXAnalyticsCsv(
   userId: string,
   options: { csv: string; exportRange: string; dryRun: boolean },
 ) {
-  const rows = parseXAnalyticsCsv(options.csv);
+  const parsedResult = parseXAnalyticsCsvWithDiagnostics(options.csv);
+  const { rows } = parsedResult;
+  const diagnostics = {
+    bomStripped: parsedResult.bomStripped,
+    duplicatePostIdsSkipped: parsedResult.duplicatePostIdsSkipped,
+    duplicateHeadersIgnored: parsedResult.duplicateHeadersIgnored,
+    invalidNumericCells: parsedResult.invalidNumericCells,
+    issueCount: parsedResult.issues.length,
+    sampleIssues: parsedResult.issues.slice(0, 20),
+  };
   if (rows.length === 0) {
     return {
       success: false,
       imported: 0,
       skipped: 0,
       error: "No rows parsed. Expected the X Analytics content CSV export.",
+      diagnostics,
     };
   }
   const observedAt = new Date().toISOString();
@@ -1493,6 +1503,7 @@ async function importXAnalyticsCsv(
       imported: 0,
       skipped: 0,
       accountAcquisitionLine,
+      diagnostics,
     };
   }
 
@@ -1513,7 +1524,13 @@ async function importXAnalyticsCsv(
 
   let imported = 0;
   let skipped = 0;
+  const seenBatchPostIds = new Set<string>();
   for (const row of rows) {
+    if (seenBatchPostIds.has(row.postId)) {
+      skipped += 1;
+      continue;
+    }
+    seenBatchPostIds.add(row.postId);
     const metadata = buildAnalyticsImportMetadata(row, {
       userId,
       archetype: classifyPostArchetype(row.text),
@@ -1550,6 +1567,7 @@ async function importXAnalyticsCsv(
     skipped,
     observedAt,
     accountAcquisitionLine,
+    diagnostics,
   };
 }
 

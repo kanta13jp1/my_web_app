@@ -33,6 +33,30 @@ export interface XAnalyticsCsvRow {
   permalinkClicks: number;
 }
 
+export type XAnalyticsCsvIssueCode =
+  | "duplicate_header"
+  | "duplicate_post_id"
+  | "non_ascii_digit"
+  | "negative_numeric"
+  | "invalid_numeric";
+
+export interface XAnalyticsCsvIssue {
+  code: XAnalyticsCsvIssueCode;
+  rowIndex: number;
+  column: string;
+  postId?: string;
+  rawValue: string;
+}
+
+export interface XAnalyticsCsvDiagnostics {
+  rows: XAnalyticsCsvRow[];
+  issues: XAnalyticsCsvIssue[];
+  bomStripped: boolean;
+  duplicatePostIdsSkipped: number;
+  duplicateHeadersIgnored: string[];
+  invalidNumericCells: number;
+}
+
 const HEADER_TO_KEY: Record<string, keyof XAnalyticsCsvRow> = {
   "post id": "postId",
   "date": "date",
@@ -53,7 +77,22 @@ const HEADER_TO_KEY: Record<string, keyof XAnalyticsCsvRow> = {
   "permalink clicks": "permalinkClicks",
 };
 
-const NUMERIC_KEYS = new Set<keyof XAnalyticsCsvRow>([
+type NumericRowKey =
+  | "impressions"
+  | "likes"
+  | "engagements"
+  | "bookmarks"
+  | "shares"
+  | "newFollows"
+  | "replies"
+  | "reposts"
+  | "profileVisits"
+  | "detailExpands"
+  | "urlClicks"
+  | "hashtagClicks"
+  | "permalinkClicks";
+
+const NUMERIC_KEYS: readonly NumericRowKey[] = [
   "impressions",
   "likes",
   "engagements",
@@ -67,17 +106,20 @@ const NUMERIC_KEYS = new Set<keyof XAnalyticsCsvRow>([
   "urlClicks",
   "hashtagClicks",
   "permalinkClicks",
-]);
+];
 
 /// RFC4180 相当の最小 CSV スプリッタ。X の Date 列は `"Wed, Jul 22, 2026"` の
 /// ように引用符内にカンマを含み、本文には改行も含まれうるため、素朴な
-/// `split(",")` / `split("\n")` では壊れる。
+/// `split(",")` / `split("\n")` では壊れる。先頭 BOM (\uFEFF) も明示除去する。
 export function splitCsvRows(input: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
   let quoted = false;
-  const text = (input ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const text = (input ?? "")
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
   for (let i = 0; i < text.length; i += 1) {
     const ch = text[i];
     if (quoted) {
@@ -112,31 +154,131 @@ export function splitCsvRows(input: string): string[][] {
   return rows;
 }
 
-function toNumber(raw: string): number {
-  const parsed = Number((raw ?? "").replace(/[",\s]/g, ""));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+function parseNumericCell(
+  raw: string,
+  rowIndex: number,
+  column: string,
+  postId: string,
+  issues: XAnalyticsCsvIssue[],
+): { value: number; invalid: boolean } {
+  const trimmed = (raw ?? "").trim();
+  if (trimmed === "") return { value: 0, invalid: false };
+  if (/[０-９]/.test(trimmed)) {
+    issues.push({
+      code: "non_ascii_digit",
+      rowIndex,
+      column,
+      postId,
+      rawValue: trimmed,
+    });
+    return { value: 0, invalid: true };
+  }
+  const compact = trimmed.replace(/[",\s]/g, "");
+  if (/^-\d+(?:\.\d+)?$/.test(compact)) {
+    issues.push({
+      code: "negative_numeric",
+      rowIndex,
+      column,
+      postId,
+      rawValue: trimmed,
+    });
+    return { value: 0, invalid: true };
+  }
+  if (/^\d+(?:\.\d+)?$/.test(compact)) {
+    const parsed = Number(compact);
+    if (Number.isFinite(parsed)) {
+      return { value: parsed, invalid: false };
+    }
+  }
+  issues.push({
+    code: "invalid_numeric",
+    rowIndex,
+    column,
+    postId,
+    rawValue: trimmed,
+  });
+  return { value: 0, invalid: true };
 }
 
-/// X Analytics のコンテンツ CSV をパースする。列順とヘッダ表記の揺れを許容し、
-/// Post id が空の行は捨てる。未知の列は無視する。
-export function parseXAnalyticsCsv(input: string): XAnalyticsCsvRow[] {
-  const rows = splitCsvRows(input);
-  if (rows.length < 2) return [];
+/// X Analytics のコンテンツ CSV をパースし、重複ヘッダ・重複 Post id・
+/// 全角数字/負数/不正数値セルの診断情報も合わせて返す。
+export function parseXAnalyticsCsvWithDiagnostics(
+  input: string,
+): XAnalyticsCsvDiagnostics {
+  const rawInput = input ?? "";
+  const bomStripped = rawInput.startsWith("\uFEFF");
+  const rows = splitCsvRows(bomStripped ? rawInput.slice(1) : rawInput);
+  const issues: XAnalyticsCsvIssue[] = [];
+  const duplicateHeadersIgnored: string[] = [];
+
+  if (rows.length < 2) {
+    return {
+      rows: [],
+      issues,
+      bomStripped,
+      duplicatePostIdsSkipped: 0,
+      duplicateHeadersIgnored,
+      invalidNumericCells: 0,
+    };
+  }
+
   const header = rows[0].map((cell) => cell.trim().toLowerCase());
   const indexByKey = new Map<keyof XAnalyticsCsvRow, number>();
   header.forEach((name, index) => {
     const key = HEADER_TO_KEY[name];
-    if (key !== undefined && !indexByKey.has(key)) indexByKey.set(key, index);
+    if (key === undefined) return;
+    if (indexByKey.has(key)) {
+      duplicateHeadersIgnored.push(name);
+      issues.push({
+        code: "duplicate_header",
+        rowIndex: 1,
+        column: name,
+        rawValue: rows[0][index] ?? name,
+      });
+      return;
+    }
+    indexByKey.set(key, index);
   });
-  if (!indexByKey.has("postId")) return [];
+
+  if (!indexByKey.has("postId")) {
+    return {
+      rows: [],
+      issues,
+      bomStripped,
+      duplicatePostIdsSkipped: 0,
+      duplicateHeadersIgnored,
+      invalidNumericCells: 0,
+    };
+  }
+
   const cell = (cells: string[], key: keyof XAnalyticsCsvRow): string => {
     const index = indexByKey.get(key);
     return index === undefined ? "" : (cells[index] ?? "").trim();
   };
+
   const parsed: XAnalyticsCsvRow[] = [];
-  for (const cells of rows.slice(1)) {
+  const seenPostIds = new Set<string>();
+  let duplicatePostIdsSkipped = 0;
+  let invalidNumericCells = 0;
+
+  for (let i = 1; i < rows.length; i += 1) {
+    const cells = rows[i];
+    const rowIndex = i + 1;
     const postId = cell(cells, "postId");
     if (!/^\d{5,}$/.test(postId)) continue;
+    if (seenPostIds.has(postId)) {
+      duplicatePostIdsSkipped += 1;
+      issues.push({
+        code: "duplicate_post_id",
+        rowIndex,
+        column: "postId",
+        postId,
+        rawValue: postId,
+      });
+      continue;
+    }
+    seenPostIds.add(postId);
+
     const row: XAnalyticsCsvRow = {
       postId,
       date: cell(cells, "date"),
@@ -156,12 +298,35 @@ export function parseXAnalyticsCsv(input: string): XAnalyticsCsvRow[] {
       hashtagClicks: 0,
       permalinkClicks: 0,
     };
+
     for (const key of NUMERIC_KEYS) {
-      (row[key] as number) = toNumber(cell(cells, key));
+      const checked = parseNumericCell(
+        cell(cells, key),
+        rowIndex,
+        key,
+        postId,
+        issues,
+      );
+      row[key] = checked.value;
+      if (checked.invalid) invalidNumericCells += 1;
     }
     parsed.push(row);
   }
-  return parsed;
+
+  return {
+    rows: parsed,
+    issues,
+    bomStripped,
+    duplicatePostIdsSkipped,
+    duplicateHeadersIgnored,
+    invalidNumericCells,
+  };
+}
+
+/// X Analytics のコンテンツ CSV をパースする。列順とヘッダ表記の揺れを許容し、
+/// Post id が空の行や重複 Post id 行は捨てる。未知の列は無視する。
+export function parseXAnalyticsCsv(input: string): XAnalyticsCsvRow[] {
+  return parseXAnalyticsCsvWithDiagnostics(input).rows;
 }
 
 /// 取り込み 1 行分の x_post_log metadata を作る。
