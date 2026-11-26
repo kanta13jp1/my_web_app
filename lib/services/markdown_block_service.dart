@@ -270,9 +270,8 @@ class MarkdownBlockService {
         ? current.selection.end.clamp(rawStart, text.length)
         : text.length;
 
-    final String prefix = rawStart > 0 && !text.substring(0, rawStart).endsWith('\n')
-        ? '\n'
-        : '';
+    final String prefix =
+        rawStart > 0 && !text.substring(0, rawStart).endsWith('\n') ? '\n' : '';
     final String replacement = '$prefix${template.snippet}';
     final String updated = text.replaceRange(rawStart, rawEnd, replacement);
     final int nextCursor =
@@ -657,12 +656,9 @@ class MarkdownBlockService {
         break;
     }
 
-    final String singleLine = raw
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    final String snippet = singleLine.length > 72
-        ? '${singleLine.substring(0, 71)}…'
-        : singleLine;
+    final String singleLine = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final String snippet =
+        singleLine.length > 72 ? '${singleLine.substring(0, 71)}…' : singleLine;
     return MarkdownBlock(
       type: type,
       rawMarkdown: raw,

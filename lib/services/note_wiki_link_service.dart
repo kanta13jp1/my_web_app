@@ -219,9 +219,7 @@ class NoteWikiLinkService {
         (WikiLinkRef link) =>
             normalizeTitle(link.targetTitle) == normalizedTarget,
       )) {
-        return trimmed.length > 96
-            ? '${trimmed.substring(0, 95)}…'
-            : trimmed;
+        return trimmed.length > 96 ? '${trimmed.substring(0, 95)}…' : trimmed;
       }
     }
     final String fallback = content.replaceAll(RegExp(r'\s+'), ' ').trim();

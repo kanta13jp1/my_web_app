@@ -3,22 +3,25 @@ import 'package:my_web_app/services/note_wiki_link_service.dart';
 
 void main() {
   group('NoteWikiLinkService extraction and resolution', () {
-    test('extractWikiLinks ignores code blocks and inline code and deduplicates', () {
-      const md = '''
+    test(
+      'extractWikiLinks ignores code blocks and inline code and deduplicates',
+      () {
+        const md = '''
 参照: [[ロードマップ]] と [[戦略メモ|戦略]] と [[  ロードマップ  ]]。
 インラインコード `[[無視されるリンク]]`
 ```
 [[コード内も無視]]
 ```
 ''';
-      final links = NoteWikiLinkService.extractWikiLinks(md);
-      expect(links.length, 2);
-      expect(links[0].targetTitle, 'ロードマップ');
-      expect(links[0].displayLabel, 'ロードマップ');
-      expect(links[1].targetTitle, '戦略メモ');
-      expect(links[1].alias, '戦略');
-      expect(links[1].displayLabel, '戦略');
-    });
+        final links = NoteWikiLinkService.extractWikiLinks(md);
+        expect(links.length, 2);
+        expect(links[0].targetTitle, 'ロードマップ');
+        expect(links[0].displayLabel, 'ロードマップ');
+        expect(links[1].targetTitle, '戦略メモ');
+        expect(links[1].alias, '戦略');
+        expect(links[1].displayLabel, '戦略');
+      },
+    );
 
     test('resolveLink matches normalized titles and excludes current note', () {
       const notes = <NoteSummary>[

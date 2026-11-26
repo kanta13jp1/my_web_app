@@ -134,9 +134,8 @@ class _BlockReorderSheetState extends State<BlockReorderSheet> {
                             IconButton(
                               tooltip: '上へ移動',
                               icon: const Icon(Icons.arrow_upward, size: 18),
-                              onPressed: index > 0
-                                  ? () => _moveStep(index, -1)
-                                  : null,
+                              onPressed:
+                                  index > 0 ? () => _moveStep(index, -1) : null,
                             ),
                             IconButton(
                               tooltip: '下へ移動',

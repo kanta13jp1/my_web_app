@@ -51,9 +51,7 @@ class InlineSlashBlockMenu extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    query.isEmpty
-                        ? 'ブロックを挿入 (/)'
-                        : 'ブロック検索: /$query',
+                    query.isEmpty ? 'ブロックを挿入 (/)' : 'ブロック検索: /$query',
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),

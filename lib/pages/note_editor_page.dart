@@ -633,7 +633,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             id: id,
             title: title,
             content: content,
-            updatedAt: updatedRaw == null ? null : DateTime.tryParse(updatedRaw),
+            updatedAt:
+                updatedRaw == null ? null : DateTime.tryParse(updatedRaw),
           ),
         );
       }
