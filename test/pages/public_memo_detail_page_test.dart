@@ -23,6 +23,15 @@ PublicMemoService _mockMemoService({required Map<String, dynamic> memoRow}) {
           request: request,
         );
       }
+      if (request.url.path.endsWith('/rest/v1/memo_likes') &&
+          request.method == 'GET') {
+        return http.Response(
+          'null',
+          200,
+          headers: const <String, String>{'content-type': 'application/json'},
+          request: request,
+        );
+      }
       return http.Response(
         jsonEncode(<String, dynamic>{
           'reactions': <String, int>{},
@@ -56,6 +65,11 @@ void main() {
   testWidgets(
     'PublicMemoDetailPage renders MarkdownPreview and signup CTA when logged out',
     (tester) async {
+      tester.view.physicalSize = const Size(1280, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(
         MaterialApp(
           home: PublicMemoDetailPage(
@@ -79,6 +93,11 @@ void main() {
   testWidgets(
     'PublicMemoDetailPage triggers template clone callback when signed in',
     (tester) async {
+      tester.view.physicalSize = const Size(1280, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       PublicMemo? clonedTarget;
       await tester.pumpWidget(
         MaterialApp(

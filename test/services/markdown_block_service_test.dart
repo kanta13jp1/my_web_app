@@ -18,7 +18,7 @@ void main() {
         expect(m2!.startOffset, 3);
         expect(m2.query, '');
 
-        final m3 = MarkdownBlockService.detectInlineSlashTrigger('メモ /cal', 8);
+        final m3 = MarkdownBlockService.detectInlineSlashTrigger('メモ /cal', 7);
         expect(m3, isNotNull);
         expect(m3!.query, 'cal');
       },

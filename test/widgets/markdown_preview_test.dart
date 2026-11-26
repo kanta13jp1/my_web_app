@@ -1,10 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/markdown_preview.dart';
 
 void main() {
   testWidgets(
-    'MarkdownPreview renders callout, expandable toggle, and wikilinks',
+    'MarkdownPreview renders callout, expandable toggle, and selectable wikilinks',
     (tester) async {
       String? tappedLink;
 
@@ -33,7 +34,55 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('隠れた詳細テキスト'), findsOneWidget);
 
-      await tester.tap(find.text('次のノート'));
+      final selectableFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is SelectableText &&
+            (widget.textSpan?.toPlainText().contains('次のノート') ?? false),
+      );
+      expect(selectableFinder, findsOneWidget);
+
+      final SelectableText selectable = tester.widget<SelectableText>(
+        selectableFinder,
+      );
+      GestureRecognizer? linkRecognizer;
+      selectable.textSpan?.visitChildren((span) {
+        if (span is TextSpan && span.text == '次のノート') {
+          linkRecognizer = span.recognizer;
+          return false;
+        }
+        return true;
+      });
+      expect(linkRecognizer, isA<TapGestureRecognizer>());
+      (linkRecognizer! as TapGestureRecognizer).onTap?.call();
+      await tester.pumpAndSettle();
+      expect(tappedLink, '次のノート');
+    },
+  );
+
+  testWidgets(
+    'MarkdownPreview triggers onWikiLinkTap on tap when selectable is false',
+    (tester) async {
+      String? tappedLink;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: MarkdownPreview(
+                selectable: false,
+                data: '[[次のノート]]',
+                onWikiLinkTap: (target) => tappedLink = target,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final richTextFinder = find.textContaining('次のノート', findRichText: true);
+      expect(richTextFinder, findsOneWidget);
+
+      await tester.tapAt(tester.getTopLeft(richTextFinder) + const Offset(12, 8));
       await tester.pumpAndSettle();
       expect(tappedLink, '次のノート');
     },
