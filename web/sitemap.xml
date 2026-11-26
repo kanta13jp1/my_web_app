@@ -16,6 +16,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://my-web-app-b67f4.web.app/blog</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://my-web-app-b67f4.web.app/public-memos</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
@@ -77,9 +82,29 @@
   </url>
   <url>
     <loc>https://my-web-app-b67f4.web.app/philosophy</loc>
-    <lastmod>2026-08-19</lastmod>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://my-web-app-b67f4.web.app/subscription-billing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://my-web-app-b67f4.web.app/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://my-web-app-b67f4.web.app/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://my-web-app-b67f4.web.app/tokusho</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
   <url>
     <loc>https://my-web-app-b67f4.web.app/ai-dev-principles</loc>

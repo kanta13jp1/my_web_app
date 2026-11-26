@@ -655,6 +655,22 @@ class Stage2OgpAssetsTest(unittest.TestCase):
         )
         self.assertIn('<meta property="og:image:alt" content="競合比較カード">', out)
 
+    def test_blog_route_has_static_meta_and_cta_link(self) -> None:
+        routes = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(item for item in routes["routes"] if item["path"] == "/blog")
+        out = build_public_route_html(TEMPLATE, route, BASE)
+
+        self.assertIn(
+            f'<link rel="canonical" href="{BASE}/blog">',
+            out,
+        )
+        self.assertIn("<title>公式ブログ | 自分株式会社</title>", out)
+        self.assertIn("無料で1件AI体験を試す", out)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -46,9 +46,16 @@ export function buildBlogPostUrl(id: string): string {
   return `${BLOG_APP_BASE_URL}?id=${encodeURIComponent(id)}`;
 }
 
+const BLOG_FRONTMATTER_RE = /^---(?:\r?\n)[\s\S]*?(?:\r?\n)---(?:\r?\n)?/;
+
+export function stripBlogFrontmatter(raw: string | null | undefined): string {
+  const source = (raw ?? "").trimStart();
+  return source.replace(BLOG_FRONTMATTER_RE, "").trimStart();
+}
+
 function blogExcerpt(row: BlogPostRow): string {
   const raw = (row.content_preview ?? "").trim();
-  return raw || buildPublicMemoExcerpt(row.content);
+  return raw || buildPublicMemoExcerpt(stripBlogFrontmatter(row.content));
 }
 
 export function extractBlogTags(row: BlogPostRow): string[] {
@@ -68,7 +75,7 @@ export function blogPostToPayload(row: BlogPostRow): Record<string, unknown> {
   return {
     id: row.id,
     title: row.title ?? "",
-    content: row.content ?? "",
+    content: stripBlogFrontmatter(row.content),
     excerpt: blogExcerpt(row),
     tags: extractBlogTags(row),
     postedAt: row.posted_at,
@@ -149,6 +156,7 @@ ${opts.body}
 export function renderBlogHtml(row: BlogPostRow): string {
   const title = row.title ?? `Blog #${row.id}`;
   const appUrl = buildBlogPostUrl(row.id);
+  const cleanContent = stripBlogFrontmatter(row.content);
   const meta: string[] = [];
   const posted = blogDate(row.posted_at);
   if (posted) meta.push(`公開日: ${posted}`);
@@ -158,12 +166,14 @@ export function renderBlogHtml(row: BlogPostRow): string {
 <article>
 <h1>${escapeHtml(title)}</h1>
 <p>${escapeHtml(meta.join(" / "))}</p>
-<div style="white-space:pre-wrap">${escapeHtml(row.content ?? "")}</div>
+<div style="white-space:pre-wrap">${escapeHtml(cleanContent)}</div>
 </article>
 <footer style="margin-top:32px;font-size:0.9em">
-<p><a href="${escapeHtml(appUrl)}">アプリで開く (${
+<p><a href="https://my-web-app-b67f4.web.app/">無料で1件AI体験を試す (${
     escapeHtml(BLOG_SITE_NAME)
-  })</a></p>
+  })</a> / <a href="https://my-web-app-b67f4.web.app/blog">ブログ一覧</a> / <a href="${
+    escapeHtml(appUrl)
+  }">アプリで開く</a></p>
 </footer>`;
   return blogHtmlDocument({
     title,
@@ -176,13 +186,14 @@ export function renderBlogHtml(row: BlogPostRow): string {
 export function renderBlogMarkdown(row: BlogPostRow): string {
   const title = row.title ?? `Blog #${row.id}`;
   const posted = blogDate(row.posted_at);
+  const cleanContent = stripBlogFrontmatter(row.content);
   const lines = [
     `# ${title}`,
     "",
     posted ? `- 公開日: ${posted}` : "",
     `- App URL: ${buildBlogPostUrl(row.id)}`,
     "",
-    row.content ?? "",
+    cleanContent,
     "",
   ].filter((l) => l !== "");
   return lines.join("\n");
