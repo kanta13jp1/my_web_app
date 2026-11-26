@@ -13,6 +13,7 @@ PublicMemoService _mockMemoService({required Map<String, dynamic> memoRow}) {
   final client = SupabaseClient(
     'https://example.supabase.co',
     'test-anon-key',
+    authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     httpClient: MockClient((request) async {
       if (request.url.path.endsWith('/rest/v1/public_memos') &&
           request.method == 'GET') {

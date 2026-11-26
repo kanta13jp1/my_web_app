@@ -663,6 +663,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _openLinkedNote(NoteSummary target) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           noteId: target.id,
           supabaseClient: _supabase,
@@ -678,6 +679,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _createLinkedNote(String targetTitle) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           initialTitle: targetTitle,
           supabaseClient: _supabase,

@@ -192,6 +192,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       _showMessage('自分のノートへ複製しました');
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/note-editor'),
           builder: (_) => NoteEditorPage(noteId: clonedNoteId),
         ),
       );
