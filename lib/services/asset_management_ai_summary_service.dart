@@ -597,6 +597,8 @@ class AssetManagementAiSummaryService {
       _promptBuilder.buildDetailedAdvicePrompt(
         report,
         existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
+        includeRowLevelTables: false,
+        includeImplementationContext: false,
       ),
       '',
       '## AIに渡す詳細ペイロード',
@@ -815,13 +817,13 @@ class AssetManagementAiSummaryService {
             workbook.billingConfirmationPendingTotal,
         'billing_confirmation_pending_rows': workbook
             .billingConfirmationPendingRows
-            .map((row) => _debtRowToJson(row, workbook.baseDate))
+            .map((row) => row.id)
             .toList(growable: false),
         'payment_source_missing_count':
             workbook.paymentSourceMissingRows.length,
         'payment_source_missing_total': workbook.paymentSourceMissingTotal,
         'payment_source_missing_rows': workbook.paymentSourceMissingRows
-            .map((row) => _debtRowToJson(row, workbook.baseDate))
+            .map((row) => row.id)
             .toList(growable: false),
       },
       // 現在残高の事実だけを渡す。固定費・サブスクの将来予定は
