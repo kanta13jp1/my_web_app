@@ -58,11 +58,14 @@ Deno.test(
     assertEquals(receipt.awardedPoints, 400);
     assertEquals(receipt.unlockedTier, "curator");
 
-    const testSecret = "unit-test-hmac-placeholder";
-    const sig = await signRewardReceipt(receipt, testSecret);
-    assertEquals(await verifyRewardReceipt(receipt, sig, testSecret), true);
+    const testMaterial = "unit-test-hmac-placeholder";
+    const sig = await signRewardReceipt(receipt, testMaterial);
+    assertEquals(await verifyRewardReceipt(receipt, sig, testMaterial), true);
 
     const tampered = { ...receipt, awardedPoints: 9999 };
-    assertEquals(await verifyRewardReceipt(tampered, sig, testSecret), false);
+    assertEquals(
+      await verifyRewardReceipt(tampered, sig, testMaterial),
+      false,
+    );
   },
 );

@@ -100,11 +100,11 @@ function toHex(buffer: ArrayBuffer): string {
     .join("");
 }
 
-async function importHmacKey(secret: string): Promise<CryptoKey> {
+async function importHmacKey(rawMaterial: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
   return await crypto.subtle.importKey(
     "raw",
-    enc.encode(secret),
+    enc.encode(rawMaterial),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"],
