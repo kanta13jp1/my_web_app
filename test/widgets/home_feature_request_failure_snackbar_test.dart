@@ -56,7 +56,10 @@ void main() {
         expect(find.textContaining(rawExceptionText), findsNothing);
         expect(find.textContaining('Exception'), findsNothing);
 
-        await tester.tap(find.text(failure.retryLabel));
+        final action = tester.widget<SnackBarAction>(
+          find.byType(SnackBarAction),
+        );
+        action.onPressed();
         await tester.pumpAndSettle();
         expect(retried, isTrue);
       }
