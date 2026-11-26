@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPT-6 Astra 長文料金境界（272,000トークン）検証ツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <a href="/">my_web_app</a>
+      <p class="eyebrow">BOUNDARY • DECIMAL • SYNTHETIC CHECK</p>
+      <h1>GPT-6 Astra 長文料金境界 検証ツール</h1>
+      <p class="lead">
+        総入力 272,000 トークン（272K）を超えるとリクエスト全体の単価が切り替わる料金モデルを、整数演算で誤差なく再計算します。
+      </p>
+    </header>
+
+    <section aria-labelledby="sec-calc">
+      <h2 id="sec-calc">1. 合成トークン数の計算と境界比較</h2>
+      <p class="notice">
+        2026年9月26日確認時点の <strong>Standard（標準料金）固定単価</strong> を使ったブラウザ内計算です。
+        外部送信・実 API 呼び出し・請求書照合は一切行いません。また Batch / Flex / Fast や推論トークン等は含みません。
+      </p>
+
+      <div class="presets" role="group" aria-label="代表プリセット">
+        <button type="button" data-total="272000" data-read="0" data-write="0" data-output="1000">境界ちょうど (272,000)</button>
+        <button type="button" data-total="272001" data-read="0" data-write="0" data-output="1000">1トークン超過 (272,001)</button>
+        <button type="button" data-total="300000" data-read="0" data-write="0" data-output="30000">原記事の例 (300K / 30K)</button>
+        <button type="button" data-total="300000" data-read="200000" data-write="0" data-output="30000">キャッシュ読み長文</button>
+        <button type="button" data-total="100" data-read="60" data-write="41" data-output="0">不正例: 内数超過</button>
+        <button type="button" data-total="1.5" data-read="0" data-write="0" data-output="0">不正例: 小数入力</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="field">
+          <label for="total-input">総入力トークン (`total_input`)</label>
+          <input id="total-input" type="text" inputmode="numeric" value="272001" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cached-read">うちキャッシュ読み (`cached_read`)</label>
+          <input id="cached-read" type="text" inputmode="numeric" value="0" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cached-write">うちキャッシュ書き (`cached_write`)</label>
+          <input id="cached-write" type="text" inputmode="numeric" value="0" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="output-tokens">出力トークン (`output`)</label>
+          <input id="output-tokens" type="text" inputmode="numeric" value="1000" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="calc-btn" type="button">計算する</button>
+        <button id="download-btn" type="button" class="secondary">結果を JSON 保存</button>
+      </div>
+
+      <p id="error" role="alert" aria-live="assertive"></p>
+      <div id="result" role="status" aria-live="polite"></div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>内訳計算（USD）</caption>
+          <thead>
+            <tr>
+              <th>区分</th>
+              <th>トークン数</th>
+              <th>算出額 (USD)</th>
+            </tr>
+          </thead>
+          <tbody id="breakdown-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-selfcheck">
+      <h2 id="sec-selfcheck">2. 15ケース境界セルフチェック（正常11・不正4）</h2>
+      <p>
+        Python 版テスト（境界前後・キャッシュ読み/書き・負数・内数超過・小数・真偽値）と同一の 15 ケースを一括検証します。
+      </p>
+      <div class="actions">
+        <button id="selfcheck-btn" type="button">15ケース一括セルフチェックを実行</button>
+      </div>
+      <p id="selfcheck-status" role="status" aria-live="polite">ボタンをクリックして 15 ケースを検証できます。</p>
+      <div class="table-wrap">
+        <table>
+          <caption>15ケース検証一覧</caption>
+          <thead>
+            <tr>
+              <th>ケース</th>
+              <th>期待結果</th>
+              <th>実測結果</th>
+              <th>閾値無視との差額</th>
+              <th>判定</th>
+            </tr>
+          </thead>
+          <tbody id="selfcheck-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>
