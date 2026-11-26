@@ -38,6 +38,7 @@ void main() {
             home: Scaffold(body: AssetAttentionDayLabel(day: day)),
           ),
         );
+        await tester.pumpAndSettle();
         final darkText = tester.widget<Text>(find.text('注意'));
         expect(darkText.style?.color, const Color(0xFFFDE68A));
         expect(darkText.style!.color!.computeLuminance(), greaterThan(0.5));
@@ -66,6 +67,7 @@ void main() {
             home: const Scaffold(body: AssetUnreconciledExpenseBadge()),
           ),
         );
+        await tester.pumpAndSettle();
         final darkText = tester.widget<Text>(find.text('不明'));
         final darkIcon = tester.widget<Icon>(find.byIcon(Icons.help_outline));
         expect(darkText.style?.color, const Color(0xFFFCD34D));
@@ -142,6 +144,7 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
         final darkBorrowText = tester.widget<Text>(find.text('借入'));
         final darkRevolvingText = tester.widget<Text>(find.text('リボ'));
         final darkViolationText = tester.widget<Text>(find.text('借金違反'));
