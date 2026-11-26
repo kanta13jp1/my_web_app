@@ -62,6 +62,11 @@ void main() {
         action.onPressed();
         await tester.pumpAndSettle();
         expect(retried, isTrue);
+
+        ScaffoldMessenger.of(
+          tester.element(find.text('Trigger')),
+        ).clearSnackBars();
+        await tester.pumpAndSettle();
       }
     },
   );
