@@ -82,7 +82,8 @@ void main() {
       final richTextFinder = find.textContaining('次のノート', findRichText: true);
       expect(richTextFinder, findsOneWidget);
 
-      await tester.tapAt(tester.getTopLeft(richTextFinder) + const Offset(12, 8));
+      await tester
+          .tapAt(tester.getTopLeft(richTextFinder) + const Offset(12, 8));
       await tester.pumpAndSettle();
       expect(tappedLink, '次のノート');
     },
