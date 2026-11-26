@@ -4,6 +4,7 @@ import 'package:my_web_app/models/competitor_claim_evidence.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/services/competitor_claim_evidence_repository.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
 void main() {
   testWidgets('Notion route displays evidence and records one arrival', (
@@ -82,6 +83,72 @@ void main() {
       Navigator.of(tester.element(find.text('home destination'))).canPop(),
       isFalse,
     );
+  });
+
+  testWidgets('Notion route renders honest parity section and /import CTA', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/': (_) => ComparisonPage(
+                competitorKey: 'notion',
+                evidenceRepository: _EvidenceRepository(),
+                touchRecorder: (_) async {},
+              ),
+          '/import': (_) => const Scaffold(body: Text('import destination')),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(MigrationParitySection.sectionKey), findsOneWidget);
+    expect(find.text('実装済み（今すぐ利用可能）'), findsOneWidget);
+    expect(find.text('開発中（順次公開予定）'), findsOneWidget);
+    expect(find.textContaining('100 MiB'), findsWidgets);
+
+    final ctaFinder = find.byKey(MigrationParitySection.diagnosticButtonKey);
+    await tester.ensureVisible(ctaFinder);
+    await tester.tap(ctaFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.text('import destination'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Evernote route renders ENEX parity section', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ComparisonPage(
+          competitorKey: 'evernote',
+          evidenceRepository: _EvidenceRepository(),
+          touchRecorder: (_) async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(MigrationParitySection.sectionKey), findsOneWidget);
+    expect(find.textContaining('Evernote ENEX 一括取込'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('unknown route omits Notion/Evernote migration parity section', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ComparisonPage(
+          competitorKey: 'unknown-service',
+          evidenceRepository: _EvidenceRepository(),
+          touchRecorder: (_) async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(MigrationParitySection.sectionKey), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
 
