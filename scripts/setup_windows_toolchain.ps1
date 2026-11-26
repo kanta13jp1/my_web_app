@@ -56,6 +56,21 @@ foreach ($check in $versionChecks) {
         Write-Output "[dry-run] verify: $check"
     } else {
         Write-Output "[verify] $check"
-        Invoke-Expression $check
+        $parts = $check -split ' '
+        $cmdName = $parts[0]
+        $cmdArg = $parts[1]
+        $cmdFound = Get-Command $cmdName -ErrorAction SilentlyContinue
+        if ($null -eq $cmdFound) {
+            Write-Warning "[missing] $cmdName is not installed or not in PATH yet."
+            continue
+        }
+        try {
+            & $cmdName $cmdArg
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "[warn] $check exited with $LASTEXITCODE."
+            }
+        } catch {
+            Write-Warning "[warn] $check failed: $_"
+        }
     }
 }
