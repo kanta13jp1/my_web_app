@@ -120,7 +120,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   }
 
   Future<void> _toggleLike() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = _resolveCurrentUserId();
     if (userId == null) {
       _showMessage('Log in before liking public memos.');
       return;
