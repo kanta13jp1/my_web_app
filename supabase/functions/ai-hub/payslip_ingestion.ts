@@ -323,7 +323,7 @@ export async function handleParsePayslipAction(options: {
       provider: "google",
       model: typeof options.body.model === "string"
         ? options.body.model
-        : "gemini-2.5-flash",
+        : "gemini-4-hydrogen",
       messages: buildPayslipExtractionMessages({
         maskedText,
         sourcePdfPath: storagePath.fullPath,
