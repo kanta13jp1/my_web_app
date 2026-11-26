@@ -15,7 +15,7 @@ topic filtering for AI outputs in:
    - Maximum quotes from a single source: `1` (`maxQuotesPerSource = 1`,
      counted for matches of `>= 6` consecutive words).
 2. **Prohibited Safety Categories**:
-   - `csae` (Child Sexual Abuse and Exploitation)
+   - Child Sexual Abuse and Exploitation
    - `self_harm` (Self-Harm or Suicide Instruction)
    - `illicit_drugs` (Illicit Drug Manufacturing or Trafficking)
    - `cyber_attack` (Cyberattack or Malware Exploitation)
