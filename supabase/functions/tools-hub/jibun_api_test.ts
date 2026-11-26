@@ -22,6 +22,9 @@ import {
   type JibunApiStore,
   MAX_KEYS_PER_USER,
   MAX_WEBHOOKS_PER_USER,
+  type NoteCaptureSource,
+  type NoteCaptureStatus,
+  normalizeNoteTags,
   normalizeScopes,
   normalizeWorkerSlug,
   type NoteRow,
@@ -210,6 +213,15 @@ class FakeJibunApiStore implements JibunApiStore {
   workers: WorkerRow[] = [];
   auditLog: AuditLogRow[] = [];
   notes: NoteRow[] = [];
+  createdNotePayloads: Array<{
+    userId: string;
+    title: string;
+    content: string;
+    tags?: string[];
+    captureStatus?: NoteCaptureStatus;
+    captureSource?: NoteCaptureSource;
+    sourceKey?: string;
+  }> = [];
   webhooks: WebhookRow[] = [];
   rateLimitCounts: Record<string, number> = {};
   nextId = 1;
@@ -356,9 +368,17 @@ class FakeJibunApiStore implements JibunApiStore {
     return Promise.resolve(filtered.slice(0, options.limit));
   }
   createNote(
-    _userId: string,
-    note: { title: string; content: string },
+    userId: string,
+    note: {
+      title: string;
+      content: string;
+      tags?: string[];
+      captureStatus?: NoteCaptureStatus;
+      captureSource?: NoteCaptureSource;
+      sourceKey?: string;
+    },
   ): Promise<NoteRow> {
+    this.createdNotePayloads.push({ userId, ...note });
     const row: NoteRow = {
       id: this.nextId++,
       title: note.title,
@@ -1276,4 +1296,101 @@ Deno.test("authenticateJibunApiBearerForMcp validates keys and enforces worker r
   if (!revokedRes.ok) {
     assertEquals(revokedRes.status, 401);
   }
+});
+
+Deno.test("normalizeNoteTags trims, deduplicates, and rejects invalid inputs", () => {
+  assertEquals(
+    normalizeNoteTags(["  web-clip ", "", "web-clip", "flutter"]),
+    ["web-clip", "flutter"],
+  );
+  assertEquals(normalizeNoteTags("not-an-array"), null);
+  assertEquals(normalizeNoteTags([123]), null);
+  assertEquals(normalizeNoteTags(["x".repeat(41)]), null);
+  assertEquals(
+    normalizeNoteTags(Array.from({ length: 21 }, (_, i) => `tag-${i}`)),
+    null,
+  );
+});
+
+Deno.test("api.notes.create passes optional web_clipper metadata and validates inputs", async () => {
+  const store = new FakeJibunApiStore();
+  const key = await issueKey(store, "user-clipper", ["notes.write"]);
+
+  const okRes = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.create",
+    body: {
+      title: "Web Clipper 記事",
+      content: "# 見出し\n\n本文",
+      tags: [" web-clip ", "notion", "web-clip"],
+      capture_status: "inbox",
+      capture_source: "web_clipper",
+      source_key: "web-clip:article:1234abcd",
+    },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(okRes!.status, 201);
+  assertEquals(store.createdNotePayloads.length, 1);
+  assertEquals(store.createdNotePayloads[0], {
+    userId: "user-clipper",
+    title: "Web Clipper 記事",
+    content: "# 見出し\n\n本文",
+    tags: ["web-clip", "notion"],
+    captureStatus: "inbox",
+    captureSource: "web_clipper",
+    sourceKey: "web-clip:article:1234abcd",
+  });
+
+  const badStatus = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.create",
+    body: {
+      title: "T",
+      content: "C",
+      capture_status: "invalid_status",
+    },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(badStatus!.status, 400);
+
+  const badSource = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.create",
+    body: {
+      title: "T",
+      content: "C",
+      capture_source: "unknown_source",
+    },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(badSource!.status, 400);
+
+  const badTags = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.create",
+    body: {
+      title: "T",
+      content: "C",
+      tags: "bad-string",
+    },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(badTags!.status, 400);
+
+  const badSourceKey = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.create",
+    body: {
+      title: "T",
+      content: "C",
+      source_key: "   ",
+    },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(badSourceKey!.status, 400);
 });
