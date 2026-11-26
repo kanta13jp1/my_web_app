@@ -237,7 +237,7 @@ class PublicMemoService implements MemoReactionService {
   }
 
   /// Clones a public memo into the authenticated user's own workspace notes.
-  Future<int?> clonePublicMemoToNote({
+  Future<String?> clonePublicMemoToNote({
     required PublicMemo memo,
     required String userId,
   }) async {
@@ -256,7 +256,10 @@ class PublicMemoService implements MemoReactionService {
           .select('id')
           .single();
       if (inserted is Map) {
-        return int.tryParse(inserted['id'].toString());
+        final Object? rawId = inserted['id'];
+        final String normalized =
+            rawId == null ? '' : rawId.toString().trim();
+        return normalized.isEmpty ? null : normalized;
       }
       return null;
     } catch (e, stackTrace) {

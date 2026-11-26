@@ -20,7 +20,7 @@ class PublicMemoDetailPage extends StatefulWidget {
   final int memoId;
   final PublicMemoService? publicMemoService;
   final String? currentUserIdOverride;
-  final Future<int?> Function(PublicMemo memo)? cloneMemoOverride;
+  final Future<String?> Function(PublicMemo memo)? cloneMemoOverride;
 
   const PublicMemoDetailPage({
     super.key,
@@ -170,13 +170,13 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     if (_isCloning) return;
     setState(() => _isCloning = true);
     try {
-      final int? clonedNoteId = widget.cloneMemoOverride != null
+      final String? clonedNoteId = widget.cloneMemoOverride != null
           ? await widget.cloneMemoOverride!(memo)
           : await _publicMemoService.clonePublicMemoToNote(
               memo: memo,
               userId: userId,
             );
-      if (clonedNoteId == null) {
+      if (clonedNoteId == null || clonedNoteId.isEmpty) {
         if (mounted) {
           _showMessage('ノートの複製に失敗しました。');
         }
@@ -192,7 +192,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       _showMessage('自分のノートへ複製しました');
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => NoteEditorPage(noteId: clonedNoteId.toString()),
+          builder: (_) => NoteEditorPage(noteId: clonedNoteId),
         ),
       );
     } finally {

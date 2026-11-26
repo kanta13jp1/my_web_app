@@ -270,7 +270,7 @@ void main() {
           userId: 'user-a',
         );
 
-        expect(clonedId, 901);
+        expect(clonedId, '901');
         expect(requests, hasLength(1));
         expect(requests.first.method, 'POST');
         expect(requests.first.url.path, endsWith('/rest/v1/notes'));
@@ -283,6 +283,36 @@ void main() {
         expect(body['tags'], <String>['template-clone']);
       },
     );
+
+    test('clonePublicMemoToNote supports UUID note identifiers', () async {
+      final service = _service((request) async {
+        return _jsonResponse(
+          request,
+          <String, dynamic>{'id': '550e8400-e29b-41d4-a716-446655440000'},
+        );
+      });
+
+      final memo = PublicMemo(
+        id: 8,
+        noteId: 322,
+        userId: 'author-2',
+        title: 'UUID ノートテンプレート',
+        content: '本文',
+        likeCount: 0,
+        viewCount: 1,
+        isPublic: true,
+        publishedAt: DateTime.utc(2026, 11, 20),
+        createdAt: DateTime.utc(2026, 11, 20),
+        updatedAt: DateTime.utc(2026, 11, 20),
+      );
+
+      final clonedId = await service.clonePublicMemoToNote(
+        memo: memo,
+        userId: 'user-b',
+      );
+
+      expect(clonedId, '550e8400-e29b-41d4-a716-446655440000');
+    });
 
     test('recordShareSignal accepts publicMemoCloneSignal', () async {
       final requests = <http.Request>[];
