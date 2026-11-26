@@ -3320,7 +3320,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final resp = await _supabase.functions.invoke(
         'growth-hub',
         body: {
-          'action': 'achievement.list',
+          'action': 'achievement.summary',
           'since': since ?? '2020-01-01T00:00:00Z',
           'label': label ?? 'すべて',
         },

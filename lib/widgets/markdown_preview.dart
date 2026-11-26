@@ -5,15 +5,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:highlight/highlight.dart' as highlight;
 import '../services/attachment_service.dart';
+import '../services/markdown_block_service.dart';
+import '../services/note_wiki_link_service.dart';
 
 class MarkdownPreview extends StatefulWidget {
   final String data;
   final bool selectable;
+  final ValueChanged<String>? onWikiLinkTap;
 
   const MarkdownPreview({
     super.key,
     required this.data,
     this.selectable = true,
+    this.onWikiLinkTap,
   });
 
   @override
@@ -87,8 +91,112 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
       );
     }
 
+    final List<PreviewSegment> segments =
+        MarkdownBlockService.splitPreviewSegments(_resolvedData);
+    if (segments.isEmpty) {
+      return _buildMarkdownWidget(context, '');
+    }
+    if (segments.length == 1 &&
+        segments.first.kind == PreviewSegmentKind.markdown) {
+      return _buildMarkdownWidget(context, segments.first.body);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: segments.map((PreviewSegment segment) {
+        switch (segment.kind) {
+          case PreviewSegmentKind.toggle:
+            return _buildToggleBlock(context, segment);
+          case PreviewSegmentKind.callout:
+            return _buildCalloutBlock(context, segment);
+          case PreviewSegmentKind.markdown:
+            return _buildMarkdownWidget(context, segment.body);
+        }
+      }).toList(growable: false),
+    );
+  }
+
+  Widget _buildToggleBlock(BuildContext context, PreviewSegment segment) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: ExpansionTile(
+        title: Text(
+          segment.title,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        children: <Widget>[
+          if (segment.body.isNotEmpty)
+            _buildMarkdownWidget(context, segment.body),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalloutBlock(BuildContext context, PreviewSegment segment) {
+    final Color accent;
+    final IconData icon;
+    switch (segment.title) {
+      case 'WARNING':
+      case 'CAUTION':
+        accent = const Color(0xFFD97706);
+        icon = Icons.warning_amber_rounded;
+        break;
+      case 'IMPORTANT':
+        accent = const Color(0xFF7C3AED);
+        icon = Icons.priority_high_rounded;
+        break;
+      case 'TIP':
+        accent = const Color(0xFF059669);
+        icon = Icons.lightbulb_outline_rounded;
+        break;
+      default:
+        accent = const Color(0xFF2563EB);
+        icon = Icons.info_outline_rounded;
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.1),
+        border: Border(
+          left: BorderSide(color: accent, width: 4),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                segment.title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                ),
+              ),
+            ],
+          ),
+          if (segment.body.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 6),
+            _buildMarkdownWidget(context, segment.body),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarkdownWidget(BuildContext context, String rawMarkdown) {
+    final String processed =
+        NoteWikiLinkService.replaceWikiLinksWithMarkdownLinks(rawMarkdown);
     return Markdown(
-      data: _resolvedData,
+      data: processed,
       selectable: widget.selectable,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -199,9 +307,15 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
         checkbox: const TextStyle(fontSize: 16, height: 1.5),
       ),
       onTapLink: (text, href, title) {
-        if (href != null) {
-          launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
+        if (href == null) return;
+        if (href.startsWith(NoteWikiLinkService.wikiLinkScheme)) {
+          final String target = Uri.decodeComponent(
+            href.substring(NoteWikiLinkService.wikiLinkScheme.length),
+          );
+          widget.onWikiLinkTap?.call(target);
+          return;
         }
+        launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
       },
       builders: {
         'code': CodeElementBuilder(),
