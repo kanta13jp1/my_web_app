@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-11-26",
+  "disclaimer": "ベンダー公式ページの確認日時点のスナップショットです。料金・上限値は変更され得るため、承認前に必ず一次情報で再確認してください。値が null の項目は一次情報で未確認です。",
+  "sources": {
+    "supabase_pricing": "https://supabase.com/pricing",
+    "supabase_spend_cap": "https://supabase.com/docs/guides/platform/cost-control",
+    "supabase_billing": "https://supabase.com/docs/guides/platform/billing-on-supabase",
+    "supabase_usage": "https://supabase.com/docs/guides/platform/manage-your-usage",
+    "firebase_hosting_quota": "https://firebase.google.com/docs/hosting/usage-quotas-pricing",
+    "firebase_pricing": "https://firebase.google.com/pricing"
+  },
+  "plans": {
+    "supabase": {
+      "default_when_unknown": "free",
+      "free": {
+        "label": "Free",
+        "base_monthly_usd": 0,
+        "on_exceed": "restricted (Fair Use Policy); not charged"
+      },
+      "pro": {
+        "label": "Pro",
+        "base_monthly_usd": 25,
+        "on_exceed": "Spend Cap on: further usage disallowed; Spend Cap off: charged per unit"
+      }
+    },
+    "firebase_hosting": {
+      "default_when_unknown": "spark",
+      "spark": {
+        "label": "Spark (no-cost)",
+        "base_monthly_usd": 0,
+        "on_exceed": "storage: new deploys blocked; transfer: sites disabled until next month after a short grace period"
+      },
+      "blaze": {
+        "label": "Blaze (pay as you go)",
+        "base_monthly_usd": 0,
+        "on_exceed": "charged per unit above no-cost level"
+      }
+    }
+  },
+  "dimensions": [
+    {
+      "id": "supabase.db_size_mb",
+      "service": "supabase",
+      "label": "Database size",
+      "unit": "MB",
+      "kind": "point",
+      "limits": { "free": 500, "pro": null },
+      "overage_usd_per_unit": { "pro": null },
+      "source": "supabase_pricing",
+      "note": "Pricing page: 500 MB database size per project (Free). docs/SUPABASE_CAPACITY_PLAN.md cites a 500 MB organization quota; the two statements differ in scope, so recheck both before relying on either."
+    },
+    {
+      "id": "supabase.disk_gb",
+      "service": "supabase",
+      "label": "Disk size per project",
+      "unit": "GB",
+      "kind": "point",
+      "limits": { "free": null, "pro": 8 },
+      "overage_usd_per_unit": { "pro": 0.125 },
+      "source": "supabase_pricing",
+      "note": "Free-plan physical disk is tracked in docs/SUPABASE_CAPACITY_PLAN.md."
+    },
+    {
+      "id": "supabase.egress_gb",
+      "service": "supabase",
+      "label": "Egress",
+      "unit": "GB",
+      "kind": "month",
+      "limits": { "free": 5, "pro": 250 },
+      "overage_usd_per_unit": { "pro": 0.09 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "supabase.cached_egress_gb",
+      "service": "supabase",
+      "label": "Cached egress",
+      "unit": "GB",
+      "kind": "month",
+      "limits": { "free": 5, "pro": 250 },
+      "overage_usd_per_unit": { "pro": 0.03 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "supabase.storage_gb",
+      "service": "supabase",
+      "label": "File storage",
+      "unit": "GB",
+      "kind": "point",
+      "limits": { "free": 1, "pro": 100 },
+      "overage_usd_per_unit": { "pro": 0.0213 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "supabase.mau",
+      "service": "supabase",
+      "label": "Monthly active users",
+      "unit": "users",
+      "kind": "month",
+      "limits": { "free": 50000, "pro": 100000 },
+      "overage_usd_per_unit": { "pro": 0.00325 },
+      "source": "supabase_pricing",
+      "note": "MAU is a distinct count; month-to-date value is not linearly projected."
+    },
+    {
+      "id": "supabase.edge_invocations",
+      "service": "supabase",
+      "label": "Edge Function invocations",
+      "unit": "invocations",
+      "kind": "month",
+      "limits": { "free": 500000, "pro": 2000000 },
+      "overage_usd_per_unit": { "pro": 0.000002 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "supabase.realtime_messages",
+      "service": "supabase",
+      "label": "Realtime messages",
+      "unit": "messages",
+      "kind": "month",
+      "limits": { "free": 2000000, "pro": 5000000 },
+      "overage_usd_per_unit": { "pro": 0.0000025 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "supabase.realtime_peak_connections",
+      "service": "supabase",
+      "label": "Realtime concurrent peak connections",
+      "unit": "connections",
+      "kind": "peak",
+      "limits": { "free": 200, "pro": 500 },
+      "overage_usd_per_unit": { "pro": 0.01 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "supabase.log_ingestion_gb",
+      "service": "supabase",
+      "label": "Log ingestion",
+      "unit": "GB",
+      "kind": "month",
+      "limits": { "free": 1, "pro": 20 },
+      "overage_usd_per_unit": { "pro": 0.5 },
+      "source": "supabase_pricing",
+      "note": ""
+    },
+    {
+      "id": "firebase_hosting.storage_gb",
+      "service": "firebase_hosting",
+      "label": "Hosting storage",
+      "unit": "GB",
+      "kind": "point",
+      "limits": { "spark": 10, "blaze": 10 },
+      "overage_usd_per_unit": { "blaze": 0.026 },
+      "source": "firebase_hosting_quota",
+      "note": "Hosting quota is project-level."
+    },
+    {
+      "id": "firebase_hosting.transfer_gb",
+      "service": "firebase_hosting",
+      "label": "Hosting data transfer",
+      "unit": "GB",
+      "kind": "month",
+      "limits": { "spark": 10, "blaze": 10 },
+      "overage_usd_per_unit": { "blaze": 0.15 },
+      "source": "firebase_hosting_quota",
+      "note": "Cache hits and misses both count."
+    }
+  ]
+}

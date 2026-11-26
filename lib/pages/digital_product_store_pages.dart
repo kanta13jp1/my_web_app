@@ -17,11 +17,31 @@ Future<bool> _launchShopUrl(Uri uri, bool external) {
   return launchUrl(uri, webOnlyWindowName: '_self');
 }
 
+/// 商品一覧から詳細ページへ遷移するルート文字列を構築する。
+///
+/// 流入計測用の `utm_source` / `utm_campaign` / `utm_content` が付与されている場合、
+/// 一覧から商品カードを開いた後も属性を失わないようクエリへ引き継ぐ。
+String buildShopProductRoute(String productId, Uri currentUri) {
+  final params = <String, String>{'product_id': productId};
+  for (final key in const ['utm_source', 'utm_campaign', 'utm_content']) {
+    final raw = currentUri.queryParameters[key]?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      params[key] = raw;
+    }
+  }
+  return Uri(path: '/shop/product', queryParameters: params).toString();
+}
+
 /// 運営者が制作したデジタル商品の公開カタログ。
 class DigitalProductStorePage extends StatefulWidget {
-  const DigitalProductStorePage({super.key, this.service});
+  const DigitalProductStorePage({
+    super.key,
+    this.service,
+    this.attributionUri,
+  });
 
   final ShopGateway? service;
+  final Uri? attributionUri;
 
   @override
   State<DigitalProductStorePage> createState() =>
@@ -32,6 +52,21 @@ class _DigitalProductStorePageState extends State<DigitalProductStorePage> {
   late final ShopCatalogViewModel _viewModel = ShopCatalogViewModel(
     gateway: widget.service ?? ShopService(),
   );
+
+  Uri _currentAttributionUri(BuildContext context) {
+    final explicit = widget.attributionUri;
+    if (explicit != null && explicit.queryParameters.isNotEmpty) {
+      return explicit;
+    }
+    final routeName = ModalRoute.of(context)?.settings.name;
+    if (routeName != null && routeName.isNotEmpty) {
+      final routeUri = Uri.tryParse(routeName);
+      if (routeUri != null && routeUri.queryParameters.isNotEmpty) {
+        return routeUri;
+      }
+    }
+    return Uri.base;
+  }
 
   @override
   void initState() {
@@ -204,8 +239,10 @@ class _DigitalProductStorePageState extends State<DigitalProductStorePage> {
                 return _ProductCatalogCard(
                   product: product,
                   onOpen: () => Navigator.of(context).pushNamed(
-                    '/shop/product?product_id='
-                    '${Uri.encodeQueryComponent(product.id)}',
+                    buildShopProductRoute(
+                      product.id,
+                      _currentAttributionUri(context),
+                    ),
                   ),
                 );
               },
@@ -324,6 +361,7 @@ class DigitalProductPage extends StatefulWidget {
     this.service,
     this.funnel,
     this.urlLauncher,
+    this.attributionUri,
   });
 
   final String productId;
@@ -331,6 +369,7 @@ class DigitalProductPage extends StatefulWidget {
   final ShopGateway? service;
   final ShopFunnelService? funnel;
   final ShopUrlLauncher? urlLauncher;
+  final Uri? attributionUri;
 
   @override
   State<DigitalProductPage> createState() => _DigitalProductPageState();
@@ -373,8 +412,23 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   );
   late final ShopUrlLauncher _urlLauncher =
       widget.urlLauncher ?? _launchShopUrl;
-  late final String _source = ShopFunnelService.sourceFromUri(Uri.base);
-  late final String _campaign = ShopFunnelService.campaignFromUri(Uri.base);
+  late final ShopFunnelService _funnel = widget.funnel ?? ShopFunnelService();
+  Uri get _effectiveAttributionUri {
+    final explicit = widget.attributionUri;
+    if (explicit != null &&
+        (explicit.queryParameters.containsKey('utm_source') ||
+            explicit.queryParameters.containsKey('utm_campaign'))) {
+      return explicit;
+    }
+    return Uri.base;
+  }
+
+  late final String _source = ShopFunnelService.sourceFromUri(
+    _effectiveAttributionUri,
+  );
+  late final String _campaign = ShopFunnelService.campaignFromUri(
+    _effectiveAttributionUri,
+  );
   int _selectedProductScreenshotIndex = 0;
 
   @override
@@ -391,10 +445,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   }
 
   void _recordFunnel(String stage) {
-    final funnel = widget.funnel;
-    if (funnel == null) return;
     unawaited(
-      funnel.record(
+      _funnel.record(
         stage,
         productId: widget.productId,
         source: _source,
@@ -406,7 +458,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   Future<void> _startPurchase() async {
     _recordFunnel(ShopFunnelService.stagePurchaseClick);
     final start = await _viewModel.startCheckout(
-      visitorId: await widget.funnel?.visitorId(),
+      visitorId: await _funnel.visitorId(),
       source: _source,
     );
     if (start == null || start.alreadyPurchased) return;

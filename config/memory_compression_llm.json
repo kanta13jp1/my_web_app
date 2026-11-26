@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "issue": 2708,
+  "description": "Configurable low-cost LLM routing, context-restoration quality gate, and API cost-reduction telemetry for AI agent memory compression.",
+  "default_profile": "gemini_flash_low_cost",
+  "baseline_profile": "claude_sonnet_baseline",
+  "fallback_chain": [
+    "gemini_flash_low_cost",
+    "gemini_flash_lite",
+    "gpt_mini",
+    "claude_haiku",
+    "offline_extractive"
+  ],
+  "env_overrides": {
+    "profile": "AGENT_MEMORY_COMPRESSION_PROFILE",
+    "provider": "AGENT_MEMORY_COMPRESSION_PROVIDER",
+    "model": "AGENT_MEMORY_COMPRESSION_MODEL",
+    "baseline_model": "AGENT_MEMORY_COMPRESSION_BASELINE_MODEL"
+  },
+  "rate_card_disclaimer": "Provider reference USD per-1M token estimates; verify billed spend against live provider invoices.",
+  "profiles": {
+    "gemini_flash_low_cost": {
+      "provider": "google",
+      "model": "gemini-2.5-flash",
+      "adapter": "gemini_generate_content",
+      "endpoint_template": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+      "auth_header": "x-goog-api-key",
+      "auth_env_var": "GEMINI_API_KEY",
+      "input_usd_per_1m": 0.15,
+      "output_usd_per_1m": 0.60,
+      "max_output_tokens": 1024,
+      "timeout_sec": 30
+    },
+    "gemini_flash_lite": {
+      "provider": "google",
+      "model": "gemini-2.5-flash-lite",
+      "adapter": "gemini_generate_content",
+      "endpoint_template": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+      "auth_header": "x-goog-api-key",
+      "auth_env_var": "GEMINI_API_KEY",
+      "input_usd_per_1m": 0.10,
+      "output_usd_per_1m": 0.40,
+      "max_output_tokens": 1024,
+      "timeout_sec": 30
+    },
+    "gpt_mini": {
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "adapter": "openai_chat_completions",
+      "endpoint_template": "https://api.openai.com/v1/chat/completions",
+      "auth_header": "Authorization",
+      "auth_prefix": "Bearer ",
+      "auth_env_var": "OPENAI_API_KEY",
+      "input_usd_per_1m": 0.15,
+      "output_usd_per_1m": 0.60,
+      "max_output_tokens": 1024,
+      "timeout_sec": 30
+    },
+    "groq_llama_fast": {
+      "provider": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "adapter": "openai_chat_completions",
+      "endpoint_template": "https://api.groq.com/openai/v1/chat/completions",
+      "auth_header": "Authorization",
+      "auth_prefix": "Bearer ",
+      "auth_env_var": "GROQ_API_KEY",
+      "input_usd_per_1m": 0.05,
+      "output_usd_per_1m": 0.20,
+      "max_output_tokens": 1024,
+      "timeout_sec": 30
+    },
+    "claude_haiku": {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5",
+      "adapter": "anthropic_messages",
+      "endpoint_template": "https://api.anthropic.com/v1/messages",
+      "auth_header": "x-api-key",
+      "auth_env_var": "ANTHROPIC_API_KEY",
+      "input_usd_per_1m": 1.00,
+      "output_usd_per_1m": 5.00,
+      "max_output_tokens": 1024,
+      "timeout_sec": 30
+    },
+    "claude_sonnet_baseline": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "adapter": "anthropic_messages",
+      "endpoint_template": "https://api.anthropic.com/v1/messages",
+      "auth_header": "x-api-key",
+      "auth_env_var": "ANTHROPIC_API_KEY",
+      "input_usd_per_1m": 3.00,
+      "output_usd_per_1m": 15.00,
+      "max_output_tokens": 1024,
+      "timeout_sec": 30
+    }
+  },
+  "quality_contract": {
+    "required_sections": [
+      "decisions",
+      "open_tasks",
+      "identifiers",
+      "constraints"
+    ],
+    "min_context_recall_score": 0.70,
+    "min_compression_ratio": 0.15,
+    "max_summary_chars": 4000,
+    "redact_secrets_before_send": true
+  }
+}

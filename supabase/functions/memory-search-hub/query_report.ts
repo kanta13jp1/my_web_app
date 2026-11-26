@@ -40,33 +40,103 @@ const REFORMULATED_QUERY_FIELDS = [
 
 const REASON_FIELDS = ["reason", "message", "feedback", "explanation"] as const;
 
+const VAGUE_QUERY_TERMS = new Set([
+  "あれ",
+  "それ",
+  "これ",
+  "どれ",
+  "あれを調べて",
+  "それを調べて",
+  "これを調べて",
+  "あれを教えて",
+  "それを教えて",
+  "これを教えて",
+  "this",
+  "that",
+  "it",
+  "help",
+  "more",
+  "details",
+]);
+
 function normalizeState(value: string): QueryReportState {
   const normalized = value.trim().toLowerCase();
   if (!normalized) return "unknown";
   if (
-    normalized.includes("reformulated") ||
-    normalized.includes("reformulate") ||
-    normalized.includes("rewritten") ||
-    normalized.includes("rewrite")
-  ) {
-    return "reformulated";
-  }
-  if (
     normalized.includes("unclear") ||
     normalized.includes("ambiguous") ||
     normalized.includes("clarify") ||
-    normalized.includes("insufficient")
+    normalized.includes("insufficient") ||
+    /\bnot\s+clear\b/.test(normalized) ||
+    normalized.includes("不明瞭") ||
+    normalized.includes("曖昧") ||
+    normalized.includes("明確でない")
   ) {
     return "unclear";
   }
   if (
+    normalized.includes("reformulated") ||
+    normalized.includes("reformulate") ||
+    normalized.includes("rewritten") ||
+    normalized.includes("rewrite") ||
+    normalized.includes("再定式化")
+  ) {
+    return "reformulated";
+  }
+  if (
     normalized.includes("trivial") ||
     normalized.includes("clear") ||
-    normalized.includes("answerable")
+    normalized.includes("answerable") ||
+    normalized.includes("direct")
   ) {
     return "trivial";
   }
   return "unknown";
+}
+
+export function extractQueryReportEnvelope(rawReport: string): string {
+  const trimmed = rawReport.trim();
+  if (!trimmed) return "";
+
+  const closedSentinel = trimmed.match(
+    /<\|query_report_start\|>([\s\S]*?)<\|query_report_end\|>/i,
+  );
+  if (closedSentinel?.[1] !== undefined) {
+    return closedSentinel[1].trim();
+  }
+
+  const openSentinelPattern = new RegExp(
+    "<\\|query_report_start\\|>([\\s\\S]*?)" +
+      "(?=<\\|(?:answer|citation|source)_start\\|>|$)",
+    "i",
+  );
+  const openSentinel = trimmed.match(openSentinelPattern);
+  if (openSentinel?.[1] !== undefined) {
+    return openSentinel[1].trim();
+  }
+
+  const pairedSentinel = trimmed.match(
+    /<\|query_report\|>([\s\S]*?)<\|\/query_report\|>/i,
+  );
+  if (pairedSentinel?.[1] !== undefined) {
+    return pairedSentinel[1].trim();
+  }
+
+  const closedXml = trimmed.match(
+    /<query_report[^>]*>([\s\S]*?)<\/query_report>/i,
+  );
+  if (closedXml?.[1] !== undefined) {
+    return closedXml[1].trim();
+  }
+
+  const openXml = trimmed.match(
+    /<query_report[^>]*>([\s\S]*?)(?=<(?:answer|citations|sources)>|$)/i,
+  );
+  if (openXml?.[1] !== undefined) {
+    return openXml[1].trim();
+  }
+
+  return trimmed;
 }
 
 function firstJsonObject(text: string): Record<string, unknown> | null {
@@ -116,12 +186,27 @@ function valueFromTags(text: string, fields: readonly string[]): string {
     const xmlMatch = text.match(xmlPattern);
     if (xmlMatch?.[1]) return xmlMatch[1].trim();
 
-    const sentinelPattern = new RegExp(
+    const startEndPattern = new RegExp(
+      `<\\|${escaped}_start\\|>([\\s\\S]*?)<\\|${escaped}_end\\|>`,
+      "i",
+    );
+    const startEndMatch = text.match(startEndPattern);
+    if (startEndMatch?.[1]) return startEndMatch[1].trim();
+
+    const pairedPattern = new RegExp(
       `<\\|${escaped}\\|>([\\s\\S]*?)<\\|\\/${escaped}\\|>`,
       "i",
     );
-    const sentinelMatch = text.match(sentinelPattern);
-    if (sentinelMatch?.[1]) return sentinelMatch[1].trim();
+    const pairedMatch = text.match(pairedPattern);
+    if (pairedMatch?.[1]) return pairedMatch[1].trim();
+
+    const openPattern = new RegExp(
+      `<\\|${escaped}(?:_start)?\\|>([\\s\\S]*?)` +
+        `(?=<\\|\\/?[a-z0-9_]+\\|>|<\\/${escaped}>|<\\/query_report>|$)`,
+      "i",
+    );
+    const openMatch = text.match(openPattern);
+    if (openMatch?.[1]) return openMatch[1].trim();
   }
   return "";
 }
@@ -148,17 +233,43 @@ function readValue(
 
 export function parseQueryReport(rawReport: string): ParsedQueryReport {
   const raw = rawReport.trim();
-  const record = firstJsonObject(raw);
-  const stateValue = readValue(raw, record, STATE_FIELDS);
-  const reformulatedQuery = readValue(raw, record, REFORMULATED_QUERY_FIELDS);
-  const reason = readValue(raw, record, REASON_FIELDS);
+  const envelope = extractQueryReportEnvelope(raw);
+  const record = firstJsonObject(envelope);
+  const stateValue = readValue(envelope, record, STATE_FIELDS);
+  const reformulatedQuery = readValue(
+    envelope,
+    record,
+    REFORMULATED_QUERY_FIELDS,
+  );
+  const reason = readValue(envelope, record, REASON_FIELDS);
 
   return {
-    state: normalizeState(stateValue || raw),
+    state: normalizeState(stateValue || envelope),
     reformulatedQuery: reformulatedQuery || null,
     reason: reason || null,
     raw,
   };
+}
+
+export function buildHeuristicQueryReport(query: string): string {
+  const compact = query.replace(/\s+/g, " ").trim();
+  const lower = compact.toLowerCase();
+  const isVague = compact.length < 3 || VAGUE_QUERY_TERMS.has(lower) ||
+    /^(あれ|それ|これ|どれ)[をがはのに]?/.test(compact);
+  if (isVague) {
+    return [
+      "<|query_report_start|>",
+      "<|state|>unclear",
+      "<|reason|>検索対象や具体的な条件を補足してください。",
+      "<|query_report_end|>",
+    ].join("\n");
+  }
+  return [
+    "<|query_report_start|>",
+    "<|state|>trivial",
+    "<|reason|>検索意図が明確なため直接検索を実行します。",
+    "<|query_report_end|>",
+  ].join("\n");
 }
 
 export function buildQueryRouteDecision(

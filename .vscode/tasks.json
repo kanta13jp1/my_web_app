@@ -37,6 +37,41 @@
         "clear": true,
         "reveal": "always"
       }
+    },
+    {
+      "label": "Dart Analyzer: diagnose (dry-run)",
+      "type": "process",
+      "command": "python3",
+      "windows": {
+        "command": "python"
+      },
+      "args": [
+        "${workspaceFolder}/scripts/recover_dart_analyzer.py"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dart Analyzer: recover frozen server (apply)",
+      "type": "process",
+      "command": "python3",
+      "windows": {
+        "command": "python"
+      },
+      "args": [
+        "${workspaceFolder}/scripts/recover_dart_analyzer.py",
+        "--apply",
+        "--confirm",
+        "${input:dartAnalyzerRecoveryConfirmation}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "reveal": "always"
+      }
     }
   ],
   "inputs": [
@@ -44,6 +79,12 @@
       "id": "containerCleanupConfirmation",
       "type": "promptString",
       "description": "Type PRUNE_WITHOUT_VOLUMES to remove only unused non-volume resources older than 7 days",
+      "password": false
+    },
+    {
+      "id": "dartAnalyzerRecoveryConfirmation",
+      "type": "promptString",
+      "description": "Type RECOVER_DART_ANALYZER to terminate hung Dart Analysis Server processes (Code: -32097 recovery)",
       "password": false
     }
   ]

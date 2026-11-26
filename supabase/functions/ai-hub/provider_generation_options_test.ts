@@ -1,6 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   applyProviderGenerationOptions,
+  applyStructuredGenerationOptions,
   GEMINI_MAX_THINKING_BUDGET,
   GEMINI_MIN_THINKING_BUDGET,
   GEMINI_OUTPUT_TOKEN_RESERVE,
@@ -109,7 +110,7 @@ Deno.test("gemini respects a caller-provided thinkingConfig", () => {
   assertEquals(generationConfig.maxOutputTokens, 24000);
 });
 
-Deno.test("openai uses max_completion_tokens and never a thinking budget", () => {
+Deno.test("openai uses max_completion_tokens without thinking budget", () => {
   const body = applyProviderGenerationOptions(
     "openai",
     { model: "gpt-5", max_tokens: 512 },
@@ -128,4 +129,84 @@ Deno.test("non-gemini providers fall back to max_tokens", () => {
   );
   assertEquals(body.max_tokens, 2048);
   assertEquals(body.generationConfig, undefined);
+});
+
+Deno.test("gemini applies responseSchema without maxTokens", () => {
+  const body = applyStructuredGenerationOptions(
+    "google_flash_lite",
+    { contents: [] },
+    {
+      responseMimeType: "application/json",
+      responseSchema: {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          tier: { type: "string", enum: ["trivial", "standard"] },
+          tags: {
+            type: "array",
+            items: { type: "string" },
+          },
+        },
+        required: ["tier"],
+      },
+    },
+  );
+  const generationConfig = body.generationConfig as Record<string, unknown>;
+  assertEquals(generationConfig.responseMimeType, "application/json");
+  const schema = generationConfig.responseSchema as Record<string, unknown>;
+  assertEquals(schema.$schema, undefined);
+  assertEquals(schema.additionalProperties, undefined);
+  assertEquals(schema.type, "object");
+});
+
+Deno.test("openai emits strict json_schema and strips $schema", () => {
+  const body = applyStructuredGenerationOptions(
+    "openai",
+    applyProviderGenerationOptions(
+      "openai",
+      { model: "gpt-5.4-mini" },
+      { maxTokens: 4096 },
+    ),
+    {
+      schemaName: "route_summary",
+      responseSchema: {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "object",
+        properties: {
+          summary: { type: "string" },
+        },
+        required: ["summary"],
+      },
+    },
+  );
+  assertEquals(body.max_completion_tokens, 4096);
+  const responseFormat = body.response_format as Record<string, unknown>;
+  assertEquals(responseFormat.type, "json_schema");
+  const jsonSchema = responseFormat.json_schema as Record<string, unknown>;
+  assertEquals(jsonSchema.name, "route_summary");
+  assertEquals(jsonSchema.strict, true);
+  const inner = jsonSchema.schema as Record<string, unknown>;
+  assertEquals(inner.$schema, undefined);
+  assertEquals(inner.additionalProperties, false);
+});
+
+Deno.test("anthropic skips response_format while keeping max_tokens", () => {
+  const body = applyStructuredGenerationOptions(
+    "anthropic",
+    applyProviderGenerationOptions(
+      "anthropic",
+      { model: "claude-sonnet-4-6" },
+      { maxTokens: 1024 },
+    ),
+    {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "object",
+        properties: { ok: { type: "boolean" } },
+      },
+    },
+  );
+  assertEquals(body.max_tokens, 1024);
+  assertEquals(body.response_format, undefined);
 });

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/external_diff_alert/external_diff_alert_container.dart';
+
 class AdminNotificationHubPage extends StatefulWidget {
   const AdminNotificationHubPage({super.key});
 
@@ -13,7 +15,7 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _error;
-  List<Map<String, dynamic>> _notifications = [];
+  List<Map<String, Object?>> _notifications = <Map<String, Object?>>[];
   String _filterSeverity = 'all';
 
   static const _severityColors = {
@@ -47,10 +49,23 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
         },
       );
       final data = res.data;
-      if (data is Map && data['notifications'] is List) {
+      if (data is Map<Object?, Object?> &&
+          data['notifications'] is List<Object?>) {
+        final rawList = data['notifications'] as List<Object?>;
+        final mapped = <Map<String, Object?>>[];
+        for (final item in rawList) {
+          if (item is Map<Object?, Object?>) {
+            final row = <String, Object?>{};
+            for (final entry in item.entries) {
+              if (entry.key != null) {
+                row[entry.key.toString()] = entry.value;
+              }
+            }
+            mapped.add(row);
+          }
+        }
         setState(() {
-          _notifications =
-              (data['notifications'] as List).cast<Map<String, dynamic>>();
+          _notifications = mapped;
         });
       }
     } catch (e) {
@@ -101,6 +116,22 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
           ],
         ),
         actions: [
+          IconButton(
+            key: const Key('open_external_diff_alerts_btn'),
+            tooltip: '外部連携 差分検知・リアルタイムアラート',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            icon: const Icon(Icons.radar_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/admin-notifications?view=external-diff-alert',
+                  ),
+                  builder: (_) => const ExternalDiffAlertContainer(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchNotifications,
