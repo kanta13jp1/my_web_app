@@ -93,6 +93,7 @@ const api = new alphaTab.AlphaTabApi(surfaceEl, {
     fontDirectory: new URL("./vendor/font/", import.meta.url).href,
     smuflFontSources: new Map([[alphaTab.FontFileFormat.Woff2, bravuraWoff2Url]]),
     useWorkers: true,
+    enableLazyLoading: false,
     includeNoteBounds: false,
   },
   display: {

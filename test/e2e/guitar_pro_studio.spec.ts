@@ -49,10 +49,14 @@ test('renders SMuFL Bravura score + 6-string TAB, handles presets, dark theme, l
   });
 
   await page.goto(LAB_PATH);
+  const isMobile = (page.viewportSize()?.width ?? 1440) < 600;
   const viewport = page.locator('#score-viewport');
   await expect(viewport).toHaveAttribute('data-render-state', 'ready', {
     timeout: 25_000,
   });
+  if (isMobile) {
+    await viewport.scrollIntoViewIfNeeded();
+  }
   await expect(page.locator('#alphaTab-surface svg').first()).toBeVisible();
   await expect(page.locator('#status-message')).toContainText(
     'Midnight Fingerpicking Study',
@@ -82,6 +86,9 @@ test('renders SMuFL Bravura score + 6-string TAB, handles presets, dark theme, l
   await expect(viewport).toHaveAttribute('data-render-state', 'ready', {
     timeout: 15_000,
   });
+  if (isMobile) {
+    await viewport.scrollIntoViewIfNeeded();
+  }
   await page.waitForTimeout(250);
   await page.screenshot({ path: info.outputPath('02-preset2-multitrack.png') });
 
@@ -95,6 +102,9 @@ test('renders SMuFL Bravura score + 6-string TAB, handles presets, dark theme, l
     timeout: 15_000,
   });
   await expect(viewport).toHaveClass(/sheet-dark/);
+  if (isMobile) {
+    await viewport.scrollIntoViewIfNeeded();
+  }
   await page.waitForTimeout(250);
   await page.screenshot({ path: info.outputPath('03-dark-tab-only.png') });
 
@@ -119,6 +129,9 @@ test('renders SMuFL Bravura score + 6-string TAB, handles presets, dark theme, l
   await expect(viewport).toHaveAttribute('data-render-state', 'ready', {
     timeout: 15_000,
   });
+  if (isMobile) {
+    await viewport.scrollIntoViewIfNeeded();
+  }
   await page.waitForTimeout(250);
   await page.screenshot({ path: info.outputPath('04-local-upload-loaded.png') });
 
