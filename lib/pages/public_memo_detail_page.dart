@@ -10,16 +10,24 @@ import '../models/public_memo.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/public_memo_service.dart';
 import '../utils/seo_meta_helper.dart';
+import '../widgets/markdown_preview.dart';
 import 'landing_page.dart';
+import 'note_editor_page.dart';
 
 class PublicMemoDetailPage extends StatefulWidget {
+  static const Key cloneButtonKey = Key('public-memo-clone-template-button');
+
   final int memoId;
   final PublicMemoService? publicMemoService;
+  final String? currentUserIdOverride;
+  final Future<int?> Function(PublicMemo memo)? cloneMemoOverride;
 
   const PublicMemoDetailPage({
     super.key,
     required this.memoId,
     this.publicMemoService,
+    this.currentUserIdOverride,
+    this.cloneMemoOverride,
   });
 
   @override
@@ -43,6 +51,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   Map<String, int> _reactionCounts = {};
   Set<String> _userReactions = {};
   bool _reactionsLoading = false;
+  bool _isCloning = false;
 
   @override
   void initState() {
@@ -59,6 +68,19 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     super.dispose();
   }
 
+  String? _resolveCurrentUserId() {
+    if (widget.currentUserIdOverride != null) {
+      return widget.currentUserIdOverride!.isEmpty
+          ? null
+          : widget.currentUserIdOverride;
+    }
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _load() async {
     setState(() => _isLoading = true);
     final memo = await _publicMemoService.getPublicMemoById(widget.memoId);
@@ -66,7 +88,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       unawaited(_publicMemoService.incrementViewCount(widget.memoId));
     }
 
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = _resolveCurrentUserId();
     var isLiked = false;
     if (userId != null) {
       isLiked =
@@ -142,6 +164,42 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       return;
     }
     _showMessage('Public memo link copied.');
+  }
+
+  Future<void> _cloneMemo(PublicMemo memo, String userId) async {
+    if (_isCloning) return;
+    setState(() => _isCloning = true);
+    try {
+      final int? clonedNoteId = widget.cloneMemoOverride != null
+          ? await widget.cloneMemoOverride!(memo)
+          : await _publicMemoService.clonePublicMemoToNote(
+              memo: memo,
+              userId: userId,
+            );
+      if (clonedNoteId == null) {
+        if (mounted) {
+          _showMessage('ノートの複製に失敗しました。');
+        }
+        return;
+      }
+      unawaited(
+        _publicMemoService.recordShareSignal(
+          memoId: widget.memoId,
+          signalKey: PublicMemoService.publicMemoCloneSignal,
+        ),
+      );
+      if (!mounted) return;
+      _showMessage('自分のノートへ複製しました');
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => NoteEditorPage(noteId: clonedNoteId.toString()),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCloning = false);
+      }
+    }
   }
 
   Future<void> _loadReactions() async {
@@ -223,7 +281,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   @override
   Widget build(BuildContext context) {
     final memo = _memo;
-    final currentUser = Supabase.instance.client.auth.currentUser;
+    final String? currentUserId = _resolveCurrentUserId();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Public memo detail'),
@@ -295,9 +353,26 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                           icon: const Icon(Icons.link),
                           label: const Text('Copy link'),
                         ),
+                        if (currentUserId != null)
+                          FilledButton.icon(
+                            key: PublicMemoDetailPage.cloneButtonKey,
+                            onPressed: _isCloning
+                                ? null
+                                : () => _cloneMemo(memo, currentUserId),
+                            icon: _isCloning
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.copy_all_outlined),
+                            label: const Text('このメモを自分のノートへ複製'),
+                          ),
                       ],
                     ),
-                    if (currentUser == null) ...[
+                    if (currentUserId == null) ...[
                       const SizedBox(height: 16),
                       Card(
                         color:
@@ -317,7 +392,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'Create an account to save imports, AI suggestions, and public memo ideas in one place.',
+                                'このテンプレートを無料で自分のワークスペースへ複製・編集できます。アカウント登録して今すぐ保存しましょう。',
                               ),
                               const SizedBox(height: 12),
                               FilledButton.icon(
@@ -332,12 +407,13 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    SelectableText(
-                      memo.content?.trim().isNotEmpty == true
-                          ? memo.content!.trim()
-                          : 'This memo does not have body text yet.',
-                      style: const TextStyle(fontSize: 16, height: 1.6),
-                    ),
+                    if (memo.content?.trim().isNotEmpty == true)
+                      MarkdownPreview(data: memo.content!.trim())
+                    else
+                      const SelectableText(
+                        'This memo does not have body text yet.',
+                        style: TextStyle(fontSize: 16, height: 1.6),
+                      ),
                     const SizedBox(height: 24),
                     _MemoReactionsBar(
                       counts: _reactionCounts,

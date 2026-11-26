@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:my_web_app/models/public_memo.dart';
 import 'package:my_web_app/services/public_memo_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -238,6 +239,66 @@ void main() {
         );
       },
     );
+  });
+
+  group('PublicMemoService template cloning', () {
+    test('clonePublicMemoToNote inserts note with created_by and template_clone', () async {
+      final requests = <http.Request>[];
+      final service = _service((request) async {
+        requests.add(request);
+        return _jsonResponse(request, <String, dynamic>{'id': 901});
+      });
+
+      final memo = PublicMemo(
+        id: 7,
+        noteId: 321,
+        userId: 'author-1',
+        title: '家計管理テンプレート',
+        content: '# テンプレート本文',
+        likeCount: 3,
+        viewCount: 15,
+        isPublic: true,
+        publishedAt: DateTime.utc(2026, 11, 20),
+        createdAt: DateTime.utc(2026, 11, 20),
+        updatedAt: DateTime.utc(2026, 11, 20),
+      );
+
+      final clonedId = await service.clonePublicMemoToNote(
+        memo: memo,
+        userId: 'user-a',
+      );
+
+      expect(clonedId, 901);
+      expect(requests, hasLength(1));
+      expect(requests.first.method, 'POST');
+      expect(requests.first.url.path, endsWith('/rest/v1/notes'));
+      final body = jsonDecode(requests.first.body) as Map<String, dynamic>;
+      expect(body['user_id'], 'user-a');
+      expect(body['created_by'], 'user-a');
+      expect(body['title'], '家計管理テンプレート');
+      expect(body['content'], '# テンプレート本文');
+      expect(body['capture_source'], 'template_clone');
+      expect(body['tags'], <String>['template-clone']);
+    });
+
+    test('recordShareSignal accepts publicMemoCloneSignal', () async {
+      final requests = <http.Request>[];
+      final service = _service((request) async {
+        requests.add(request);
+        return _jsonResponse(request, <String, dynamic>{'success': true});
+      });
+
+      await service.recordShareSignal(
+        memoId: 7,
+        signalKey: PublicMemoService.publicMemoCloneSignal,
+        now: DateTime(2026, 11, 27),
+      );
+
+      expect(requests, hasLength(1));
+      final body = jsonDecode(requests.first.body) as Map<String, dynamic>;
+      expect(body['signalKey'], PublicMemoService.publicMemoCloneSignal);
+      expect(body['contextId'], 7);
+    });
   });
 }
 
