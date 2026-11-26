@@ -43,13 +43,13 @@ class NoteHierarchyBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final List<NoteSummary> ancestors = _resolveAncestors();
-    final List<NoteSummary> children = currentNoteId == null ||
-            currentNoteId!.isEmpty
-        ? const <NoteSummary>[]
-        : NoteHierarchyService.directChildren(
-            parentNoteId: currentNoteId!,
-            allNotes: allNotes,
-          );
+    final List<NoteSummary> children =
+        currentNoteId == null || currentNoteId!.isEmpty
+            ? const <NoteSummary>[]
+            : NoteHierarchyService.directChildren(
+                parentNoteId: currentNoteId!,
+                allNotes: allNotes,
+              );
     final String displayCurrent =
         currentTitle.trim().isEmpty ? '無題のメモ' : currentTitle.trim();
 
@@ -174,7 +174,8 @@ class NoteHierarchyBar extends StatelessWidget {
               children: <Widget>[
                 ...children.map(
                   (NoteSummary child) => ActionChip(
-                    avatar: const Icon(Icons.subdirectory_arrow_right, size: 14),
+                    avatar:
+                        const Icon(Icons.subdirectory_arrow_right, size: 14),
                     label: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 160),
                       child: Text(
@@ -251,9 +252,8 @@ Future<String?> showParentNotePickerSheet(
                   itemCount: candidates.length,
                   itemBuilder: (BuildContext context, int index) {
                     final NoteSummary item = candidates[index];
-                    final String title = item.title.trim().isEmpty
-                        ? '無題のメモ'
-                        : item.title.trim();
+                    final String title =
+                        item.title.trim().isEmpty ? '無題のメモ' : item.title.trim();
                     final bool selected = item.id == currentParentId;
                     return ListTile(
                       leading: const Icon(Icons.description_outlined),

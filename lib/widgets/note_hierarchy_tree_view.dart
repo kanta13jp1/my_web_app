@@ -44,9 +44,8 @@ class NoteHierarchyTreeView extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         final NoteTreeNode node = nodes[index];
         final int visualDepth = node.depth.clamp(0, 6);
-        final String title = node.note.title.trim().isEmpty
-            ? '無題のメモ'
-            : node.note.title.trim();
+        final String title =
+            node.note.title.trim().isEmpty ? '無題のメモ' : node.note.title.trim();
 
         return Card(
           margin: EdgeInsets.fromLTRB(visualDepth * 16.0, 3, 0, 3),
