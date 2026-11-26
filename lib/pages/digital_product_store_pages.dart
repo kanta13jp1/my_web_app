@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/shop_attribution.dart';
 import '../services/shop_funnel_service.dart';
 import '../services/shop_service.dart';
 import '../theme/design_tokens.dart';
@@ -21,8 +22,14 @@ Future<bool> _launchShopUrl(Uri uri, bool external) {
 ///
 /// 流入計測用の `utm_source` / `utm_campaign` / `utm_content` が付与されている場合、
 /// 一覧から商品カードを開いた後も属性を失わないようクエリへ引き継ぐ。
+/// 無効または重複した属性パラメータは `shop_attribution=unavailable` として保持する。
 String buildShopProductRoute(String productId, Uri currentUri) {
   final params = <String, String>{'product_id': productId};
+  final attribution = ShopAttribution.fromUri(currentUri);
+  if (!attribution.isValid) {
+    params[ShopAttribution.unavailableQueryKey] = 'unavailable';
+    return Uri(path: '/shop/product', queryParameters: params).toString();
+  }
   for (final key in const ['utm_source', 'utm_campaign', 'utm_content']) {
     final raw = currentUri.queryParameters[key]?.trim();
     if (raw != null && raw.isNotEmpty) {
@@ -417,16 +424,16 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
     final explicit = widget.attributionUri;
     if (explicit != null &&
         (explicit.queryParameters.containsKey('utm_source') ||
-            explicit.queryParameters.containsKey('utm_campaign'))) {
+            explicit.queryParameters.containsKey('utm_campaign') ||
+            explicit.queryParameters.containsKey('utm_content') ||
+            explicit.queryParameters
+                .containsKey(ShopAttribution.unavailableQueryKey))) {
       return explicit;
     }
     return Uri.base;
   }
 
-  late final String _source = ShopFunnelService.sourceFromUri(
-    _effectiveAttributionUri,
-  );
-  late final String _campaign = ShopFunnelService.campaignFromUri(
+  late final ShopAttribution _attribution = ShopAttribution.fromUri(
     _effectiveAttributionUri,
   );
   int _selectedProductScreenshotIndex = 0;
@@ -449,8 +456,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
       _funnel.record(
         stage,
         productId: widget.productId,
-        source: _source,
-        campaign: _campaign,
+        attribution: _attribution,
       ),
     );
   }
@@ -458,8 +464,8 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   Future<void> _startPurchase() async {
     _recordFunnel(ShopFunnelService.stagePurchaseClick);
     final start = await _viewModel.startCheckout(
-      visitorId: await _funnel.visitorId(),
-      source: _source,
+      visitorId: _attribution.isValid ? await _funnel.visitorId() : null,
+      attribution: _attribution,
     );
     if (start == null || start.alreadyPurchased) return;
     _recordFunnel(ShopFunnelService.stageCheckoutRedirect);
