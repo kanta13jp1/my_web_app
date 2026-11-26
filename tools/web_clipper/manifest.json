@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "自分株式会社 Web Clipper",
+  "version": "0.1.0",
+  "description": "Web記事・選択テキスト・URLを1クリックで自分株式会社のInboxノートへ保存するChrome/Edge拡張機能",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://smmkxxavexumewbfaqpy.supabase.co/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "自分株式会社へクリップ"
+  }
+}
