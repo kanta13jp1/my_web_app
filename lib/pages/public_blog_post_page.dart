@@ -4,10 +4,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/blog_publish_service.dart';
+import '../utils/blog_content_utils.dart';
 import '../widgets/markdown_preview.dart';
 
 class PublicBlogPostPage extends StatefulWidget {
-  const PublicBlogPostPage({super.key});
+  final String? postId;
+  final Future<Map<String, dynamic>?> Function(String id)? postLoader;
+  final String? Function()? currentUserIdProvider;
+
+  const PublicBlogPostPage({
+    super.key,
+    this.postId,
+    this.postLoader,
+    this.currentUserIdProvider,
+  });
 
   @override
   State<PublicBlogPostPage> createState() => _PublicBlogPostPageState();
@@ -24,11 +34,12 @@ class _PublicBlogPostPageState extends State<PublicBlogPostPage> {
     // アプリ内ナビの arguments を優先しつつ、URL クエリ (/blog/post?id=X) からも
     // id を解決する。クローラー / 直リンク / SNS 共有からの直接アクセスを可能にし、
     // 公開ブログをインデックス可能にする (SEO 監査 H7)。
-    final id = (args is Map ? args['id']?.toString() : null) ??
+    final id = widget.postId ??
+        (args is Map ? args['id']?.toString() : null) ??
         Uri.base.queryParameters['id'];
     if (id != null && id != _postId) {
       _postId = id;
-      _future = BlogPublishService.getPostById(id);
+      _future = (widget.postLoader ?? BlogPublishService.getPostById)(id);
     }
   }
 
@@ -56,6 +67,9 @@ class _PublicBlogPostPageState extends State<PublicBlogPostPage> {
         actions: [
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, '/blog'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(48, 48),
+            ),
             icon: const Icon(Icons.list, size: 18),
             label: const Text('一覧'),
           ),
@@ -95,11 +109,15 @@ class _PublicBlogPostPageState extends State<PublicBlogPostPage> {
             return const Center(
               child: Text(
                 '記事が見つかりません',
-                style: TextStyle(color: Color(0xFF6B7280)),
+                style: TextStyle(color: Color(0xFF4B5563)),
               ),
             );
           }
-          return _PostBody(post: post, hPad: hPad);
+          return _PostBody(
+            post: post,
+            hPad: hPad,
+            currentUserIdProvider: widget.currentUserIdProvider,
+          );
         },
       ),
     );
@@ -109,13 +127,18 @@ class _PublicBlogPostPageState extends State<PublicBlogPostPage> {
 class _PostBody extends StatelessWidget {
   final Map<String, dynamic> post;
   final double hPad;
+  final String? Function()? currentUserIdProvider;
 
-  const _PostBody({required this.post, required this.hPad});
+  const _PostBody({
+    required this.post,
+    required this.hPad,
+    this.currentUserIdProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
     final title = post['title']?.toString() ?? '';
-    final content = post['content']?.toString() ?? '';
+    final content = stripBlogFrontmatter(post['content']?.toString());
     final postedAt = DateTime.tryParse(post['posted_at']?.toString() ?? '');
     final dateLabel = postedAt != null
         ? DateFormat('yyyy年MM月dd日', 'ja').format(postedAt)
@@ -144,14 +167,14 @@ class _PostBody extends StatelessWidget {
               const Icon(
                 Icons.calendar_today_outlined,
                 size: 13,
-                color: Color(0xFF9CA3AF),
+                color: Color(0xFF4B5563),
               ),
               const SizedBox(width: 4),
               Text(
                 dateLabel,
                 style: const TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF9CA3AF),
+                  color: Color(0xFF4B5563),
                   height: 1.5,
                 ),
               ),
@@ -181,6 +204,7 @@ class _PostBody extends StatelessWidget {
           _EditButton(
             postId: postId,
             createdBy: post['created_by']?.toString(),
+            currentUserIdProvider: currentUserIdProvider,
           ),
           const Divider(height: 32, color: Color(0xFFE5E7EB)),
           // Content
@@ -189,7 +213,7 @@ class _PostBody extends StatelessWidget {
           else
             const Text(
               'コンテンツがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(color: Color(0xFF4B5563), height: 1.5),
             ),
           // External links
           if (externalUrl != null && externalUrl.isNotEmpty) ...[
@@ -223,12 +247,64 @@ class _PostBody extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 32),
+          // Free AI Trial CTA
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF2FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFC7D2FE)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'まずは無料で1件、AI体験を試してみませんか？',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E1B4B),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '登録不要で1件試して、そのまま結果を保存できます。',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF374151),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF4338CA),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(48, 48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('無料で1件AI体験を試す'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
           // Back
           OutlinedButton.icon(
             onPressed: () => Navigator.pushNamedAndRemoveUntil(
               context,
               '/blog',
               (route) => false,
+            ),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(48, 48),
             ),
             icon: const Icon(Icons.arrow_back, size: 16),
             label: const Text('記事一覧へ'),
@@ -242,12 +318,19 @@ class _PostBody extends StatelessWidget {
 class _EditButton extends StatelessWidget {
   final String postId;
   final String? createdBy;
+  final String? Function()? currentUserIdProvider;
 
-  const _EditButton({required this.postId, this.createdBy});
+  const _EditButton({
+    required this.postId,
+    this.createdBy,
+    this.currentUserIdProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = currentUserIdProvider != null
+        ? currentUserIdProvider!()
+        : Supabase.instance.client.auth.currentUser?.id;
     if (createdBy == null || userId != createdBy) {
       return const SizedBox.shrink();
     }
