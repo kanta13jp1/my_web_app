@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_web_app/models/shop_attribution.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
 import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/services/shop_service.dart';
@@ -24,12 +25,13 @@ class _RecordingShopFunnelService extends ShopFunnelService {
     required String productId,
     String? source,
     String? campaign,
+    ShopAttribution? attribution,
   }) async {
     final _FunnelCall call = (
       stage: stage,
       productId: productId,
-      source: source,
-      campaign: campaign,
+      source: attribution?.source ?? source,
+      campaign: attribution?.campaign ?? campaign,
     );
     calls.add(call);
   }
@@ -80,9 +82,10 @@ class _FakeShopGateway implements ShopGateway {
     String productId, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async {
     checkoutCalls++;
-    lastCheckoutSource = source;
+    lastCheckoutSource = attribution?.source ?? source;
     return const CheckoutStart.redirect('https://checkout.example/session');
   }
 
@@ -292,6 +295,26 @@ void main() {
           'utm_campaign': 'h4_h7_pitch',
           'utm_content': 'growth_game_t30_r1',
         });
+      },
+    );
+
+    test(
+      'buildShopProductRoute preserves unavailable attribution state',
+      () {
+        final cases = [
+          '/shop?shop_attribution=unavailable',
+          '/shop?utm_source=x&utm_content=bad/value',
+          '/shop?utm_source=x&utm_source=y',
+        ];
+        for (final raw in cases) {
+          final route = buildShopProductRoute('hexciv-win64', Uri.parse(raw));
+          final parsed = Uri.parse(route);
+          expect(parsed.path, '/shop/product');
+          expect(parsed.queryParameters, <String, String>{
+            'product_id': 'hexciv-win64',
+            ShopAttribution.unavailableQueryKey: 'unavailable',
+          });
+        }
       },
     );
 

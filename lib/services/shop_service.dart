@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/shop_attribution.dart';
 import 'supabase_client_provider.dart';
 
 /// 買い切り商品の販売・配信まわり (2026-07-28 追加)。
@@ -37,6 +38,7 @@ abstract interface class ShopGateway {
     String productId, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   });
 
   Future<DownloadTicket> requestDownloadUrl(String productId);
@@ -152,6 +154,7 @@ class ShopService implements ShopGateway {
     String productId, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async {
     final response = await _client.functions.invoke(
       'shop-checkout',
@@ -159,8 +162,14 @@ class ShopService implements ShopGateway {
         'product_id': productId,
         // funnel の最終段を webhook 側で書くために持ち回す。
         // 無くても購入は成立する (計測が欠けるだけ)。
-        if (visitorId != null && visitorId.isNotEmpty) 'visitor_id': visitorId,
-        if (source != null && source.isNotEmpty) 'source': source,
+        if (attribution?.isValid != false &&
+            visitorId != null &&
+            visitorId.isNotEmpty)
+          'visitor_id': visitorId,
+        if (attribution != null)
+          ...attribution.toRequest()
+        else if (source != null && source.isNotEmpty)
+          'source': source,
       },
     );
     final data = _asMap(response.data);

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/shop_attribution.dart';
 import 'supabase_client_provider.dart';
 
 /// 販売 funnel の到達を記録する (2026-07-29 追加)。
@@ -26,7 +27,7 @@ class ShopFunnelService {
   // when the application client has not initialized yet.
   SupabaseClient get _client => _clientOverride ?? supabase;
 
-  /// 訪問者IDの保存キー。個人とは結び付かない乱数を1つ持つだけ。
+  /// 端末に保存する仮名識別子。サーバーにも送信し、認証行と関連し得る。
   static const String _visitorKey = 'shop.visitor_id';
 
   String? _cachedVisitorId;
@@ -42,7 +43,7 @@ class ShopFunnelService {
 
   /// 訪問者IDを取得する (無ければ作って保存する)。
   ///
-  /// 端末内に留まる乱数で、こちらから人物へは辿れない。
+  /// 個人情報から生成しないが、匿名性や追跡不能を保証する値ではない。
   /// 取得に失敗した場合は null を返し、計測を諦める (画面は動かす)。
   Future<String?> visitorId() async {
     final cached = _cachedVisitorId;
@@ -69,8 +70,16 @@ class ShopFunnelService {
     required String productId,
     String? source,
     String? campaign,
+    ShopAttribution? attribution,
   }) async {
     try {
+      final labels = attribution ??
+          ShopAttribution.parse(source: source, campaign: campaign);
+      if (!labels.isValid ||
+          !const [stageProductView, stagePurchaseClick, stageCheckoutRedirect]
+              .contains(stage)) {
+        return;
+      }
       final visitor = await visitorId();
       if (visitor == null) return;
       await _client.functions.invoke(
@@ -79,8 +88,7 @@ class ShopFunnelService {
           'visitor_id': visitor,
           'product_id': productId,
           'stage': stage,
-          'source': _normalize(source) ?? 'direct',
-          'campaign': _normalize(campaign) ?? '',
+          ...labels.toRequest(),
         },
       );
     } catch (_) {
@@ -88,10 +96,11 @@ class ShopFunnelService {
     }
   }
 
-  /// EF 側の文字種制限に合わせて正規化する。
+  /// Legacy display helpers only. New measurement uses ShopAttribution and
+  /// rejects invalid tags, preserving their unavailable state across redirects.
   ///
-  /// 弾かれる値を送ると、その段が丸ごと欠測して母数が合わなくなるので、
-  /// 送る前にこちら側で整えておく。整えられない場合は null を返す。
+  /// Kept for old callers of sourceFromUri/campaignFromUri. New product pages
+  /// must not use these lossy display helpers for persistent post attribution.
   static String? _normalize(String? raw) {
     if (raw == null) return null;
     final lowered = raw.trim().toLowerCase();
