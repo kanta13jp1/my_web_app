@@ -36,6 +36,10 @@ import {
   createSupabaseLlmHealthcheckDb,
   handleLlmHealthcheckAction,
 } from "./llm_healthcheck.ts";
+import {
+  createSupabaseAiEmotionDb,
+  handleAiEmotionAction,
+} from "./ai_emotion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1294,6 +1298,20 @@ serve(async (req: Request) => {
         return json(result.body, result.status);
       }
 
+      // --- AI Functional Emotion Logging & Dashboard (#2764) ---
+      case "ai_emotion.list":
+      case "ai_emotion.seed_defaults":
+      case "ai_emotion.classify_and_log":
+      case "ai_emotion.summary": {
+        const result = await handleAiEmotionAction({
+          action,
+          body,
+          userId,
+          db: createSupabaseAiEmotionDb(admin),
+        });
+        return json(result.body, result.status);
+      }
+
       // --- AI Functional Emotion Feedback & NotebookLM KB (#2766) ---
       case "ai_emotion_feedback.list":
       case "ai_emotion_feedback.submit":
@@ -1336,6 +1354,34 @@ serve(async (req: Request) => {
         }
       }
 
+      // --- AI Model Compliance & Security Review Workflow (#2763) ---
+      case "ai_compliance.list":
+      case "ai_compliance.seed_defaults":
+      case "ai_compliance.submit_review":
+      case "ai_compliance.update_checklist":
+      case "ai_compliance.approve":
+      case "ai_compliance.check_invoke_guard": {
+        const { AiComplianceError, handleAiComplianceAction } = await import(
+          "./ai_compliance.ts"
+        );
+        try {
+          const result = await handleAiComplianceAction({
+            action,
+            admin,
+            body,
+            userId,
+          });
+          return json({ success: true, ...result });
+        } catch (err) {
+          if (err instanceof AiComplianceError) {
+            return json(
+              { success: false, error: err.message, ...err.payload },
+              err.status,
+            );
+          }
+          throw err;
+        }
+      }
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
