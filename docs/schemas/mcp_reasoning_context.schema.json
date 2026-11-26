@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://my-web-app-b67f4.web.app/schemas/mcp_reasoning_context.schema.json",
+  "title": "MCP Reasoning Context (Why) Log",
+  "description": "Structured reasoning_context payload capturing why an agent selected an MCP server and tool (#2814).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "availableTools",
+    "selectedTool",
+    "reasoningWhy",
+    "serverName",
+    "timestamp"
+  ],
+  "anyOf": [
+    { "required": ["promptHash"] },
+    { "required": ["promptSummary"] }
+  ],
+  "properties": {
+    "availableTools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "selectedTool": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasoningWhy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "promptHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "promptSummary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "serverName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "minLength": 1
+    }
+  }
+}
