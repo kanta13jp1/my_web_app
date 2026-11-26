@@ -1,0 +1,16 @@
+{
+  "name": "jibun-company-web-clipper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome/Edge Manifest V3 Web Clipper for 自分株式会社 using @mozilla/readability and turndown",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/clipper.test.mjs"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "turndown": "^7.2.0"
+  }
+}

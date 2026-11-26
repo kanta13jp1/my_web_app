@@ -54,7 +54,7 @@ class ComparisonCtaPanel extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   hasImportSupport
-                      ? '既存データを残したまま移行できます。まずは無料で登録して、必要ならインポートから始めてください。'
+                      ? '既存データを残したまま、ログイン不要のブラウザ移行診断（Notion ZIP / Evernote ENEX）から試せます。無料枠はテキスト無制限・添付 100 MiB まで対応。'
                       : 'クレジットカード不要。比較しながら試して、必要な機能だけあとから広げられます。',
                   style: const TextStyle(
                     color: Color(0xFFE5E7EB),
