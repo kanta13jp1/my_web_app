@@ -22,6 +22,10 @@ import {
   isExternalRevenueCandidate,
   normalizeSupporterBuyerContext,
 } from "../_shared/supporter_buyer.ts";
+import {
+  aggregateGrowthSummaryCounts,
+  normalizeSinceUtcIso,
+} from "../_shared/growth_achievement_summary.ts";
 import { isSupportedAcquisitionSignal } from "./acquisition_signals.ts";
 import { analyticsActorHash } from "./analytics_actor.ts";
 import {
@@ -2931,6 +2935,55 @@ serve(async (req: Request) => {
       case "achievement.list": {
         const items = await listItems(admin, "growth_achievement", userId!);
         return json({ success: true, items });
+      }
+
+      case "achievement.summary": {
+        if (!(await isXOperator(admin, userId!))) {
+          return json({ success: false, error: "Forbidden" }, 403);
+        }
+        const { sinceUtcIso, sinceDateKey } = normalizeSinceUtcIso(body.since);
+        const label = typeof body.label === "string" ? body.label : "すべて";
+
+        const [
+          newUsersRes,
+          totalUsersRes,
+          analyticsRes,
+          referralsRes,
+        ] = await Promise.all([
+          admin
+            .from("user_profiles")
+            .select("user_id", { count: "exact", head: true })
+            .gte("created_at", sinceUtcIso),
+          admin
+            .from("user_profiles")
+            .select("user_id", { count: "exact", head: true }),
+          admin
+            .from("app_analytics")
+            .select("source_details")
+            .gte("date", sinceDateKey),
+          admin
+            .from("referrals")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "completed")
+            .gte("completed_at", sinceUtcIso),
+        ]);
+
+        if (newUsersRes.error) throw new Error(newUsersRes.error.message);
+        if (totalUsersRes.error) throw new Error(totalUsersRes.error.message);
+        if (analyticsRes.error) throw new Error(analyticsRes.error.message);
+        if (referralsRes.error) throw new Error(referralsRes.error.message);
+
+        return json(
+          aggregateGrowthSummaryCounts({
+            newUsers: newUsersRes.count ?? 0,
+            totalUsersEver: totalUsersRes.count ?? 0,
+            referralsCompleted: referralsRes.count ?? 0,
+            analyticsRows: (analyticsRes.data ?? []) as Array<{
+              source_details?: Record<string, unknown> | null;
+            }>,
+            label,
+          }),
+        );
       }
 
       case "achievement.unlock": {

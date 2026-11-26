@@ -8,6 +8,7 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/hexciv_shop_page.dart';
+import 'package:my_web_app/models/shop_attribution.dart';
 import 'package:my_web_app/services/shop_service.dart';
 
 /// HexCiv 商品ページの状態別の描き分けを固定する (2026-07-28 追加)。
@@ -36,6 +37,7 @@ class _FakeGateway implements ShopGateway {
   /// funnel の最終段を webhook 側で書くために渡される値。
   String? lastVisitorId;
   String? lastSource;
+  ShopAttribution? lastAttribution;
 
   @override
   bool get isSignedIn => signedIn;
@@ -64,10 +66,12 @@ class _FakeGateway implements ShopGateway {
     String productId, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async {
     startCheckoutCalls++;
     lastVisitorId = visitorId;
     lastSource = source;
+    lastAttribution = attribution;
     return const CheckoutStart.redirect('https://checkout.example/session');
   }
 
@@ -104,12 +108,14 @@ Future<void> _pump(
   WidgetTester tester,
   _FakeGateway gateway, {
   String? purchaseResult,
+  Uri? attributionUri,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
       home: HexcivShopPage(
         service: gateway,
         purchaseResult: purchaseResult,
+        attributionUri: attributionUri,
         urlLauncher: (_, __) async => true,
       ),
     ),
@@ -174,6 +180,46 @@ void main() {
       containsAll(['product_view', 'purchase_click', 'checkout_redirect']),
     );
     expect(requests.every((row) => row['visitor_id'] == visitor), isTrue);
+    expect(gateway.lastAttribution?.toRequest(), {
+      'source': 'direct',
+      'campaign': '',
+      'content_id': '',
+    });
+  });
+
+  testWidgets('explicit route labels reach view click and checkout unchanged',
+      (tester) async {
+    final gateway = _FakeGateway(product: _product(), signedIn: true);
+    await tester.runAsync(() async {
+      await _pump(
+        tester,
+        gateway,
+        attributionUri: Uri.parse(
+          '/shop/hexciv?utm_source=X&utm_campaign=h4_h7_pitch'
+          '&utm_content=growth_game_t30_r1',
+        ),
+      );
+      await viewRecorded.future.timeout(const Duration(seconds: 5));
+    });
+    await tester.ensureVisible(find.text('¥500 で購入'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('¥500 で購入'));
+      await tester.pumpAndSettle();
+      await checkoutRecorded.future.timeout(const Duration(seconds: 5));
+    });
+    expect(gateway.startCheckoutCalls, 1);
+    expect(requests, hasLength(3));
+    for (final row in requests) {
+      expect(row['source'], 'x');
+      expect(row['campaign'], 'h4_h7_pitch');
+      expect(row['content_id'], 'growth_game_t30_r1');
+      expect(row['visitor_id'], gateway.lastVisitorId);
+    }
+    expect(gateway.lastAttribution?.toRequest(), {
+      'source': 'x',
+      'campaign': 'h4_h7_pitch',
+      'content_id': 'growth_game_t30_r1',
+    });
   });
 
   group('HexcivShopPage の状態別の描き分け', () {
