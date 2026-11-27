@@ -12,7 +12,6 @@ import {
 } from "../_shared/resource_optimizer.ts";
 
 const MAX_REQUEST_BYTES = 1024;
-const MAX_OUTPUT_TOKENS = 1024;
 
 type OptimizerRequest = {
   days: number;
@@ -199,7 +198,7 @@ export const requestMentorPlan = async (
 
   try {
     const response = await fetcher(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent",
       {
         method: "POST",
         headers: {
@@ -209,9 +208,8 @@ export const requestMentorPlan = async (
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2,
             responseMimeType: "application/json",
-            maxOutputTokens: MAX_OUTPUT_TOKENS,
+            thinkingConfig: { thinkingLevel: "LOW" },
           },
         }),
         signal: AbortSignal.timeout(15_000),

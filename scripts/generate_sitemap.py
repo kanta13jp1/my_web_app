@@ -28,6 +28,7 @@ PUBLIC_ROUTES: list[tuple[str, str, str]] = [
     ("/", "1.0", "daily"),
     ("/shop", "0.9", "weekly"),
     ("/competitors", "0.8", "weekly"),
+    ("/blog", "0.8", "daily"),
     ("/public-memos", "0.7", "daily"),
     ("/ai-university", "0.7", "weekly"),
     ("/gemini-university", "0.7", "weekly"),

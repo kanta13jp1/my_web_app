@@ -1404,12 +1404,13 @@ serve(async (req) => {
         const prompt = String(body.prompt ?? "");
         const tone = String(body.tone ?? "professional");
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{ parts: [{ text: `Tone: ${tone}\n\n${prompt}` }] }],
+              generationConfig: { thinkingConfig: { thinkingLevel: "LOW" } },
             }),
           },
         );
@@ -1433,7 +1434,7 @@ serve(async (req) => {
           name: body.name,
           trigger: body.trigger,
           steps: body.steps ?? [],
-          ai_model: body.ai_model ?? "gemini-2.5-flash",
+          ai_model: body.ai_model ?? "gemini-4-hydrogen",
           status: "active",
         });
         return json({ success: true, workflow: item });

@@ -4,7 +4,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { generateJsonWithGeminiFirst } from "./gemini_json_client.ts";
 
-Deno.test("generateJsonWithGeminiFirst uses Gemini first, disables thinking for 2.5-flash, and skips thought parts", async () => {
+Deno.test("generateJsonWithGeminiFirst uses Gemini 4 Hydrogen first with LOW thinking, no temperature/low cap, and skips thought parts", async () => {
   const calledUrls: string[] = [];
   let sentBody: Record<string, unknown> = {};
 
@@ -37,15 +37,49 @@ Deno.test("generateJsonWithGeminiFirst uses Gemini first, disables thinking for 
   });
 
   assertEquals(calledUrls.length, 1);
-  assertStringIncludes(calledUrls[0], "generativelanguage.googleapis.com");
+  assertStringIncludes(calledUrls[0], "gemini-4-hydrogen:generateContent");
   assertEquals(calledUrls[0].includes("api.openai.com"), false);
   const generationConfig = sentBody.generationConfig as Record<string, unknown>;
   const thinkingConfig = generationConfig.thinkingConfig as Record<
     string,
     unknown
   >;
-  assertEquals(thinkingConfig.thinkingBudget, 0);
+  assertEquals(thinkingConfig.thinkingLevel, "LOW");
+  assertEquals("temperature" in generationConfig, false);
+  assertEquals("maxOutputTokens" in generationConfig, false);
   assertEquals(parsed, { summary: "ok", count: 1 });
+});
+
+Deno.test("generateJsonWithGeminiFirst disables thinkingBudget for explicit gemini-2.5-flash", async () => {
+  let sentBody: Record<string, unknown> = {};
+
+  const parsed = await generateJsonWithGeminiFirst({
+    systemPrompt: "Return JSON only.",
+    userPrompt: "Analyze test input",
+    geminiApiKey: "gemini-key",
+    geminiModel: "gemini-2.5-flash",
+    fetchImpl: (_input, init) => {
+      sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              { content: { parts: [{ text: '{"ok":true}' }] } },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  const generationConfig = sentBody.generationConfig as Record<string, unknown>;
+  const thinkingConfig = generationConfig.thinkingConfig as Record<
+    string,
+    unknown
+  >;
+  assertEquals(thinkingConfig.thinkingBudget, 0);
+  assertEquals(parsed, { ok: true });
 });
 
 Deno.test("generateJsonWithGeminiFirst falls back to OpenAI only when Gemini fails", async () => {

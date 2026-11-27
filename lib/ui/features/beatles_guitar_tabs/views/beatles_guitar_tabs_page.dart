@@ -14,13 +14,19 @@ import '../../../../domain/models/guitar_tab_song.dart';
 import '../../../../theme/design_tokens.dart';
 import '../view_models/beatles_guitar_tabs_view_model.dart';
 import 'widgets/chord_lyrics_studio_panel.dart';
+import 'widgets/guitar_pro_studio_surface.dart';
 import 'widgets/guitar_tab_staff.dart';
 import 'widgets/structured_tab_studio_panel.dart';
 
 /// dark surface2(#1E1E1E)・surface3(#2A2A2A) 上で WCAG 2.1 AA (4.5:1 以上) を満たす補助文字色。
 const Color _mutedAccessibleText = Color(0xFF9CA3AF);
 
-enum _GuitarStudioMode { catalog, structuredScore, chordLyrics }
+enum _GuitarStudioMode {
+  catalog,
+  structuredScore,
+  chordLyrics,
+  proStudio,
+}
 
 class BeatlesGuitarTabsPage extends StatefulWidget {
   const BeatlesGuitarTabsPage({
@@ -91,6 +97,7 @@ class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
                     catalogService: widget.chordLyricsCatalogService,
                     userStorageService: widget.userChordLyricsStorageService,
                   ),
+                _GuitarStudioMode.proStudio => const GuitarProStudioSurface(),
                 _GuitarStudioMode.catalog => ListenableBuilder(
                     listenable: viewModel,
                     builder: (BuildContext context, _) {
@@ -167,7 +174,7 @@ class _GuitarModeSwitcher extends StatelessWidget {
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-              final useRow = constraints.maxWidth >= 520 && textScale <= 1.3;
+              final useRow = constraints.maxWidth >= 720 && textScale <= 1.3;
               final buttons = <Widget>[
                 _ModeTabButton(
                   buttonKey: const Key('guitar_mode_catalog'),
@@ -190,6 +197,13 @@ class _GuitarModeSwitcher extends StatelessWidget {
                   selected: mode == _GuitarStudioMode.chordLyrics,
                   onTap: () => onChanged(_GuitarStudioMode.chordLyrics),
                 ),
+                _ModeTabButton(
+                  buttonKey: const Key('guitar_mode_pro_studio'),
+                  icon: Icons.music_note_outlined,
+                  label: 'プロ譜面ラボ',
+                  selected: mode == _GuitarStudioMode.proStudio,
+                  onTap: () => onChanged(_GuitarStudioMode.proStudio),
+                ),
               ];
               if (useRow) {
                 return Row(
@@ -199,6 +213,8 @@ class _GuitarModeSwitcher extends StatelessWidget {
                     Expanded(child: buttons[1]),
                     const SizedBox(width: DesignTokens.space8),
                     Expanded(child: buttons[2]),
+                    const SizedBox(width: DesignTokens.space8),
+                    Expanded(child: buttons[3]),
                   ],
                 );
               }
@@ -235,50 +251,56 @@ class _ModeTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected
-          ? DesignTokens.orange.withValues(alpha: 0.18)
-          : DesignTokens.surface2,
-      borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
-      child: InkWell(
-        key: buttonKey,
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected
+            ? DesignTokens.orange.withValues(alpha: 0.18)
+            : DesignTokens.surface2,
         borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
-            border: Border.all(
-              color: selected ? DesignTokens.orange : DesignTokens.divider,
+        child: InkWell(
+          key: buttonKey,
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space12,
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                icon,
-                size: 16,
-                color: selected
-                    ? DesignTokens.orangeLight
-                    : DesignTokens.textSecondary,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+              border: Border.all(
+                color: selected ? DesignTokens.orange : DesignTokens.divider,
               ),
-              const SizedBox(width: DesignTokens.space8),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: selected
-                        ? DesignTokens.orangeLight
-                        : DesignTokens.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  icon,
+                  size: 16,
+                  color: selected
+                      ? DesignTokens.orangeLight
+                      : DesignTokens.textSecondary,
+                ),
+                const SizedBox(width: DesignTokens.space8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected
+                          ? DesignTokens.orangeLight
+                          : DesignTokens.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
