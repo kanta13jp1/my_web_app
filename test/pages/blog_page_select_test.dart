@@ -7,8 +7,8 @@ void main() {
     expect(cols, contains('excerpt:content_preview'));
     expect(cols, contains('published_at:posted_at'));
 
-    final tokens = cols.split(',').map((t) => t.trim()).toList();
-    expect(tokens.contains('excerpt'), isFalse);
-    expect(tokens.contains('published_at'), isFalse);
+    final columns = cols.split(',').map((t) => t.trim()).toList();
+    expect(columns.contains('excerpt'), isFalse);
+    expect(columns.contains('published_at'), isFalse);
   });
 }
