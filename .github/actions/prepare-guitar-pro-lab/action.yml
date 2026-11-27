@@ -1,0 +1,30 @@
+name: Prepare same-origin Guitar Pro SMuFL lab
+description: Copy pinned alphaTab runtime, SMuFL Bravura font, and Sonivox SoundFont into an existing web output; fail closed on mismatch.
+inputs:
+  web-root:
+    description: Existing build output root relative to repository root
+    required: true
+  standalone:
+    description: Copy web/labs/guitar-pro-studio sources even if web-root already exists
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+      with:
+        node-version: '22'
+        cache: npm
+    - shell: bash
+      env:
+        GUITAR_LAB_WEB_ROOT: ${{ inputs.web-root }}
+        GUITAR_LAB_STANDALONE: ${{ inputs.standalone }}
+      run: |
+        set -euo pipefail
+        npm ci --ignore-scripts
+        if [ "$GUITAR_LAB_STANDALONE" = "true" ]; then
+          node scripts/build_guitar_pro_lab.mjs "$GUITAR_LAB_WEB_ROOT" --standalone
+        else
+          node scripts/build_guitar_pro_lab.mjs "$GUITAR_LAB_WEB_ROOT"
+        fi
+        node scripts/verify_guitar_pro_lab.mjs "$GUITAR_LAB_WEB_ROOT"
