@@ -67705,6 +67705,16 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   competitorName: _info.name,
                   accentColor: _info.accentColor,
                   hasImportSupport: _hasImportSupport,
+                  onPrimaryCtaTap: () {
+                    final recorder = widget.touchRecorder ??
+                        _acquisitionService.recordComparisonTouch;
+                    return recorder('${widget.competitorKey}:primary_cta');
+                  },
+                  onSecondaryCtaTap: () {
+                    final recorder = widget.touchRecorder ??
+                        _acquisitionService.recordComparisonTouch;
+                    return recorder('${widget.competitorKey}:secondary_cta');
+                  },
                 ),
               ],
             ),

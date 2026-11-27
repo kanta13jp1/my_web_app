@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
+import 'package:my_web_app/domain/models/debt_guard_emotion.dart';
 import 'package:my_web_app/domain/models/debt_guard_rule.dart';
 import 'package:my_web_app/view_models/debt_guard_view_model.dart';
 
@@ -68,6 +71,96 @@ void main() {
       expect(viewModel.events.single.note, 'アプリを閉じて散歩した');
     });
 
+    test('history loaded during a save retains the saved label', () async {
+      repository.historyStarted = Completer<void>();
+      repository.historyRelease = Completer<void>();
+      final loading = viewModel.load();
+      await repository.historyStarted!.future;
+      for (var i = 0; i < 3; i++) {
+        expect(
+          await viewModel.record(
+            ruleId: 'eating_out',
+            type: DebtGuardEventType.violation,
+            emotion: DebtGuardEmotion.boredom,
+          ),
+          isTrue,
+        );
+      }
+      repository.historyRelease!.complete();
+      await loading;
+      expect(viewModel.emotionInsight.labelledCount, 3);
+    });
+
+    test('saves the emotion label and feeds it into the insight', () async {
+      await viewModel.load();
+      expect(
+        viewModel.emotionInsight.status,
+        DebtGuardEmotionInsightStatus.insufficient,
+      );
+      expect(repository.lastLabelledSince, DateTime(2026, 7, 26));
+
+      for (var i = 0; i < 3; i++) {
+        expect(
+          await viewModel.record(
+            ruleId: 'eating_out',
+            type: DebtGuardEventType.violation,
+            emotion: DebtGuardEmotion.boredom,
+          ),
+          isTrue,
+        );
+      }
+
+      expect(repository.lastDrafts.single.emotion, DebtGuardEmotion.boredom);
+      expect(viewModel.events.last.emotion, DebtGuardEmotion.boredom);
+      final insight = viewModel.emotionInsight;
+      expect(insight.status, DebtGuardEmotionInsightStatus.ready);
+      expect(insight.riskiest!.emotion, DebtGuardEmotion.boredom);
+      expect(insight.riskiest!.violationCount, 3);
+    });
+
+    test('never attaches an emotion to a routine check-in', () async {
+      await viewModel.load();
+
+      await viewModel.record(
+        ruleId: 'eating_out',
+        type: DebtGuardEventType.checkIn,
+        emotion: DebtGuardEmotion.boredom,
+      );
+
+      expect(repository.lastDrafts.single.emotion, isNull);
+      expect(viewModel.emotionInsight.labelledCount, 0);
+    });
+
+    test(
+      'a failed insight read does not block recording or show an error',
+      () async {
+        repository.failLabelled = true;
+
+        await viewModel.load();
+
+        expect(viewModel.errorMessage, isNull);
+        expect(viewModel.emotionInsightFailed, isTrue);
+        expect(
+          viewModel.emotionInsight.status,
+          DebtGuardEmotionInsightStatus.unavailable,
+        );
+        expect(
+          await viewModel.record(
+            ruleId: 'eating_out',
+            type: DebtGuardEventType.violation,
+            emotion: DebtGuardEmotion.fatigue,
+          ),
+          isTrue,
+        );
+        // Still unavailable: three local records must not masquerade as the
+        // full four-week history that was never read.
+        expect(
+          viewModel.emotionInsight.status,
+          DebtGuardEmotionInsightStatus.unavailable,
+        );
+      },
+    );
+
     test('records starting a required action as weakening the bug', () async {
       await viewModel.load();
 
@@ -117,6 +210,30 @@ class _MemoryDebtGuardRepository implements DebtGuardRepository {
     return List.of(events);
   }
 
+  Completer<void>? historyStarted;
+  Completer<void>? historyRelease;
+
+  bool failLabelled = false;
+  final labelledHistory = <DebtGuardEvent>[];
+  DateTime? lastLabelledSince;
+
+  @override
+  Future<List<DebtGuardEvent>> loadLabelledEvents({
+    required String userId,
+    required DateTime since,
+  }) async {
+    if (failLabelled) throw StateError('offline');
+    lastLabelledSince = since;
+    final snapshot = <DebtGuardEvent>[
+      ...labelledHistory,
+      for (final event in events)
+        if (event.emotion != null) event,
+    ];
+    historyStarted?.complete();
+    await historyRelease?.future;
+    return snapshot;
+  }
+
   @override
   Future<List<DebtGuardEvent>> appendEvents({
     required String userId,
@@ -134,6 +251,7 @@ class _MemoryDebtGuardRepository implements DebtGuardRepository {
           eventDate: DateTime(date.year, date.month, date.day),
           createdAt: date.add(Duration(microseconds: _nextId)),
           note: draft.note,
+          emotion: draft.emotion,
         ),
     ];
     this.events.addAll(inserted);
