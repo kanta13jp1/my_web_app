@@ -16,9 +16,9 @@ class MindMapPage extends StatefulWidget {
 
 class _MindMapPageState extends State<MindMapPage> {
   static const List<String> _mindMapFallbackModels = <String>[
-    'gemini-2.5-flash',
+    'gemini-4-hydrogen',
     'gemma-3n-e2b-it',
-    'gemini-2.5-pro',
+    'gemini-4-neon',
   ];
   static const double _canvasPadding = 32;
   static const double _horizontalGap = 32;
@@ -35,7 +35,7 @@ class _MindMapPageState extends State<MindMapPage> {
   bool _isDownloading = false;
   String? _errorMessage;
   String? _geminiApiKey;
-  String _selectedModel = 'gemini-2.5-flash';
+  String _selectedModel = 'gemini-4-hydrogen';
 
   @override
   void initState() {
@@ -61,7 +61,7 @@ class _MindMapPageState extends State<MindMapPage> {
     final resolvedModel =
         savedCandidates.whereType<String>().map((v) => v.trim()).firstWhere(
               (v) => v.isNotEmpty,
-              orElse: () => 'gemini-2.5-flash',
+              orElse: () => 'gemini-4-hydrogen',
             );
 
     if (!mounted) {
