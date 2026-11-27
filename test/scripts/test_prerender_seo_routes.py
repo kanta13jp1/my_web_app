@@ -655,6 +655,123 @@ class Stage2OgpAssetsTest(unittest.TestCase):
         )
         self.assertIn('<meta property="og:image:alt" content="競合比較カード">', out)
 
+    def test_blog_route_has_static_meta_and_cta_link(self) -> None:
+        routes = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        route = next(item for item in routes["routes"] if item["path"] == "/blog")
+        out = build_public_route_html(TEMPLATE, route, BASE)
+
+        self.assertIn(
+            f'<link rel="canonical" href="{BASE}/blog">',
+            out,
+        )
+        self.assertIn("<title>公式ブログ | 自分株式会社</title>", out)
+        self.assertIn("無料で1件AI体験を試す", out)
+
+    def test_every_public_sitemap_route_has_prerender_config(self) -> None:
+        routes = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        configured = {item["path"] for item in routes["routes"]}
+        sitemap_subroutes = {
+            path for path, _, _ in PUBLIC_ROUTES if path != "/"
+        }
+        self.assertEqual(sitemap_subroutes - configured, set())
+
+    def test_subroutes_strip_homepage_about_boilerplate_and_keep_home_intact(
+        self,
+    ) -> None:
+        index_html = (self.repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('<h2 id="seo-about-title">自分株式会社とは</h2>', index_html)
+
+        vs_out = build_route_html(index_html, ROUTE, BASE)
+        self.assertNotIn('class="seo-about"', vs_out)
+        self.assertNotIn('id="seo-about-title"', vs_out)
+        self.assertIn('href="#seo-how"', vs_out)
+
+        pub_routes = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )["routes"]
+        for path in ("/philosophy", "/blog", "/ai-dev-principles"):
+            route = next(item for item in pub_routes if item["path"] == path)
+            pub_out = build_public_route_html(index_html, route, BASE)
+            with self.subTest(path=path):
+                self.assertNotIn('class="seo-about"', pub_out)
+                self.assertNotIn('id="seo-about-title"', pub_out)
+                self.assertIn('href="#seo-how"', pub_out)
+                self.assertIn(f'<link rel="canonical" href="{BASE}{path}">', pub_out)
+                self.assertNotIn(
+                    "<title>自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ</title>",
+                    pub_out,
+                )
+
+    def test_homepage_exposes_primary_internal_links_and_same_as_channels(
+        self,
+    ) -> None:
+        index_html = (self.repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        for path in (
+            "/blog",
+            "/competitors",
+            "/ai-university",
+            "/public-memos",
+            "/shop",
+            "/subscription-billing",
+            "/ai-dev-principles",
+        ):
+            self.assertIn(f'href="https://my-web-app-b67f4.web.app{path}"', index_html)
+
+        blocks = re.findall(
+            r'<script type="application/ld\+json"[^>]*>(.*?)</script>',
+            index_html,
+            re.DOTALL,
+        )
+        org = None
+        for block in blocks:
+            parsed = json.loads(block)
+            for node in parsed.get("@graph", []):
+                if node.get("@type") == "Organization":
+                    org = node
+        self.assertIsNotNone(org)
+        for url in org["sameAs"]:
+            self.assertIn(f'href="{url}"', index_html)
+
+    def test_newly_added_seven_routes_render_self_canonical_pages(self) -> None:
+        index_html = (self.repo_root / "web" / "index.html").read_text(
+            encoding="utf-8"
+        )
+        pub_routes = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )["routes"]
+        new_paths = (
+            "/ai-university-content",
+            "/ai-university-ranking",
+            "/ai-university-voice",
+            "/tech-blog-tracker",
+            "/ai-image-generator",
+            "/public-guitar-gallery",
+            "/ai-dev-principles",
+        )
+        for path in new_paths:
+            route = next(item for item in pub_routes if item["path"] == path)
+            out = build_public_route_html(index_html, route, BASE)
+            with self.subTest(path=path):
+                self.assertIn(f'<link rel="canonical" href="{BASE}{path}">', out)
+                self.assertIn(f"<title>{route['title']}</title>", out)
+                self.assertIn(f'<h1 id="seo-title">{route["h1"]}</h1>', out)
+
 
 if __name__ == "__main__":
     unittest.main()

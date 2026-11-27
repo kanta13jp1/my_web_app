@@ -12,6 +12,14 @@ Allow: /public-memos
 Allow: /public-guitar-gallery
 Allow: /philosophy
 Allow: /ai-dev-principles
+Allow: /blog
+Allow: /competitors
+Allow: /shop
+Allow: /development-achievements
+Allow: /subscription-billing
+Allow: /tech-blog-tracker
+Allow: /real-world-danshari
+Allow: /ai-image-generator
 Allow: /vs-
 
 # Authenticated, admin, and operational surfaces should not be indexed.
@@ -27,4 +35,3 @@ Disallow: /blog-management
 Disallow: /api-playground
 
 Sitemap: https://my-web-app-b67f4.web.app/sitemap.xml
-Host: my-web-app-b67f4.web.app
