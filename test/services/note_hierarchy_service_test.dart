@@ -126,8 +126,8 @@ void main() {
     });
 
     test(
-      'Note.fromJson/toJson round-trips int, String, and null parent_note_id',
-      () {
+        'Note.fromJson/toJson round-trips int, String, and null parent_note_id',
+        () {
       final Map<String, dynamic> baseJson = <String, dynamic>{
         'id': 10,
         'user_id': 'user-1',
