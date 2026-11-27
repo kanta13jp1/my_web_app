@@ -42,3 +42,14 @@ Deno.test("Qiita access is disabled by default and requires explicit true", () =
   assertEquals(isQiitaAccessEnabled("false"), false);
   assertEquals(isQiitaAccessEnabled(" true "), true);
 });
+
+Deno.test("app-only targets resolve without requiring external platforms", () => {
+  assertEquals(
+    resolveBlogPublishPlatforms(["app"], undefined),
+    { platforms: ["app"] },
+  );
+  assertEquals(
+    resolveBlogPublishPlatforms(["app", "devto"], ["app"]),
+    { platforms: ["app"] },
+  );
+});

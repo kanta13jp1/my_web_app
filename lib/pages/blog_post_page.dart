@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/blog_content_utils.dart';
+
 class BlogPostPage extends StatelessWidget {
   final Map<String, dynamic> post;
   const BlogPostPage({super.key, required this.post});
@@ -15,7 +17,7 @@ class BlogPostPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = post['title'] as String? ?? '';
-    final content = post['content'] as String? ?? '';
+    final content = stripBlogFrontmatter(post['content'] as String?);
     final url = post['url'] as String? ?? '';
     final postedAt =
         post['posted_at'] as String? ?? post['created_at'] as String? ?? '';
@@ -118,7 +120,7 @@ class BlogPostPage extends StatelessWidget {
       buf.write('*$dateStr*');
       if (platforms.isNotEmpty) {
         final platformNames =
-            platforms.map((p) => p == 'qiita' ? 'Qiita' : 'dev.to').join(' · ');
+            platforms.map(formatBlogPlatformLabel).join(' · ');
         buf.write(' · $platformNames');
       }
       buf.writeln();
@@ -133,6 +135,12 @@ class BlogPostPage extends StatelessWidget {
     buf.writeln(
       content.isEmpty ? '*この記事は外部プラットフォームに投稿されています。*' : content,
     );
+    if (!content.toLowerCase().contains('my-web-app-b67f4.web.app')) {
+      buf.writeln();
+      buf.writeln('---');
+      buf.writeln();
+      buf.writeln('[無料で1件AI体験を試す →](https://my-web-app-b67f4.web.app/)');
+    }
     if (url.isNotEmpty) {
       buf.writeln();
       buf.writeln('---');

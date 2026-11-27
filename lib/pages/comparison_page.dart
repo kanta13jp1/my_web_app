@@ -7,6 +7,7 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
 import '../services/growth_acquisition_service.dart';
@@ -67699,12 +67700,28 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     competitorName: _info.name,
                     accentColor: _info.accentColor,
                   ),
-                _buildSwitchPlan(context),
+                ComparisonSwitchPlanSection(
+                  accentColor: _info.accentColor,
+                  stepOneTitle: _switchStepTitle,
+                  stepOneBody: _switchStepBody,
+                  primaryButton: _buildPrimaryHeroButton(context),
+                  secondaryButton: _buildSecondaryHeroButton(context),
+                ),
                 _buildRelatedComparisons(context),
                 ComparisonCtaPanel(
                   competitorName: _info.name,
                   accentColor: _info.accentColor,
                   hasImportSupport: _hasImportSupport,
+                  onPrimaryCtaTap: () {
+                    final recorder = widget.touchRecorder ??
+                        _acquisitionService.recordComparisonTouch;
+                    return recorder('${widget.competitorKey}:primary_cta');
+                  },
+                  onSecondaryCtaTap: () {
+                    final recorder = widget.touchRecorder ??
+                        _acquisitionService.recordComparisonTouch;
+                    return recorder('${widget.competitorKey}:secondary_cta');
+                  },
                 ),
               ],
             ),
@@ -68209,105 +68226,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildSwitchPlan(BuildContext context) {
-    final steps = [
-      _buildStepCard(
-        number: '01',
-        title: _switchStepTitle,
-        body: _switchStepBody,
-        accent: _info.accentColor,
-      ),
-      _buildStepCard(
-        number: '02',
-        title: '今日の最重要タスクを AI に任せる',
-        body: 'ノート・タスク・習慣・財務を横断して、今やるべき1件を先に見つけられます。',
-        accent: _indigo,
-      ),
-      _buildStepCard(
-        number: '03',
-        title: '必要になった機能だけ横に増やす',
-        body: '資産管理・AI大学・部署AIまで、必要になった機能を後から同じアプリ内で広げられます。',
-        accent: _orange,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: _surfacePrimary,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: _borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '乗り換えの進め方',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.72,
-                    color: _textPrimary,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  '一気に全部を置き換えなくても大丈夫です。まず入口をひとつにして、そこから必要な機能を足していけます。',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _textSecondary,
-                    height: 1.7,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth < 760) {
-                      return Column(
-                        children: steps
-                            .map(
-                              (step) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: step,
-                              ),
-                            )
-                            .toList(),
-                      );
-                    }
-
-                    return Row(
-                      children: [
-                        for (var i = 0; i < steps.length; i++) ...[
-                          Expanded(child: steps[i]),
-                          if (i != steps.length - 1) const SizedBox(width: 12),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _buildPrimaryHeroButton(context),
-                    _buildSecondaryHeroButton(context),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildRelatedComparisons(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -68537,55 +68455,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
             child: Icon(icon, color: accent),
           ),
           const SizedBox(height: 14),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _textPrimary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(
-              fontSize: 13,
-              color: _textSecondary,
-              height: 1.7,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepCard({
-    required String number,
-    required String title,
-    required String body,
-    required Color accent,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surfaceSecondary,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            number,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: accent,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 10),
           Text(
             title,
             style: const TextStyle(
