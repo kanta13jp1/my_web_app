@@ -6,6 +6,11 @@ import 'package:intl/intl.dart';
 import '../utils/blog_content_utils.dart';
 
 class BlogPage extends StatefulWidget {
+  static const String blogPostsSelectColumns =
+      'id, title, content, excerpt:content_preview, url, '
+      'posted_at, published_at:posted_at, created_at, '
+      'target_platforms, tags, notes';
+
   final SupabaseClient? supabaseClient;
 
   const BlogPage({super.key, this.supabaseClient});
@@ -50,9 +55,7 @@ class _BlogPageState extends State<BlogPage> {
       final results = await Future.wait([
         _supabase
             .from('blog_posts')
-            .select(
-              'id, title, content, excerpt, url, posted_at, published_at, created_at, target_platforms, tags, notes',
-            )
+            .select(BlogPage.blogPostsSelectColumns)
             .eq('status', 'posted')
             .order('posted_at', ascending: false)
             .limit(100),
