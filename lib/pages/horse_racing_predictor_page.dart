@@ -1566,36 +1566,52 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
-              const SizedBox(width: 8),
-              const Text(
-                'AI予測（参考情報）',
-                style: TextStyle(
-                  color: Color(0xFFFF6B35),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  height: 1.5,
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'AI予測（参考情報）',
+                        style: TextStyle(
+                          color: Color(0xFFFF6B35),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '信頼度 ${(confidence * 100).toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    color: Color(0xFFFF6B35),
-                    fontSize: 11,
-                    height: 1.5,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '信頼度 ${(confidence * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           if (wasCorrected) ...[
@@ -1790,8 +1806,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            spacing: 6,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 bet['bet_type']?.toString() ?? '-',
@@ -1802,7 +1820,6 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   height: 1.35,
                 ),
               ),
-              const SizedBox(width: 6),
               Text(
                 hit == true
                     ? '的中'
