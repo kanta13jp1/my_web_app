@@ -141,6 +141,7 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: _bg,
+        foregroundColor: Colors.white,
         title: const Text('AI Router Cost'),
         actions: [
           IconButton(
