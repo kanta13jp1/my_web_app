@@ -382,7 +382,7 @@ async function analyzeFeatureRequestAttachment(params: {
 
   try {
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -399,8 +399,7 @@ async function analyzeFeatureRequestAttachment(params: {
             ],
           }],
           generationConfig: {
-            temperature: 0.25,
-            maxOutputTokens: 1200,
+            thinkingConfig: { thinkingLevel: "LOW" },
           },
         }),
       },
@@ -421,7 +420,7 @@ async function analyzeFeatureRequestAttachment(params: {
     return normalizeFeatureRequestAnalysis(parsed, {
       ...fallback,
       confidence: "medium",
-      generated_by: "gemini-2.5-flash",
+      generated_by: "gemini-4-hydrogen",
     });
   } catch (e) {
     return {
@@ -500,20 +499,19 @@ async function buildProactiveAiReview(input: {
   "summary": "全体状況を1-2文で要約",
   "root_cause": "主な原因仮説",
   "next_actions": ["次の一手1", "次の一手2", "次の一手3"],
-  "generated_by": "gemini-2.5-flash"
+  "generated_by": "gemini-4-hydrogen"
 }`;
 
   try {
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 900,
+            thinkingConfig: { thinkingLevel: "LOW" },
           },
         }),
       },
@@ -537,7 +535,7 @@ async function buildProactiveAiReview(input: {
         500,
       ),
       next_actions: nextActions.slice(0, 4),
-      generated_by: "gemini-2.5-flash",
+      generated_by: "gemini-4-hydrogen",
     };
   } catch {
     return { ...fallback, generated_by: "heuristic:exception" };
@@ -2730,15 +2728,14 @@ description: ${pageDescription}
 
           try {
             const resp = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   contents: [{ parts: [{ text: prompt }] }],
                   generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 300,
+                    thinkingConfig: { thinkingLevel: "LOW" },
                   },
                 }),
               },
