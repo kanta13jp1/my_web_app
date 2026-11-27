@@ -82,7 +82,8 @@ void main() {
                             onPrimaryCtaTap: () async {
                               ctaRecorded = true;
                               throw StateError(
-                                  'non-blocking telemetry failure');
+                                'non-blocking telemetry failure',
+                              );
                             },
                           ),
                         ],
