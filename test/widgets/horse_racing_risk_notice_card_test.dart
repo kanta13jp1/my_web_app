@@ -289,6 +289,16 @@ void main() {
         find.byKey(const Key('horse-racing-responsible-use-card')),
         findsOneWidget,
       );
+      await tester.scrollUntilVisible(
+        find.text('テスト記念'),
+        150,
+        scrollable: find
+            .descendant(
+              of: find.byType(TabBarView),
+              matching: find.byType(Scrollable),
+            )
+            .last,
+      );
       await tester.tap(find.text('テスト記念'));
       await tester.pumpAndSettle();
       expect(find.textContaining('見送り'), findsWidgets);

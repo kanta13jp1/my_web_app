@@ -609,7 +609,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildTodayTab() {
-    return Column(
+    return ListView(
+      padding: EdgeInsets.zero,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -638,58 +639,49 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ),
         ),
         _buildTodayActionBar(),
-        Expanded(
-          child: _todayRaces.isEmpty
-              ? LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.sports,
-                              size: 64,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '$_selectedDate のレースデータなし',
-                              style: const TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              '毎朝 07:30 に自動取得されます',
-                              style: TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                fontSize: 12,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
-                              style: TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                fontSize: 11,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+        if (_todayRaces.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.sports,
+                  size: 64,
+                  color: Color(0xFF9CA3AF),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '$_selectedDate のレースデータなし',
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    height: 1.5,
                   ),
-                )
-              : _buildTodayRacesList(),
-        ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '毎朝 07:30 に自動取得されます',
+                  style: TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
+                  style: TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )
+        else
+          _buildTodayRacesList(shrinkWrap: true),
       ],
     );
   }
@@ -812,7 +804,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return priority[venue] ?? 100;
   }
 
-  Widget _buildTodayRacesList() {
+  Widget _buildTodayRacesList({bool shrinkWrap = false}) {
     final hasPredictions = _todayRaces.any(_hasPrediction);
 
     // Win版#112: netkeiba 風 開催地別カラム表示
@@ -835,7 +827,55 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         return a.compareTo(b);
       });
 
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final cols = w >= 1100
+            ? 4
+            : w >= 820
+                ? 3
+                : w >= 540
+                    ? 2
+                    : 1;
+        if (cols == 1) {
+          return ListView(
+            shrinkWrap: shrinkWrap,
+            physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            children: [
+              for (final v in venues) ...[
+                _buildVenueHeader(v, byVenue[v]!.length),
+                ...byVenue[v]!.map(_buildRaceCard),
+                const SizedBox(height: 12),
+              ],
+            ],
+          );
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final v in venues)
+                SizedBox(
+                  width: (w - 12 * (cols + 1)) / cols,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildVenueHeader(v, byVenue[v]!.length),
+                      ...byVenue[v]!.map(_buildRaceCard),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
     return Column(
+      mainAxisSize: shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
       children: [
         if (!hasPredictions)
           Container(
@@ -858,52 +898,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ],
             ),
           ),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final cols = w >= 1100
-                  ? 4
-                  : w >= 820
-                      ? 3
-                      : w >= 540
-                          ? 2
-                          : 1;
-              if (cols == 1) {
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  children: [
-                    for (final v in venues) ...[
-                      _buildVenueHeader(v, byVenue[v]!.length),
-                      ...byVenue[v]!.map(_buildRaceCard),
-                      const SizedBox(height: 12),
-                    ],
-                  ],
-                );
-              }
-              return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    for (final v in venues)
-                      SizedBox(
-                        width: (w - 12 * (cols + 1)) / cols,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildVenueHeader(v, byVenue[v]!.length),
-                            ...byVenue[v]!.map(_buildRaceCard),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
+        if (shrinkWrap) content else Expanded(child: content),
       ],
     );
   }
