@@ -2315,11 +2315,19 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _cashflowLines(AssetLiabilityWorkbook workbook) {
-    if (workbook.cashflowRows.isEmpty) {
+    final activeRows = workbook.cashflowRows.where((row) {
+      if (row.isPayment &&
+          row.paymentAmount <= 0 &&
+          (row.actualPaymentAmount ?? 0) <= 0) {
+        return false;
+      }
+      return true;
+    }).toList();
+    if (activeRows.isEmpty) {
       return '- キャッシュフロー行はありません。\n';
     }
     final buffer = StringBuffer();
-    for (final row in workbook.cashflowRows) {
+    for (final row in activeRows) {
       buffer.writeln(
         '- ${_formatDate(row.paymentDate)} / ${row.eventType.name} / '
         '項目:${row.accountName} / 金額:${_formatAmount(row.paymentAmount)} / '

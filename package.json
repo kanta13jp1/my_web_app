@@ -17,6 +17,7 @@
     "quality:no-verify": "python scripts/check_no_verify_bypass.py --range HEAD~1..HEAD"
   },
   "devDependencies": {
+    "@coderline/alphatab": "1.9.0",
     "@playwright/test": "^1.65.0",
     "lefthook": "^2.2.2",
     "three": "0.187.0",
