@@ -404,5 +404,62 @@ void main() {
         expect(gateway.lastCheckoutSource, 'x');
       },
     );
+
+    testWidgets(
+      'unauthenticated login CTA preserves product_id and UTM params',
+      (tester) async {
+        final product = _product(
+          'hexciv-win64',
+          'HexCiv (Windows 版)',
+          ShopProductType.game,
+        );
+        final gateway = _FakeShopGateway(products: [product]);
+        final pushedRoutes = <String>[];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            onGenerateRoute: (settings) {
+              final name = settings.name ?? '';
+              if (name.startsWith('/login')) {
+                pushedRoutes.add(name);
+                return MaterialPageRoute(
+                  builder: (_) => const Scaffold(body: Text('LOGIN')),
+                  settings: settings,
+                );
+              }
+              return MaterialPageRoute(
+                builder: (_) => DigitalProductPage(
+                  productId: product.id,
+                  service: gateway,
+                  funnel: _RecordingShopFunnelService(),
+                  attributionUri: Uri.parse(
+                    '/shop/product?product_id=hexciv-win64'
+                    '&utm_source=x&utm_campaign=h4_h7_pitch'
+                    '&utm_content=growth_game_t30_r1',
+                  ),
+                ),
+                settings: settings,
+              );
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.ensureVisible(find.text('ログインして購入'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ログインして購入'));
+        await tester.pumpAndSettle();
+
+        expect(pushedRoutes, hasLength(1));
+        final loginUri = Uri.parse(pushedRoutes.single);
+        expect(loginUri.path, '/login');
+        expect(loginUri.queryParameters, <String, String>{
+          'shop_product': 'hexciv-win64',
+          'utm_source': 'x',
+          'utm_campaign': 'h4_h7_pitch',
+          'utm_content': 'growth_game_t30_r1',
+        });
+      },
+    );
   });
 }
