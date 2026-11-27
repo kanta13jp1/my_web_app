@@ -50,9 +50,7 @@ class _BlogPageState extends State<BlogPage> {
       final results = await Future.wait([
         _supabase
             .from('blog_posts')
-            .select(
-              'id, title, content, excerpt, url, posted_at, published_at, created_at, target_platforms, tags, notes',
-            )
+            .select(kBlogPageSelectColumns)
             .eq('status', 'posted')
             .order('posted_at', ascending: false)
             .limit(100),

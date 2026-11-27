@@ -58,4 +58,13 @@ void main() {
       expect(formatBlogPlatformLabel(''), '');
     });
   });
+
+  group('kBlogPageSelectColumns', () {
+    test('aliases content_preview and posted_at without raw missing columns', () {
+      expect(kBlogPageSelectColumns, contains('excerpt:content_preview'));
+      expect(kBlogPageSelectColumns, contains('published_at:posted_at'));
+      expect(kBlogPageSelectColumns, isNot(contains(', excerpt,')));
+      expect(kBlogPageSelectColumns, isNot(contains(', published_at,')));
+    });
+  });
 }

@@ -1,3 +1,8 @@
+const String kBlogPageSelectColumns =
+    'id, title, content, excerpt:content_preview, url, '
+    'posted_at, published_at:posted_at, created_at, '
+    'target_platforms, tags, notes';
+
 String stripBlogFrontmatter(String? raw) {
   final source = (raw ?? '').trimLeft();
   return source
