@@ -7,6 +7,7 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
@@ -67692,7 +67693,13 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 _buildBreadcrumb(context),
                 _buildHero(context),
                 _buildOutcomeCards(),
-                _buildPainPoints(),
+                ComparisonPainPointsSection(
+                  competitorName: _info.name,
+                  painPoints: _info.painPoints,
+                  showLegacyClaims: _showLegacyClaims,
+                  evidenceStatus: widget.evidenceStatus,
+                  otherEvidence: _otherEvidence,
+                ),
                 _buildFeatureTable(),
                 if (_hasImportSupport)
                   MigrationParitySection(
@@ -68014,98 +68021,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 ],
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPainPoints() {
-    if (!_showLegacyClaims) {
-      return ComparisonEvidenceSection(
-        title: '根拠確認済みの比較情報',
-        status: widget.evidenceStatus,
-        claims: _otherEvidence,
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${_info.name} を使っていて詰まりやすいポイント',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '今のツールで十分そうに見えても、日々の運用ではここがボトルネックになりがちです。',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 760;
-                  final items = <Widget>[];
-
-                  for (var i = 0; i < _info.painPoints.length; i++) {
-                    items.add(
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: _surfacePrimary,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: _borderColor),
-                        ),
-                        child: Text(
-                          '${i + 1}. ${_info.painPoints[i]}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: _textSecondary,
-                            height: 1.7,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (compact) {
-                    return Column(
-                      children: items
-                          .map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: item,
-                            ),
-                          )
-                          .toList(),
-                    );
-                  }
-
-                  return Row(
-                    children: [
-                      for (var i = 0; i < items.length; i++) ...[
-                        Expanded(child: items[i]),
-                        if (i != items.length - 1) const SizedBox(width: 12),
-                      ],
-                    ],
-                  );
-                },
-              ),
-            ],
           ),
         ),
       ),
