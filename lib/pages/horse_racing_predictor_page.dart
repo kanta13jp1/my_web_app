@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../features/horse_racing/horse_racing_data_gateway.dart';
 import '../features/horse_racing/horse_racing_decision_support.dart';
 import '../features/horse_racing/horse_racing_performance_view_model.dart';
+import '../features/horse_racing/horse_racing_tab_and_ticket_helper.dart';
 import '../widgets/home_back_button.dart';
 import 'horse_provider_leaderboard_page.dart';
 import 'horseracing_race_detail_page.dart';
@@ -114,12 +115,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   String _routeForTab(int index) {
-    return switch (index) {
-      1 => '/horse-racing/history',
-      2 => '/horse-racing/analysis',
-      3 => '/horse-racing/bets',
-      _ => '/horse-racing',
-    };
+    return HorseRacingTabRouteHelper.routeForTabIndex(index);
   }
 
   void _syncTabRoute() {
@@ -2386,16 +2382,20 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         useRootNavigator: true,
         builder: (dialogContext) => StatefulBuilder(
           builder: (dialogContext, setDialogState) {
-            final total = drafts.fold<int>(
-              0,
-              (sum, draft) => sum + _toIntValue(draft.amountCtrl.text),
-            );
             final recordedToday = _recordedStakeForDate(_selectedDate);
             final isSkipRecord =
                 drafts.any((draft) => draft.betType == '購入しない') &&
                     drafts.every((draft) => draft.betType == '購入しない');
-            final exceedsBudget =
-                !isSkipRecord && recordedToday + total > _dailyBudgetYen;
+            final ticketCheck = HorseRacingTicketValidationResult.evaluate(
+              lineAmounts: drafts
+                  .map((draft) => _toIntValue(draft.amountCtrl.text))
+                  .toList(growable: false),
+              isSkipRecord: isSkipRecord,
+              recordedToday: recordedToday,
+              dailyBudgetYen: _dailyBudgetYen,
+            );
+            final total = ticketCheck.totalAmount;
+            final exceedsBudget = ticketCheck.exceedsBudget;
 
             return AlertDialog(
               title: const Text('購入馬券を記録'),
