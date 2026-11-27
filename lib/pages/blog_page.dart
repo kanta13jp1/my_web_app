@@ -3,15 +3,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/blog_content_utils.dart';
+
 class BlogPage extends StatefulWidget {
-  const BlogPage({super.key});
+  final SupabaseClient? supabaseClient;
+
+  const BlogPage({super.key, this.supabaseClient});
 
   @override
   State<BlogPage> createState() => _BlogPageState();
 }
 
 class _BlogPageState extends State<BlogPage> {
-  final _supabase = Supabase.instance.client;
+  SupabaseClient get _supabase =>
+      widget.supabaseClient ?? Supabase.instance.client;
   List<Map<String, dynamic>> _posts = [];
   Map<String, Map<String, dynamic>> _engagement = {};
   bool _loading = true;
@@ -19,6 +24,7 @@ class _BlogPageState extends State<BlogPage> {
   String _platformFilter = 'all';
 
   static const _platformColors = {
+    'app': Color(0xFFFF6B35),
     'qiita': Color(0xFF55C500),
     'devto': Color(0xFF0A0A0A),
     'zenn': Color(0xFF3EA8FF),
@@ -175,11 +181,24 @@ class _BlogPageState extends State<BlogPage> {
                   ),
                 ),
               ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => Navigator.pushNamed(context, '/'),
+                icon: const Icon(Icons.auto_awesome, color: _orange, size: 16),
+                label: const Text(
+                  '無料で1件AI体験',
+                  style: TextStyle(
+                    color: _orange,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
-            'Flutter × Supabase × AI の実装ログをサイト内で公開。\n管理画面のレビュー後、外部プラットフォームにも自動配信します。',
+            '家計・習慣・タスク・AI活用の実践記録と開発ログを公開しています。\n各記事から無料で1件AI体験を試せます。',
             style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
           ),
         ],
@@ -191,6 +210,7 @@ class _BlogPageState extends State<BlogPage> {
     final platforms = ['all', ..._allPlatforms];
     final labels = {
       'all': 'すべて',
+      'app': '公式ブログ',
       'qiita': 'Qiita',
       'devto': 'dev.to',
       'zenn': 'Zenn',
@@ -313,22 +333,6 @@ int _asInt(dynamic value) {
   return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
-String _blogPostExcerpt(Map<String, dynamic> post) {
-  final explicit = post['excerpt']?.toString().trim() ?? '';
-  if (explicit.isNotEmpty) return explicit;
-  final content = post['content']?.toString().trim() ?? '';
-  if (content.isEmpty) return '';
-  final plain = content
-      .replaceAll(RegExp(r'^#{1,6}\s.*$', multiLine: true), '')
-      .replaceAll(RegExp(r'```[\s\S]*?```'), '')
-      .replaceAll(RegExp(r'`([^`]*)`'), r'$1')
-      .replaceAll(RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1')
-      .replaceAll(RegExp(r'[*_~>#-]'), '')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
-  return plain.length <= 140 ? plain : '${plain.substring(0, 140)}…';
-}
-
 class _BlogCard extends StatelessWidget {
   final Map<String, dynamic> post;
   final int likes;
@@ -343,6 +347,7 @@ class _BlogCard extends StatelessWidget {
 
   static const _orange = Color(0xFFFF6B35);
   static const _platformColors = {
+    'app': Color(0xFFFF6B35),
     'qiita': Color(0xFF55C500),
     'devto': Color(0xFF0A0A0A),
     'zenn': Color(0xFF3EA8FF),
@@ -368,7 +373,7 @@ class _BlogCard extends StatelessWidget {
     final tags = (rawTags is List)
         ? rawTags.map((t) => t.toString()).toList()
         : <String>[];
-    final excerpt = _blogPostExcerpt(post);
+    final excerpt = extractBlogExcerpt(post);
     final postId = post['id']?.toString() ?? '';
     final hasMetrics = likes > 0 || views > 0 || comments > 0;
 
@@ -418,9 +423,7 @@ class _BlogCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        p == 'devto'
-                            ? 'dev.to'
-                            : p.substring(0, 1).toUpperCase() + p.substring(1),
+                        formatBlogPlatformLabel(p),
                         style: TextStyle(
                           color: color,
                           fontSize: 10,
