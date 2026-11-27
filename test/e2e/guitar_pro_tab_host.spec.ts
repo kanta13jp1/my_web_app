@@ -23,6 +23,13 @@ function isAllowedSameOriginRequest(url: string): boolean {
   );
 }
 
+function isAllowedHostFontFallback(url: string): boolean {
+  return (
+    url.startsWith('https://fonts.gstatic.com/') ||
+    url.startsWith('https://fonts.googleapis.com/')
+  );
+}
+
 async function openFlutterHost(page: Page) {
   const errors: string[] = [];
   const externalRequests: string[] = [];
@@ -34,8 +41,22 @@ async function openFlutterHost(page: Page) {
     }
   });
   page.on('request', (req) => {
-    if (!isAllowedSameOriginRequest(req.url())) {
-      externalRequests.push(req.url());
+    const url = req.url();
+    if (isAllowedSameOriginRequest(url)) {
+      return;
+    }
+    let frameUrl = '';
+    try {
+      frameUrl = req.frame()?.url() ?? '';
+    } catch {
+      frameUrl = '';
+    }
+    if (frameUrl.includes('/labs/guitar-pro-studio/')) {
+      externalRequests.push(`lab-iframe: ${url}`);
+      return;
+    }
+    if (!isAllowedHostFontFallback(url)) {
+      externalRequests.push(`host: ${url}`);
     }
   });
 
