@@ -54,7 +54,7 @@ import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_curated_calendar_section.dart';
-import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_today_action_section.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
@@ -2033,8 +2033,8 @@ abstinence_slip_details: $slipDetailsText
       };
     }
 
-    return HomePrimaryActionCard(
-      key: Key('home_next_action_${command.type.name}'),
+    return HomeTodayActionSection(
+      actionTypeName: command.type.name,
       accentColor: command.color,
       icon: command.icon,
       title: command.title,
@@ -4956,12 +4956,6 @@ abstinence_slip_details: $slipDetailsText
                           children: [
                             const HomeTodayPriorityGoal(),
                             if (!showInternalOperations) ...[
-                              _buildSectionHeader(
-                                '今日の1件',
-                                Icons.ads_click_outlined,
-                                const Color(0xFF4F46E5),
-                                key: const Key('home_section_today_action'),
-                              ),
                               _buildNextActionBubble(
                                 context,
                                 nextAction,
