@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/shop_attribution.dart';
+import '../models/shop_login_continuation.dart';
 import '../services/shop_community_repository.dart';
 import '../services/shop_funnel_service.dart';
 import '../services/shop_service.dart';
@@ -918,7 +919,12 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           _PrimaryShopButton(
             label: 'ログインして購入',
             icon: Icons.login,
-            onPressed: () => Navigator.of(context).pushNamed('/login'),
+            onPressed: () => Navigator.of(context).pushNamed(
+              ShopLoginContinuation.loginUri(
+                productId: widget.productId,
+                attribution: _attribution,
+              ).toString(),
+            ),
           ),
         ],
       );
