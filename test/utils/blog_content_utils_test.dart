@@ -60,7 +60,7 @@ void main() {
   });
 
   group('kBlogPageSelectColumns', () {
-    test('aliases content_preview and posted_at without raw missing columns', () {
+    test('aliases missing columns cleanly', () {
       expect(kBlogPageSelectColumns, contains('excerpt:content_preview'));
       expect(kBlogPageSelectColumns, contains('published_at:posted_at'));
       expect(kBlogPageSelectColumns, isNot(contains(', excerpt,')));
