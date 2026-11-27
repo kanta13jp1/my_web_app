@@ -299,6 +299,8 @@ void main() {
             )
             .last,
       );
+      await tester.ensureVisible(find.text('テスト記念'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('テスト記念'));
       await tester.pumpAndSettle();
       expect(find.textContaining('見送り'), findsWidgets);
