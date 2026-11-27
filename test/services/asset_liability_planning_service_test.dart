@@ -60,6 +60,32 @@ void main() {
       expect(workbook.cardUsagePolicies['famipay_card']!.memo, '受付 ABC123');
     });
 
+    test(
+        'reflects annualRateOverrides in both accounts list and debtMasterRows',
+        () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{
+          'mobit': 0.15,
+        },
+      );
+
+      final account = workbook.accounts.firstWhere((a) => a.id == 'mobit');
+      expect(account.annualRate, 0.15);
+
+      final currentAccount =
+          workbook.currentAccounts.firstWhere((a) => a.id == 'mobit');
+      expect(currentAccount.annualRate, 0.15);
+
+      final debtRow =
+          workbook.debtMasterRows.firstWhere((r) => r.id == 'mobit');
+      expect(debtRow.annualRate, 0.15);
+    });
+
     test('groups liability balances by payment day', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -70,13 +96,15 @@ void main() {
         for (final risk in workbook.paymentDayRisks) risk.paymentDay: risk,
       };
 
-      expect(riskByDay[8]?.balanceTotal.round(), -2933552);
+      expect(riskByDay[8]?.balanceTotal.round(), -699446);
       expect(riskByDay[10]?.balanceTotal.round(), -513770);
       expect(riskByDay.containsKey(11), isFalse);
       expect(riskByDay[15]?.balanceTotal.round(), -2195978);
+      expect(riskByDay[26]?.balanceTotal.round(), -2234106);
       expect(riskByDay[27]?.balanceTotal.round(), -1579266);
       expect(riskByDay[8]?.isPast, isTrue);
       expect(riskByDay[15]?.isUpcoming, isTrue);
+      expect(riskByDay[26]?.isUpcoming, isTrue);
     });
 
     test('builds debt master rows with type, rate, and priority signals', () {
@@ -88,13 +116,14 @@ void main() {
       final largest = workbook.debtMasterRows.first;
       expect(largest.name, 'アコムショッピング');
       expect(largest.kind, AssetLiabilityAccountKind.shoppingDebt);
-      expect(largest.paymentDay, 8);
+      expect(largest.paymentDay, 26);
+      expect(largest.annualRate, 0.146);
       expect(largest.liabilityShare, closeTo(0.308, 0.001));
 
       final topPriority = workbook.repaymentPriorityRows.first;
       expect(topPriority.name, anyOf('アコムカードローン', 'モビット'));
-      expect(topPriority.annualRate, 0.18);
-      expect(topPriority.priorityLabel, '最優先');
+      expect(topPriority.annualRate, 0.15);
+      expect(topPriority.priorityLabel, '高');
     });
 
     test('prefers manually entered monthly payment over the estimate', () {
@@ -136,6 +165,50 @@ void main() {
       );
     });
 
+    test('uses the recorded actual payment for principal when the row is paid',
+        () {
+      // 今月支払予定額は 0 円のまま、実際には 15,000 円を支払済みとして記録した月。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 0},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+        paidAccountNames: const <String>{'モビット'},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.scheduledPaymentAmount, 0);
+      expect(mobit.monthlyInterestEstimate, closeTo(1250, 0.001));
+      expect(mobit.principalPaymentEstimate, closeTo(13750, 0.001));
+      expect(mobit.balanceAfterPaymentEstimate, closeTo(-86250, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 15000);
+    });
+
+    test('keeps the scheduled payment for principal while unpaid', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 5000},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.principalPaymentEstimate, closeTo(3750, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 5000);
+    });
+
     test('uses annual rate overrides for interest and priority signals', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -166,7 +239,7 @@ void main() {
         (row) => row.name == 'モビット',
       );
 
-      expect(mobit.annualRate, 0.18);
+      expect(mobit.annualRate, 0.15);
     });
 
     test('uses the estimated minimum payment when manual input is absent', () {
@@ -1260,7 +1333,7 @@ void main() {
       expect(cashflowRow.paid, isTrue);
     });
 
-    test('marks unpaid payments due today or earlier as overdue', () {
+    test('keeps unpaid payments due today separate from overdue', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
           '財布': 50000,
@@ -1281,10 +1354,10 @@ void main() {
         (row) => row.accountId == 'paypay_card',
       );
 
-      expect(mobit.overdue, isTrue);
+      expect(mobit.overdue, isFalse);
       expect(payPay.overdue, isFalse);
-      expect(workbook.hasOverduePayments, isTrue);
-      expect(workbook.overdueCashflowRows, hasLength(1));
+      expect(workbook.hasOverduePayments, isFalse);
+      expect(workbook.overdueCashflowRows, isEmpty);
     });
 
     test('builds cashflow rows by payment day with risk levels', () {
@@ -1366,7 +1439,7 @@ void main() {
         '$acomShoppingName\u6255\u3044',
       );
       expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
-        8,
+        26,
         26,
       ]);
       // \u73fe\u91d1\u652f\u51fa\u306f\u30a2\u30b3\u30e0\u6700\u4f4e\u8fd4\u6e08 (68000) \u306e\u307f\u3002Anthropic \u306e 40000 \u306f\u4e8c\u91cd\u8a08\u4e0a\u3057\u306a\u3044\u3002
@@ -2406,5 +2479,64 @@ void main() {
       );
       expect(aupay.paymentSourceAccountName, 'じぶん銀行');
     });
+
+    test('assigns confirmed contract rates for Acom debts by default', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'アコムカードローン': -500000,
+          'アコムショッピング': -2000000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+
+      final acomLoan = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムカードローン',
+      );
+      expect(acomLoan.annualRate, 0.15);
+      expect(acomLoan.kind, AssetLiabilityAccountKind.cardLoan);
+      expect(acomLoan.paymentDay, 8);
+
+      final acomShopping = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムショッピング',
+      );
+      expect(acomShopping.annualRate, 0.146);
+      expect(acomShopping.kind, AssetLiabilityAccountKind.shoppingDebt);
+      expect(acomShopping.paymentDay, 26);
+    });
+
+    test(
+      'computes PaymentDayRisk.shortageAmount and overdue late-fee estimates (#3342, #3442)',
+      () {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            '現金': 200000,
+            'モビット': -500000,
+          },
+          baseDate: DateTime(2026, 9, 15),
+          paymentDayOverrides: const <String, int>{'mobit': 5},
+          annualRateOverrides: const <String, double>{'mobit': 0.18},
+          monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        );
+
+        final mobit = workbook.debtMasterRows.firstWhere(
+          (row) => row.id == 'mobit',
+        );
+        expect(mobit.overdueDays, 10);
+        expect(mobit.lateFeeAnnualRate, 0.18);
+        // 5000 * 0.18 * 10 / 365 = 24.65 -> 25
+        expect(mobit.estimatedLateFeeAmount, 25);
+        expect(mobit.projectedBalanceWithLateFee, 500025);
+
+        final risk5 = workbook.paymentDayRisks.firstWhere(
+          (risk) => risk.paymentDay == 5 && risk.requiresAction,
+        );
+        expect(risk5.hasShortage, isTrue);
+        expect(
+          risk5.shortageAmount,
+          mobit.minimumPaymentEstimate - mobit.scheduledPaymentAmount,
+        );
+        expect(risk5.estimatedLateFeeTotal, 25);
+      },
+    );
   });
 }

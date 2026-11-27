@@ -207,6 +207,49 @@ def _migration_item_breakdown(
     }
 
 
+def _wbs_resolution_plan(plan: dict[str, Any]) -> dict[str, Any]:
+    """Split content-free WBS decisions into automatic and human-review lanes."""
+
+    decisions = plan.get("decisions")
+    if not isinstance(decisions, dict):
+        raise AuditError("WBS plan decisions are missing")
+
+    automatic_keys = (
+        "insert",
+        "update_from_notion",
+        "unchanged",
+        "site_newer_preserved",
+    )
+    human_review_keys = (
+        "manual_timestamp_conflict",
+        "identity_collision",
+        "invalid_fields",
+        "conflicting_duplicate",
+        "title_group_content_conflict",
+    )
+    automatic = {key: _integer(decisions, key) for key in automatic_keys}
+    human_review = {key: _integer(decisions, key) for key in human_review_keys}
+    automatic_total = sum(automatic.values())
+    human_review_total = sum(human_review.values())
+
+    if automatic_total != _integer(plan, "safe_logical_groups"):
+        raise AuditError("WBS automatic decision count mismatch")
+    if human_review_total != _integer(plan, "blocked_logical_groups"):
+        raise AuditError("WBS human-review decision count mismatch")
+
+    return {
+        "automatic": {
+            "total": automatic_total,
+            "by_decision": automatic,
+        },
+        "human_review": {
+            "total": human_review_total,
+            "by_decision": human_review,
+        },
+        "writes_authorized": False,
+    }
+
+
 def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
     batches = client.rows(
         "notion_migration_batches",
@@ -334,6 +377,7 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
         ],
     )
     wbs_import_plan = build_wbs_import_plan(staged_wbs_rows, site_wbs_rows)
+    wbs_resolution_plan = _wbs_resolution_plan(wbs_import_plan)
 
     verified = _integer(progress, "verified_items")
     deletion_ready = _integer(progress, "deletion_ready_items")
@@ -405,6 +449,7 @@ def collect_audit(client: SupabaseAuditClient) -> dict[str, Any]:
             "staged_at": wbs.get("staged_at"),
         },
         "wbs_import_plan": wbs_import_plan,
+        "wbs_resolution_plan": wbs_resolution_plan,
         "vault_manifest": (
             None
             if vault is None
@@ -455,6 +500,7 @@ def render_summary(report: dict[str, Any]) -> str:
     capabilities = report["capabilities"]
     wbs = report["wbs_stage"]
     wbs_plan = report["wbs_import_plan"]
+    resolution = report["wbs_resolution_plan"]
     vault = report["vault_manifest"]
     gates = report["gates"]
     lines.extend(
@@ -553,6 +599,33 @@ def render_summary(report: dict[str, Any]) -> str:
                 + ("OPEN" if wbs_plan["apply_gate_open"] else "CLOSED")
                 + " |"
             ),
+            "",
+            "### WBS resolution lanes",
+            "",
+            "| lane | groups |",
+            "| --- | ---: |",
+            f"| automatic | {resolution['automatic']['total']} |",
+            f"| human review | {resolution['human_review']['total']} |",
+            "",
+            "| reason | groups |",
+            "| --- | ---: |",
+            (
+                "| exact normalized match | "
+                f"{resolution['automatic']['by_decision']['unchanged']} |"
+            ),
+            (
+                "| preserve newer site value | "
+                f"{resolution['automatic']['by_decision']['site_newer_preserved']} |"
+            ),
+            (
+                "| conflicting duplicate | "
+                f"{resolution['human_review']['by_decision']['conflicting_duplicate']} |"
+            ),
+            (
+                "| title/content conflict | "
+                f"{resolution['human_review']['by_decision']['title_group_content_conflict']} |"
+            ),
+            "| writes authorized by this audit | no |",
         ]
     )
     if vault is not None:

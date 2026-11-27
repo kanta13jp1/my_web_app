@@ -1,0 +1,5 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- Expense classification review (#5452)
+- Jev Mario latency experiment (#5466)
+
+#buildinpublic #flutter #supabase #claudecode #aifleet

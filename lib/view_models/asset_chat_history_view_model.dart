@@ -22,6 +22,7 @@ class AssetChatHistoryViewModel extends ChangeNotifier {
   bool _hasMoreThreads = false;
   bool _hasOlderMessages = false;
   String _searchQuery = '';
+  AssetChatThreadSortBy _sortBy = AssetChatThreadSortBy.updatedAt;
   String? _errorMessage;
   AssetChatThreadSummary? _selectedThread;
   int _threadRequestVersion = 0;
@@ -37,10 +38,17 @@ class AssetChatHistoryViewModel extends ChangeNotifier {
   bool get hasMoreThreads => _hasMoreThreads;
   bool get hasOlderMessages => _hasOlderMessages;
   String get searchQuery => _searchQuery;
+  AssetChatThreadSortBy get sortBy => _sortBy;
   String? get errorMessage => _errorMessage;
   AssetChatThreadSummary? get selectedThread => _selectedThread;
 
   Future<void> initialize() => loadThreads(reset: true);
+
+  Future<void> setSortBy(AssetChatThreadSortBy sortBy) async {
+    if (sortBy == _sortBy && _threads.isNotEmpty) return;
+    _sortBy = sortBy;
+    await loadThreads(reset: true);
+  }
 
   Future<void> search(String value) async {
     final normalized = value.trim();
@@ -66,6 +74,7 @@ class AssetChatHistoryViewModel extends ChangeNotifier {
     try {
       final page = await _repository.fetchThreads(
         searchQuery: _searchQuery,
+        sortBy: _sortBy,
         offset: reset ? 0 : _threads.length,
         limit: threadPageSize,
       );

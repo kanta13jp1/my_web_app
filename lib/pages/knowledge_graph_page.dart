@@ -333,38 +333,101 @@ class _CitationAnswerText extends StatelessWidget {
   final KnowledgeGraphRagAnswer answer;
   final ValueChanged<KnowledgeGraphRagCitation> onCitationPressed;
 
+  String _tooltipMessage(KnowledgeGraphRagCitation citation) {
+    final excerpt = citation.highlightText.isNotEmpty
+        ? citation.highlightText
+        : citation.excerpt;
+    return <String>[
+      citation.fileName,
+      if (citation.position.label.isNotEmpty) citation.position.label,
+      if (excerpt.isNotEmpty) excerpt,
+    ].join('\n');
+  }
+
+  Widget _buildCitationWidget(
+    BuildContext context,
+    KnowledgeGraphAnswerSegment segment,
+    KnowledgeGraphRagCitation citation,
+    TextStyle baseStyle,
+  ) {
+    final tooltipMessage = _tooltipMessage(citation);
+    if (!segment.markerOnly) {
+      final colors = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Tooltip(
+          message: tooltipMessage,
+          waitDuration: const Duration(milliseconds: 250),
+          child: InkWell(
+            key: Key('knowledge-citation-link-${segment.citationId}'),
+            borderRadius: BorderRadius.circular(6),
+            onTap: () => onCitationPressed(citation),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.primaryContainer.withAlpha(110),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                child: Text(
+                  '${segment.text} [${citation.id}]',
+                  style: baseStyle.copyWith(
+                    color: colors.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Tooltip(
+        message: tooltipMessage,
+        waitDuration: const Duration(milliseconds: 250),
+        child: ActionChip(
+          key: Key('knowledge-citation-link-${segment.citationId}'),
+          avatar: const Icon(Icons.find_in_page_outlined, size: 16),
+          label: Text(
+            '${segment.text} '
+            '${citation.fileName} · '
+            '${citation.position.label}',
+          ),
+          onPressed: () => onCitationPressed(citation),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseStyle =
         Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55) ??
             const TextStyle(height: 1.55);
+    final segments = answer.parsedSegments.isNotEmpty
+        ? answer.parsedSegments
+        : parseKnowledgeGraphAnswer(answer.answer);
     return SelectionArea(
       child: Text.rich(
         key: const Key('knowledge-answer-text'),
         TextSpan(
           style: baseStyle,
           children: [
-            for (final segment in parseKnowledgeGraphAnswer(answer.answer))
+            for (final segment in segments)
               if (!segment.isCitation ||
                   answer.citationById(segment.citationId!) == null)
                 TextSpan(text: segment.text)
               else
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: ActionChip(
-                      key: Key('knowledge-citation-link-${segment.citationId}'),
-                      avatar: const Icon(Icons.find_in_page_outlined, size: 16),
-                      label: Text(
-                        '${segment.text} '
-                        '${answer.citationById(segment.citationId!)!.fileName} · '
-                        '${answer.citationById(segment.citationId!)!.position.label}',
-                      ),
-                      onPressed: () => onCitationPressed(
-                        answer.citationById(segment.citationId!)!,
-                      ),
-                    ),
+                  child: _buildCitationWidget(
+                    context,
+                    segment,
+                    answer.citationById(segment.citationId!)!,
+                    baseStyle,
                   ),
                 ),
           ],
@@ -459,13 +522,27 @@ class _SourcesPanel extends StatelessWidget {
   }
 }
 
-class _CitationDocumentDialog extends StatelessWidget {
+class _CitationDocumentDialog extends StatefulWidget {
   const _CitationDocumentDialog({required this.citation});
 
   final KnowledgeGraphRagCitation citation;
 
   @override
+  State<_CitationDocumentDialog> createState() =>
+      _CitationDocumentDialogState();
+}
+
+class _CitationDocumentDialogState extends State<_CitationDocumentDialog> {
+  final List<bool> _reviewed = [false, false, false];
+  static const _reviewLabels = [
+    '回答と引用の対象が同じ',
+    '日時・数量などの条件が同じ',
+    '引用の文脈が回答の結論を支える',
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    final citation = widget.citation;
     final theme = Theme.of(context);
     final before = citation.previewText.substring(0, citation.highlightStart);
     final highlighted = citation.previewText.substring(
@@ -546,32 +623,59 @@ class _CitationDocumentDialog extends StatelessWidget {
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: SelectionArea(
-                      child: Text.rich(
-                        key: Key('knowledge-citation-preview-${citation.id}'),
-                        TextSpan(
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            height: 1.6,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          children: [
-                            if (citation.previewTruncatedBefore)
-                              const TextSpan(text: '…\n'),
-                            TextSpan(text: before),
-                            TextSpan(
-                              text: highlighted,
-                              style: TextStyle(
-                                backgroundColor:
-                                    theme.colorScheme.tertiary.withAlpha(70),
-                                fontWeight: FontWeight.w800,
-                              ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SelectionArea(
+                          child: Text.rich(
+                            key: Key(
+                              'knowledge-citation-preview-${citation.id}',
                             ),
-                            TextSpan(text: after),
-                            if (citation.previewTruncatedAfter)
-                              const TextSpan(text: '\n…'),
-                          ],
+                            TextSpan(
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                              children: [
+                                if (citation.previewTruncatedBefore)
+                                  const TextSpan(text: '…\n'),
+                                TextSpan(text: before),
+                                TextSpan(
+                                  text: highlighted,
+                                  style: TextStyle(
+                                    backgroundColor: theme.colorScheme.tertiary
+                                        .withAlpha(70),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                TextSpan(text: after),
+                                if (citation.previewTruncatedAfter)
+                                  const TextSpan(text: '\n…'),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                        Text(
+                          '回答と引用を確認 ${_reviewed.where((value) => value).length}/3',
+                          key: const Key('knowledge-citation-review-count'),
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        const Text('手動の確認メモです。回答の正確性を保証せず、閉じると消えます。'),
+                        for (var i = 0; i < _reviewLabels.length; i++)
+                          CheckboxListTile(
+                            key: Key('knowledge-citation-review-$i'),
+                            value: _reviewed[i],
+                            title: Text(_reviewLabels[i]),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            onChanged: (value) => setState(() {
+                              _reviewed[i] = value ?? false;
+                            }),
+                          ),
+                      ],
                     ),
                   ),
                 ),

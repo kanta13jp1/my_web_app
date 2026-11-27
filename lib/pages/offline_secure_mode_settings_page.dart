@@ -4,10 +4,12 @@ import '../services/offline_secure_mode_settings_service.dart';
 
 class OfflineSecureModeSettingsPage extends StatefulWidget {
   final OfflineSecureModeSettingsService settingsService;
+  final OfflineSecureModeAuditGateway auditGateway;
 
   const OfflineSecureModeSettingsPage({
     super.key,
     this.settingsService = const OfflineSecureModeSettingsService(),
+    this.auditGateway = const SupabaseOfflineSecureModeAuditGateway(),
   });
 
   @override
@@ -22,8 +24,11 @@ class _OfflineSecureModeSettingsPageState
   final TextEditingController _runtimeUrlController = TextEditingController();
 
   OfflineSecureModeSettings _settings = const OfflineSecureModeSettings();
+  List<OfflineSecureModeAuditEntry> _auditEntries =
+      const <OfflineSecureModeAuditEntry>[];
   bool _loading = true;
   bool _saving = false;
+  bool _loadingAudit = false;
 
   @override
   void initState() {
@@ -52,6 +57,20 @@ class _OfflineSecureModeSettingsPageState
       _settings = settings;
       _loading = false;
     });
+    await _loadAuditLogs();
+  }
+
+  Future<void> _loadAuditLogs() async {
+    if (!mounted) return;
+    setState(() {
+      _loadingAudit = true;
+    });
+    final entries = await widget.auditGateway.listRecent(limit: 10);
+    if (!mounted) return;
+    setState(() {
+      _auditEntries = entries;
+      _loadingAudit = false;
+    });
   }
 
   Future<void> _saveSettings() async {
@@ -66,6 +85,13 @@ class _OfflineSecureModeSettingsPageState
     );
     final saved = await widget.settingsService.saveSettings(next);
     if (!mounted) return;
+    await widget.auditGateway.recordPolicyEvent(
+      settings: saved,
+      auditAction: 'settings.update',
+      status:
+          saved.externalApiBlocked ? 'external_api_blocked' : 'online_allowed',
+    );
+    if (!mounted) return;
     setState(() {
       _settings = saved;
       _saving = false;
@@ -73,6 +99,7 @@ class _OfflineSecureModeSettingsPageState
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('オフラインセキュアモード設定を保存しました')),
     );
+    await _loadAuditLogs();
   }
 
   @override
@@ -106,6 +133,9 @@ class _OfflineSecureModeSettingsPageState
                   child: Column(
                     children: [
                       SwitchListTile(
+                        key: const ValueKey<String>(
+                          'offline_secure_mode_switch',
+                        ),
                         secondary: const Icon(Icons.security_outlined),
                         title: const Text('オフラインセキュアモード'),
                         subtitle: Text(
@@ -122,6 +152,9 @@ class _OfflineSecureModeSettingsPageState
                       ),
                       const Divider(height: 1),
                       SwitchListTile(
+                        key: const ValueKey<String>(
+                          'offline_block_external_api_switch',
+                        ),
                         secondary: const Icon(Icons.public_off_outlined),
                         title: const Text('外部API遮断'),
                         subtitle: const Text('ON時はオンラインプロバイダーを遮断対象にします'),
@@ -138,6 +171,33 @@ class _OfflineSecureModeSettingsPageState
                   ),
                 ),
                 const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  key: ValueKey<int>(_settings.memoryLimitMb),
+                  initialValue: _settings.memoryLimitMb,
+                  decoration: const InputDecoration(
+                    labelText: 'メモリ上限ガード (8GB RAM制約)',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: (<int>{
+                    ...OfflineSecureModeSettings.supportedMemoryLimitsMb,
+                    _settings.memoryLimitMb,
+                  }.toList()
+                        ..sort())
+                      .map(
+                        (limitMb) => DropdownMenuItem<int>(
+                          value: limitMb,
+                          child: Text('$limitMb MB (${limitMb ~/ 1024} GB)'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _settings = _settings.copyWith(memoryLimitMb: value);
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _settings.inferenceEngine,
                   decoration: const InputDecoration(
@@ -188,6 +248,7 @@ class _OfflineSecureModeSettingsPageState
                 ),
                 const SizedBox(height: 20),
                 FilledButton.icon(
+                  key: const ValueKey<String>('offline_save_button'),
                   onPressed: _saving ? null : _saveSettings,
                   icon: _saving
                       ? const SizedBox(
@@ -198,8 +259,90 @@ class _OfflineSecureModeSettingsPageState
                       : const Icon(Icons.save_outlined),
                   label: const Text('保存'),
                 ),
+                const SizedBox(height: 20),
+                _AuditTrailSection(
+                  entries: _auditEntries,
+                  loading: _loadingAudit,
+                  onRefresh: _loadAuditLogs,
+                ),
               ],
             ),
+    );
+  }
+}
+
+class _AuditTrailSection extends StatelessWidget {
+  final List<OfflineSecureModeAuditEntry> entries;
+  final bool loading;
+  final VoidCallback onRefresh;
+
+  const _AuditTrailSection({
+    required this.entries,
+    required this.loading,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      key: const ValueKey<String>('offline_audit_section'),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'セキュアモード監査証跡 (Supabase)',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: const ValueKey<String>('offline_audit_refresh_button'),
+                  tooltip: '監査証跡を更新',
+                  onPressed: loading ? null : onRefresh,
+                  icon: const Icon(Icons.history),
+                ),
+              ],
+            ),
+            if (loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: LinearProgressIndicator(),
+              )
+            else if (entries.isEmpty)
+              Text(
+                '記録済みのセキュアモード監査証跡はまだありません。',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              )
+            else
+              ...entries.take(5).map(
+                    (entry) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      leading: Icon(
+                        entry.externalApiBlocked
+                            ? Icons.gpp_good_outlined
+                            : Icons.cloud_done_outlined,
+                      ),
+                      title: Text('${entry.action} · ${entry.status}'),
+                      subtitle: Text(
+                        '${entry.provider} | ${entry.memoryLimitMb} MB'
+                        '${entry.recordedAt.isEmpty ? '' : ' | ${entry.recordedAt}'}',
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -248,6 +391,10 @@ class _StatusPanel extends StatelessWidget {
                   Text('推論エンジン: ${settings.inferenceEngine}'),
                   const SizedBox(height: 6),
                   Text('ローカルRAG: ${settings.localRuntimeUrl}'),
+                  const SizedBox(height: 6),
+                  Text(
+                    'メモリ上限ガード: ${settings.memoryLimitMb} MB (8GB RAM制約対応)',
+                  ),
                 ],
               ),
             ),

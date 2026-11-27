@@ -1,0 +1,149 @@
+name: D-ID Video Translate Pipeline
+
+on:
+  schedule:
+    # 毎週月曜 11:00 JST (02:00 UTC) に多言語動画翻訳パイプラインを dry-run で点検
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without calling external D-ID API (true/false)'
+        required: false
+        default: 'true'
+      source_video_id:
+        description: 'Logical source video identifier'
+        required: false
+        default: 'intro_philosophy_01'
+      source_video_url:
+        description: 'Public HTTPS source video URL (required when dry_run=false)'
+        required: false
+        default: ''
+      languages:
+        description: 'Comma-separated target language codes (e.g. ja,en,es,fr)'
+        required: false
+        default: 'ja,en,es,fr'
+      duration_seconds:
+        description: 'Source video duration in seconds'
+        required: false
+        default: '30'
+      max_duration_cap_seconds:
+        description: 'Fail-closed maximum video duration cap (seconds)'
+        required: false
+        default: '120'
+      max_cost_cap_usd:
+        description: 'Fail-closed maximum estimated compute cost cap (USD)'
+        required: false
+        default: '5.0'
+
+concurrency:
+  group: did-video-translate-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  did-video-translate:
+    name: Run D-ID Video Translate multilingual pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run D-ID pipeline unit tests
+        run: python3 -B test/scripts/test_did_video_translate_pipeline.py -v
+
+      - name: Run D-ID pipeline self-test
+        run: python3 -B scripts/did_video_translate_pipeline.py --self-test
+
+      - name: Execute D-ID Video Translate pipeline
+        id: did_translate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          SOURCE_VIDEO_ID: ${{ github.event.inputs.source_video_id || 'intro_philosophy_01' }}
+          SOURCE_VIDEO_URL: ${{ github.event.inputs.source_video_url || '' }}
+          TARGET_LANGUAGES: ${{ github.event.inputs.languages || 'ja,en,es,fr' }}
+          DURATION_SECONDS: ${{ github.event.inputs.duration_seconds || '30' }}
+          MAX_DURATION_CAP: ${{ github.event.inputs.max_duration_cap_seconds || '120' }}
+          MAX_COST_CAP: ${{ github.event.inputs.max_cost_cap_usd || '5.0' }}
+          D_ID_API_KEY: ${{ secrets.D_ID_API_KEY || '' }}
+          D_ID_WEBHOOK_URL: ${{ secrets.D_ID_TRANSLATE_WEBHOOK_URL || vars.D_ID_TRANSLATE_WEBHOOK_URL || '' }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ] && [ -n "${D_ID_API_KEY}" ] && [ -n "${SOURCE_VIDEO_URL}" ]; then
+            if [ -n "${D_ID_WEBHOOK_URL}" ]; then
+              python3 -B scripts/did_video_translate_pipeline.py \
+                --source-video-id "${SOURCE_VIDEO_ID}" \
+                --source-video-url "${SOURCE_VIDEO_URL}" \
+                --languages "${TARGET_LANGUAGES}" \
+                --duration-seconds "${DURATION_SECONDS}" \
+                --max-duration-cap-seconds "${MAX_DURATION_CAP}" \
+                --max-cost-cap-usd "${MAX_COST_CAP}" \
+                --webhook-url "${D_ID_WEBHOOK_URL}" \
+                --json-out "did_video_translate_report.json" \
+                --markdown-out "did_video_translate_report.md" \
+                --github-output "${GITHUB_OUTPUT}" \
+                --live
+            else
+              python3 -B scripts/did_video_translate_pipeline.py \
+                --source-video-id "${SOURCE_VIDEO_ID}" \
+                --source-video-url "${SOURCE_VIDEO_URL}" \
+                --languages "${TARGET_LANGUAGES}" \
+                --duration-seconds "${DURATION_SECONDS}" \
+                --max-duration-cap-seconds "${MAX_DURATION_CAP}" \
+                --max-cost-cap-usd "${MAX_COST_CAP}" \
+                --json-out "did_video_translate_report.json" \
+                --markdown-out "did_video_translate_report.md" \
+                --github-output "${GITHUB_OUTPUT}" \
+                --live
+            fi
+          else
+            python3 -B scripts/did_video_translate_pipeline.py \
+              --source-video-id "${SOURCE_VIDEO_ID}" \
+              --languages "${TARGET_LANGUAGES}" \
+              --duration-seconds "${DURATION_SECONDS}" \
+              --max-duration-cap-seconds "${MAX_DURATION_CAP}" \
+              --max-cost-cap-usd "${MAX_COST_CAP}" \
+              --json-out "did_video_translate_report.json" \
+              --markdown-out "did_video_translate_report.md" \
+              --github-output "${GITHUB_OUTPUT}" \
+              --dry-run
+          fi
+
+      - name: Upload translation pipeline artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: did-video-translate-report
+          path: |
+            did_video_translate_report.json
+            did_video_translate_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append workflow summary
+        env:
+          PIPELINE_STATUS: ${{ steps.did_translate.outputs.status }}
+          PIPELINE_MODE: ${{ steps.did_translate.outputs.mode }}
+          LANG_COUNT: ${{ steps.did_translate.outputs.language_count }}
+          EST_COST_USD: ${{ steps.did_translate.outputs.estimated_cost_usd }}
+          DURATION_SEC: ${{ steps.did_translate.outputs.duration_seconds }}
+        run: |
+          {
+            echo "## D-ID Video Translate Pipeline (#2660)"
+            echo "- Status: \`${PIPELINE_STATUS}\` (Mode: \`${PIPELINE_MODE}\`)"
+            echo "- Target Languages: \`${LANG_COUNT}\`"
+            echo "- Duration: \`${DURATION_SEC}s\` | Estimated Cost: \`USD ${EST_COST_USD}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

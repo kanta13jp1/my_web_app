@@ -62,6 +62,21 @@ def load_resource_metrics(path: Path) -> dict[str, float]:
     return dict(sorted(totals.items()))
 
 
+def load_landing_trial_failures(path: Path | None) -> int:
+    if path is None or not path.exists():
+        return 0
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return 0
+    if not isinstance(data, dict):
+        return 0
+    rows = data.get("result")
+    if isinstance(rows, list):
+        return len(rows)
+    return int(_number(data.get("count", 0)))
+
+
 def build_report(
     providers: list[dict[str, Any]],
     resources: dict[str, float],
@@ -73,6 +88,9 @@ def build_report(
     resource_alerts: dict[str, float],
     sentry_status: str = "configured",
     forced_alert_label: str | None = None,
+    landing_trial_failures: int = 0,
+    landing_trial_failure_alert: int = 1,
+    landing_trial_status: str = "unconfigured",
 ) -> dict[str, Any]:
     if sentry_status not in SENTRY_STATUSES:
         raise ValueError(f"invalid Sentry status: {sentry_status}")
@@ -102,6 +120,17 @@ def build_report(
 
     if sentry_status == "configured" and sentry_errors >= sentry_error_alert:
         alerts.append({"source": "sentry", "reason": "error_volume", "label": "project"})
+    if (
+        landing_trial_status == "configured"
+        and landing_trial_failures >= landing_trial_failure_alert
+    ):
+        alerts.append(
+            {
+                "source": "landing_trial",
+                "reason": "provider_failed",
+                "label": "growth-hub",
+            }
+        )
     for name, maximum in resource_alerts.items():
         if resources.get(name, 0.0) >= maximum:
             alerts.append({"source": "supabase_metrics", "reason": "resource", "label": name})
@@ -123,19 +152,25 @@ def build_report(
             "ai_hub": "provider_health_view (24h aggregate)",
             "supabase": "Management API Prometheus metrics endpoint",
             "sentry": "project received-error stats (24h aggregate)",
+            "landing_trial": "Supabase function_logs (1h landing.trial provider failed count)",
         },
         "source_status": {
             "ai_hub": "configured",
             "supabase": "configured",
             "sentry": sentry_status,
+            "landing_trial": landing_trial_status,
         },
         "providers": summarized_providers,
         "resources": resources,
         "sentry_errors_24h": sentry_errors,
+        "landing_trial": {
+            "failures": landing_trial_failures,
+        },
         "thresholds": {
             "p95_alert_ms": p95_alert_ms,
             "error_rate_alert": error_rate_alert,
             "sentry_error_alert": sentry_error_alert,
+            "landing_trial_failure_alert": landing_trial_failure_alert,
             "resource_alerts": resource_alerts,
         },
         "alerts": alerts,
@@ -147,11 +182,15 @@ def build_report(
 
 
 def render_markdown(report: dict[str, Any]) -> str:
+    landing_trial_failures = int(
+        _number((report.get("landing_trial") or {}).get("failures", 0))
+    )
     lines = [
         "# Production Observability Monitor",
         "",
         f"- Threshold breach: **{str(report['breach']).lower()}**",
         f"- Sentry errors (24h): **{report['sentry_errors_24h']}**",
+        f"- Landing trial failures (1h): **{landing_trial_failures}**",
         f"- Dedupe key: `{report['dedupe_key']}`",
         "",
         "## Source status",
@@ -212,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
         choices=sorted(SENTRY_STATUSES),
         default="configured",
     )
+    parser.add_argument("--landing-trial-logs-json", type=Path)
+    parser.add_argument("--landing-trial-failure-alert", type=int, default=1)
+    parser.add_argument("--landing-trial-status", default="unconfigured")
     parser.add_argument("--force-alert-label")
     args = parser.parse_args(argv)
     report = build_report(
@@ -224,6 +266,11 @@ def main(argv: list[str] | None = None) -> int:
         resource_alerts=parse_resource_alerts(args.resource_alert),
         sentry_status=args.sentry_status,
         forced_alert_label=args.force_alert_label,
+        landing_trial_failures=load_landing_trial_failures(
+            args.landing_trial_logs_json
+        ),
+        landing_trial_failure_alert=args.landing_trial_failure_alert,
+        landing_trial_status=args.landing_trial_status,
     )
     args.output_json.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     args.output_md.write_text(render_markdown(report), encoding="utf-8", newline="\n")
@@ -232,6 +279,30 @@ def main(argv: list[str] | None = None) -> int:
     print(f"forced_alert={str(report['forced_alert']).lower()}")
     return 0
 
+
+
+def select_alert_issue(issues, forced=False):
+    """Match the oldest canonical alert, never a fuzzy dashboard match.
+
+    Fingerprints describe changing symptoms; the title is the canonical incident
+    identity used by repository duplicate consolidation. Validation is isolated.
+    """
+    import re
+
+    title = ("[Validation][Observability] Dedupe alert live proof" if forced else
+             "[Alert][Observability] Production telemetry threshold breach")
+    candidates = []
+    for issue in issues:
+        body = issue.get("body") or ""
+        if (issue.get("state", "").lower() != "open"
+                or "pull_request" in issue
+                or issue.get("title") != title
+                or "[observability-dashboard:" in body
+                or not re.search(r"^\[observability-dedupe:[0-9a-f]{16}\]$",
+                                 body, re.MULTILINE)):
+            continue
+        candidates.append(issue["number"])
+    return min(candidates) if candidates else None
 
 if __name__ == "__main__":
     raise SystemExit(main())

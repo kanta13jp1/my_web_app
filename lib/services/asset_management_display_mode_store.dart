@@ -35,6 +35,7 @@ enum AssetManagementSectionId {
   alertCenter,
   netWorthPanel,
   monthlyDashboard,
+  savingsPlan,
 }
 
 /// セクション単位の表示上書き。auto はティア×モードの既定に従う。
@@ -75,6 +76,8 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
 
   String get label {
     switch (this) {
+      case AssetManagementSectionId.savingsPlan:
+        return '貯蓄目標と生活費の計画';
       case AssetManagementSectionId.monthlyFlow:
         return '当サイクルの収支の概観';
       case AssetManagementSectionId.calendar:
@@ -133,6 +136,7 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
       case AssetManagementSectionId.debtPlanner:
         return AssetManagementSectionTier.essential;
       case AssetManagementSectionId.proposals:
+      case AssetManagementSectionId.savingsPlan:
       case AssetManagementSectionId.salaryBreakdown:
       case AssetManagementSectionId.recurringFixedCost:
       case AssetManagementSectionId.subscriptionFixedCost:
@@ -585,7 +589,9 @@ class AssetManagementDisplayModeStore {
     bool recordEvent = true,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    await store.setString(_modeKey, mode.storageId);
+    if (!await store.setString(_modeKey, mode.storageId)) {
+      throw StateError('表示設定の保存を確認できませんでした。');
+    }
     if (!recordEvent) {
       return;
     }

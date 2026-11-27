@@ -2,6 +2,11 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts";
+import {
+  extractTokenUsage,
+  recordApiUsageLog,
+  type UsageLogInsertClient,
+} from "../_shared/ai_cost_tracker.ts";
 import { AiAssistantChatError, handleAiAssistantChat } from "./chat.ts";
 import { createSupabaseAiAssistantChatStore } from "./chat_supabase.ts";
 
@@ -23,9 +28,9 @@ const KEYS = {
 };
 
 const FALLBACK_MODELS = [
-  { provider: "openai", model: "gpt-4o-mini" },
-  { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
   { provider: "gemini", model: "gemini-2.5-flash" },
+  { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
+  { provider: "openai", model: "gpt-4o-mini" },
   { provider: "deepseek", model: "deepseek-v4-flash" },
 ];
 
@@ -132,6 +137,20 @@ interface MagiNodeProfile {
   defaultModel: string;
 }
 
+interface UsageTelemetryContext {
+  client: UsageLogInsertClient | null;
+  userId: string;
+  actionName: string;
+}
+
+function createOptionalUsageClient(): UsageLogInsertClient | null {
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SERVICE_ROLE_KEY") ??
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!url || !serviceKey) return null;
+  return createClient(url, serviceKey) as unknown as UsageLogInsertClient;
+}
+
 interface MagiOpinion {
   nodeName: string;
   viewpoint: string;
@@ -194,6 +213,13 @@ serve(async (req) => {
 
     const requestData: AIRequest = await req.json().catch(() => ({}));
     const { action, model: targetModel } = requestData;
+    const usageContext: UsageTelemetryContext = {
+      client: createOptionalUsageClient(),
+      userId: user.id,
+      actionName: typeof action === "string" && action.trim()
+        ? action.trim()
+        : "unknown",
+    };
 
     const requestContent = requestData.content ?? requestData.text;
     const runFallbackChain = async (
@@ -243,7 +269,7 @@ serve(async (req) => {
             content: originalPrompt,
             imageBase64: image?.base64,
             mimeType: image?.mime,
-          });
+          }, usageContext);
           if (fighter !== primaryChain[0]) {
             console.warn(
               `[fallback] used ${fighter.provider}:${fighter.model} after primary failure`,
@@ -302,6 +328,7 @@ serve(async (req) => {
         },
         image,
         fallback: runFallbackChain,
+        usageContext,
       });
     };
 
@@ -1316,8 +1343,9 @@ async function runMagiNode(params: {
   profile: MagiNodeProfile;
   requestData: AIRequest;
   image?: { base64: string; mime: string };
+  usageContext?: UsageTelemetryContext;
 }): Promise<MagiOpinion | null> {
-  const { prompt, profile, requestData, image } = params;
+  const { prompt, profile, requestData, image, usageContext } = params;
   const model = resolveMagiNodeModel(profile, requestData);
   const provider = inferProvider(model);
   if (!isProviderAvailable(provider)) {
@@ -1337,6 +1365,7 @@ async function runMagiNode(params: {
         imageBase64: image?.base64,
         mimeType: image?.mime,
       },
+      usageContext,
     );
     const content = normalizeMagiText(response);
     if (!content) {
@@ -1357,8 +1386,9 @@ async function runMagiBestEffort(params: {
   prompt: string;
   requestData: AIRequest;
   image?: { base64: string; mime: string };
+  usageContext?: UsageTelemetryContext;
 }): Promise<string> {
-  const { prompt, requestData, image } = params;
+  const { prompt, requestData, image, usageContext } = params;
   let lastError: unknown;
   for (const fighter of buildMagiSynthesisFighters(requestData)) {
     try {
@@ -1371,6 +1401,7 @@ async function runMagiBestEffort(params: {
           imageBase64: image?.base64,
           mimeType: image?.mime,
         },
+        usageContext,
       );
       const normalized = normalizeMagiText(response);
       if (normalized) {
@@ -1395,17 +1426,23 @@ async function runMagiChain(params: {
     originalPrompt: string,
     image?: { base64: string; mime: string },
   ) => Promise<string>;
+  usageContext?: UsageTelemetryContext;
 }): Promise<string> {
-  const { prompt, requestData, image, fallback } = params;
+  const { prompt, requestData, image, fallback, usageContext } = params;
   const opinions = (await Promise.all(
     MAGI_NODE_PROFILES.map((profile) =>
-      runMagiNode({ prompt, profile, requestData, image })
+      runMagiNode({ prompt, profile, requestData, image, usageContext })
     ),
   )).filter((opinion): opinion is MagiOpinion => opinion !== null);
 
   if (opinions.length === 0) {
     try {
-      return await runMagiBestEffort({ prompt, requestData, image });
+      return await runMagiBestEffort({
+        prompt,
+        requestData,
+        image,
+        usageContext,
+      });
     } catch {
       return await fallback(prompt, image);
     }
@@ -1421,6 +1458,7 @@ async function runMagiChain(params: {
       prompt: synthesisPrompt,
       requestData,
       image,
+      usageContext,
     });
   } catch {
     return opinions[0].content;
@@ -1434,23 +1472,34 @@ async function callAI(
   fighter: Fighter,
   keys: KeyMap,
   data: AIRequest,
+  usageContext?: UsageTelemetryContext,
 ): Promise<string> {
   if (!isProviderAvailable(fighter.provider)) {
     throw new Error(`${fighter.provider} API key is not configured`);
   }
   if (fighter.provider === "gemini") {
-    return await callGemini(fighter.model, keys.gemini!, data);
+    return await callGemini(fighter.model, keys.gemini!, data, usageContext);
   }
   if (fighter.provider === "anthropic") {
-    return await callAnthropic(fighter.model, keys.anthropic!, data);
+    return await callAnthropic(
+      fighter.model,
+      keys.anthropic!,
+      data,
+      usageContext,
+    );
   }
   if (fighter.provider === "deepseek") {
-    return await callDeepSeek(fighter.model, keys.deepseek!, data);
+    return await callDeepSeek(
+      fighter.model,
+      keys.deepseek!,
+      data,
+      usageContext,
+    );
   }
   return await callOpenAICompatible(fighter.model, keys.openai!, data, {
     providerLabel: "OpenAI",
     baseUrl: "https://api.openai.com/v1/chat/completions",
-  });
+  }, usageContext);
 }
 
 // ---------------- Helper functions ----------------
@@ -1662,11 +1711,37 @@ async function createHedraVideo(
   return normalizeHedraVideoResponse(parsed);
 }
 
+async function recordProviderUsageBestEffort(params: {
+  provider: string;
+  model: string;
+  payload: unknown;
+  usageContext?: UsageTelemetryContext;
+}): Promise<void> {
+  if (!params.usageContext?.userId) return;
+  try {
+    const usage = extractTokenUsage(params.provider, params.payload);
+    await recordApiUsageLog({
+      client: params.usageContext.client,
+      userId: params.usageContext.userId,
+      provider: params.provider,
+      model: params.model,
+      actionName: params.usageContext.actionName,
+      usage,
+    });
+  } catch (err) {
+    console.warn(
+      "[ai-assistant] recordProviderUsageBestEffort failed:",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+}
+
 async function callOpenAICompatible(
   model: string,
   apiKey: string,
   data: AIRequest,
   options: { providerLabel: string; baseUrl: string },
+  usageContext?: UsageTelemetryContext,
 ): Promise<string> {
   const messages: Array<
     { role: string; content: string | Array<Record<string, unknown>> }
@@ -1694,6 +1769,12 @@ async function callOpenAICompatible(
       `${options.providerLabel}: ${json.error?.message || "Unknown error"}`,
     );
   }
+  await recordProviderUsageBestEffort({
+    provider: options.providerLabel,
+    model,
+    payload: json,
+    usageContext,
+  });
   return json.choices[0].message.content;
 }
 
@@ -1701,17 +1782,25 @@ async function callDeepSeek(
   model: string,
   apiKey: string,
   data: AIRequest,
+  usageContext?: UsageTelemetryContext,
 ): Promise<string> {
-  return await callOpenAICompatible(model, apiKey, data, {
-    providerLabel: "DeepSeek",
-    baseUrl: "https://api.deepseek.com/chat/completions",
-  });
+  return await callOpenAICompatible(
+    model,
+    apiKey,
+    data,
+    {
+      providerLabel: "DeepSeek",
+      baseUrl: "https://api.deepseek.com/chat/completions",
+    },
+    usageContext,
+  );
 }
 
 async function callAnthropic(
   model: string,
   apiKey: string,
   data: AIRequest,
+  usageContext?: UsageTelemetryContext,
 ): Promise<string> {
   const content: Array<Record<string, unknown>> = [{
     type: "text",
@@ -1744,6 +1833,12 @@ async function callAnthropic(
   if (!resp.ok) {
     throw new Error(`Anthropic: ${json.error?.message || "Unknown error"}`);
   }
+  await recordProviderUsageBestEffort({
+    provider: "anthropic",
+    model,
+    payload: json,
+    usageContext,
+  });
   return json.content[0].text;
 }
 
@@ -1751,6 +1846,7 @@ async function callGemini(
   model: string,
   apiKey: string,
   data: AIRequest,
+  usageContext?: UsageTelemetryContext,
 ): Promise<string> {
   const parts: Array<Record<string, unknown>> = [{ text: data.content || "" }];
   if (data.imageBase64) {
@@ -1773,5 +1869,11 @@ async function callGemini(
   if (!resp.ok) {
     throw new Error(`Gemini: ${json.error?.message || "Unknown error"}`);
   }
+  await recordProviderUsageBestEffort({
+    provider: "gemini",
+    model,
+    payload: json,
+    usageContext,
+  });
   return json.candidates[0].content.parts[0].text;
 }

@@ -1,7 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_web_app/models/shop_attribution.dart';
 import 'package:my_web_app/pages/digital_product_store_pages.dart';
+import 'package:my_web_app/services/shop_funnel_service.dart';
 import 'package:my_web_app/services/shop_service.dart';
+
+typedef _FunnelCall = ({
+  String stage,
+  String productId,
+  String? source,
+  String? campaign,
+});
+
+class _RecordingShopFunnelService extends ShopFunnelService {
+  final List<_FunnelCall> calls = [];
+
+  @override
+  Future<String?> visitorId() async => 'visitor-test-1';
+
+  @override
+  Future<void> record(
+    String stage, {
+    required String productId,
+    String? source,
+    String? campaign,
+    ShopAttribution? attribution,
+  }) async {
+    final _FunnelCall call = (
+      stage: stage,
+      productId: productId,
+      source: attribution?.source ?? source,
+      campaign: attribution?.campaign ?? campaign,
+    );
+    calls.add(call);
+  }
+}
 
 class _FakeShopGateway implements ShopGateway {
   _FakeShopGateway({
@@ -16,6 +50,7 @@ class _FakeShopGateway implements ShopGateway {
 
   int checkoutCalls = 0;
   int downloadCalls = 0;
+  String? lastCheckoutSource;
 
   @override
   bool get isSignedIn => signedIn;
@@ -47,8 +82,10 @@ class _FakeShopGateway implements ShopGateway {
     String productId, {
     String? visitorId,
     String? source,
+    ShopAttribution? attribution,
   }) async {
     checkoutCalls++;
+    lastCheckoutSource = attribution?.source ?? source;
     return const CheckoutStart.redirect('https://checkout.example/session');
   }
 
@@ -103,6 +140,10 @@ Future<void> _pump(
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('DigitalProductStorePage', () {
     testWidgets('9種別を表示し、選択した種別だけに絞り込む', (tester) async {
       final image = _product('image-pack', '画像素材集', ShopProductType.image);
@@ -233,5 +274,135 @@ void main() {
       expect(gateway.downloadCalls, 1);
       expect(external, isTrue);
     });
+  });
+
+  group('UTM attribution route propagation', () {
+    test(
+      'buildShopProductRoute keeps utm params and drops unrelated params',
+      () {
+        final route = buildShopProductRoute(
+          'hexciv-win64',
+          Uri.parse(
+            '/shop?utm_source=x&utm_campaign=h4_h7_pitch'
+            '&utm_content=growth_game_t30_r1&ref=ignored&utm_medium= ',
+          ),
+        );
+        final parsed = Uri.parse(route);
+        expect(parsed.path, '/shop/product');
+        expect(parsed.queryParameters, <String, String>{
+          'product_id': 'hexciv-win64',
+          'utm_source': 'x',
+          'utm_campaign': 'h4_h7_pitch',
+          'utm_content': 'growth_game_t30_r1',
+        });
+      },
+    );
+
+    test(
+      'buildShopProductRoute preserves unavailable attribution state',
+      () {
+        final cases = [
+          '/shop?shop_attribution=unavailable',
+          '/shop?utm_source=x&utm_content=bad/value',
+          '/shop?utm_source=x&utm_source=y',
+        ];
+        for (final raw in cases) {
+          final route = buildShopProductRoute('hexciv-win64', Uri.parse(raw));
+          final parsed = Uri.parse(route);
+          expect(parsed.path, '/shop/product');
+          expect(parsed.queryParameters, <String, String>{
+            'product_id': 'hexciv-win64',
+            ShopAttribution.unavailableQueryKey: 'unavailable',
+          });
+        }
+      },
+    );
+
+    testWidgets(
+      'DigitalProductStorePage forwards UTM parameters to product route',
+      (tester) async {
+        final product = _product(
+          'hexciv-win64',
+          'HexCiv (Windows 版)',
+          ShopProductType.game,
+        );
+        final gateway = _FakeShopGateway(products: [product]);
+        final pushedRoutes = <String>[];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            initialRoute:
+                '/shop?utm_source=verify_pr5388&utm_campaign=p1_20261125',
+            onGenerateRoute: (settings) {
+              final uri = Uri.parse(settings.name ?? '/shop');
+              if (uri.path == '/shop/product') {
+                pushedRoutes.add(settings.name ?? '');
+                return MaterialPageRoute(
+                  builder: (_) => const Scaffold(body: Text('DETAIL')),
+                  settings: settings,
+                );
+              }
+              return MaterialPageRoute(
+                builder: (_) => DigitalProductStorePage(
+                  service: gateway,
+                  attributionUri: uri,
+                ),
+                settings: settings,
+              );
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('HexCiv (Windows 版)'));
+        await tester.pumpAndSettle();
+
+        expect(pushedRoutes, hasLength(1));
+        final target = Uri.parse(pushedRoutes.single);
+        expect(target.path, '/shop/product');
+        expect(target.queryParameters['product_id'], 'hexciv-win64');
+        expect(target.queryParameters['utm_source'], 'verify_pr5388');
+        expect(target.queryParameters['utm_campaign'], 'p1_20261125');
+      },
+    );
+
+    testWidgets(
+      'DigitalProductPage records source and campaign from attributionUri',
+      (tester) async {
+        final product = _product(
+          'hexciv-win64',
+          'HexCiv (Windows 版)',
+          ShopProductType.game,
+        );
+        final gateway = _FakeShopGateway(products: [product], signedIn: true);
+        final funnel = _RecordingShopFunnelService();
+
+        await _pump(
+          tester,
+          DigitalProductPage(
+            productId: product.id,
+            service: gateway,
+            funnel: funnel,
+            attributionUri: Uri.parse(
+              '/shop/product?product_id=hexciv-win64'
+              '&utm_source=x&utm_campaign=h4_h7_pitch',
+            ),
+            urlLauncher: (_, __) async => true,
+          ),
+        );
+
+        expect(funnel.calls, hasLength(1));
+        expect(funnel.calls.single.stage, ShopFunnelService.stageProductView);
+        expect(funnel.calls.single.source, 'x');
+        expect(funnel.calls.single.campaign, 'h4_h7_pitch');
+
+        await tester.ensureVisible(find.text('¥800 で購入'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('¥800 で購入'));
+        await tester.pumpAndSettle();
+
+        expect(gateway.lastCheckoutSource, 'x');
+      },
+    );
   });
 }

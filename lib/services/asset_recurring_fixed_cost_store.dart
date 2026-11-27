@@ -38,10 +38,30 @@ class AssetRecurringFixedCostStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     if (costs.isEmpty) {
-      await store.remove(prefsKey);
+      if (!await store.remove(prefsKey)) {
+        throw StateError('Recurring fixed cost removal was rejected');
+      }
       return;
     }
-    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(costs)));
+    final normalized = costs.map(normalizeCost).toList();
+    final saved = await store.setString(
+      prefsKey,
+      jsonEncode(encodeMirrorValue(normalized)),
+    );
+    if (!saved) {
+      throw StateError('Recurring fixed cost save was rejected');
+    }
+  }
+
+  /// Persist user-entered billing details without vendor-specific guesses.
+  static AssetRecurringFixedCost normalizeCost(AssetRecurringFixedCost cost) {
+    return cost;
+  }
+
+  static List<AssetRecurringFixedCost> normalizeCosts(
+    Iterable<AssetRecurringFixedCost> costs,
+  ) {
+    return costs.map(normalizeCost).toList();
   }
 
   /// リストを `asset_pref_mirror.value` (jsonb) 形 `{id: {...}}` へ変換する。
@@ -50,7 +70,7 @@ class AssetRecurringFixedCostStore {
     List<AssetRecurringFixedCost> costs,
   ) {
     return <String, dynamic>{
-      for (final cost in costs) cost.id: cost.toJson(),
+      for (final cost in costs) cost.id: normalizeCost(cost).toJson(),
     };
   }
 
@@ -69,7 +89,7 @@ class AssetRecurringFixedCostStore {
           Map<String, dynamic>.from(raw),
         );
         if (cost != null) {
-          result.add(cost);
+          result.add(normalizeCost(cost));
         }
       }
     });

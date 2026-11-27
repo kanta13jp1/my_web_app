@@ -1,4 +1,8 @@
-export type AiHubActionAccess = "public" | "authenticated" | "service_role";
+export type AiHubActionAccess =
+  | "public"
+  | "authenticated"
+  | "authenticated_or_service_role"
+  | "service_role";
 
 export type AiHubAuthorizationContext = {
   userId: string | null;
@@ -13,16 +17,9 @@ export type AiHubAuthorizationDecision =
     error: "Unauthorized" | "Forbidden" | "UnknownAction";
   };
 
+// Anonymous access is limited to read-only content that never calls a paid
+// external provider. Anything that spends an API key must not be listed here.
 export const PUBLIC_AI_HUB_ACTIONS = new Set([
-  "judgment.get",
-  "judgment.get.legacy",
-  "tags.suggest",
-  "search.index_note",
-  "provider.list",
-  "provider.chat",
-  "provider.chat_auto",
-  "edge_llm.invoke",
-  "election.analyze",
   "english_reading.list_lessons",
   "english_reading.get_lesson",
   "home.popular",
@@ -36,6 +33,12 @@ export const PUBLIC_AI_HUB_ACTIONS = new Set([
 ]);
 
 export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
+  "judgment.get",
+  "judgment.get.legacy",
+  "tags.suggest",
+  "search.index_note",
+  "provider.list",
+  "election.analyze",
   "search.query",
   "task.clarity.evaluate",
   "secretary.task",
@@ -45,6 +48,11 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "agent.create",
   "agent.run",
   "agent.tool_policy.evaluate",
+  "agent.tool_policy.preview",
+  "agent.sandbox.evaluate",
+  "agent.sandbox.execute_isolated",
+  "agent.sandbox.audit_list",
+  "agent.sandbox.policy_upsert",
   "org.get",
   "my_agent.chat",
   "my_agent.history",
@@ -80,12 +88,17 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "asset.monthly_report.generate",
   "asset_liability.monthly_report.generate",
   "asset_subscription.analyze_statement",
+  "palm_reading.analyze",
+  "palm_reading.delete",
   "asset.chat",
   "ai_hub.asset_chat",
   "department_finance_summary",
   "ai_hub.department_finance_summary",
   "payslip.parse",
   "parse-payslip",
+  "mario.jev_decide",
+  "expense.jev_suggest",
+  "expense.jev_search",
   "expense.classify",
   "classify-expense",
   "expense.weekly_coaching.generate",
@@ -97,6 +110,9 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "knowledge_graph.upload",
   "knowledge_graph.query",
   "knowledge_graph.delete_document",
+  "ai_monitor.token_cache.summary",
+  "ai_monitor.token_cache.diagnose_prefix",
+  "ai_monitor.token_cache.record_tool_usage",
   "voice.tts",
   "voice.catalog",
   "voice.usage",
@@ -104,10 +120,38 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "voice.stt",
   "voice.cartesia_session.start",
   "voice.cartesia_session.finish",
+  "voice.clone.consent.status",
+  "voice.clone.consent.accept",
+  "voice.clone.consent.submit_recording",
+  "voice.clone.consent.revoke",
+  "voice.clone.generate",
   "english_reading.submit_attempt",
   "english_reading.ability",
   "english_reading.generate_lesson",
   "home.recommend",
+  "quota.daily_status",
+  "data_sources.status",
+  "data_sources.register",
+  "ai_router.structured.route",
+  "ai_router.structured.validate_and_save",
+  "ai_router.structured.list_preferences",
+]);
+
+// Paid LLM gateways: callable by a signed-in user, or by other Edge Functions
+// (lifestyle-hub / tools-hub / memory-search-hub / ai-hub internal worker)
+// using the service-role key. Never anonymous.
+export const AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
+  "provider.chat",
+  "provider.chat_auto",
+  "edge_llm.invoke",
+  "prompt_cache.build_payload",
+  "prompt_cache.record_metric",
+  "prompt_cache.monitor_summary",
+  "prompt_cache.check_renewal",
+  "agent.safety_checkpoint.evaluate",
+  "agent.safety_checkpoint.list",
+  "agent.safety_checkpoint.approve",
+  "agent.safety_checkpoint.reject",
 ]);
 
 export const SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
@@ -125,6 +169,9 @@ export const SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
 
 export function aiHubActionAccess(action: string): AiHubActionAccess | null {
   if (SERVICE_ROLE_AI_HUB_ACTIONS.has(action)) return "service_role";
+  if (AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS.has(action)) {
+    return "authenticated_or_service_role";
+  }
   if (AUTHENTICATED_AI_HUB_ACTIONS.has(action)) return "authenticated";
   if (PUBLIC_AI_HUB_ACTIONS.has(action)) return "public";
   return null;
@@ -136,12 +183,21 @@ export function authorizeAiHubAction(
 ): AiHubAuthorizationDecision {
   const access = aiHubActionAccess(action);
   if (access === null) {
-    // Fail-closed for any unregistered action
+    // Fail-closed for any unregistered action. Anonymous callers get 401 so
+    // the action registry is not probeable without credentials.
+    if (!context.userId && !context.isServiceRole) {
+      return { allowed: false, status: 401, error: "Unauthorized" };
+    }
     return { allowed: false, status: 400, error: "UnknownAction" };
   }
   if (access === "public") return { allowed: true };
   if (access === "authenticated") {
     return context.userId
+      ? { allowed: true }
+      : { allowed: false, status: 401, error: "Unauthorized" };
+  }
+  if (access === "authenticated_or_service_role") {
+    return context.userId || context.isServiceRole
       ? { allowed: true }
       : { allowed: false, status: 401, error: "Unauthorized" };
   }

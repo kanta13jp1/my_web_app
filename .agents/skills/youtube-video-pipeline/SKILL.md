@@ -15,12 +15,13 @@ Read [references/ai-university-embedding.md](references/ai-university-embedding.
 
 ## Preflight
 
-Set the skill and output paths, then check dependencies:
+From the chosen repository checkout, derive the skill path and select a job directory outside Git, then check dependencies:
 
 ```powershell
-$skillDir = "C:\Users\kanta\GitHub\my_web_app\.agents\skills\youtube-video-pipeline"
-$jobDir = "C:\Users\kanta\Videos\youtube-video-pipeline\<job-name>"
-$appRepo = "C:\Users\kanta\GitHub\my_web_app"
+$appRepo = (git rev-parse --show-toplevel).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Run from the chosen repository checkout." }
+$skillDir = Join-Path $appRepo ".agents/skills/youtube-video-pipeline"
+$jobDir = Join-Path ([Environment]::GetFolderPath("UserProfile")) "Videos/youtube-video-pipeline/<job-name>"
 python "$skillDir\scripts\media_pipeline.py" check
 ```
 
@@ -224,11 +225,11 @@ gh pr create --base main --head (git branch --show-current) `
   --title "feat: publish YouTube lesson in AI University" `
   --body-file <pr-body.md>
 gh pr checks <pr-number> --watch --interval 15
-gh pr merge <pr-number> --squash --delete-branch
+gh pr merge <pr-number> --squash
 gh pr view <pr-number> --json state,mergedAt,mergeCommit,url
 ```
 
-Merge only after required checks pass. Capture the actual squash merge commit, then identify the `Deploy to Production` run whose `headSha` matches it; do not assume the newest run belongs to this release.
+Merge only after required checks pass. Do not delete the remote branch as part of this skill; report its state for a separate user decision. Capture the actual squash merge commit, then identify the `Deploy to Production` run whose `headSha` matches it; do not assume the newest run belongs to this release.
 
 ```powershell
 gh run list --workflow deploy-prod.yml --branch main --event push --limit 20 `

@@ -118,6 +118,21 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/analytics/endpoints/metrics" \
             > supabase-metrics.prom
+          LT_START=$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ)
+          LT_SQL="select timestamp from logs where source = 'function_logs' and position(event_message, 'landing.trial provider failed') > 0 limit 50"
+          if curl --fail --silent --show-error --max-time 30 --get \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --data-urlencode "sql=$LT_SQL" \
+            --data-urlencode "iso_timestamp_start=$LT_START" \
+            --data-urlencode "iso_timestamp_end=$END" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/analytics/endpoints/logs" \
+            > landing-trial-logs.json && jq -e '.result | type == "array"' landing-trial-logs.json >/dev/null; then
+            echo "LANDING_TRIAL_STATUS=configured" >> "$GITHUB_ENV"
+          else
+            echo '{"result":[]}' > landing-trial-logs.json
+            echo "LANDING_TRIAL_STATUS=unavailable" >> "$GITHUB_ENV"
+            echo "::notice::landing.trial log check unavailable; continuing with core observability telemetry."
+          fi
 
           SENTRY_CONFIG_COUNT=0
           for value in "$SENTRY_AUTH_TOKEN" "$SENTRY_ORG" "$SENTRY_PROJECT"; do
@@ -204,6 +219,9 @@ jobs:
             --ai-hub-json ai-hub-health.json \
             --supabase-metrics supabase-metrics.prom \
             --sentry-json sentry-stats.json \
+            --landing-trial-logs-json landing-trial-logs.json \
+            --landing-trial-failure-alert 1 \
+            --landing-trial-status "$LANDING_TRIAL_STATUS" \
             --output-json production-observability.json \
             --output-md production-observability.md \
             --p95-alert-ms "$P95_ALERT_MS" \
@@ -243,7 +261,11 @@ jobs:
           FORCED_ALERT: ${{ steps.evaluate.outputs.forced_alert }}
         run: |
           MARKER="[observability-dedupe:$DEDUPE_KEY]"
-          ISSUE=$(gh issue list --state open --search "$MARKER in:body" --json number --jq '.[0].number // empty')
+          set -euo pipefail
+          # Paginate the REST list: fuzzy search can return the dashboard and
+          # search indexing can lag behind newly created canonical alerts.
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" > open-issues.json
+          ISSUE=$(python -c 'import json, os; from scripts.production_observability_monitor import select_alert_issue; pages=json.load(open("open-issues.json")); print(select_alert_issue([i for page in pages for i in page], forced=os.environ["FORCED_ALERT"] == "true") or "")')
           { echo "$MARKER"; cat production-observability.md; } > issue-body.md
           if [ -n "$ISSUE" ]; then
             gh issue comment "$ISSUE" --body-file issue-body.md
@@ -255,7 +277,7 @@ jobs:
             gh issue create --title "$TITLE" --body-file issue-body.md --label automation --label bug
           fi
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: production-observability
@@ -263,3 +285,4 @@ jobs:
             production-observability.json
             production-observability.md
             trace-correlation.json
+            landing-trial-logs.json

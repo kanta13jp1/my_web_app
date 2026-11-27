@@ -1,7 +1,7 @@
-﻿# 閾ｪ蛻・ｪ蠑丈ｼ夂､ｾ 髢狗匱 WBS (Work Breakdown Structure)
+# 閾ｪ蛻・ｪ蠑丈ｼ夂､ｾ 髢狗匱 WBS (Work Breakdown Structure)
 
 > **譛邨よ峩譁ｰ**: 2026-04-23 Codex (ノートコメント Notion風再利用Realtime)
-> **蜿ら・**: 繧ｵ繧､繝井ｸ翫・ `/project-gantt` 繝壹・繧ｸ縺ｧ繝ｪ繧｢繝ｫ繧ｿ繧､繝遒ｺ隱榊庄閭ｽ  
+> **蜿ら・**: 繧ｵ繧､繝井ｸ翫・ `/project-gantt` 繝壹・繧ｸ縺ｧ繝ｪ繧｢繝ｫ繧ｿ繧､繝遒ｺ隱榊庄閭ｽ
 > **DB**: `wbs_milestones` + `wbs_tasks` 繝・・繝悶Ν (migration 20260417180000 / 20260417190000 / 20260417200000)
 
 ## 収益化P0 現在地 (2026-08-19)
@@ -159,6 +159,13 @@
 - 担当変更: 実際に着手するこの1件のみ `instance='codex' / owner_instance='codex'` としてWBSに追加。
 - 対応内容: 既存の `FeatureStrategyMonitor` と `LifeWasteElimination` の抽象を再利用し、重複ダッシュボードを増やさず、ライフ浪費ゼロ司令塔に「今日の運用ループ」を追加。現状、KGI、CSF、数値KPI、毎日モニタリング、改善の1手、拡張しない条件を同じUIで確認できるようにしました。
 - WBS DB反映: migration `20260427004000_wbs_codex_life_ai_operating_loop.sql`
+
+## Codex 引き継ぎメモ (2026-09-29)
+
+- 実担当タスク: `確定申告export (CSV+e-Tax形式) (#2492)` (WBS UUID: `c188e792-6c81-4973-b667-396a7ddcb046`)
+- 状態: `100% (完了)`
+- 対応内容: 資産管理画面 (`AssetManagementPage`) の月次履歴・CSV出力カードに「確定申告出力」導線を新設。対象年度（今年・前年・前々年）の動的切替、収入・経費・控除のプレビュー集計、注意点・バリデーション警告、および確定申告用CSVとe-Tax XMLスケルトンのブラウザ直接ダウンロード導線を実装。`AssetTaxExportService` にワークブックからの自動抽出ヘルパー `extractRecordsFromWorkbook` を実装し、単体テストを追加。
+- WBS DB反映: migration `20260929093000_wbs_complete_asset_tax_export.sql`
 
 ## 繝槭う繝ｫ繧ｹ繝医・繝ｳ讎りｦ・(繝ｦ繝ｼ繧ｶ繝ｼ蜿ｯ隕・
 

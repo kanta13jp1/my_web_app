@@ -12,12 +12,17 @@ import '../services/ai_service.dart';
 import '../services/attachment_cache_service.dart';
 import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
+import '../services/markdown_block_service.dart';
 import '../services/note_comments_service.dart';
+import '../services/note_version_history_service.dart';
 import '../services/note_prompt_library_service.dart';
 import '../services/note_semantic_search_service.dart';
 import '../services/note_tag_service.dart';
+import '../services/note_task_service.dart';
+import '../services/note_wiki_link_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
+import '../utils/note_clipboard_helper.dart';
 import '../utils/note_image_clipboard.dart';
 import '../utils/note_image_drop.dart';
 import '../widgets/attachment_list_widget.dart';
@@ -25,8 +30,14 @@ import '../widgets/ai_free_limit_upgrade_dialog.dart';
 import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
+import '../widgets/note_editor/block_reorder_sheet.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/note_editor/inline_slash_block_menu.dart';
+import '../widgets/note_editor/note_backlinks_panel.dart';
+import '../widgets/note_editor/note_range_select_page.dart';
 import '../widgets/note_tags_field.dart';
+import '../widgets/note_version_history_sheet.dart';
+import '../widgets/note_tasks_panel.dart';
 import '../widgets/related_notes_strip.dart';
 
 class NoteEditorPage extends StatefulWidget {
@@ -155,6 +166,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _currentNoteId;
   DateTime? _reminderDate;
   bool _isFavorite = false;
+  bool _isPinned = false;
   List<String> _tags = const <String>[];
   bool _isLoading = false;
   bool _isLoadingAttachments = false;
@@ -167,10 +179,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _persistedContent;
   String? _persistedReminderIso;
   bool? _persistedIsFavorite;
+  bool? _persistedIsPinned;
   List<String>? _persistedTags;
   DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
   bool? _isSlashCommandBarExpanded;
+  InlineSlashMatch? _inlineSlashMatch;
+  bool _showBlockInsertPalette = false;
+  List<NoteSummary> _workspaceNoteSummaries = const <NoteSummary>[];
   int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
@@ -181,6 +197,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _relatedNotesHasError = false;
   int _relatedNotesRequestId = 0;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const String _newDraftKey = '${_draftKeyPrefix}new';
+  int _draftWriteEpoch = 0;
+  Future<void> _draftStorageQueue = Future<void>.value();
+  String? _latestDraftPayloadJson;
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const String _slashBarExpandedKey = 'note_editor_slash_bar_expanded';
   static const List<String> _slashCommandSuggestions = <String>[
@@ -192,6 +212,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     '/title',
     '/translate en',
     '/favorite',
+    '/pin',
     '/stamp',
     '/tabs',
   ];
@@ -234,6 +255,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         TextEditingController(text: widget.initialContent ?? '');
     _slashCommandController = TextEditingController();
     _contentFocusNode = FocusNode();
+    _contentFocusNode.addListener(_onContentFocusChanged);
     _autoSaveService = AutoSaveService();
     _undoRedoService = UndoRedoService();
     _imagePasteRegistration = registerNoteImagePasteListener(
@@ -258,6 +280,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       unawaited(_loadCommentCount());
       unawaited(_loadRelatedNotes());
     }
+    unawaited(_loadWorkspaceNoteSummaries());
     await _loadAttachments();
     await _restoreDraftFromLocal();
     _initializeEditorHistory();
@@ -282,7 +305,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   String _currentDraftKey() {
-    return '$_draftKeyPrefix${_currentNoteId ?? 'new'}';
+    return _currentNoteId == null
+        ? _newDraftKey
+        : '$_draftKeyPrefix$_currentNoteId';
   }
 
   bool get _hasPersistableState =>
@@ -290,28 +315,48 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _contentController.text.trim().isNotEmpty ||
       _reminderDate != null ||
       _isFavorite ||
+      _isPinned ||
       _tags.isNotEmpty;
 
   bool _boolFromValue(dynamic value) => value == true;
 
-  Future<void> _persistDraftToLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    final title = _titleController.text;
-    final content = _contentController.text;
-    if (!_hasPersistableState) {
-      await prefs.remove(_currentDraftKey());
-      return;
-    }
+  Future<void> _enqueueDraftStorageOp(Future<void> Function() operation) {
+    final next = _draftStorageQueue.then((_) => operation());
+    _draftStorageQueue = next.catchError((Object _) {});
+    return next;
+  }
+
+  String _encodeCurrentDraftPayload() {
     final payload = <String, dynamic>{
-      'title': title,
-      'content': content,
+      'title': _titleController.text,
+      'content': _contentController.text,
       'reminder_date': _reminderDate?.toIso8601String(),
       'is_favorite': _isFavorite,
-      'tags': _tags,
+      'is_pinned': _isPinned,
+      'tags': List<String>.from(_tags),
       // サーバーの updated_at と比較するため UTC で保存する。
       'saved_at': DateTime.now().toUtc().toIso8601String(),
     };
-    await prefs.setString(_currentDraftKey(), jsonEncode(payload));
+    return jsonEncode(payload);
+  }
+
+  Future<void> _persistDraftToLocal() {
+    if (!mounted) return Future<void>.value();
+    final epoch = ++_draftWriteEpoch;
+    final draftKey = _currentDraftKey();
+    final payloadJson =
+        _hasPersistableState ? _encodeCurrentDraftPayload() : null;
+    _latestDraftPayloadJson = payloadJson;
+    return _enqueueDraftStorageOp(() async {
+      if (epoch != _draftWriteEpoch) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (epoch != _draftWriteEpoch) return;
+      if (payloadJson == null) {
+        await prefs.remove(draftKey);
+        return;
+      }
+      await prefs.setString(draftKey, payloadJson);
+    });
   }
 
   Future<void> _restoreDraftFromLocal() async {
@@ -323,6 +368,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String content;
     DateTime? reminderDate;
     bool isFavorite;
+    bool isPinned;
     List<String> tags;
     DateTime? draftSavedAt;
     try {
@@ -334,6 +380,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ? null
           : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
       isFavorite = _boolFromValue(decoded['is_favorite']);
+      isPinned = decoded.containsKey('is_pinned')
+          ? _boolFromValue(decoded['is_pinned'])
+          : _isPinned;
       tags = NoteTagService.normalize(decoded['tags']);
       draftSavedAt = decoded['saved_at'] == null
           ? null
@@ -345,6 +394,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         content.isEmpty &&
         reminderDate == null &&
         !isFavorite &&
+        !isPinned &&
         tags.isEmpty) {
       return;
     }
@@ -353,6 +403,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _contentController.text != content ||
         _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
         _isFavorite != isFavorite ||
+        _isPinned != isPinned ||
         !NoteTagService.equals(_tags, tags);
     if (!hasChanges) return;
 
@@ -398,6 +449,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _contentController.text = content;
     _reminderDate = reminderDate;
     _isFavorite = isFavorite;
+    _isPinned = isPinned;
     _tags = tags;
 
     if (mounted) {
@@ -407,15 +459,45 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
-  Future<void> _clearDraftFromLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_currentDraftKey());
+  Future<void> _clearDraftFromLocal({bool alsoClearNewDraft = false}) {
+    final epoch = ++_draftWriteEpoch;
+    final draftKey = _currentDraftKey();
+    final clearObsoleteNewDraft = alsoClearNewDraft || widget.noteId == null;
+    _latestDraftPayloadJson = null;
+    return _enqueueDraftStorageOp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      if (clearObsoleteNewDraft && draftKey != _newDraftKey) {
+        await prefs.remove(_newDraftKey);
+      }
+      if (epoch != _draftWriteEpoch) return;
+      await prefs.remove(draftKey);
+    });
+  }
+
+  Future<void> _migrateNewDraftToNoteId(
+    String noteId,
+    String? payloadJson,
+  ) {
+    final epoch = ++_draftWriteEpoch;
+    final targetKey = '$_draftKeyPrefix$noteId';
+    _latestDraftPayloadJson = payloadJson;
+    return _enqueueDraftStorageOp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_newDraftKey);
+      if (epoch != _draftWriteEpoch) return;
+      if (payloadJson == null) {
+        await prefs.remove(targetKey);
+      } else {
+        await prefs.setString(targetKey, payloadJson);
+      }
+    });
   }
 
   void _attachTextListeners() {
     _syncObservedText();
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
+    _contentController.addListener(_onContentSelectionOrTextChanged);
   }
 
   /// listener が「本文が変わった」と判断するための基準値を現在値に合わせる。
@@ -432,12 +514,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String content,
     required String? reminderIso,
     required bool isFavorite,
+    required bool isPinned,
     required List<String> tags,
   }) {
     _persistedTitle = title;
     _persistedContent = content;
     _persistedReminderIso = reminderIso;
     _persistedIsFavorite = isFavorite;
+    _persistedIsPinned = isPinned;
     _persistedTags = NoteTagService.normalize(tags);
   }
 
@@ -452,18 +536,160 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String content,
     required String? reminderIso,
     required bool isFavorite,
+    required bool isPinned,
     required List<String> tags,
   }) {
     return _persistedTitle == title &&
         _persistedContent == content &&
         _persistedReminderIso == reminderIso &&
         _persistedIsFavorite == isFavorite &&
+        _persistedIsPinned == isPinned &&
         NoteTagService.equals(_persistedTags, tags);
   }
 
   void _detachTextListeners() {
     _titleController.removeListener(_onTextChanged);
     _contentController.removeListener(_onTextChanged);
+    _contentController.removeListener(_onContentSelectionOrTextChanged);
+  }
+
+  void _onContentSelectionOrTextChanged() {
+    if (_isApplyingSnapshot || _showMarkdownPreview) return;
+    final TextSelection sel = _contentController.selection;
+    final InlineSlashMatch? nextMatch = sel.isCollapsed
+        ? MarkdownBlockService.detectInlineSlashTrigger(
+            _contentController.text,
+            sel.baseOffset,
+          )
+        : null;
+    final bool changed =
+        nextMatch?.startOffset != _inlineSlashMatch?.startOffset ||
+            nextMatch?.endOffset != _inlineSlashMatch?.endOffset ||
+            nextMatch?.query != _inlineSlashMatch?.query;
+    if (!changed || !mounted) return;
+    setState(() {
+      _inlineSlashMatch = nextMatch;
+    });
+  }
+
+  void _onSlashTemplateSelected(SlashBlockTemplate template) {
+    final InlineSlashMatch? match = _inlineSlashMatch;
+    final TextEditingValue updated = match != null
+        ? MarkdownBlockService.applySlashTemplate(
+            _contentController.value,
+            match,
+            template,
+          )
+        : MarkdownBlockService.insertTemplateAtSelection(
+            _contentController.value,
+            template,
+          );
+    setState(() {
+      _inlineSlashMatch = null;
+      _showBlockInsertPalette = false;
+    });
+    _contentController.value = updated;
+    _contentFocusNode.requestFocus();
+  }
+
+  Future<void> _openBlockReorderSheet() async {
+    final String? reordered = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => BlockReorderSheet(
+        initialMarkdown: _contentController.text,
+      ),
+    );
+    if (!mounted || reordered == null) return;
+    if (reordered == _contentController.text) return;
+    _contentController.value = TextEditingValue(
+      text: reordered,
+      selection: TextSelection.collapsed(offset: reordered.length),
+    );
+  }
+
+  Future<void> _loadWorkspaceNoteSummaries() async {
+    try {
+      final User? user = _supabase.auth.currentUser;
+      if (user == null) return;
+      final dynamic rows = await _supabase
+          .from('notes')
+          .select('id, title, content, updated_at')
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
+          .order('updated_at', ascending: false)
+          .limit(100);
+      if (rows is! List) return;
+      final List<NoteSummary> parsed = <NoteSummary>[];
+      for (final dynamic item in rows) {
+        if (item is! Map) continue;
+        final String? id = item['id']?.toString();
+        if (id == null || id.isEmpty) continue;
+        final String title = (item['title'] as String?) ?? '';
+        final String content = (item['content'] as String?) ?? '';
+        final String? updatedRaw = item['updated_at'] as String?;
+        parsed.add(
+          NoteSummary(
+            id: id,
+            title: title,
+            content: content,
+            updatedAt:
+                updatedRaw == null ? null : DateTime.tryParse(updatedRaw),
+          ),
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _workspaceNoteSummaries = parsed;
+      });
+    } catch (_) {
+      // Fail-open so offline/fake clients in unit tests never break.
+    }
+  }
+
+  Future<void> _handleWikiLinkTap(String targetTitle) async {
+    final NoteSummary? existing = NoteWikiLinkService.resolveLink(
+      targetTitle,
+      _workspaceNoteSummaries,
+      excludeNoteId: _currentNoteId,
+    );
+    if (existing != null) {
+      await _openLinkedNote(existing);
+      return;
+    }
+    await _createLinkedNote(targetTitle);
+  }
+
+  Future<void> _openLinkedNote(NoteSummary target) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          noteId: target.id,
+          supabaseClient: _supabase,
+          aiService: _aiService,
+        ),
+      ),
+    );
+    if (mounted) {
+      unawaited(_loadWorkspaceNoteSummaries());
+    }
+  }
+
+  Future<void> _createLinkedNote(String targetTitle) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          initialTitle: targetTitle,
+          supabaseClient: _supabase,
+          aiService: _aiService,
+        ),
+      ),
+    );
+    if (mounted) {
+      unawaited(_loadWorkspaceNoteSummaries());
+    }
   }
 
   NoteSnapshot _buildCurrentSnapshot() {
@@ -483,6 +709,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _contentController.text.trim().isNotEmpty ||
         _reminderDate != null ||
         _isFavorite ||
+        _isPinned ||
         _tags.isNotEmpty;
     // ローカル下書きを復元した直後は、画面上の内容がサーバーより新しい。
     // 従来はここで無条件に markAsSaved していたため「保存済み」と表示され
@@ -493,6 +720,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           content: _contentController.text.trim(),
           reminderIso: _reminderDate?.toUtc().toIso8601String(),
           isFavorite: _isFavorite,
+          isPinned: _isPinned,
           tags: _tags,
         );
 
@@ -591,11 +819,33 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Future<void> _showTasksPanel() async {
+    final noteId = int.tryParse(_currentNoteId ?? '');
+    if (noteId == null) {
+      _showMessage('タスクを追加する前にメモを保存してください');
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: 0.9,
+        child: NoteTasksPanel(
+          noteId: noteId,
+          repository: SupabaseNoteTaskRepository(_supabase),
+        ),
+      ),
+    );
+  }
+
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message)),
+      );
   }
 
   Future<bool> _showUpgradeDialogIfNeeded(Object error) async {
@@ -605,55 +855,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return showAiFreeLimitUpgradeDialog(context, error);
   }
 
-  Future<int?> _ensureNoteIdForAttachmentFlow() async {
-    final existingNoteId = int.tryParse(_currentNoteId ?? '');
-    if (existingNoteId != null) {
-      return existingNoteId;
-    }
-
-    if (_hasPersistableState) {
-      await _saveNoteWithoutClosing();
-      final savedNoteId = int.tryParse(_currentNoteId ?? '');
-      if (savedNoteId != null) {
-        return savedNoteId;
-      }
-    }
-
-    final user = _supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('Login is required.');
-    }
-
-    final dynamic inserted = await _supabase
-        .from('notes')
-        .insert({
-          'user_id': user.id,
-          'title': _titleController.text.trim(),
-          'content': _contentController.text.trim(),
-          'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-          'is_favorite': _isFavorite,
-          'is_archived': false,
-          'is_pinned': false,
-        })
-        .select('id')
-        .maybeSingle();
-
-    final createdNoteId = inserted is Map && inserted['id'] != null
-        ? int.tryParse(inserted['id'].toString())
-        : null;
-    if (createdNoteId == null) {
-      return null;
-    }
-
-    _currentNoteId = createdNoteId.toString();
-    unawaited(_loadCommentCount());
-    _autoSaveService.markAsSaved();
-    await _clearDraftFromLocal();
-    if (mounted) {
-      setState(() {});
-    }
-    return createdNoteId;
-  }
+  Future<int?> _ensureNoteIdForAttachmentFlow() =>
+      _autoSaveService.runExclusive(() async {
+        if (!mounted) return null;
+        final existingNoteId = int.tryParse(_currentNoteId ?? '');
+        if (existingNoteId != null) return existingNoteId;
+        // Use the same persisted baseline/draft checks as regular note creation.
+        await _saveNoteWithoutClosing(allowEmpty: true);
+        return int.tryParse(_currentNoteId ?? '');
+      });
 
   Future<void> _loadAttachments() async {
     final noteId = int.tryParse(_currentNoteId ?? '');
@@ -743,7 +953,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       AttachmentCacheService.clearNoteCache(noteId);
       _insertContentAtCursor(_buildAttachmentMarkdown(attachment));
-      await _saveNoteWithoutClosing();
+      await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       await _loadAttachments();
       _showMessage('$sourceLabelから ${attachment.fileName} を追加しました');
     } catch (e) {
@@ -1235,6 +1445,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             SizedBox(height: 8),
             Text('/favorite Toggle favorite for this note'),
             SizedBox(height: 8),
+            Text('/pin Toggle pin for this note'),
+            SizedBox(height: 8),
             Text('/stamp Insert the current timestamp'),
             SizedBox(height: 8),
             Text('/tabs Insert a 3-tab block template'),
@@ -1282,6 +1494,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       case 'fav':
       case 'star':
         _toggleFavorite();
+        _slashCommandController.clear();
+        return;
+      case 'pin':
+      case 'unpin':
+        _togglePin();
         _slashCommandController.clear();
         return;
       case 'style':
@@ -1420,7 +1637,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       final data = await _supabase
           .from('notes')
           .select(
-            'title, content, reminder_date, is_favorite, tags, updated_at',
+            'title, content, reminder_date, is_favorite, is_pinned, tags, updated_at',
           )
           .eq('id', id)
           .single();
@@ -1438,6 +1655,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   data['reminder_date'].toString(),
                 )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
+          _isPinned = _boolFromValue(data['is_pinned']);
           _tags = NoteTagService.normalize(data['tags']);
         });
         _markStatePersisted(
@@ -1445,6 +1663,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           content: _contentController.text.trim(),
           reminderIso: _reminderDate?.toUtc().toIso8601String(),
           isFavorite: _isFavorite,
+          isPinned: _isPinned,
           tags: _tags,
         );
         _syncObservedText();
@@ -1527,14 +1746,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (mounted) unawaited(_loadRelatedNotes());
   }
 
-  Future<void> _saveNoteWithoutClosing() async {
+  // Call only from the AutoSaveService lane, including attachment flows.
+  Future<void> _saveNoteWithoutClosing({bool allowEmpty = false}) async {
+    if (!mounted) return;
+    final wasNewNote = _currentNoteId == null;
+    final requestDraftEpoch = _draftWriteEpoch;
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
     final isFavorite = _isFavorite;
+    final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
 
-    if (!_hasPersistableState && _currentNoteId == null) {
+    if (!allowEmpty && !_hasPersistableState && _currentNoteId == null) {
       return;
     }
 
@@ -1552,21 +1776,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         content: content,
         reminderIso: reminderIso,
         isFavorite: isFavorite,
+        isPinned: isPinned,
         tags: tags,
       )) {
         _autoSaveService.markAsSaved();
+        await _clearDraftFromLocal(alsoClearNewDraft: widget.noteId == null);
         return;
       }
-      await _supabase.from('notes').update({
-        'title': title,
-        'content': content,
-        'reminder_date': reminderIso,
-        'is_favorite': isFavorite,
-        'tags': tags,
-        // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
-        // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', _currentNoteId!);
+      await _supabase
+          .from('notes')
+          .update({
+            'title': title,
+            'content': content,
+            'reminder_date': reminderIso,
+            'is_favorite': isFavorite,
+            'is_pinned': isPinned,
+            'tags': tags,
+            // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
+            // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', _currentNoteId!)
+          .eq('user_id', user.id);
     } else {
       final dynamic inserted = await _supabase
           .from('notes')
@@ -1578,13 +1809,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'is_favorite': isFavorite,
             'tags': tags,
             'is_archived': false,
-            'is_pinned': false,
+            'is_pinned': isPinned,
           })
           .select('id')
           .maybeSingle();
 
-      if (inserted is Map && inserted['id'] != null) {
-        _currentNoteId = inserted['id'].toString();
+      final insertedId = inserted is Map && inserted['id'] != null
+          ? inserted['id'].toString()
+          : null;
+      if (!mounted) {
+        if (insertedId != null && _supabase.auth.currentUser?.id == user.id) {
+          final pendingDraftJson = _draftWriteEpoch == requestDraftEpoch
+              ? null
+              : _latestDraftPayloadJson;
+          await _migrateNewDraftToNoteId(insertedId, pendingDraftJson);
+        }
+        return;
+      }
+      if (_supabase.auth.currentUser?.id != user.id) {
+        throw StateError('Session changed during save');
+      }
+      if (insertedId != null) {
+        _currentNoteId = insertedId;
         unawaited(_loadCommentCount());
         if (mounted) {
           setState(() {});
@@ -1592,11 +1838,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       }
     }
 
+    if (!mounted) return;
+    if (_supabase.auth.currentUser?.id != user.id) {
+      throw StateError('Session changed during save');
+    }
     _markStatePersisted(
       title: title,
       content: content,
       reminderIso: reminderIso,
       isFavorite: isFavorite,
+      isPinned: isPinned,
       tags: tags,
     );
 
@@ -1605,13 +1856,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       content: _contentController.text.trim(),
       reminderIso: _reminderDate?.toUtc().toIso8601String(),
       isFavorite: _isFavorite,
+      isPinned: _isPinned,
       tags: _tags,
     );
     if (currentMatchesSavedRequest) {
       _autoSaveService.markAsSaved();
-      await _clearDraftFromLocal();
+      await _clearDraftFromLocal(
+        alsoClearNewDraft: wasNewNote || widget.noteId == null,
+      );
     } else {
       _autoSaveService.markAsModified();
+      if (wasNewNote && _currentNoteId != null) {
+        await _migrateNewDraftToNoteId(
+          _currentNoteId!,
+          _hasPersistableState ? _encodeCurrentDraftPayload() : null,
+        );
+      }
     }
   }
 
@@ -1626,8 +1886,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     try {
-      await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
-      await _saveVersionSnapshot();
+      await _autoSaveService.saveImmediately(() async {
+        await _saveNoteWithoutClosing();
+        await _saveVersionSnapshot();
+      });
       unawaited(_indexAndRefreshRelatedNotes());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1643,11 +1905,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
-  Future<void> _saveVersionSnapshot() async {
+  Future<void> _saveVersionSnapshot({bool requiredForRestore = false}) async {
+    if (!mounted) {
+      if (requiredForRestore) throw StateError('The editor is closed');
+      return;
+    }
     final noteId = _currentNoteId;
-    if (noteId == null) return;
+    if (noteId == null) {
+      if (requiredForRestore) throw StateError('Note is not saved');
+      return;
+    }
     final user = _supabase.auth.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      if (requiredForRestore) throw StateError('Login is required');
+      return;
+    }
     try {
       await _supabase.from('note_versions').insert({
         'note_id': noteId,
@@ -1657,6 +1929,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         'saved_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (_) {
+      if (requiredForRestore) rethrow;
       // バージョン保存失敗は無視（メイン保存は成功している）
     }
   }
@@ -1694,18 +1967,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (confirm != true || !mounted) return;
 
     final service = PublicMemoService(_supabase);
-    final ok = await service.publishMemo(
+    final published = await service.upsertMemo(
       noteId: int.tryParse(noteId.toString()) ?? 0,
       userId: user.id,
       title: title,
       content: _contentController.text.trim(),
     );
     if (!mounted) return;
-    if (ok) {
+    if (published != null) {
+      final String url = PublicMemoService.buildPublicMemoUrl(published.id);
+      await Clipboard.setData(ClipboardData(text: url));
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('公開しました！ /public-memos で確認できます'),
-          duration: Duration(seconds: 3),
+          content: Text('公開しました！複製CTA付きの公開URLをコピーしました'),
+          duration: Duration(seconds: 4),
         ),
       );
     } else {
@@ -1752,139 +2028,85 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _showVersionHistory() async {
     final noteId = _currentNoteId;
     if (noteId == null) return;
-
-    List<Map<String, dynamic>> versions = [];
-    try {
-      final res = await _supabase
-          .from('note_versions')
-          .select('id, title, saved_at, content')
-          .eq('note_id', noteId)
-          .order('saved_at', ascending: false)
-          .limit(30);
-      versions = List<Map<String, dynamic>>.from(
-        (res as List).map((e) => Map<String, dynamic>.from(e as Map)),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('履歴の取得に失敗しました: $e')),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
-
-    await showModalBottomSheet<void>(
+    final selected = await showModalBottomSheet<NoteVersionDetail>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      builder: (_) => NoteVersionHistorySheet(
+        repository: SupabaseNoteVersionHistoryRepository(_supabase),
+        noteId: noteId,
       ),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.3,
-        builder: (_, scrollCtrl) => Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'バージョン履歴',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
-            ),
-            const Divider(),
-            Expanded(
-              child: versions.isEmpty
-                  ? const Center(child: Text('保存済みバージョンがありません'))
-                  : ListView.builder(
-                      controller: scrollCtrl,
-                      itemCount: versions.length,
-                      itemBuilder: (_, i) {
-                        final v = versions[i];
-                        final savedAt = DateTime.tryParse(
-                          v['saved_at']?.toString() ?? '',
-                        )?.toLocal();
-                        final dateStr = savedAt != null
-                            ? '${savedAt.year}/${savedAt.month.toString().padLeft(2, '0')}/${savedAt.day.toString().padLeft(2, '0')} ${savedAt.hour.toString().padLeft(2, '0')}:${savedAt.minute.toString().padLeft(2, '0')}'
-                            : '不明';
-                        final title =
-                            (v['title'] as String?)?.isNotEmpty == true
-                                ? v['title'] as String
-                                : '無題';
-                        return ListTile(
-                          leading: const Icon(Icons.restore, size: 20),
-                          title: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            dateStr,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              height: 1.5,
-                            ),
-                          ),
-                          trailing: TextButton(
-                            child: const Text('復元'),
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              final confirmed = await showDialog<bool>(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('バージョンを復元しますか？'),
-                                  content: Text(
-                                    '$dateStr 時点の内容に戻します。現在の内容は自動で新しいバージョンとして保存されます。',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
-                                      child: const Text('キャンセル'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      child: const Text('復元'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirmed == true && mounted) {
-                                await _saveVersionSnapshot();
-                                if (!mounted) return;
-                                setState(() {
-                                  _titleController.text =
-                                      v['title'] as String? ?? '';
-                                  _contentController.text =
-                                      v['content'] as String? ?? '';
-                                });
-                                _autoSaveService.markAsModified();
-                                _autoSaveService
-                                    .triggerAutoSave(_saveNoteWithoutClosing);
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+    );
+    if (!mounted || selected == null || selected.summary.isEvernote) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('タイトル・本文を復元しますか？'),
+        content: const Text(
+          '現在のタイトル・本文を新しい履歴に保存してから、選択した内容に戻します。'
+          'バックアップに失敗した場合は復元しません。'
+          'タグ・添付ファイル・タスク・リマインダーは変更しません。',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('復元'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final backupTitle = _titleController.text;
+    final backupContent = _contentController.text;
+    final backupOwner = _supabase.auth.currentUser?.id;
+    const changedMessage = '保全中に編集内容またはログイン状態が変わったため、復元を中止しました。';
+    String? abortReason;
+    try {
+      abortReason = await _autoSaveService.runExclusive<String?>(() async {
+        if (!mounted) return null;
+        bool draftChanged() =>
+            _titleController.text != backupTitle ||
+            _contentController.text != backupContent ||
+            _currentNoteId != noteId ||
+            _supabase.auth.currentUser?.id != backupOwner;
+        // A previous save may have held the lane while the user kept editing.
+        if (draftChanged()) return changedMessage;
+        await _saveVersionSnapshot(requiredForRestore: true);
+        if (!mounted) return null;
+        if (draftChanged()) return changedMessage;
+        setState(() {
+          _titleController.text = selected.summary.title;
+          _contentController.text = selected.content;
+        });
+        _autoSaveService.markAsModified();
+        _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+        return null;
+      });
+    } catch (_) {
+      abortReason = '現在の内容を履歴に保全できなかったため、復元を中止しました。';
+    }
+    if (mounted && abortReason != null) {
+      await _showHistoryRestoreAborted(abortReason);
+    }
+  }
+
+  Future<void> _showHistoryRestoreAborted(String message) async {
+    if (!mounted) return;
+    // Restoration outcomes must not wait behind unrelated queued snackbars.
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('復元を中止しました'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('閉じる'),
+          ),
+        ],
       ),
     );
   }
@@ -1924,6 +2146,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         ),
       ),
     );
+  }
+
+  void _togglePin() {
+    final nextValue = !_isPinned;
+    setState(() {
+      _isPinned = nextValue;
+    });
+    _autoSaveService.markAsModified();
+    _persistDraftToLocal();
+    if (_currentNoteId != null || _hasPersistableState) {
+      _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            nextValue ? 'メモをピン留めしました' : 'ピン留めを解除しました',
+          ),
+        ),
+      );
   }
 
   void _undo() {
@@ -2232,7 +2476,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return Container(
       key: const Key('note_editor_slash_command_bar'),
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -2363,11 +2607,353 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Future<void> _copyNoteText() async {
+    final target = NoteClipboardHelper.extractCopyTarget(
+      _contentController.value,
+    );
+    if (target == null) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: target.text));
+      if (!mounted) return;
+      final msg = switch (target.scope) {
+        NoteCopyScope.selection => '選択範囲をコピーしました',
+        NoteCopyScope.currentLine => '現在の行をコピーしました',
+        NoteCopyScope.fullText => '本文をコピーしました',
+      };
+      _showMessage(msg);
+    } catch (_) {
+      _showMessage('コピーに失敗しました');
+    }
+  }
+
+  Future<void> _copyFullNoteText() async {
+    final text = _contentController.text;
+    if (text.isEmpty) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      _showMessage('全文をコピーしました');
+    } catch (_) {
+      _showMessage('コピーに失敗しました');
+    }
+  }
+
+  Future<void> _cutNoteText() async {
+    final cut = NoteClipboardHelper.cutTarget(_contentController.value);
+    if (cut == null) {
+      _showMessage('切り取るテキストがありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: cut.cutText));
+      if (!mounted) return;
+      _contentController.value = cut.nextValue;
+      _contentFocusNode.requestFocus();
+      final msg = cut.scope == NoteCopyScope.selection
+          ? '選択範囲を切り取りました'
+          : '現在の行を切り取りました';
+      _showMessage(msg);
+    } catch (_) {
+      _showMessage('切り取りに失敗しました');
+    }
+  }
+
+  Future<void> _pasteIntoNote() async {
+    final currentValue = _contentController.value;
+    String? pasted;
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      pasted = data?.text;
+    } catch (_) {
+      pasted = null;
+    }
+    if (!mounted) return;
+    if (pasted != null && pasted.isNotEmpty) {
+      _contentController.value = NoteClipboardHelper.insertPastedText(
+        currentValue,
+        pasted,
+      );
+      _contentFocusNode.requestFocus();
+      _showMessage('貼り付けました');
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('クリップボードを読み取れませんでした'),
+          action: SnackBarAction(
+            label: '手動貼り付け',
+            onPressed: () => unawaited(_showManualPasteDialog()),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _showManualPasteDialog() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => const _ManualPasteDialog(),
+    );
+    if (!mounted || result == null || result.isEmpty) {
+      return;
+    }
+    _contentController.value = NoteClipboardHelper.insertPastedText(
+      _contentController.value,
+      result,
+    );
+    _contentFocusNode.requestFocus();
+    _showMessage('貼り付けました');
+  }
+
+  void _selectTokenOrValue() {
+    _contentController.value = NoteClipboardHelper.selectTokenOrValue(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  Future<void> _openRangeSelectPage() async {
+    final text = _contentController.text;
+    if (text.isEmpty) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    final initialSelection = _contentController.selection;
+    _contentFocusNode.unfocus();
+    final selected = await openNoteRangeSelectPage(
+      context: context,
+      text: text,
+      initialSelection: initialSelection,
+    );
+    if (!mounted || selected == null || selected.isCollapsed) {
+      return;
+    }
+    final maxLen = _contentController.text.length;
+    final start = selected.start.clamp(0, maxLen);
+    final end = selected.end.clamp(start, maxLen);
+    if (end <= start) {
+      return;
+    }
+    _contentController.value = _contentController.value.copyWith(
+      selection: TextSelection(baseOffset: start, extentOffset: end),
+      composing: TextRange.empty,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  void _selectCurrentLine() {
+    _contentController.value = NoteClipboardHelper.selectCurrentLine(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  void _selectAllNoteText() {
+    _contentController.value = NoteClipboardHelper.selectAll(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  Widget _buildContentContextMenu(
+    BuildContext context,
+    EditableTextState editableTextState,
+  ) {
+    final items = List<ContextMenuButtonItem>.from(
+      editableTextState.contextMenuButtonItems,
+    );
+    if (_contentController.text.isNotEmpty) {
+      items.addAll([
+        ContextMenuButtonItem(
+          label: '値を選択',
+          onPressed: () {
+            _selectTokenOrValue();
+            editableTextState.hideToolbar();
+          },
+        ),
+        ContextMenuButtonItem(
+          label: '行を選択',
+          onPressed: () {
+            _selectCurrentLine();
+            editableTextState.hideToolbar();
+          },
+        ),
+        ContextMenuButtonItem(
+          label: '範囲を選択',
+          onPressed: () {
+            editableTextState.hideToolbar();
+            unawaited(_openRangeSelectPage());
+          },
+        ),
+      ]);
+    }
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: editableTextState.contextMenuAnchors,
+      buttonItems: items,
+    );
+  }
+
+  void _onContentFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _triggerCopy() => unawaited(_copyNoteText());
+  void _triggerCopyAll() => unawaited(_copyFullNoteText());
+  void _triggerCut() => unawaited(_cutNoteText());
+  void _triggerPaste() => unawaited(_pasteIntoNote());
+  void _triggerRangeSelect() => unawaited(_openRangeSelectPage());
+
+  Widget _buildClipboardActionButton({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return OutlinedButton(
+      key: key,
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        minimumSize: const Size(0, 30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14),
+          const SizedBox(width: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClipboardActionBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
+    return TextFieldTapRegion(
+      child: Focus(
+        canRequestFocus: false,
+        descendantsAreFocusable: false,
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _contentController,
+          builder: (context, value, _) {
+            final hasText = value.text.isNotEmpty;
+            final hasSelection =
+                value.selection.isValid && !value.selection.isCollapsed;
+            final copyLabel = hasSelection ? '選択をコピー' : 'コピー';
+            return Container(
+              key: const Key('note_editor_clipboard_bar'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderColor),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _showMarkdownPreview
+                      ? [
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_all_button'),
+                            icon: Icons.copy_all_outlined,
+                            label: '全文コピー',
+                            onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_range_select_button'),
+                            icon: Icons.crop_free_outlined,
+                            label: '範囲選択',
+                            onPressed: hasText ? _triggerRangeSelect : null,
+                          ),
+                        ]
+                      : [
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_button'),
+                            icon: Icons.content_copy_outlined,
+                            label: copyLabel,
+                            onPressed: hasText ? _triggerCopy : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_range_select_button'),
+                            icon: Icons.crop_free_outlined,
+                            label: '範囲選択',
+                            onPressed: hasText ? _triggerRangeSelect : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_value_button'),
+                            icon: Icons.vpn_key_outlined,
+                            label: '値を選択',
+                            onPressed: hasText ? _selectTokenOrValue : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_paste_button'),
+                            icon: Icons.content_paste_outlined,
+                            label: '貼り付け',
+                            onPressed: _triggerPaste,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_line_button'),
+                            icon: Icons.format_align_left_outlined,
+                            label: '行を選択',
+                            onPressed: hasText ? _selectCurrentLine : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_cut_button'),
+                            icon: Icons.content_cut_outlined,
+                            label: '切り取り',
+                            onPressed: hasText ? _triggerCut : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_all_button'),
+                            icon: Icons.copy_all_outlined,
+                            label: '全文コピー',
+                            onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_all_button'),
+                            icon: Icons.select_all_outlined,
+                            label: '全選択',
+                            onPressed: hasText ? _selectAllNoteText : null,
+                          ),
+                        ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildEditorSurface() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
-    final outerPadding =
-        isNarrow ? const EdgeInsets.all(8.0) : const EdgeInsets.all(16.0);
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final compactForKeyboard = isNarrow && isKeyboardOpen;
+    final showSlashBar = !(compactForKeyboard && _contentFocusNode.hasFocus) &&
+        (!compactForKeyboard || (_isSlashCommandBarExpanded == true));
+    final outerPadding = isNarrow
+        ? const EdgeInsets.fromLTRB(8, 6, 8, 6)
+        : const EdgeInsets.fromLTRB(16, 10, 16, 8);
     final titleFontSize = isNarrow ? 20.0 : 24.0;
     final String attachLabel;
     if (_isUploadingAttachment) {
@@ -2382,157 +2968,304 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       previewLabel = 'プレビュー';
     }
 
-    return Stack(
-      children: [
-        Padding(
-          padding: outerPadding,
-          child: Column(
-            children: [
-              _buildReminderBanner(context),
-              _buildSlashCommandBar(context),
-              TextField(
-                key: const Key('note_editor_title_field'),
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  hintText: 'タイトル',
-                  border: InputBorder.none,
-                ),
-                style: TextStyle(
-                  fontSize: titleFontSize,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-              ),
-              const Divider(),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _isUploadingAttachment
-                        ? null
-                        : _insertAttachmentFromPicker,
-                    icon: _isUploadingAttachment
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.image_outlined),
-                    label: Text(attachLabel),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _showMarkdownPreview = !_showMarkdownPreview;
-                      });
-                    },
-                    icon: Icon(
-                      _showMarkdownPreview
-                          ? Icons.edit_note_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                    label: Text(previewLabel),
-                  ),
-                  OutlinedButton.icon(
-                    key: const Key('note_editor_tags_button'),
-                    onPressed: _showTagsEditor,
-                    icon: const Icon(Icons.sell_outlined),
-                    label: Text(isNarrow ? 'タグ' : 'タグ (${_tags.length})'),
-                  ),
-                ],
-              ),
-              if (!isNarrow) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              if (_isLoadingAttachments) ...[
-                const SizedBox(height: 12),
-                const LinearProgressIndicator(minHeight: 2),
-              ],
-              if (_attachments.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                AttachmentListWidget(
-                  attachments: _attachments,
-                  onDelete: _deleteAttachment,
-                ),
-              ],
-              const SizedBox(height: 12),
-              Expanded(
-                child: NoteImageDropZone(
-                  onImageDropped: (bytes, fileName, mimeType) =>
-                      _handlePastedImage(
-                    Uint8List.fromList(bytes),
-                    fileName,
-                    mimeType,
-                  ),
-                  child: _showMarkdownPreview
-                      ? ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: _contentController,
-                          builder: (context, value, _) {
-                            if (value.text.trim().isEmpty) {
-                              return Center(
-                                child: Text(
-                                  '本文や画像を追加すると、ここにプレビューが表示されます。',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              );
-                            }
-                            return SingleChildScrollView(
-                              child: MarkdownPreview(data: value.text),
-                            );
-                          },
-                        )
-                      : TextField(
-                          key: const Key('note_editor_content_field'),
-                          controller: _contentController,
-                          focusNode: _contentFocusNode,
-                          decoration: const InputDecoration(
-                            hintText: 'Write your note here...',
-                            border: InputBorder.none,
-                          ),
-                          maxLines: null,
-                          expands: true,
+    return Padding(
+      padding: outerPadding,
+      child: Column(
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bodyMinHeight =
+                    (constraints.maxHeight - (isNarrow ? 160 : 210))
+                        .clamp(80.0, 480.0);
+                return SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.manual,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildReminderBanner(context),
+                      if (showSlashBar) _buildSlashCommandBar(context),
+                      TextField(
+                        key: const Key('note_editor_title_field'),
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          hintText: 'タイトル',
+                          border: InputBorder.none,
                         ),
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
+                      ),
+                      Divider(height: compactForKeyboard ? 1 : 8),
+                      Wrap(
+                        spacing: compactForKeyboard ? 8 : 10,
+                        runSpacing: compactForKeyboard ? 6 : 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: _isUploadingAttachment
+                                ? null
+                                : _insertAttachmentFromPicker,
+                            icon: _isUploadingAttachment
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.image_outlined),
+                            label: Text(attachLabel),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _showMarkdownPreview = !_showMarkdownPreview;
+                              });
+                            },
+                            icon: Icon(
+                              _showMarkdownPreview
+                                  ? Icons.edit_note_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            label: Text(previewLabel),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('note_editor_tags_button'),
+                            onPressed: _showTagsEditor,
+                            icon: const Icon(Icons.sell_outlined),
+                            label: Text(
+                              isNarrow ? 'タグ' : 'タグ (${_tags.length})',
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('note_editor_pin_button'),
+                            onPressed: _togglePin,
+                            style: _isPinned
+                                ? OutlinedButton.styleFrom(
+                                    foregroundColor:
+                                        theme.brightness == Brightness.dark
+                                            ? const Color(0xFFFFB38A)
+                                            : const Color(0xFFB53D0B),
+                                    side: const BorderSide(
+                                      color: Color(0xFFFF6B35),
+                                    ),
+                                    backgroundColor: const Color(0xFFFF6B35)
+                                        .withValues(alpha: 0.14),
+                                  )
+                                : null,
+                            icon: Icon(
+                              _isPinned
+                                  ? Icons.push_pin
+                                  : Icons.push_pin_outlined,
+                            ),
+                            label: Text(_isPinned ? 'ピン留め解除' : 'ピン留め'),
+                          ),
+                          if (_currentNoteId != null)
+                            OutlinedButton.icon(
+                              key: const Key('note_editor_tasks_button'),
+                              onPressed: _showTasksPanel,
+                              icon: const Icon(Icons.checklist_rtl_outlined),
+                              label: Text(isNarrow ? 'タスク' : 'タスクを管理'),
+                            ),
+                          if (!_showMarkdownPreview)
+                            OutlinedButton.icon(
+                              key: const Key(
+                                'note_editor_insert_block_button',
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _showBlockInsertPalette =
+                                      !_showBlockInsertPalette;
+                                });
+                              },
+                              icon: const Icon(Icons.add_box_outlined),
+                              label: Text(isNarrow ? 'ブロック' : 'ブロック挿入'),
+                            ),
+                          OutlinedButton.icon(
+                            key: const Key('note_editor_block_reorder_button'),
+                            onPressed: _openBlockReorderSheet,
+                            icon: const Icon(Icons.swap_vert_rounded),
+                            label: Text(isNarrow ? '並替' : 'ブロック並替'),
+                          ),
+                        ],
+                      ),
+                      if (!isNarrow) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (_isLoadingAttachments) ...[
+                        const SizedBox(height: 12),
+                        const LinearProgressIndicator(minHeight: 2),
+                      ],
+                      if (_attachments.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        AttachmentListWidget(
+                          attachments: _attachments,
+                          onDelete: _deleteAttachment,
+                        ),
+                      ],
+                      SizedBox(height: compactForKeyboard ? 6 : 8),
+                      if (!_showMarkdownPreview &&
+                          (_inlineSlashMatch != null ||
+                              _showBlockInsertPalette))
+                        InlineSlashBlockMenu(
+                          templates: MarkdownBlockService.filterTemplates(
+                            _inlineSlashMatch?.query ?? '',
+                          ),
+                          query: _inlineSlashMatch?.query ?? '',
+                          onSelect: _onSlashTemplateSelected,
+                          onDismiss: () {
+                            setState(() {
+                              _inlineSlashMatch = null;
+                              _showBlockInsertPalette = false;
+                            });
+                          },
+                        ),
+                      NoteImageDropZone(
+                        onImageDropped: (bytes, fileName, mimeType) =>
+                            _handlePastedImage(
+                          Uint8List.fromList(bytes),
+                          fileName,
+                          mimeType,
+                        ),
+                        child: _showMarkdownPreview
+                            ? ValueListenableBuilder<TextEditingValue>(
+                                valueListenable: _contentController,
+                                builder: (context, value, _) {
+                                  if (value.text.trim().isEmpty) {
+                                    return ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minHeight: bodyMinHeight,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '本文や画像を追加すると、ここにプレビューが表示されます。',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minHeight: bodyMinHeight,
+                                    ),
+                                    child: MarkdownPreview(
+                                      data: value.text,
+                                      onWikiLinkTap: _handleWikiLinkTap,
+                                    ),
+                                  );
+                                },
+                              )
+                            : ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: bodyMinHeight,
+                                ),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: _contentFocusNode.requestFocus,
+                                  child: Align(
+                                    alignment: Alignment.topLeft,
+                                    child: TextField(
+                                      key: const Key(
+                                        'note_editor_content_field',
+                                      ),
+                                      controller: _contentController,
+                                      focusNode: _contentFocusNode,
+                                      enableInteractiveSelection: true,
+                                      scrollPadding: const EdgeInsets.only(
+                                        bottom: 100,
+                                      ),
+                                      contextMenuBuilder:
+                                          _buildContentContextMenu,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Write your note here...',
+                                        border: InputBorder.none,
+                                      ),
+                                      minLines: 1,
+                                      maxLines: null,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _contentController,
+                        builder: (context, value, _) {
+                          final List<WikiLinkRef> outgoing =
+                              NoteWikiLinkService.extractWikiLinks(value.text);
+                          final List<NoteBacklink> backlinks =
+                              NoteWikiLinkService.findBacklinks(
+                            currentNoteTitle: _titleController.text,
+                            allNotes: _workspaceNoteSummaries,
+                            currentNoteId: _currentNoteId,
+                          );
+                          return NoteBacklinksPanel(
+                            outgoingLinks: outgoing,
+                            allNotes: _workspaceNoteSummaries,
+                            currentNoteId: _currentNoteId,
+                            backlinks: backlinks,
+                            onOpenNote: _openLinkedNote,
+                            onCreateLinkedNote: _createLinkedNote,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(child: _buildClipboardActionBar(context)),
+              if (!compactForKeyboard) ...[
+                const SizedBox(width: 6),
+                AiAssistantMenu(
+                  contentController: _contentController,
+                  onApply: (text) => _contentController.text = text,
+                  model: _selectedAiModel,
+                  styleName: _selectedAiStyle.instruction == null
+                      ? null
+                      : _selectedAiStyle.commandValue,
+                  styleInstruction: _selectedAiStyle.instruction,
+                  compact: true,
                 ),
-              ),
+              ],
             ],
           ),
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: AiAssistantMenu(
-            contentController: _contentController,
-            onApply: (text) => _contentController.text = text,
-            model: _selectedAiModel,
-            styleName: _selectedAiStyle.instruction == null
-                ? null
-                : _selectedAiStyle.commandValue,
-            styleInstruction: _selectedAiStyle.instruction,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildEditorBody() {
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showRelatedNotes =
+        _currentNoteId != null && !(isNarrow && isKeyboardOpen);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compactRelatedNotes = constraints.maxHeight < 620;
+        final compactRelatedNotes = constraints.maxHeight < 620 || isNarrow;
         return Column(
           children: [
             Expanded(child: _buildEditorSurface()),
-            if (_currentNoteId != null)
+            if (showRelatedNotes)
               RelatedNotesStrip(
                 notes: _relatedNotes,
                 isLoading: _isLoadingRelatedNotes,
@@ -2549,7 +3282,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   /// デバウンス待ち (入力後 2 秒以内) にエディタを閉じると、`dispose()` で
   /// タイマーが破棄され未保存の編集がサーバーに届かない。破棄前に確定値を
-  /// 取り出して投げ切る (State には触れないので dispose 後も安全)。
+  /// 取り出し、先行保存の後に送る。最終コールバックは State に触れない。
   void _flushPendingSaveOnExit() {
     final noteId = _currentNoteId;
     if (noteId == null) return; // 新規メモはローカル下書きで復元される
@@ -2559,33 +3292,42 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
     final isFavorite = _isFavorite;
+    final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
     if (_matchesPersistedState(
-      title: title,
-      content: content,
-      reminderIso: reminderIso,
-      isFavorite: isFavorite,
-      tags: tags,
-    )) {
+          title: title,
+          content: content,
+          reminderIso: reminderIso,
+          isFavorite: isFavorite,
+          isPinned: isPinned,
+          tags: tags,
+        ) &&
+        !_autoSaveService.hasPendingOperations) {
       return;
     }
 
+    final client = _supabase;
+    final owner = client.auth.currentUser?.id;
+    if (owner == null) return;
     unawaited(
-      _supabase
-          .from('notes')
-          .update({
-            'title': title,
-            'content': content,
-            'reminder_date': reminderIso,
-            'is_favorite': isFavorite,
-            'tags': tags,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', noteId)
-          .catchError((Object _) {
-            // 閉じた後なので UI 通知はできない。ローカル下書きが残るため
-            // 次回このメモを開いたときに復元される。
-          }),
+      _autoSaveService.saveOnExit(() async {
+        if (client.auth.currentUser?.id != owner) return;
+        await client
+            .from('notes')
+            .update({
+              'title': title,
+              'content': content,
+              'reminder_date': reminderIso,
+              'is_favorite': isFavorite,
+              'is_pinned': isPinned,
+              'tags': tags,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', noteId)
+            .eq('user_id', owner);
+      }).catchError((Object _) {
+        // Preserve the local draft if the final request fails after UI disposal.
+      }),
     );
   }
 
@@ -2593,6 +3335,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   void dispose() {
     _flushPendingSaveOnExit();
     _imagePasteRegistration?.dispose();
+    _contentFocusNode.removeListener(_onContentFocusChanged);
     _contentFocusNode.dispose();
     _detachTextListeners();
     _autoSaveService.dispose();
@@ -2776,4 +3519,50 @@ class _RedoIntent extends Intent {
 
 class _SaveIntent extends Intent {
   const _SaveIntent();
+}
+
+class _ManualPasteDialog extends StatefulWidget {
+  const _ManualPasteDialog();
+
+  @override
+  State<_ManualPasteDialog> createState() => _ManualPasteDialogState();
+}
+
+class _ManualPasteDialogState extends State<_ManualPasteDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('note_editor_manual_paste_dialog'),
+      title: const Text('手動で貼り付け'),
+      content: TextField(
+        key: const Key('note_editor_manual_paste_field'),
+        controller: _controller,
+        autofocus: true,
+        maxLines: 5,
+        decoration: const InputDecoration(
+          hintText: 'ここを長押しして「ペースト」してください',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          key: const Key('note_editor_manual_paste_confirm'),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('本文へ挿入'),
+        ),
+      ],
+    );
+  }
 }

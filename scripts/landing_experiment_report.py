@@ -16,12 +16,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
 
 DEFAULT_SUPABASE_URL = "https://smmkxxavexumewbfaqpy.supabase.co"
+RECENT_FUNNEL_WINDOW_DAYS = 14
 HYPOTHESES = tuple(f"h{index:02d}" for index in range(1, 11))
 VARIANTS = ("control", "treatment")
 COUNT_FIELDS = (
@@ -280,6 +281,89 @@ def summarize_funnel_rows(rows: Any) -> dict[str, int]:
     return totals
 
 
+OAUTH_FAILURE_EVENT_KEYS = (
+    ("cancelled", "funnel_google_oauth_fail_cancelled"),
+    ("rate_limit", "funnel_google_oauth_fail_rate_limit"),
+    ("provider_configuration", "funnel_google_oauth_fail_provider_config"),
+    ("redirect_configuration", "funnel_google_oauth_fail_redirect"),
+    ("callback_exchange", "funnel_google_oauth_fail_callback_exchange"),
+    ("unknown", "funnel_google_oauth_fail_unknown"),
+)
+
+
+def _extract_google_oauth_failures(
+    observed_funnel: dict[str, int] | None,
+) -> tuple[dict[str, int | None], int | None]:
+    source = observed_funnel or {}
+    failures = {
+        label: source.get(event_key)
+        for label, event_key in OAUTH_FAILURE_EVENT_KEYS
+    }
+    total = (
+        sum(value or 0 for value in failures.values())
+        if observed_funnel is not None
+        else None
+    )
+    return (failures, total)
+
+
+def summarize_recent_funnel_rows(
+    rows: Any,
+    *,
+    window_end_date: str | None = None,
+    window_days: int = RECENT_FUNNEL_WINDOW_DAYS,
+) -> tuple[dict[str, int], str | None]:
+    if not isinstance(rows, list):
+        raise ReportContractError("app analytics response must be a list")
+    if window_days <= 0:
+        raise ValueError("window_days must be positive")
+
+    parsed_rows: list[tuple[date | None, dict[str, Any]]] = []
+    valid_dates: list[date] = []
+    failure_dates: list[date] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ReportContractError("every app analytics row must be an object")
+        raw_date = row.get("date")
+        row_date: date | None = None
+        if isinstance(raw_date, str) and raw_date.strip():
+            try:
+                row_date = date.fromisoformat(raw_date.strip()[:10])
+                valid_dates.append(row_date)
+            except ValueError:
+                row_date = None
+        parsed_rows.append((row_date, row))
+        source_details = row.get("source_details")
+        if row_date is not None and isinstance(source_details, dict):
+            for _, event_key in OAUTH_FAILURE_EVENT_KEYS:
+                val = source_details.get(event_key, 0)
+                if not isinstance(val, bool) and isinstance(val, (int, float)) and val > 0:
+                    failure_dates.append(row_date)
+                    break
+
+    end_d: date | None = None
+    if window_end_date and window_end_date.strip():
+        try:
+            end_d = date.fromisoformat(window_end_date.strip()[:10])
+        except ValueError:
+            end_d = None
+    if end_d is None and valid_dates:
+        end_d = max(valid_dates)
+
+    if end_d is None:
+        recent_rows = [row for _, row in parsed_rows]
+    else:
+        start_d = end_d - timedelta(days=window_days - 1)
+        recent_rows = [
+            row
+            for row_date, row in parsed_rows
+            if row_date is not None and start_d <= row_date <= end_d
+        ]
+
+    last_failure_date = max(failure_dates).isoformat() if failure_dates else None
+    return (summarize_funnel_rows(recent_rows), last_failure_date)
+
+
 def wilson_interval(
     successes: int,
     trials: int,
@@ -367,6 +451,9 @@ def build_report(
     synthetic_offsets: dict[tuple[str, str], int] | None = None,
     funnel_counts: dict[str, int] | None = None,
     funnel_observation_window: tuple[str | None, str | None] = (None, None),
+    recent_funnel_counts: dict[str, int] | None = None,
+    recent_funnel_window_days: int = RECENT_FUNNEL_WINDOW_DAYS,
+    last_google_oauth_failure_date: str | None = None,
     minimum_views_per_arm: int = 100,
     minimum_metric_denominator_per_arm: int = 20,
     minimum_total_primary_successes: int = 10,
@@ -416,24 +503,16 @@ def build_report(
     magic_link_attempts = observed_funnel.get("funnel_magic_link_attempt")
     magic_link_sends = observed_funnel.get("funnel_magic_link_send")
     google_oauth_starts = observed_funnel.get("funnel_google_oauth_start")
-    google_oauth_failures = {
-        "cancelled": observed_funnel.get("funnel_google_oauth_fail_cancelled"),
-        "rate_limit": observed_funnel.get("funnel_google_oauth_fail_rate_limit"),
-        "provider_configuration": observed_funnel.get(
-            "funnel_google_oauth_fail_provider_config"
-        ),
-        "redirect_configuration": observed_funnel.get(
-            "funnel_google_oauth_fail_redirect"
-        ),
-        "callback_exchange": observed_funnel.get(
-            "funnel_google_oauth_fail_callback_exchange"
-        ),
-        "unknown": observed_funnel.get("funnel_google_oauth_fail_unknown"),
-    }
-    google_oauth_failure_total = (
-        sum(value or 0 for value in google_oauth_failures.values())
-        if funnel_counts is not None
-        else None
+    google_oauth_failures, google_oauth_failure_total = (
+        _extract_google_oauth_failures(funnel_counts)
+    )
+    recent_google_oauth_failures, recent_google_oauth_failure_total = (
+        _extract_google_oauth_failures(recent_funnel_counts)
+    )
+    active_oauth_failure_total = (
+        recent_google_oauth_failure_total
+        if recent_funnel_counts is not None
+        else google_oauth_failure_total
     )
 
     if funnel_counts is None:
@@ -444,7 +523,7 @@ def build_report(
         recommended_next_action = "improve_registration_cta_handoff"
     elif (magic_link_attempts or 0) > 0 and (magic_link_sends or 0) == 0:
         recommended_next_action = "repair_magic_link_delivery_or_use_google_oauth"
-    elif (google_oauth_failure_total or 0) > 0 and total_non_anonymous_completes == 0:
+    elif (active_oauth_failure_total or 0) > 0 and total_non_anonymous_completes == 0:
         recommended_next_action = "repair_google_oauth_callback_failure"
     elif total_non_anonymous_completes == 0:
         recommended_next_action = "verify_oauth_callback_and_signup_completion"
@@ -455,6 +534,7 @@ def build_report(
         "status": "available" if funnel_counts is not None else "not_fetched",
         "observation_start": funnel_observation_window[0],
         "observation_end": funnel_observation_window[1],
+        "recent_window_days": recent_funnel_window_days,
         "counting": "aggregate_events_not_unique_visitors",
         "trial_runs": observed_funnel.get("funnel_trial_run"),
         "save_ctas": observed_funnel.get("funnel_save_cta"),
@@ -465,6 +545,9 @@ def build_report(
         "google_oauth_starts": google_oauth_starts,
         "google_oauth_failures": google_oauth_failures,
         "google_oauth_failure_total": google_oauth_failure_total,
+        "recent_google_oauth_failures": recent_google_oauth_failures,
+        "recent_google_oauth_failure_total": recent_google_oauth_failure_total,
+        "last_google_oauth_failure_date": last_google_oauth_failure_date,
         "inbox_opens": observed_funnel.get("funnel_inbox_open"),
         "recommended_next_action": recommended_next_action,
     }
@@ -637,6 +720,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"{funnel['google_oauth_starts'] if funnel['google_oauth_starts'] is not None else 'missing'}",
         "- Categorized Google OAuth callback failures: "
         f"{funnel['google_oauth_failure_total'] if funnel['google_oauth_failure_total'] is not None else 'missing'}",
+        "- Recent Google OAuth callback failures "
+        f"({funnel.get('recent_window_days', RECENT_FUNNEL_WINDOW_DAYS)}d): "
+        f"{funnel['recent_google_oauth_failure_total'] if funnel.get('recent_google_oauth_failure_total') is not None else 'missing'}"
+        + (
+            f" (last failure: {funnel['last_google_oauth_failure_date']})"
+            if funnel.get("last_google_oauth_failure_date")
+            else ""
+        ),
         f"- Inbox opens: {funnel['inbox_opens'] if funnel['inbox_opens'] is not None else 'missing'}",
         f"- Recommended next action: {funnel['recommended_next_action']}",
         "- Counting note: aggregate event counts, not unique visitors.",
@@ -808,11 +899,17 @@ def main(argv: list[str] | None = None) -> int:
             timeout=args.timeout,
         )
         funnel_counts = summarize_funnel_rows(funnel_rows)
+        recent_funnel_counts, last_oauth_failure_date = summarize_recent_funnel_rows(
+            funnel_rows,
+            window_end_date=observation_window[1],
+        )
         report = build_report(
             arms,
             synthetic_offsets=offsets,
             funnel_counts=funnel_counts,
             funnel_observation_window=observation_window,
+            recent_funnel_counts=recent_funnel_counts,
+            last_google_oauth_failure_date=last_oauth_failure_date,
         )
         markdown = render_markdown(report)
         write_report(

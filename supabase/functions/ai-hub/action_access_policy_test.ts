@@ -2,6 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   aiHubActionAccess,
   AUTHENTICATED_AI_HUB_ACTIONS,
+  AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS,
   authorizeAiHubAction,
   PUBLIC_AI_HUB_ACTIONS,
   resolveAuthenticatedUserId,
@@ -9,9 +10,19 @@ import {
 } from "./action_access_policy.ts";
 
 Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
-  assertEquals(aiHubActionAccess("judgment.get"), "public");
+  assertEquals(aiHubActionAccess("university.content"), "public");
+  assertEquals(aiHubActionAccess("judgment.get"), "authenticated");
+  assertEquals(aiHubActionAccess("quota.daily_status"), "authenticated");
+  assertEquals(aiHubActionAccess("data_sources.status"), "authenticated");
+  assertEquals(aiHubActionAccess("data_sources.register"), "authenticated");
+  assertEquals(
+    aiHubActionAccess("edge_llm.invoke"),
+    "authenticated_or_service_role",
+  );
   assertEquals(aiHubActionAccess("search.query"), "authenticated");
   assertEquals(aiHubActionAccess("corporate_site.readiness"), "authenticated");
+  assertEquals(aiHubActionAccess("palm_reading.analyze"), "authenticated");
+  assertEquals(aiHubActionAccess("palm_reading.delete"), "authenticated");
   assertEquals(aiHubActionAccess("observability.heatmap"), "service_role");
   assertEquals(aiHubActionAccess("unknown.random.action"), null);
 });
@@ -28,8 +39,67 @@ Deno.test("authorizeAiHubAction fails closed on unregistered actions", () => {
   });
 });
 
+Deno.test("authorizeAiHubAction rejects anonymous unregistered actions with 401", () => {
+  const decision = authorizeAiHubAction("some.future.paid_action", {
+    userId: null,
+    isServiceRole: false,
+  });
+  assertEquals(decision, {
+    allowed: false,
+    status: 401,
+    error: "Unauthorized",
+  });
+});
+
+for (const action of ["provider.chat", "provider.chat_auto"]) {
+  Deno.test(`${action} rejects anonymous callers with 401`, () => {
+    assertEquals(aiHubActionAccess(action), "authenticated_or_service_role");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+  });
+
+  Deno.test(`${action} allows authenticated users`, () => {
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
+    );
+  });
+
+  Deno.test(`${action} allows internal service-role callers`, () => {
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      { allowed: true },
+    );
+  });
+}
+
+Deno.test("no public action spends a paid provider key", () => {
+  const paidActions = [
+    "provider.chat",
+    "provider.chat_auto",
+    "edge_llm.invoke",
+    "judgment.get",
+    "judgment.get.legacy",
+    "tags.suggest",
+    "election.analyze",
+  ];
+  for (const action of paidActions) {
+    assertEquals(
+      PUBLIC_AI_HUB_ACTIONS.has(action),
+      false,
+      `${action} must not be public`,
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+  }
+});
+
 Deno.test("authorizeAiHubAction allows public actions for anonymous users", () => {
-  const decision = authorizeAiHubAction("judgment.get", {
+  const decision = authorizeAiHubAction("university.content", {
     userId: null,
     isServiceRole: false,
   });
@@ -87,6 +157,23 @@ Deno.test("disjointness of action registry sets", () => {
   const pub = [...PUBLIC_AI_HUB_ACTIONS];
   const auth = [...AUTHENTICATED_AI_HUB_ACTIONS];
   const srv = [...SERVICE_ROLE_AI_HUB_ACTIONS];
+  const mixed = [...AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS];
+
+  for (const a of mixed) {
+    for (
+      const [name, set] of [
+        ["public", PUBLIC_AI_HUB_ACTIONS],
+        ["authenticated", AUTHENTICATED_AI_HUB_ACTIONS],
+        ["service_role", SERVICE_ROLE_AI_HUB_ACTIONS],
+      ] as const
+    ) {
+      assertEquals(
+        set.has(a),
+        false,
+        `${a} is in both authenticated_or_service_role and ${name}`,
+      );
+    }
+  }
 
   for (const a of pub) {
     assertEquals(
@@ -117,6 +204,54 @@ Deno.test("disjointness of action registry sets", () => {
       AUTHENTICATED_AI_HUB_ACTIONS.has(a),
       false,
       `${a} is in both service_role and authenticated`,
+    );
+  }
+});
+
+Deno.test("prompt_cache.* and agent.safety_checkpoint.* allow signed-in and service-role callers while blocking anonymous", () => {
+  const actions = [
+    "prompt_cache.build_payload",
+    "prompt_cache.record_metric",
+    "prompt_cache.monitor_summary",
+    "prompt_cache.check_renewal",
+    "agent.safety_checkpoint.evaluate",
+    "agent.safety_checkpoint.list",
+    "agent.safety_checkpoint.approve",
+    "agent.safety_checkpoint.reject",
+  ];
+  for (const action of actions) {
+    assertEquals(aiHubActionAccess(action), "authenticated_or_service_role");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: true }),
+      { allowed: true },
+    );
+  }
+});
+
+Deno.test("agent.sandbox.* requires authenticated users and blocks anonymous callers", () => {
+  const sandboxActions = [
+    "agent.sandbox.evaluate",
+    "agent.sandbox.execute_isolated",
+    "agent.sandbox.audit_list",
+    "agent.sandbox.policy_upsert",
+  ];
+  for (const action of sandboxActions) {
+    assertEquals(aiHubActionAccess(action), "authenticated");
+    assertEquals(
+      authorizeAiHubAction(action, { userId: null, isServiceRole: false }),
+      { allowed: false, status: 401, error: "Unauthorized" },
+    );
+    assertEquals(
+      authorizeAiHubAction(action, { userId: "user-1", isServiceRole: false }),
+      { allowed: true },
     );
   }
 });

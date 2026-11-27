@@ -50,6 +50,19 @@ export const CORE_HUB_ACTION_REGISTRY = {
   "design.screens.list": { auth: "user" },
   "design.audit.upsert": { auth: "service_role" },
   "design.rollout.upsert": { auth: "service_role" },
+  "async_job.enqueue": { auth: "user" },
+  "async_job.status": { auth: "user" },
+  "async_job.list": { auth: "user" },
+  "async_job.update_status": { auth: "user" },
+  "stage_gate.list": { auth: "user" },
+  "stage_gate.submit": { auth: "user" },
+  "stage_gate.decide": { auth: "user" },
+  "external_diff.rule.list": { auth: "user" },
+  "external_diff.rule.upsert": { auth: "user" },
+  "external_diff.alert.list": { auth: "user" },
+  "external_diff.alert.acknowledge": { auth: "user" },
+  "external_diff.snapshot_and_detect": { auth: "user" },
+  "external_diff.batch_scan": { auth: "service_role" },
 } as const satisfies Record<string, CoreHubActionDefinition>;
 
 export type CoreHubAction = keyof typeof CORE_HUB_ACTION_REGISTRY;

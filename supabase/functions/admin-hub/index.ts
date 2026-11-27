@@ -14,6 +14,39 @@ import {
   runTaskBudgetAssistant,
 } from "../_shared/task_budget_assistant.ts";
 import { mapAutoErrorReports } from "./auto_error_reports.ts";
+import {
+  createSupabaseCompetitorCandidateStore,
+  handleCompetitorCandidateList,
+  handleCompetitorCandidateReview,
+  handleCompetitorCandidateVerifyUrl,
+} from "./competitor_candidates.ts";
+import {
+  createSupabaseCapacityReportStore,
+  handleCapacityReportAggregate,
+  handleCapacityReportList,
+  handleCapacityReportNotify,
+} from "./capacity_report.ts";
+import {
+  createSupabaseOrgAuditQuotaStore,
+  handleOrgAuditList,
+  handleOrgAuditRecord,
+  handleOrgQuotaAcknowledgeAlert,
+  handleOrgQuotaConsume,
+  handleOrgQuotaStatus,
+  handleOrgQuotaUpdateLimit,
+} from "./organization_audit_quota.ts";
+import {
+  createSupabaseWorkosAdminStore,
+  handleWorkosPortalLink,
+  handleWorkosUpdateMemberRole,
+} from "./workos_admin.ts";
+import {
+  createSupabaseOrgIdpRbacStore,
+  handleOrgIdpMappingsDelete,
+  handleOrgIdpMappingsList,
+  handleOrgIdpMappingsUpsert,
+  handleOrgSsoEvaluate,
+} from "./idp_rbac_admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +75,22 @@ async function getUserId(req: Request): Promise<string | null> {
     data: { user },
   } = await c.auth.getUser();
   return user?.id ?? null;
+}
+
+async function isAdminActor(
+  admin: SupabaseClient,
+  userId: string | null,
+  isServiceRole: boolean,
+): Promise<boolean> {
+  if (isServiceRole) return true;
+  if (!userId) return false;
+  const { data: profile, error } = await admin
+    .from("user_profiles")
+    .select("is_admin, role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return false;
+  return profile?.is_admin === true || profile?.role === "admin";
 }
 
 async function listItems(
@@ -847,6 +896,189 @@ serve(async (req: Request) => {
           })) ?? [],
           total: data?.total ?? 0,
         });
+      }
+
+      case "competitor_candidate.list": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCompetitorCandidateList(
+          createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "competitor_candidate.verify_url": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCompetitorCandidateVerifyUrl(
+          createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "competitor_candidate.review": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCompetitorCandidateReview(
+          createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "capacity_report.list": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCapacityReportList(
+          createSupabaseCapacityReportStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "capacity_report.aggregate": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCapacityReportAggregate(
+          createSupabaseCapacityReportStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "capacity_report.notify": {
+        if (!(await isAdminActor(admin, userId, isServiceRole))) {
+          return json({ error: "Forbidden: admin role required" }, 403);
+        }
+        const res = await handleCapacityReportNotify(
+          createSupabaseCapacityReportStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_audit.record": {
+        const res = await handleOrgAuditRecord(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_audit.list": {
+        const res = await handleOrgAuditList(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.consume": {
+        const res = await handleOrgQuotaConsume(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+          {
+            slackWebhookUrl: Deno.env.get("ADMIN_QUOTA_ALERT_WEBHOOK_URL") ?? "",
+          },
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.status": {
+        const res = await handleOrgQuotaStatus(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.update_limit": {
+        const res = await handleOrgQuotaUpdateLimit(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.acknowledge_alert": {
+        const res = await handleOrgQuotaAcknowledgeAlert(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "workos.portal_link": {
+        const res = await handleWorkosPortalLink({
+          store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.update_member_role": {
+        const res = await handleWorkosUpdateMemberRole({
+          store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.list": {
+        const res = await handleOrgIdpMappingsList({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.upsert": {
+        const res = await handleOrgIdpMappingsUpsert({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.delete": {
+        const res = await handleOrgIdpMappingsDelete({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.sso_evaluate": {
+        const res = await handleOrgSsoEvaluate({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
       }
 
       default:

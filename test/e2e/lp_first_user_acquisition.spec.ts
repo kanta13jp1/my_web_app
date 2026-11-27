@@ -85,7 +85,7 @@ test.describe('LP first-user acquisition', () => {
 
   test('trial action reveals the generated result without jumping to the save form', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await openLanding(page, treatmentPath);
 
     const trialInput = page.getByRole('textbox', { name: /登録なしで試す/ });
@@ -101,21 +101,31 @@ test.describe('LP first-user acquisition', () => {
     );
     await page.keyboard.insertText('今日の最優先タスクを1件に絞りたい');
     await trialAction.click();
-    await completeGuidedTrial(page);
 
     const trialResultCard = page.getByRole('group', {
       name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
-    await expect(trialAction).toBeVisible();
-    const triggerBoxAfterResult = await trialAction.boundingBox();
     const viewport = page.viewportSize();
-    expect(triggerBoxAfterResult).not.toBeNull();
     expect(viewport).not.toBeNull();
-    expect(triggerBoxAfterResult!.y).toBeGreaterThanOrEqual(0);
-    expect(triggerBoxAfterResult!.y + triggerBoxAfterResult!.height).toBeLessThan(
-      viewport!.height * 0.7,
-    );
+    if (testInfo.project.name === 'mobile-chrome') {
+      await expect(trialAction).toHaveCount(0);
+      await expect(
+        page.getByRole('button', { name: /この提案を保存/ }),
+      ).toBeVisible();
+      const resultBox = await trialResultCard.boundingBox();
+      expect(resultBox).not.toBeNull();
+      expect(resultBox!.y).toBeGreaterThanOrEqual(0);
+      expect(resultBox!.y).toBeLessThan(viewport!.height * 0.45);
+    } else {
+      await expect(trialAction).toBeVisible();
+      const triggerBoxAfterResult = await trialAction.boundingBox();
+      expect(triggerBoxAfterResult).not.toBeNull();
+      expect(triggerBoxAfterResult!.y).toBeGreaterThanOrEqual(0);
+      expect(
+        triggerBoxAfterResult!.y + triggerBoxAfterResult!.height,
+      ).toBeLessThan(viewport!.height * 0.7);
+    }
     await expect(
       page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
     ).toHaveCount(0);
@@ -123,7 +133,7 @@ test.describe('LP first-user acquisition', () => {
 
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await openLanding(page, treatmentPath);
 
     await page
@@ -137,6 +147,12 @@ test.describe('LP first-user acquisition', () => {
       name: /登録なしで試す:.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
+    if (testInfo.project.name === 'mobile-chrome') {
+      await expect(
+        page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+      ).toHaveCount(0);
+      await page.getByRole('button', { name: /この提案を保存/ }).click();
+    }
     await expect(
       page.getByRole('button', {
         name: 'Googleで無料登録して引き継ぐ',
@@ -272,36 +288,6 @@ test.describe('LP first-user acquisition', () => {
     await expect(googleAction).toBeVisible();
   });
 });
-
-async function completeGuidedTrial(page: Page) {
-  for (let step = 0; step < 5; step += 1) {
-    await expect(
-      page.getByRole('group', {
-        name: new RegExp(`登録なしで試す:.*質問 ${step + 1} / 5`),
-      }),
-    ).toBeVisible();
-    const quickAnswer = page.getByRole('button', { name: /迷ったら/ });
-    await expect(quickAnswer).toBeVisible();
-    await quickAnswer.click();
-    const next = page.getByRole('button', {
-      name: step === 4 ? '送る内容を確認' : '次の質問へ',
-      exact: true,
-    });
-    await expect(next).toBeEnabled();
-    await next.click();
-  }
-  await expect(
-    page.getByRole('group', {
-      name: /登録なしで試す:.*AIに送る内容を確認/,
-    }),
-  ).toBeVisible();
-  const submit = page.getByRole('button', {
-    name: 'この内容でAIに提案してもらう',
-    exact: true,
-  });
-  await expect(submit).toBeVisible();
-  await submit.click();
-}
 
 async function openLanding(page: Page, path: string) {
   await page.route('**/rest/v1/app_analytics*', async (route) => {
