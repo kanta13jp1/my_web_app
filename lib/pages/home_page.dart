@@ -83,6 +83,7 @@ import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
 import '../widgets/home_feature_request_failure_snackbar.dart';
 import '../widgets/home_feature_request_form_card.dart';
+import '../widgets/home_monthly_cashflow_priority_card.dart';
 import '../utils/home_calendar_visible_range.dart';
 import '../utils/home_cashflow_bundle_loader.dart';
 import '../utils/home_calendar_day_composition.dart';
@@ -2056,231 +2057,21 @@ abstinence_slip_details: $slipDetailsText
     required bool isHighlighted,
   }) {
     final summary = snapshot.monthlyCashflowSummary;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = summary.netTotal >= 0
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFEF9A9A);
-    final cardColor =
-        isDark ? const Color(0xFF1E1E1E) : Colors.white.withValues(alpha: 0.92);
-    final borderColor = isHighlighted
-        ? accentColor.withValues(alpha: 0.7)
-        : accentColor.withValues(alpha: 0.22);
-    final monthLabel = summary.monthLabel;
-    final recordLabel =
-        summary.recordCount == 0 ? '未記録' : '${summary.recordCount}件記録';
-
-    return Container(
-      key: const Key('home_monthly_cashflow_card'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: isHighlighted ? 1.6 : 1),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: isHighlighted ? 0.18 : 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.receipt_long, color: accentColor),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$monthLabelの収支を最優先',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xDE000000),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      summary.summaryLine,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.6,
-                        color: (isDark ? Colors.white : const Color(0xDE000000))
-                            .withValues(alpha: 0.78),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isHighlighted)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'NOW',
-                    style: TextStyle(
-                      color: accentColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildMonthlyCashflowMetric(
-                label: '収入',
-                value: _formatYen(summary.incomeTotal.toDouble()),
-                color: const Color(0xFF388E3C),
-              ),
-              _buildMonthlyCashflowMetric(
-                label: '支出',
-                value: _formatYen(summary.expenseTotal.toDouble()),
-                color: const Color(0xFFE53935),
-              ),
-              _buildMonthlyCashflowMetric(
-                label: '差額',
-                value: _formatSignedYen(summary.netTotal.toDouble()),
-                color: accentColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildMonthlyCashflowChip(
-                icon:
-                    summary.reviewDone ? Icons.visibility : Icons.priority_high,
-                label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
-                color:
-                    summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
-              ),
-              _buildMonthlyCashflowChip(
-                icon: Icons.edit_note,
-                label: recordLabel,
-                color: summary.recordCount > 0
-                    ? const Color(0xFF6366F1)
-                    : const Color(0xFFFF6B35),
-              ),
-              if (summary.lastRecordedAt != null)
-                _buildMonthlyCashflowChip(
-                  icon: Icons.schedule,
-                  label:
-                      '最終記録 ${DateFormat('M/d HH:mm').format(summary.lastRecordedAt!)}',
-                  color: const Color(0xFF3D5AFE),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            key: const Key('home_monthly_cashflow_cta'),
-            onPressed: () => _openMonthlyCashflowReview(context),
-            icon: const Icon(Icons.arrow_forward),
-            label: Text(summary.recordCount == 0 ? '今月の収支を記録する' : '今月の収支を確認する'),
-            style: FilledButton.styleFrom(
-              backgroundColor: accentColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthlyCashflowMetric({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 104),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthlyCashflowChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
+    final lastRecorded = summary.lastRecordedAt;
+    return HomeMonthlyCashflowPriorityCard(
+      monthLabel: summary.monthLabel,
+      summaryLine: summary.summaryLine,
+      incomeLabel: _formatYen(summary.incomeTotal.toDouble()),
+      expenseLabel: _formatYen(summary.expenseTotal.toDouble()),
+      netLabel: _formatSignedYen(summary.netTotal.toDouble()),
+      netTotal: summary.netTotal.toDouble(),
+      reviewDone: summary.reviewDone,
+      recordCount: summary.recordCount,
+      lastRecordedLabel: lastRecorded == null
+          ? null
+          : DateFormat('M/d HH:mm').format(lastRecorded),
+      isHighlighted: isHighlighted,
+      onOpenReview: () => _openMonthlyCashflowReview(context),
     );
   }
 
