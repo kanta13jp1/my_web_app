@@ -54,7 +54,6 @@ import '../widgets/ga_readiness_gate_panel.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
-import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_curated_calendar_section.dart';
 import '../widgets/home_primary_action_card.dart';
@@ -85,6 +84,7 @@ import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
 import '../widgets/home_feature_request_failure_snackbar.dart';
+import '../widgets/home_feature_request_form_card.dart';
 import '../utils/home_calendar_visible_range.dart';
 import '../utils/home_cashflow_bundle_loader.dart';
 import '../utils/home_calendar_day_composition.dart';
@@ -6370,458 +6370,49 @@ abstinence_slip_details: $slipDetailsText
   }
 
   Widget _buildHomeFeatureRequestForm(bool isDark, bool isCompact) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final submission = _lastFeatureRequestSubmission;
     final githubIssue = _dynamicMap(submission?['githubIssue']);
     final wbsTask = _dynamicMap(submission?['wbsTask']);
     final issueUrl = (githubIssue['html_url'] ?? '').toString();
-    final issueNumber = githubIssue['number'];
+    final rawIssueNumber = githubIssue['number'];
+    final issueNumber = rawIssueNumber is int ? rawIssueNumber : null;
     final wbsTaskTitle = (wbsTask['title'] ?? '').toString();
     final hasWbsTask = wbsTaskTitle.isNotEmpty && wbsTask['error'] == null;
-    const categories = ['機能追加', 'UX改善', '不具合', 'AI連携', 'データ連携', 'その他'];
-    const priorityLabels = {'high': '高', 'medium': '中', 'low': '低'};
-    final fieldBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: colorScheme.outlineVariant),
-    );
+    final file = _featureRequestAttachment;
+    final analysis = _featureRequestAttachmentAnalysis;
 
-    Widget dropdowns() {
-      final categoryField = DropdownButtonFormField<String>(
-        key: ValueKey('feature-request-category-$_featureRequestCategory'),
-        initialValue: _featureRequestCategory,
-        decoration: InputDecoration(
-          labelText: '分類',
-          prefixIcon: const Icon(Icons.category_outlined),
-          border: fieldBorder,
-          enabledBorder: fieldBorder,
-          isDense: true,
-        ),
-        items: [
-          for (final category in categories)
-            DropdownMenuItem(value: category, child: Text(category)),
-        ],
-        onChanged: _isSubmittingFeatureRequest
-            ? null
-            : (value) {
-                if (value != null) {
-                  setState(() => _featureRequestCategory = value);
-                }
-              },
-      );
-      final priorityField = DropdownButtonFormField<String>(
-        key: ValueKey('feature-request-priority-$_featureRequestPriority'),
-        initialValue: _featureRequestPriority,
-        decoration: InputDecoration(
-          labelText: '優先度',
-          prefixIcon: const Icon(Icons.priority_high_outlined),
-          border: fieldBorder,
-          enabledBorder: fieldBorder,
-          isDense: true,
-        ),
-        items: [
-          for (final entry in priorityLabels.entries)
-            DropdownMenuItem(value: entry.key, child: Text(entry.value)),
-        ],
-        onChanged: _isSubmittingFeatureRequest
-            ? null
-            : (value) {
-                if (value != null) {
-                  setState(() => _featureRequestPriority = value);
-                }
-              },
-      );
-
-      if (isCompact) {
-        return Column(
-          children: [categoryField, const SizedBox(height: 10), priorityField],
-        );
-      }
-      return Row(
-        children: [
-          Expanded(child: categoryField),
-          const SizedBox(width: 10),
-          Expanded(child: priorityField),
-        ],
-      );
-    }
-
-    Widget attachmentAnalyzer() {
-      final file = _featureRequestAttachment;
-      final analysis = _featureRequestAttachmentAnalysis;
-      final observation =
-          analysis == null ? '' : _analysisText(analysis, 'observation');
-      final proposal =
-          analysis == null ? '' : _analysisText(analysis, 'proposal');
-
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.image_search_outlined,
-                  color: colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'スクリーンショット・写真からAIが追加要望を下書きします',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (file != null) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${file.name} / ${_formatFeatureRequestAttachmentSize(file.size)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _isSubmittingFeatureRequest ||
-                          _isAnalyzingFeatureRequestAttachment
-                      ? null
-                      : _pickFeatureRequestAttachment,
-                  icon: const Icon(Icons.attach_file_outlined),
-                  label: Text(file == null ? '画像を選択' : '画像を変更'),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: file == null ||
-                          _isSubmittingFeatureRequest ||
-                          _isAnalyzingFeatureRequestAttachment
-                      ? null
-                      : _analyzeFeatureRequestAttachment,
-                  icon: _isAnalyzingFeatureRequestAttachment
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.auto_awesome_outlined),
-                  label: Text(
-                    _isAnalyzingFeatureRequestAttachment ? 'AI診断中' : 'AI診断',
-                  ),
-                ),
-                if (file != null)
-                  TextButton.icon(
-                    onPressed: _isSubmittingFeatureRequest ||
-                            _isAnalyzingFeatureRequestAttachment
-                        ? null
-                        : _clearFeatureRequestAttachment,
-                    icon: const Icon(Icons.close_outlined),
-                    label: const Text('クリア'),
-                  ),
-              ],
-            ),
-            if (analysis != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                [
-                  if (observation.isNotEmpty) '観察: $observation',
-                  if (proposal.isNotEmpty) '改善案: $proposal',
-                ].join('\n'),
-                style: theme.textTheme.bodySmall?.copyWith(height: 1.55),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    final formCard = Card(
-      elevation: 0,
-      color: isDark ? const Color(0xFF111827) : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : const Color(0xFFDDE8E4),
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(isCompact ? 14 : 18),
-        child: Form(
-          key: _featureRequestFormKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F766E).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.add_comment_outlined,
-                      color: Color(0xFF0F766E),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '改善内容を送る',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          '送信内容はサービス改善の検討に利用し、受付番号を発行します。',
-                          style: TextStyle(fontSize: 12, height: 1.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _featureRequestTitleController,
-                enabled: !_isSubmittingFeatureRequest,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: '要望タイトル',
-                  hintText: '例: カレンダーから習慣の優先度を調整したい',
-                  prefixIcon: const Icon(Icons.title_outlined),
-                  border: fieldBorder,
-                  enabledBorder: fieldBorder,
-                ),
-                validator: (value) {
-                  final text = value?.trim() ?? '';
-                  if (text.length < 3) return '3文字以上で入力してください';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              dropdowns(),
-              const SizedBox(height: 10),
-              attachmentAnalyzer(),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _featureRequestDescriptionController,
-                enabled: !_isSubmittingFeatureRequest,
-                minLines: 3,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  labelText: '内容',
-                  hintText: '困っていること、使いたい場面、現在の回避策など',
-                  alignLabelWithHint: true,
-                  prefixIcon: const Icon(Icons.notes_outlined),
-                  border: fieldBorder,
-                  enabledBorder: fieldBorder,
-                ),
-                validator: (value) {
-                  final text = value?.trim() ?? '';
-                  if (text.length < 10) return '10文字以上で入力してください';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _featureRequestOutcomeController,
-                enabled: !_isSubmittingFeatureRequest,
-                minLines: 2,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: '期待する成果',
-                  hintText: 'この機能で何が速く、楽に、確実になるか',
-                  alignLabelWithHint: true,
-                  prefixIcon: const Icon(Icons.check_circle_outline),
-                  border: fieldBorder,
-                  enabledBorder: fieldBorder,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  onPressed: _isSubmittingFeatureRequest
-                      ? null
-                      : _submitHomeFeatureRequest,
-                  icon: _isSubmittingFeatureRequest
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send_outlined),
-                  label: Text(_isSubmittingFeatureRequest ? '登録中' : '登録する'),
-                ),
-              ),
-              if (submission != null) ...[
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF0A2A1A)
-                        : const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF1A5A3A)
-                          : const Color(0xFFA7F3D0),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.task_alt,
-                            color: Color(0xFF047857),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            submission['success'] == true ? '登録完了' : '一部登録完了',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF065F46),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        issueNumber == null
-                            ? '受付番号を発行しています'
-                            : '受付番号: #$issueNumber',
-                        style: const TextStyle(
-                          color: Color(0xFF065F46),
-                          height: 1.5,
-                        ),
-                      ),
-                      Text(
-                        hasWbsTask ? '改善タスクに登録済み' : '改善タスクへの登録を確認中',
-                        style: const TextStyle(
-                          color: Color(0xFF065F46),
-                          height: 1.5,
-                        ),
-                      ),
-                      if (issueUrl.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: issueUrl),
-                            );
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('受付URLをコピーしました')),
-                            );
-                          },
-                          icon: const Icon(Icons.copy, size: 16),
-                          label: const Text('受付URLをコピー'),
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      const Divider(height: 1, color: Color(0x33047857)),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '要望をありがとうございます。あなたの一言がそのまま開発タスクになります。'
-                        'この仕組みをXで広めて、一緒にアプリを育てる仲間を増やしませんか？',
-                        style: TextStyle(
-                          color: Color(0xFF065F46),
-                          fontSize: 12,
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton.icon(
-                          key: const Key('feature_request_share_x_button'),
-                          onPressed: () async {
-                            final messenger = ScaffoldMessenger.of(context);
-                            final opened =
-                                await GrowTogetherShare.launchXShare();
-                            if (!mounted || opened) return;
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Xの投稿画面を開けませんでした。本文をコピーして共有してください。',
-                                ),
-                              ),
-                            );
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF000000),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Text(
-                            '𝕏',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          label: const Text('Xでシェアして仲間を増やす'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        formCard,
-        const SizedBox(height: 16),
-        GrowTogetherShareCard(isDark: isDark, isCompact: isCompact),
-      ],
+    return HomeFeatureRequestFormCard(
+      isDark: isDark,
+      isCompact: isCompact,
+      formKey: _featureRequestFormKey,
+      titleController: _featureRequestTitleController,
+      descriptionController: _featureRequestDescriptionController,
+      outcomeController: _featureRequestOutcomeController,
+      category: _featureRequestCategory,
+      priority: _featureRequestPriority,
+      isSubmitting: _isSubmittingFeatureRequest,
+      isAnalyzingAttachment: _isAnalyzingFeatureRequestAttachment,
+      hasAttachment: file != null,
+      attachmentFileName: file?.name,
+      attachmentSizeLabel:
+          file == null ? null : _formatFeatureRequestAttachmentSize(file.size),
+      analysisObservation:
+          analysis == null ? '' : _analysisText(analysis, 'observation'),
+      analysisProposal:
+          analysis == null ? '' : _analysisText(analysis, 'proposal'),
+      hasSubmission: submission != null,
+      submissionSuccess: submission?['success'] == true,
+      issueNumber: issueNumber,
+      issueUrl: issueUrl,
+      hasWbsTask: hasWbsTask,
+      onCategoryChanged: (value) =>
+          setState(() => _featureRequestCategory = value),
+      onPriorityChanged: (value) =>
+          setState(() => _featureRequestPriority = value),
+      onPickAttachment: _pickFeatureRequestAttachment,
+      onAnalyzeAttachment: _analyzeFeatureRequestAttachment,
+      onClearAttachment: _clearFeatureRequestAttachment,
+      onSubmit: _submitHomeFeatureRequest,
     );
   }
 
