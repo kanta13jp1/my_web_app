@@ -150,7 +150,9 @@ Deno.test("Gemini request keeps the key out of the URL and caps output", async (
     "secret-key",
   );
   const body = JSON.parse(String(capturedInit?.body));
-  assertEquals(body.generationConfig.maxOutputTokens, 1024);
+  assertEquals(body.generationConfig.thinkingConfig.thinkingLevel, "LOW");
+  assertEquals("temperature" in body.generationConfig, false);
+  assertEquals("maxOutputTokens" in body.generationConfig, false);
 });
 
 Deno.test("Gemini prompt derives frontier IDs from the same first 50 metrics", async () => {

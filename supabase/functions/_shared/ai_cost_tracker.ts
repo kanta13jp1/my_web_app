@@ -20,6 +20,18 @@ export interface ModelPricingRate {
 }
 
 export const MODEL_PRICING_RATES: Record<string, ModelPricingRate> = {
+  "gemini-4-hydrogen": {
+    provider: "gemini",
+    inputUsdPer1m: 1.50,
+    outputUsdPer1m: 7.50,
+    pricingNote: "Google Gemini 4 Hydrogen paid tier reference",
+  },
+  "gemini-4-neon": {
+    provider: "gemini",
+    inputUsdPer1m: 3.00,
+    outputUsdPer1m: 15.00,
+    pricingNote: "Google Gemini 4 Neon paid tier reference",
+  },
   "gemini-2.5-flash": {
     provider: "gemini",
     inputUsdPer1m: 0.30,

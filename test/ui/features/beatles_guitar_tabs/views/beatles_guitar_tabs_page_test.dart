@@ -9,6 +9,7 @@ import 'package:my_web_app/data/services/guitar_metronome_audio_service.dart';
 import 'package:my_web_app/data/services/guitar_tab_catalog_service.dart';
 import 'package:my_web_app/theme/design_tokens.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
+import 'package:my_web_app/ui/features/beatles_guitar_tabs/views/widgets/guitar_pro_studio_surface.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/views/widgets/guitar_tab_staff.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -446,6 +447,37 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('D#/D'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'switches to GuitarProStudioSurface from mode bar cleanly and disposes',
+    (tester) async {
+      expect(kGuitarProStudioAssetPath, '/labs/guitar-pro-studio/index.html');
+      await _setSurfaceSize(tester, const Size(1200, 900));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: BeatlesGuitarTabsFeature(repository: repository),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('guitar_mode_pro_studio')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('guitar_pro_studio_fallback')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('プロ譜面ラボ (alphaTab) は Web 版の my_web_app で利用できます。'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('guitar_mode_catalog')));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox.shrink());
       expect(tester.takeException(), isNull);
     },
   );

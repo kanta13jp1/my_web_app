@@ -413,12 +413,58 @@ Deno.test("landing trial reports sanitized OpenAI 429 metadata before Gemini fal
   assertEquals(suggestion.provider, "gemini");
 });
 
-Deno.test("landing trial disables thinking budget and skips thought parts for gemini-2.5-flash", async () => {
+Deno.test("landing trial uses LOW thinkingLevel and skips thought parts for gemini-4-hydrogen default", async () => {
   let sentBody: Record<string, unknown> = {};
 
   const suggestion = await generateLandingTrialSuggestionWithFallback({
     openAiApiKey: "",
     geminiApiKey: "gemini-key",
+    prompt: "仕事が多すぎて優先順位を決められない",
+    fetchImpl: (_input, init) => {
+      sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                finishReason: "STOP",
+                content: {
+                  parts: [
+                    { text: "internal thought", thought: true },
+                    {
+                      text:
+                        '{"action":"今日締切の仕事を1件開き次の操作を書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  const generationConfig = sentBody.generationConfig as Record<string, unknown>;
+  const thinkingConfig = generationConfig.thinkingConfig as Record<
+    string,
+    unknown
+  >;
+  assertEquals("maxOutputTokens" in generationConfig, false);
+  assertEquals("temperature" in generationConfig, false);
+  assertEquals(thinkingConfig.thinkingLevel, "LOW");
+  assertEquals(suggestion.action, "今日締切の仕事を1件開き次の操作を書く");
+  assertEquals(suggestion.provider, "gemini");
+});
+
+Deno.test("landing trial disables thinking budget and skips thought parts for explicit gemini-2.5-flash", async () => {
+  let sentBody: Record<string, unknown> = {};
+
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "",
+    geminiApiKey: "gemini-key",
+    geminiModel: "gemini-2.5-flash",
     prompt: "仕事が多すぎて優先順位を決められない",
     fetchImpl: (_input, init) => {
       sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;

@@ -1,0 +1,181 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f6fa;
+  color: #17263a;
+  font: 16px/1.7 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 16px 56px;
+}
+
+h1 {
+  font-size: clamp(24px, 4.5vw, 36px);
+  line-height: 1.35;
+  margin: 10px 0;
+}
+
+h2 {
+  font-size: 20px;
+  margin-top: 0;
+}
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #36526d;
+  font-weight: 700;
+  margin: 10px 0 4px;
+}
+
+.lead {
+  margin: 6px 0 0;
+}
+
+section {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 14px;
+  margin: 22px 0;
+  border: 1px solid #d7dfeb;
+}
+
+a {
+  color: #145a92;
+  font-weight: 600;
+}
+
+.notice {
+  background: #f0f5fa;
+  border-left: 4px solid #174f77;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.presets,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.field label {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.field input {
+  width: 100%;
+  font: 15px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 10px 12px;
+  border: 1px solid #7a8aa0;
+  border-radius: 8px;
+  color: #17263a;
+  background: #ffffff;
+}
+
+button {
+  font: inherit;
+  padding: 10px 14px;
+  border: 1px solid #174f77;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #174f77;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.presets button,
+button.secondary {
+  background: #ffffff;
+  color: #174f77;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid #eeaa00;
+  outline-offset: 2px;
+}
+
+#error {
+  color: #ac1c27;
+  font-weight: 700;
+  min-height: 1.2em;
+  margin: 10px 0 6px;
+}
+
+#result,
+#selfcheck-status {
+  padding: 14px 16px;
+  background: #edf6fc;
+  border: 1px solid #c5deef;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: pre-line;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+th,
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #d7dfeb;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+.badge-pass {
+  color: #116136;
+  font-weight: 700;
+}
+
+.badge-fail {
+  color: #ac1c27;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  section {
+    padding: 16px;
+  }
+}

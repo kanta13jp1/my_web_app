@@ -568,7 +568,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
+          shopLoginUri: uri,
         ),
+        settings: settings,
       );
     case '/jev-mario-lab':
       return MaterialPageRoute(
