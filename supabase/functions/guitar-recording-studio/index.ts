@@ -1160,13 +1160,13 @@ async function generateRecordingFeedback(
   if (audioPart) parts.push(audioPart);
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts }],
-        generationConfig: { temperature: 0.6, maxOutputTokens: 250 },
+        generationConfig: { thinkingConfig: { thinkingLevel: "LOW" } },
       }),
     },
   );
@@ -1220,15 +1220,14 @@ async function generateGeminiCoaching(
 `;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1024,
+          thinkingConfig: { thinkingLevel: "LOW" },
         },
       }),
     },

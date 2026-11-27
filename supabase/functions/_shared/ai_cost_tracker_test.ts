@@ -53,6 +53,22 @@ Deno.test("extracts OpenAI and Anthropic usage shapes cleanly", () => {
 });
 
 Deno.test("estimates deterministic cost and keeps unknown models null", () => {
+  const hydrogen = estimateModelCostUsd({
+    model: "gemini-4-hydrogen",
+    inputUnits: 1_000_000,
+    outputUnits: 1_000_000,
+  });
+  assertEquals(hydrogen.known_pricing, true);
+  assertEquals(hydrogen.estimated_cost_usd, 9.0);
+
+  const neon = estimateModelCostUsd({
+    model: "gemini-4-neon",
+    inputUnits: 1_000_000,
+    outputUnits: 1_000_000,
+  });
+  assertEquals(neon.known_pricing, true);
+  assertEquals(neon.estimated_cost_usd, 18.0);
+
   const flash = estimateModelCostUsd({
     model: "gemini-2.5-flash",
     inputUnits: 1_000_000,

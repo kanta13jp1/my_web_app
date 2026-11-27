@@ -16,6 +16,10 @@ export const GEMINI_OUTPUT_TOKEN_RESERVE = 8000;
 export const GEMINI_MIN_THINKING_BUDGET = 512;
 export const GEMINI_MAX_THINKING_BUDGET = 24576;
 
+export function isGemini4Model(model?: string): boolean {
+  return /^gemini-4(?:$|-)/i.test((model ?? "").trim());
+}
+
 export type StructuredGenerationOptions = {
   responseMimeType?: string;
   responseSchema?: Record<string, unknown>;
@@ -142,7 +146,7 @@ export function applyStructuredGenerationOptions(
 export function applyProviderGenerationOptions(
   providerId: string,
   requestBody: Record<string, unknown>,
-  options?: { maxTokens?: number },
+  options?: { maxTokens?: number; model?: string },
 ): Record<string, unknown> {
   const maxTokens = options?.maxTokens;
 
@@ -171,6 +175,37 @@ export function applyProviderGenerationOptions(
       body.max_completion_tokens = budget;
     }
     return body;
+  }
+
+  if (
+    (providerId === "google" || providerId === "google_flash_lite") &&
+    isGemini4Model(options?.model)
+  ) {
+    const generationConfig = isSchemaRecord(requestBody.generationConfig)
+      ? requestBody.generationConfig
+      : {};
+    const nextGenerationConfig: Record<string, unknown> = {
+      ...generationConfig,
+    };
+    delete nextGenerationConfig.temperature;
+    delete nextGenerationConfig.topP;
+    delete nextGenerationConfig.topK;
+    if (
+      typeof nextGenerationConfig.maxOutputTokens === "number" &&
+      nextGenerationConfig.maxOutputTokens < 65536
+    ) {
+      delete nextGenerationConfig.maxOutputTokens;
+    }
+    if (maxTokens != null && maxTokens >= 65536) {
+      nextGenerationConfig.maxOutputTokens = maxTokens;
+    }
+    if (nextGenerationConfig.thinkingConfig == null) {
+      nextGenerationConfig.thinkingConfig = { thinkingLevel: "LOW" };
+    }
+    return {
+      ...requestBody,
+      generationConfig: nextGenerationConfig,
+    };
   }
 
   if (!maxTokens) return requestBody;
