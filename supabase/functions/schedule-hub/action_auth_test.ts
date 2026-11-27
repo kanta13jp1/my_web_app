@@ -129,3 +129,33 @@ Deno.test("public actions remain a narrow explicit allowlist", () => {
   ]);
   assert(PUBLIC_ACTIONS.every((action) => actionPolicy(action) !== null));
 });
+
+Deno.test(
+  "shared maintenance mutations reject user JWT and require service role",
+  () => {
+    const maintenanceMutations: readonly ScheduleHubAction[] = [
+      "maintenance.create",
+      "maintenance.update",
+      "maintenance.delete",
+    ];
+    for (const action of maintenanceMutations) {
+      assertEquals(requiredAuthLevel(action), "service_role", action);
+      assertEquals(
+        authorizeAction(action, {
+          authenticatedUser: true,
+          serviceRoleRequest: false,
+        }),
+        { allowed: false, error: "Unauthorized", status: 401 },
+        action,
+      );
+      assertEquals(
+        authorizeAction(action, {
+          authenticatedUser: false,
+          serviceRoleRequest: true,
+        }).allowed,
+        true,
+        action,
+      );
+    }
+  },
+);
