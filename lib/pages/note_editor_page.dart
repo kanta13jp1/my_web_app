@@ -3105,21 +3105,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     children: [
                       _buildReminderBanner(context),
                       if (showSlashBar) _buildSlashCommandBar(context),
-                      if (!compactForKeyboard)
-                        ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: _titleController,
-                          builder: (context, titleValue, _) {
-                            return NoteHierarchyBar(
-                              currentNoteId: _currentNoteId,
-                              parentNoteId: _parentNoteId,
-                              currentTitle: titleValue.text,
-                              allNotes: _workspaceNoteSummaries,
-                              onOpenNote: _openLinkedNote,
-                              onAddSubpage: _createSubpage,
-                              onChangeParent: _openParentNotePicker,
-                            );
-                          },
-                        ),
                       TextField(
                         key: const Key('note_editor_title_field'),
                         controller: _titleController,
@@ -3227,6 +3212,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           ),
                         ],
                       ),
+                      if (!compactForKeyboard) ...[
+                        const SizedBox(height: 8),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _titleController,
+                          builder: (context, titleValue, _) {
+                            return NoteHierarchyBar(
+                              currentNoteId: _currentNoteId,
+                              parentNoteId: _parentNoteId,
+                              currentTitle: titleValue.text,
+                              allNotes: _workspaceNoteSummaries,
+                              onOpenNote: _openLinkedNote,
+                              onAddSubpage: _createSubpage,
+                              onChangeParent: _openParentNotePicker,
+                            );
+                          },
+                        ),
+                      ],
                       if (!isNarrow) ...[
                         const SizedBox(height: 8),
                         Text(

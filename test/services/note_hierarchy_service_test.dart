@@ -113,9 +113,21 @@ void main() {
         expanded.map((n) => '${n.note.id}:${n.depth}').toList(),
         <String>['1:0', '2:1', '3:0'],
       );
+
+      const cyclic = <NoteSummary>[
+        NoteSummary(id: 'a', title: 'Cycle A', content: '', parentNoteId: 'b'),
+        NoteSummary(id: 'b', title: 'Cycle B', content: '', parentNoteId: 'a'),
+      ];
+      final cyclicCollapsed = NoteHierarchyService.flattenTree(
+        allNotes: cyclic,
+        expandedIds: const <String>{},
+      );
+      expect(cyclicCollapsed.map((n) => n.note.id).toList(), <String>['a']);
     });
 
-    test('Note.fromJson and Note.toJson round-trip int, String, and null parent_note_id', () {
+    test(
+      'Note.fromJson/toJson round-trips int, String, and null parent_note_id',
+      () {
       final Map<String, dynamic> baseJson = <String, dynamic>{
         'id': 10,
         'user_id': 'user-1',

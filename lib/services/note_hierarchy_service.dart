@@ -232,6 +232,23 @@ class NoteHierarchyService {
 
     final List<NoteTreeNode> out = <NoteTreeNode>[];
     final Set<String> emitted = <String>{};
+    final Set<String> reachable = <String>{};
+
+    void markReachable(String rootId) {
+      final List<String> queue = <String>[rootId];
+      int head = 0;
+      while (head < queue.length) {
+        final String id = queue[head];
+        head += 1;
+        if (!reachable.add(id)) continue;
+        for (final NoteSummary child
+            in childrenByParent[id] ?? const <NoteSummary>[]) {
+          if (!reachable.contains(child.id)) {
+            queue.add(child.id);
+          }
+        }
+      }
+    }
 
     void walk(NoteSummary node, int depth) {
       if (!emitted.add(node.id) || depth > maxDepth) {
@@ -259,12 +276,14 @@ class NoteHierarchyService {
     }
 
     for (final NoteSummary root in roots) {
+      markReachable(root.id);
       walk(root, 0);
     }
 
     // Break pure cycles whose members had parents inside the set without roots.
     for (final NoteSummary note in allNotes) {
-      if (!emitted.contains(note.id)) {
+      if (!reachable.contains(note.id)) {
+        markReachable(note.id);
         walk(note, 0);
       }
     }
