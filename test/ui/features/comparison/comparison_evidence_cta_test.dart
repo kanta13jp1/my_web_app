@@ -59,35 +59,38 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          initialRoute: '/comparison',
           routes: {
             '/': (_) => const Scaffold(body: Text('home destination')),
-          },
-          home: MediaQuery(
-            data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
-            child: Scaffold(
-              backgroundColor: const Color(0xFF0B1120),
-              body: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ComparisonEvidenceSection(
-                      title: '根拠確認済みの機能比較',
-                      status: ComparisonEvidenceStatus.loaded,
-                      claims: [claim],
+            '/comparison': (_) => MediaQuery(
+                  data:
+                      const MediaQueryData(textScaler: TextScaler.linear(2.0)),
+                  child: Scaffold(
+                    backgroundColor: const Color(0xFF0B1120),
+                    body: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          ComparisonEvidenceSection(
+                            title: '根拠確認済みの機能比較',
+                            status: ComparisonEvidenceStatus.loaded,
+                            claims: [claim],
+                          ),
+                          ComparisonCtaPanel(
+                            competitorName: 'Notion',
+                            accentColor: const Color(0xFF3D5AFE),
+                            hasImportSupport: true,
+                            onPrimaryCtaTap: () async {
+                              ctaRecorded = true;
+                              throw StateError(
+                                  'non-blocking telemetry failure');
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    ComparisonCtaPanel(
-                      competitorName: 'Notion',
-                      accentColor: const Color(0xFF3D5AFE),
-                      hasImportSupport: true,
-                      onPrimaryCtaTap: () async {
-                        ctaRecorded = true;
-                        throw StateError('non-blocking telemetry failure');
-                      },
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ),
+          },
         ),
       );
       await tester.pumpAndSettle();
