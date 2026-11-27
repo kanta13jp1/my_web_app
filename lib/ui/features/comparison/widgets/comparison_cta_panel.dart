@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class ComparisonCtaPanel extends StatelessWidget {
@@ -6,6 +8,8 @@ class ComparisonCtaPanel extends StatelessWidget {
     required this.competitorName,
     required this.accentColor,
     required this.hasImportSupport,
+    this.onPrimaryCtaTap,
+    this.onSecondaryCtaTap,
   });
 
   static const primaryButtonKey = Key('comparison-primary-cta');
@@ -14,6 +18,15 @@ class ComparisonCtaPanel extends StatelessWidget {
   final String competitorName;
   final Color accentColor;
   final bool hasImportSupport;
+  final Future<void> Function()? onPrimaryCtaTap;
+  final Future<void> Function()? onSecondaryCtaTap;
+
+  void _fireCtaCallback(Future<void> Function()? callback) {
+    if (callback == null) return;
+    try {
+      unawaited(callback().catchError((_) {}));
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,8 +84,11 @@ class ComparisonCtaPanel extends StatelessWidget {
                   children: [
                     FilledButton.icon(
                       key: primaryButtonKey,
-                      onPressed: () => Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/', (_) => false),
+                      onPressed: () {
+                        _fireCtaCallback(onPrimaryCtaTap);
+                        Navigator.of(context)
+                            .pushNamedAndRemoveUntil('/', (_) => false);
+                      },
                       icon: const Icon(Icons.rocket_launch, size: 18),
                       label: const Text(
                         '無料で自分株式会社を始める',
@@ -89,9 +105,12 @@ class ComparisonCtaPanel extends StatelessWidget {
                     ),
                     OutlinedButton.icon(
                       key: secondaryButtonKey,
-                      onPressed: () => Navigator.of(context).pushNamed(
-                        hasImportSupport ? '/import' : '/',
-                      ),
+                      onPressed: () {
+                        _fireCtaCallback(onSecondaryCtaTap);
+                        Navigator.of(context).pushNamed(
+                          hasImportSupport ? '/import' : '/',
+                        );
+                      },
                       icon: Icon(
                         hasImportSupport
                             ? Icons.upload_file_rounded
