@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guitar Pro / SMuFL スタジオ（alphaTab）</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="studio-shell">
+      <header class="studio-header">
+        <div class="title-block">
+          <span class="badge">OSS / SMuFL Lab</span>
+          <h1>Guitar Pro / SMuFL スタジオ（alphaTab）</h1>
+        </div>
+        <div class="rights-banner" role="note">
+          同梱曲はオリジナル練習曲のみを収録しています。個人の Guitar Pro
+          （.gp / .gp5 / .gpx）・MusicXML（.musicxml / .xml）・AlphaTex（.tex）
+          ファイルは「譜面ファイル読込」からこのブラウザ内のみで非公開表示・再生できます。
+        </div>
+      </header>
+
+      <section class="card selector-card" aria-label="練習曲プリセット選択">
+        <h2 class="section-heading">練習曲プリセットを選択</h2>
+        <div id="preset-buttons" class="preset-row"></div>
+        <p id="preset-description" class="muted-note"></p>
+      </section>
+
+      <section class="card controls-card" aria-label="譜面・再生コントロール">
+        <div class="controls-grid">
+          <div class="control-group">
+            <button
+              id="btn-play-pause"
+              type="button"
+              class="btn btn-primary"
+              disabled
+            >
+              再生
+            </button>
+            <button id="btn-stop" type="button" class="btn" disabled>
+              停止
+            </button>
+            <button
+              id="btn-loop"
+              type="button"
+              class="btn"
+              aria-pressed="false"
+            >
+              ループ OFF
+            </button>
+            <button
+              id="btn-metronome"
+              type="button"
+              class="btn"
+              aria-pressed="false"
+            >
+              メトロノーム OFF
+            </button>
+          </div>
+
+          <div class="control-group">
+            <label class="field-label" for="track-select">
+              トラック
+              <select id="track-select" aria-label="表示トラック"></select>
+            </label>
+            <label class="field-label" for="stave-profile">
+              譜面形式
+              <select id="stave-profile" aria-label="譜面表示形式">
+                <option value="score-tab" selected>五線＋6線TAB</option>
+                <option value="tab">6線TABのみ</option>
+                <option value="score">五線譜のみ</option>
+              </select>
+            </label>
+            <label class="field-label" for="tempo-speed">
+              速度
+              <select id="tempo-speed" aria-label="再生速度">
+                <option value="0.5">50%</option>
+                <option value="0.75">75%</option>
+                <option value="1" selected>100%</option>
+                <option value="1.25">125%</option>
+              </select>
+            </label>
+            <button
+              id="btn-sheet-theme"
+              type="button"
+              class="btn"
+              aria-pressed="false"
+            >
+              ダーク譜面
+            </button>
+            <label class="btn btn-indigo file-picker-label" for="score-file-input">
+              譜面ファイル読込（ローカル専用）
+              <input
+                id="score-file-input"
+                type="file"
+                accept=".gp,.gp3,.gp4,.gp5,.gpx,.musicxml,.xml,.tex"
+              />
+            </label>
+          </div>
+        </div>
+
+        <p id="status-message" class="status-line" role="status" aria-live="polite">
+          SMuFL フォント・alphaTab エンジンを初期化しています...
+        </p>
+        <p id="error-message" class="error-line" role="alert" hidden></p>
+      </section>
+
+      <section
+        id="score-viewport"
+        class="score-viewport sheet-light"
+        aria-label="SMuFL 楽譜表示領域"
+        data-render-state="loading"
+        data-player-ready="false"
+      >
+        <div id="alphaTab-surface" class="alphatab-surface"></div>
+      </section>
+
+      <footer class="studio-footer">
+        Powered by alphaTab 1.9.0 (MPL-2.0) ・ SMuFL Reference Font Bravura
+        (SIL OFL-1.1) ・ Sonivox SoundFont (Apache-2.0)
+      </footer>
+    </main>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

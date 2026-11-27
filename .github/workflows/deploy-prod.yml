@@ -899,6 +899,12 @@ jobs:
         with:
           web-root: build/web
 
+      - name: Package verified Guitar Pro Studio assets
+        if: steps.changes.outputs.web == 'true'
+        uses: ./.github/actions/prepare-guitar-pro-lab
+        with:
+          web-root: build/web
+
       - name: Upload Sentry sourcemaps and register release
         if: steps.changes.outputs.web == 'true'
         continue-on-error: true

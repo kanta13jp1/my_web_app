@@ -486,26 +486,42 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     displayName: "Google Gemini",
     envKey: "GEMINI_API_KEY",
     chatUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-    defaultModel: "gemini-2.5-flash",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent",
+    defaultModel: "gemini-4-hydrogen",
     buildBody: (messages, _model, inlineFiles) =>
       buildGoogleGeminiBody(messages, inlineFiles),
-    parseResponse: (data) =>
-      String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
+    parseResponse: (data) => {
+      const parts = pick(data, "candidates", 0, "content", "parts");
+      if (Array.isArray(parts)) {
+        const text = parts
+          .filter((p) => (p as { thought?: unknown })?.thought !== true)
+          .map((p) => String((p as { text?: unknown })?.text ?? ""))
+          .join("");
+        if (text) return text;
+      }
+      return String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? "");
+    },
   },
-  // Master Brain 提案 #1 (Win版#132 part 29 / 2026-04-26): バッチ処理向け軽量・低コスト Gemini
-  // 用途: competitor-monitoring / ai-university-update 等の大量バッチ推論
-  // コスト目安: gemini-2.5-flash-lite は通常 flash の 1/3 価格・1M tokens context
+  // バッチ処理・既定呼び出し向け高速 Gemini 4 Hydrogen
   google_flash_lite: {
-    displayName: "Google Gemini Flash-Lite",
+    displayName: "Google Gemini 4 Hydrogen",
     envKey: "GEMINI_API_KEY",
     chatUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-    defaultModel: "gemini-2.5-flash-lite",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent",
+    defaultModel: "gemini-4-hydrogen",
     buildBody: (messages, _model, inlineFiles) =>
       buildGoogleGeminiBody(messages, inlineFiles),
-    parseResponse: (data) =>
-      String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
+    parseResponse: (data) => {
+      const parts = pick(data, "candidates", 0, "content", "parts");
+      if (Array.isArray(parts)) {
+        const text = parts
+          .filter((p) => (p as { thought?: unknown })?.thought !== true)
+          .map((p) => String((p as { text?: unknown })?.text ?? ""))
+          .join("");
+        if (text) return text;
+      }
+      return String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? "");
+    },
   },
   cerebras: {
     displayName: "Cerebras",
@@ -884,7 +900,7 @@ async function callSingleProvider(
             applyProviderGenerationOptions(
               providerId,
               cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
-              options,
+              { ...options, model: model ?? cfg.defaultModel },
             ),
             options,
           ),
@@ -4263,11 +4279,14 @@ async function callGemini(
     });
   }
   const res = await fetchWithProviderTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }] }),
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { thinkingConfig: { thinkingLevel: "LOW" } },
+      }),
     },
   );
   if (!res.ok) {
@@ -6717,7 +6736,7 @@ serve(async (req: Request) => {
         return json({
           success: true,
           provider: "google",
-          model: "gemini-2.5-flash",
+          model: "gemini-4-hydrogen",
           candidates,
           candidate_count: candidates.length,
           image_persisted: false,
@@ -6885,7 +6904,7 @@ serve(async (req: Request) => {
             analysis: payload.analysis,
             comparison: payload.comparison,
             provider: "google",
-            model: "gemini-2.5-flash",
+            model: "gemini-4-hydrogen",
             schema_version: 1,
             quality_score: payload.analysis.photo_quality.score,
           })
@@ -9610,7 +9629,7 @@ serve(async (req: Request) => {
 `;
         try {
           const r = await fetchWithProviderTimeout(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiApiKey}`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -9618,7 +9637,7 @@ serve(async (req: Request) => {
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                   responseMimeType: "application/json",
-                  temperature: 0.2,
+                  thinkingConfig: { thinkingLevel: "LOW" },
                 },
               }),
             },

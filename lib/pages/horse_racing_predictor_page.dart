@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../features/horse_racing/horse_racing_data_gateway.dart';
 import '../features/horse_racing/horse_racing_decision_support.dart';
 import '../features/horse_racing/horse_racing_performance_view_model.dart';
+import '../features/horse_racing/horse_racing_tab_and_ticket_helper.dart';
 import '../widgets/home_back_button.dart';
 import 'horse_provider_leaderboard_page.dart';
 import 'horseracing_race_detail_page.dart';
@@ -114,12 +115,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   String _routeForTab(int index) {
-    return switch (index) {
-      1 => '/horse-racing/history',
-      2 => '/horse-racing/analysis',
-      3 => '/horse-racing/bets',
-      _ => '/horse-racing',
-    };
+    return HorseRacingTabRouteHelper.routeForTabIndex(index);
   }
 
   void _syncTabRoute() {
@@ -459,25 +455,29 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
         leading: const HomeBackButton(),
-        title: Row(
-          children: [
-            const Text(
-              '競馬AI予想',
-              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _pickDate,
-              child: Chip(
-                label: Text(
-                  _selectedDate,
-                  style: const TextStyle(fontSize: 12, height: 1.5),
-                ),
-                avatar: const Icon(Icons.calendar_today, size: 14),
-                padding: EdgeInsets.zero,
+        title: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '競馬AI予想',
+                style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _pickDate,
+                child: Chip(
+                  label: Text(
+                    _selectedDate,
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  avatar: const Icon(Icons.calendar_today, size: 14),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
         ),
         bottom: TabBar(
           controller: _tabController,
@@ -541,52 +541,55 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     }
     if (_error != null) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              switch (_errorType) {
-                ErrorType.network => Icons.cloud_off,
-                ErrorType.serviceUnavailable => Icons.hourglass_empty,
-                ErrorType.api => Icons.error,
-                _ => Icons.warning,
-              },
-              size: 64,
-              color: _errorType == ErrorType.network ||
-                      _errorType == ErrorType.serviceUnavailable
-                  ? const Color(0xFFFF6B35)
-                  : const Color(0xFFE53935),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              switch (_errorType) {
-                ErrorType.network => 'ネットワーク接続エラー',
-                ErrorType.serviceUnavailable => 'サーバー混雑中',
-                ErrorType.api => 'サーバーエラー',
-                _ => 'エラーが発生しました',
-              },
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.5,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                switch (_errorType) {
+                  ErrorType.network => Icons.cloud_off,
+                  ErrorType.serviceUnavailable => Icons.hourglass_empty,
+                  ErrorType.api => Icons.error,
+                  _ => Icons.warning,
+                },
+                size: 64,
+                color: _errorType == ErrorType.network ||
+                        _errorType == ErrorType.serviceUnavailable
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFE53935),
               ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              const SizedBox(height: 16),
+              Text(
+                switch (_errorType) {
+                  ErrorType.network => 'ネットワーク接続エラー',
+                  ErrorType.serviceUnavailable => 'サーバー混雑中',
+                  ErrorType.api => 'サーバーエラー',
+                  _ => 'エラーが発生しました',
+                },
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _loadAll,
-              icon: const Icon(Icons.refresh),
-              label: const Text('再試行'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _loadAll,
+                icon: const Icon(Icons.refresh),
+                label: const Text('再試行'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -602,7 +605,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildTodayTab() {
-    return Column(
+    return ListView(
+      padding: EdgeInsets.zero,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -631,58 +635,49 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ),
         ),
         _buildTodayActionBar(),
-        Expanded(
-          child: _todayRaces.isEmpty
-              ? LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.sports,
-                              size: 64,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '$_selectedDate のレースデータなし',
-                              style: const TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              '毎朝 07:30 に自動取得されます',
-                              style: TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                fontSize: 12,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
-                              style: TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                fontSize: 11,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+        if (_todayRaces.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.sports,
+                  size: 64,
+                  color: Color(0xFF9CA3AF),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '$_selectedDate のレースデータなし',
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    height: 1.5,
                   ),
-                )
-              : _buildTodayRacesList(),
-        ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '毎朝 07:30 に自動取得されます',
+                  style: TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
+                  style: TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )
+        else
+          _buildTodayRacesList(shrinkWrap: true),
       ],
     );
   }
@@ -805,7 +800,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return priority[venue] ?? 100;
   }
 
-  Widget _buildTodayRacesList() {
+  Widget _buildTodayRacesList({bool shrinkWrap = false}) {
     final hasPredictions = _todayRaces.any(_hasPrediction);
 
     // Win版#112: netkeiba 風 開催地別カラム表示
@@ -828,7 +823,55 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         return a.compareTo(b);
       });
 
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final cols = w >= 1100
+            ? 4
+            : w >= 820
+                ? 3
+                : w >= 540
+                    ? 2
+                    : 1;
+        if (cols == 1) {
+          return ListView(
+            shrinkWrap: shrinkWrap,
+            physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            children: [
+              for (final v in venues) ...[
+                _buildVenueHeader(v, byVenue[v]!.length),
+                ...byVenue[v]!.map(_buildRaceCard),
+                const SizedBox(height: 12),
+              ],
+            ],
+          );
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final v in venues)
+                SizedBox(
+                  width: (w - 12 * (cols + 1)) / cols,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildVenueHeader(v, byVenue[v]!.length),
+                      ...byVenue[v]!.map(_buildRaceCard),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
     return Column(
+      mainAxisSize: shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
       children: [
         if (!hasPredictions)
           Container(
@@ -851,52 +894,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ],
             ),
           ),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final cols = w >= 1100
-                  ? 4
-                  : w >= 820
-                      ? 3
-                      : w >= 540
-                          ? 2
-                          : 1;
-              if (cols == 1) {
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  children: [
-                    for (final v in venues) ...[
-                      _buildVenueHeader(v, byVenue[v]!.length),
-                      ...byVenue[v]!.map(_buildRaceCard),
-                      const SizedBox(height: 12),
-                    ],
-                  ],
-                );
-              }
-              return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    for (final v in venues)
-                      SizedBox(
-                        width: (w - 12 * (cols + 1)) / cols,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildVenueHeader(v, byVenue[v]!.length),
-                            ...byVenue[v]!.map(_buildRaceCard),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
+        if (shrinkWrap) content else Expanded(child: content),
       ],
     );
   }
@@ -1564,36 +1562,52 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
-              const SizedBox(width: 8),
-              const Text(
-                'AI予測（参考情報）',
-                style: TextStyle(
-                  color: Color(0xFFFF6B35),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  height: 1.5,
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'AI予測（参考情報）',
+                        style: TextStyle(
+                          color: Color(0xFFFF6B35),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '信頼度 ${(confidence * 100).toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    color: Color(0xFFFF6B35),
-                    fontSize: 11,
-                    height: 1.5,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '信頼度 ${(confidence * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           if (wasCorrected) ...[
@@ -1788,8 +1802,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            spacing: 6,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 bet['bet_type']?.toString() ?? '-',
@@ -1800,7 +1816,6 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   height: 1.35,
                 ),
               ),
-              const SizedBox(width: 6),
               Text(
                 hit == true
                     ? '的中'
@@ -2367,16 +2382,20 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         useRootNavigator: true,
         builder: (dialogContext) => StatefulBuilder(
           builder: (dialogContext, setDialogState) {
-            final total = drafts.fold<int>(
-              0,
-              (sum, draft) => sum + _toIntValue(draft.amountCtrl.text),
-            );
             final recordedToday = _recordedStakeForDate(_selectedDate);
             final isSkipRecord =
                 drafts.any((draft) => draft.betType == '購入しない') &&
                     drafts.every((draft) => draft.betType == '購入しない');
-            final exceedsBudget =
-                !isSkipRecord && recordedToday + total > _dailyBudgetYen;
+            final ticketCheck = HorseRacingTicketValidationResult.evaluate(
+              lineAmounts: drafts
+                  .map((draft) => _toIntValue(draft.amountCtrl.text))
+                  .toList(growable: false),
+              isSkipRecord: isSkipRecord,
+              recordedToday: recordedToday,
+              dailyBudgetYen: _dailyBudgetYen,
+            );
+            final total = ticketCheck.totalAmount;
+            final exceedsBudget = ticketCheck.exceedsBudget;
 
             return AlertDialog(
               title: const Text('購入馬券を記録'),
@@ -2758,7 +2777,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildBetTicketsTab() {
     if (!_gateway.isAuthenticated) {
       return const Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2788,7 +2807,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
     if (_betTickets.isEmpty) {
       return const Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
