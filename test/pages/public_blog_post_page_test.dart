@@ -15,6 +15,7 @@ void main() {
     double textScale = 1.0,
   }) {
     return MaterialApp(
+      key: ValueKey(postId),
       routes: {
         '/': (_) => Scaffold(
               appBar: AppBar(title: const Text('無料AI体験トップ')),
