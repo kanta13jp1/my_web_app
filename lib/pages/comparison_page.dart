@@ -8,6 +8,7 @@ import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidenc
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
@@ -68142,119 +68143,17 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   }
 
   Widget _buildRelatedComparisons(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '他の比較ページも見る',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '比較検討の途中なら、近いカテゴリの競合ページもすぐ見比べられます。',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _relatedCompetitors.map((entry) {
-                  final key = entry.key;
-                  final info = entry.value;
-                  return InkWell(
-                    onTap: () => Navigator.of(context).pushNamed('/vs-$key'),
-                    borderRadius: BorderRadius.circular(18),
-                    child: Ink(
-                      width: 190,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _surfacePrimary,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: _borderColor),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${info.emoji} ${info.name}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _textPrimary,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            info.searchKeyword,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: _textSecondary,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              InkWell(
-                onTap: () => Navigator.of(context).pushNamed('/competitors'),
-                borderRadius: BorderRadius.circular(12),
-                child: Ink(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _surfaceMuted,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.grid_view_rounded,
-                        size: 16,
-                        color: _textSecondary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '全294社の競合ランドスケープを見る →',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: _textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ComparisonRelatedComparisonsSection(
+      items: _relatedCompetitors
+          .map(
+            (entry) => RelatedComparisonItem(
+              competitorKey: entry.key,
+              emoji: entry.value.emoji,
+              name: entry.value.name,
+              searchKeyword: entry.value.searchKeyword,
+            ),
+          )
+          .toList(growable: false),
     );
   }
 
