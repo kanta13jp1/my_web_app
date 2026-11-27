@@ -2675,6 +2675,10 @@ serve(async (req: Request) => {
         const ppPlatforms = ppPlatformResolution.platforms;
         const ppResults: Record<string, unknown> = {};
 
+        if (ppPlatforms.includes("app")) {
+          ppResults.app = { ok: true, url: buildOwnSiteBlogPostUrl(postId) };
+        }
+
         if (ppPlatforms.includes("qiita") && qiitaToken) {
           try {
             const tagObjects = ppRawTags
