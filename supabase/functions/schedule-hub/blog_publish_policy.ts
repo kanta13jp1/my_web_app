@@ -1,6 +1,7 @@
-export type BlogPublishPlatform = "qiita" | "devto";
+export type BlogPublishPlatform = "app" | "qiita" | "devto";
 
 const SUPPORTED_PLATFORMS = new Set<BlogPublishPlatform>([
+  "app",
   "qiita",
   "devto",
 ]);
