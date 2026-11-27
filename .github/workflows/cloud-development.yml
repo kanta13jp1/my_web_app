@@ -55,6 +55,13 @@ on:
       - lib/ui/features/beatles_guitar_tabs/**
       - test/fixtures/guitar_chord_lyrics_app.dart
       - test/e2e/guitar_chord_lyrics.spec.ts
+      - package.json
+      - package-lock.json
+      - scripts/build_guitar_pro_lab.mjs
+      - scripts/verify_guitar_pro_lab.mjs
+      - .github/actions/prepare-guitar-pro-lab/**
+      - web/labs/guitar-pro-studio/**
+      - test/e2e/guitar_pro_studio.spec.ts
   workflow_dispatch:
     inputs:
       expected_head_sha:
@@ -1156,4 +1163,59 @@ jobs:
             playwright-report/
             test-results/
             guitar-server.log
+          if-no-files-found: ignore
+
+  guitar-pro-studio-e2e:
+    name: Guitar Pro Studio E2E
+    if: github.event_name == 'pull_request' || inputs.profile == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Prepare same-origin Guitar Pro SMuFL lab
+        uses: ./.github/actions/prepare-guitar-pro-lab
+        with:
+          web-root: build/guitar-pro-preview
+          standalone: "true"
+
+      - name: Verify deterministic double-build hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build_guitar_pro_lab.mjs build/guitar-pro-verify --standalone
+          diff -u build/guitar-pro-preview/labs/guitar-pro-studio/engine-build.json \
+            build/guitar-pro-verify/labs/guitar-pro-studio/engine-build.json
+
+      - name: Install Japanese system fonts and Playwright Chromium
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          npx --no-install playwright install --with-deps chromium
+
+      - name: Run Guitar Pro Studio E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/guitar-pro-preview --port 7359 > guitar-pro-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for _ in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:7359/labs/guitar-pro-studio/index.html > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7359 npx playwright test test/e2e/guitar_pro_studio.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
+      - name: Upload Guitar Pro Studio E2E report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: guitar-pro-studio-e2e-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            guitar-pro-server.log
           if-no-files-found: ignore
