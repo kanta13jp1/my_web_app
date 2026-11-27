@@ -459,25 +459,29 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
         leading: const HomeBackButton(),
-        title: Row(
-          children: [
-            const Text(
-              '競馬AI予想',
-              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _pickDate,
-              child: Chip(
-                label: Text(
-                  _selectedDate,
-                  style: const TextStyle(fontSize: 12, height: 1.5),
-                ),
-                avatar: const Icon(Icons.calendar_today, size: 14),
-                padding: EdgeInsets.zero,
+        title: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '競馬AI予想',
+                style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _pickDate,
+                child: Chip(
+                  label: Text(
+                    _selectedDate,
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  avatar: const Icon(Icons.calendar_today, size: 14),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
         ),
         bottom: TabBar(
           controller: _tabController,
@@ -541,52 +545,55 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     }
     if (_error != null) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              switch (_errorType) {
-                ErrorType.network => Icons.cloud_off,
-                ErrorType.serviceUnavailable => Icons.hourglass_empty,
-                ErrorType.api => Icons.error,
-                _ => Icons.warning,
-              },
-              size: 64,
-              color: _errorType == ErrorType.network ||
-                      _errorType == ErrorType.serviceUnavailable
-                  ? const Color(0xFFFF6B35)
-                  : const Color(0xFFE53935),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              switch (_errorType) {
-                ErrorType.network => 'ネットワーク接続エラー',
-                ErrorType.serviceUnavailable => 'サーバー混雑中',
-                ErrorType.api => 'サーバーエラー',
-                _ => 'エラーが発生しました',
-              },
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.5,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                switch (_errorType) {
+                  ErrorType.network => Icons.cloud_off,
+                  ErrorType.serviceUnavailable => Icons.hourglass_empty,
+                  ErrorType.api => Icons.error,
+                  _ => Icons.warning,
+                },
+                size: 64,
+                color: _errorType == ErrorType.network ||
+                        _errorType == ErrorType.serviceUnavailable
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFE53935),
               ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              const SizedBox(height: 16),
+              Text(
+                switch (_errorType) {
+                  ErrorType.network => 'ネットワーク接続エラー',
+                  ErrorType.serviceUnavailable => 'サーバー混雑中',
+                  ErrorType.api => 'サーバーエラー',
+                  _ => 'エラーが発生しました',
+                },
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _loadAll,
-              icon: const Icon(Icons.refresh),
-              label: const Text('再試行'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _loadAll,
+                icon: const Icon(Icons.refresh),
+                label: const Text('再試行'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -2758,7 +2765,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildBetTicketsTab() {
     if (!_gateway.isAuthenticated) {
       return const Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2788,7 +2795,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
     if (_betTickets.isEmpty) {
       return const Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
