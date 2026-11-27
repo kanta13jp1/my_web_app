@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../features/ai_token_cache_monitor/ai_token_cache_monitor_container.dart';
 import '../models/ai_provider_registry.dart';
 
 /// AI大学 プロバイダー実装ステータス一覧
@@ -40,7 +41,9 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
           'message': 'こんにちは。短く自己紹介してください。',
         },
       );
-      final data = resp.data as Map<String, dynamic>?;
+      final Object? rawData = resp.data;
+      final Map<String, Object?>? data =
+          rawData is Map<String, Object?> ? rawData : null;
       final success = data?['success'] == true;
       final status = data?['status'] as String? ?? 'unknown';
       final text = data?['text'] as String? ?? '';
@@ -89,6 +92,25 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
         title: const Text('AIプロバイダー実装状況'),
         backgroundColor: const Color(0xFF0A0A0A),
         elevation: 0,
+        actions: <Widget>[
+          IconButton(
+            key: const Key('open_token_cache_monitor_btn'),
+            tooltip: 'AI ツール消費・キャッシュ最適化',
+            color: Colors.white,
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/ai-provider-status?view=token-cache-monitor',
+                  ),
+                  builder: (_) => const AiTokenCacheMonitorContainer(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.analytics_outlined),
+          ),
+        ],
       ),
       body: Column(
         children: [

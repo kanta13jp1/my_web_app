@@ -1,0 +1,106 @@
+{
+  "issue": 2695,
+  "workspace_file": "my_web_app.code-workspace",
+  "cursorignore_file": ".cursorignore",
+  "rule_file": ".cursor/rules/flutter_supabase_cross_stack.mdc",
+  "folders": [
+    {
+      "name": "my_web_app (Root)",
+      "path": "."
+    },
+    {
+      "name": "Flutter Web UI (lib)",
+      "path": "lib"
+    },
+    {
+      "name": "Flutter Tests (test)",
+      "path": "test"
+    },
+    {
+      "name": "Supabase Backend (supabase)",
+      "path": "supabase"
+    },
+    {
+      "name": "Automation & CI (scripts)",
+      "path": "scripts"
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "files.encoding": "utf8",
+    "files.eol": "\n",
+    "dart.mcpServer": true,
+    "deno.enable": true,
+    "deno.lint": true,
+    "deno.config": "supabase/functions/deno.json",
+    "terminal.integrated.env.windows": {
+      "PYTHONUTF8": "1",
+      "PYTHONIOENCODING": "utf-8"
+    },
+    "files.exclude": {
+      "**/.dart_tool": true,
+      "**/build": true,
+      "**/.ci-logs": true
+    },
+    "search.exclude": {
+      "**/.dart_tool": true,
+      "**/build": true,
+      "**/.ci-logs": true,
+      "**/node_modules": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "Dart-Code.dart-code",
+      "Dart-Code.flutter",
+      "denoland.vscode-deno",
+      "redhat.java",
+      "ms-azuretools.vscode-containers",
+      "ms-vscode-remote.remote-containers"
+    ]
+  },
+  "cursorignore_patterns": [
+    "# Sensitive environment & credential files",
+    ".env",
+    ".env.*",
+    "!.env.example",
+    "**/credentials*.json",
+    "**/client_secret*.json",
+    "**/*.pem",
+    "**/*.key",
+    "**/storage_state.json",
+    "",
+    "# Private personal/financial vault directories",
+    "attachments/",
+    "receipts/",
+    "payslips/",
+    "financial_records/",
+    "bank_statements/",
+    "",
+    "# Generated tool caches and build outputs",
+    ".dart_tool/",
+    "build/",
+    ".ci-logs/",
+    "coverage/",
+    "__pycache__/",
+    "*.pyc",
+    ".venv/"
+  ],
+  "cross_stack_rule": {
+    "description": "Cross-stack synchronization rules for Flutter Web (lib/, test/) and Supabase (supabase/migrations/, supabase/functions/).",
+    "globs": [
+      "lib/**/*.dart",
+      "test/**/*.dart",
+      "supabase/migrations/*.sql",
+      "supabase/functions/**/*.ts"
+    ],
+    "alwaysApply": false,
+    "guidelines": [
+      "When modifying a Supabase table or RPC signature in `supabase/migrations/*.sql`, update any affected Edge Function (`supabase/functions/**/*.ts`) and Flutter domain/repository/view/test files in the same change set.",
+      "Every SQL migration must enforce strict RLS, avoid `auth.role()`, keep `pg_temp` last in `search_path`, wrap `request.jwt.claims::jsonb` against `22P02`, and issue `revoke all on function ... from public, anon, authenticated;` for trigger functions.",
+      "Every Supabase Edge Function CORS header map containing `Access-Control-Allow-Headers` must include literal `traceparent, tracestate, baggage, sentry-trace`, await every `async` path (`require-await`), and pass `deno lint --config supabase/functions/deno.json`.",
+      "Every Flutter UI / repository change must adhere to `analysis_options.yaml` (`require_trailing_commas`, `prefer_final_parameters`, `prefer_const_literals_to_create_immutables`), copy `const` seed collections defensively in test fakes, call `ensureVisible` before interacting in `2.0x textScale` tests, and preserve `dart format --language-version=3.6` compliance.",
+      "Never write credentials, API keys, `.env` secrets, or `.dart_tool/` artifacts into tracked workspace or rule files."
+    ]
+  }
+}

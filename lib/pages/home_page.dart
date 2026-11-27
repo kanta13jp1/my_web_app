@@ -84,8 +84,10 @@ import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
+import '../widgets/home_feature_request_failure_snackbar.dart';
 import '../utils/home_calendar_visible_range.dart';
 import '../utils/home_cashflow_bundle_loader.dart';
+import '../utils/home_calendar_day_composition.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -371,13 +373,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
   ) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(failure.userMessage),
-        action: SnackBarAction(
-          label: failure.retryLabel,
-          onPressed: () => unawaited(retry()),
-        ),
+      buildHomeFeatureRequestFailureSnackBar(
+        failure: failure,
         backgroundColor: Theme.of(context).colorScheme.error,
+        onRetry: () => unawaited(retry()),
       ),
     );
   }
@@ -1404,6 +1403,26 @@ class _HomePageState extends State<HomePage> with RouteAware {
     };
   }
 
+  HomeCalendarAbstinenceInput _toCalendarAbstinenceInput(
+    AbstinenceGuardSnapshot snapshot,
+  ) {
+    return HomeCalendarAbstinenceInput(
+      enabledCount: snapshot.enabledCount,
+      totalSlipCount: snapshot.totalSlipCount,
+      disciplineRepCount: snapshot.disciplineSnapshot.totalRepCount,
+      enabledLabels: snapshot.enabledLabels,
+      slipDetails: snapshot.slipDetails,
+      slippedCandidates: [
+        for (final state in snapshot.slippedStates)
+          HomeCalendarSlipCandidate(
+            label: state.item.label,
+            replacementAction: state.item.replacementAction,
+            slipCount: state.slipCount,
+          ),
+      ],
+    );
+  }
+
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     HomeCalendarVisibleRange? calendarRange,
     required Map<String, _HomeDailyStatusRecord> homeDailyMap,
@@ -1413,118 +1432,60 @@ class _HomePageState extends State<HomePage> with RouteAware {
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
     Set<String> additionalDebtViolationDates = const <String>{},
   }) async {
-    final now = _now();
-    final range = calendarRange ?? _calendarVisibleRange();
-    final monthAnchor = range.monthAnchor;
-    final startDay = range.startDay;
-    final endDay = range.endDay;
-    final abstinenceByDate = abstinenceSnapshotsByDate ??
-        await AbstinenceGuardStore.loadSnapshotsByDate(
-          startDate: startDay,
-          endDate: endDay,
+    final composedDays = await loadHomeCalendarDays<_HomeCalendarTask>(
+      range: calendarRange ?? _calendarVisibleRange(),
+      now: _now(),
+      dateKeyFor: _statusDateKey,
+      dailyStatusByDate: {
+        for (final entry in homeDailyMap.entries)
+          entry.key: HomeCalendarDailyStatusInput(
+            morningBriefingDone: entry.value.morningBriefingDone,
+            balanceCheckDone: entry.value.balanceCheckDone,
+          ),
+      },
+      pendingCriticalTaskMap: pendingCriticalTaskMap,
+      cashflowByDate: cashflowByDate,
+      tasksByDate: tasksByDate,
+      abstinenceByDate: abstinenceSnapshotsByDate == null
+          ? null
+          : {
+              for (final entry in abstinenceSnapshotsByDate.entries)
+                entry.key: _toCalendarAbstinenceInput(entry.value),
+            },
+      fetchAbstinenceByDate: (startDate, endDate) async {
+        final loaded = await AbstinenceGuardStore.loadSnapshotsByDate(
+          startDate: startDate,
+          endDate: endDate,
         );
-
-    final days = <_HomeCalendarDay>[];
-    for (DateTime day = startDay;
-        !day.isAfter(endDay);
-        day = day.add(const Duration(days: 1))) {
-      final dateKey = _statusDateKey(day);
-      final abstinence =
-          abstinenceByDate[dateKey] ?? _emptyAbstinenceSnapshot();
-      final isCurrentMonth =
-          day.year == monthAnchor.year && day.month == monthAnchor.month;
-      final isToday =
-          day.year == now.year && day.month == now.month && day.day == now.day;
-      final dayStatus = homeDailyMap[dateKey] ?? const _HomeDailyStatusRecord();
-      final morningDone = dayStatus.morningBriefingDone;
-      final balanceDone = dayStatus.balanceCheckDone;
-      final pendingCriticalTaskCountForDay =
-          pendingCriticalTaskMap[dateKey] ?? 0;
-      final tasks = List<_HomeCalendarTask>.from(
-        tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
-      );
-      final cashflow =
-          cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
-      final hasProtection = abstinence.enabledCount > 0;
-      final hasSlip = abstinence.totalSlipCount > 0;
-      final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
-      final missingItems = <String>[
-        if (!isFuture && !morningDone) 'モーニング・ブリーフィング',
-        if (!isFuture && !balanceDone) '口座残高確認',
-        if (!isFuture && pendingCriticalTaskCountForDay > 0)
-          '必須タスク $pendingCriticalTaskCountForDay件',
-        if (!isFuture && !hasProtection) '禁欲ガード設定',
-      ];
-      final relapsePreventionAction = _buildRelapsePreventionAction(
-        abstinence: abstinence,
-        isFuture: isFuture,
-        morningDone: morningDone,
-        balanceDone: balanceDone,
-        hasProtection: hasProtection,
-        hasSlip: hasSlip,
-      );
-
-      days.add(
+        return {
+          for (final entry in loaded.entries)
+            entry.key: _toCalendarAbstinenceInput(entry.value),
+        };
+      },
+      additionalDebtViolationDates: additionalDebtViolationDates,
+    );
+    return [
+      for (final day in composedDays)
         _HomeCalendarDay(
-          date: day,
-          isCurrentMonth: isCurrentMonth,
-          isToday: isToday,
-          isFuture: isFuture,
-          morningDone: morningDone,
-          balanceDone: balanceDone,
-          pendingCriticalTaskCount: pendingCriticalTaskCountForDay,
-          hasAbstinenceProtection: hasProtection,
-          hasAbstinenceSlip: hasSlip,
-          hasAdditionalDebtViolation:
-              additionalDebtViolationDates.contains(dateKey),
-          isSaturday: day.weekday == DateTime.saturday,
-          enabledLabels: abstinence.enabledLabels,
-          slipDetails: abstinence.slipDetails,
-          missingItems: missingItems,
-          relapsePreventionAction: relapsePreventionAction,
-          cashflow: cashflow,
-          tasks: tasks,
+          date: day.date,
+          isCurrentMonth: day.isCurrentMonth,
+          isToday: day.isToday,
+          isFuture: day.isFuture,
+          morningDone: day.morningDone,
+          balanceDone: day.balanceDone,
+          pendingCriticalTaskCount: day.pendingCriticalTaskCount,
+          hasAbstinenceProtection: day.hasAbstinenceProtection,
+          hasAbstinenceSlip: day.hasAbstinenceSlip,
+          hasAdditionalDebtViolation: day.hasAdditionalDebtViolation,
+          isSaturday: day.isSaturday,
+          enabledLabels: day.enabledLabels,
+          slipDetails: day.slipDetails,
+          missingItems: day.missingItems,
+          relapsePreventionAction: day.relapsePreventionAction,
+          cashflow: day.cashflow,
+          tasks: day.tasks,
         ),
-      );
-    }
-    return days;
-  }
-
-  String _buildRelapsePreventionAction({
-    required AbstinenceGuardSnapshot abstinence,
-    required bool isFuture,
-    required bool morningDone,
-    required bool balanceDone,
-    required bool hasProtection,
-    required bool hasSlip,
-  }) {
-    if (isFuture) {
-      return '前日までの逸脱傾向を見て、禁止対象を1件だけ先に固定する。';
-    }
-
-    if (hasSlip) {
-      final sortedSlips = abstinence.slippedStates.toList()
-        ..sort((a, b) => b.slipCount.compareTo(a.slipCount));
-      if (sortedSlips.isNotEmpty) {
-        final top = sortedSlips.first;
-        return '${top.item.label}が崩れやすい日。${top.item.replacementAction}';
-      }
-    }
-
-    if (!hasProtection) {
-      return '朝いちで禁止対象を1件だけ固定して、先に逃げ道を塞ぐ。';
-    }
-    if (abstinence.disciplineSnapshot.totalRepCount == 0) {
-      return '今日はまだ我慢の実績がありません。買わない・開かないを1回記録する。';
-    }
-    if (!morningDone) {
-      return '朝の最初にブリーフィングを実施し、優先順位を固定する。';
-    }
-    if (!balanceDone) {
-      return '口座残高確認を先に終えて、意思決定を数字に戻す。';
-    }
-
-    return '同じ禁止対象を維持し、夜に逸脱ゼロを確認して日次を閉じる。';
+    ];
   }
 
   Future<_HomeDailyStatusRecord?> _fetchHomeDailyStatusFromSupabase(
@@ -5824,6 +5785,8 @@ abstinence_slip_details: $slipDetailsText
                                 child: EdgeFunctionSummaryCard(),
                               ),
                               const SizedBox(height: 16),
+                              _buildAiVisionMonitorButton(context),
+                              const SizedBox(height: 10),
                               _buildUiStatusButton(context),
                               const SizedBox(height: 40),
                             ],
@@ -5943,6 +5906,26 @@ abstinence_slip_details: $slipDetailsText
         child: const AiRecommendedFeaturesList(),
       ),
     ];
+  }
+
+  Widget _buildAiVisionMonitorButton(BuildContext context) {
+    return OutlinedButton.icon(
+      key: const Key('home_vision_benchmark_button'),
+      onPressed: () => Navigator.of(context).pushNamed('/vision-benchmark'),
+      icon: const Icon(Icons.monitor_heart_outlined, size: 16),
+      label: const Text('AI監視ダッシュボード (Visionベンチマーク)'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF0F766E),
+        side: const BorderSide(color: Color(0xFF0F766E)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        minimumSize: const Size(double.infinity, 44),
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1.6,
+        ),
+      ),
+    );
   }
 
   Widget _buildUiStatusButton(BuildContext context) {

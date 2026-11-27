@@ -57,6 +57,12 @@ export const CORE_HUB_ACTION_REGISTRY = {
   "stage_gate.list": { auth: "user" },
   "stage_gate.submit": { auth: "user" },
   "stage_gate.decide": { auth: "user" },
+  "external_diff.rule.list": { auth: "user" },
+  "external_diff.rule.upsert": { auth: "user" },
+  "external_diff.alert.list": { auth: "user" },
+  "external_diff.alert.acknowledge": { auth: "user" },
+  "external_diff.snapshot_and_detect": { auth: "user" },
+  "external_diff.batch_scan": { auth: "service_role" },
 } as const satisfies Record<string, CoreHubActionDefinition>;
 
 export type CoreHubAction = keyof typeof CORE_HUB_ACTION_REGISTRY;

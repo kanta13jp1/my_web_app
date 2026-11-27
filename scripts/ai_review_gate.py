@@ -42,8 +42,9 @@ MAX_DIFF = 240_000
 MAX_FILES = 40
 AREAS = {'correctness', 'security', 'tests'}
 SAFE_SUFFIXES = {'.dart', '.ts', '.js', '.mjs', '.cjs', '.py', '.ps1', '.sh',
-                 '.yaml', '.yml', '.json', '.sql', '.md', '.toml', '.txt', '.lock', '.html', '.css'}
-SAFE_EXACT_NAMES = {'.gitattributes'}
+                 '.yaml', '.yml', '.json', '.sql', '.md', '.toml', '.txt', '.lock', '.html', '.css',
+                 '.code-workspace', '.mdc'}
+SAFE_EXACT_NAMES = {'.gitattributes', '.cursorignore'}
 SAFE_EXACT_PATHS = {'.githooks/pre-push'}
 PRIVATE_PATH = re.compile(r'(^|/)(attachments|receipts|payslips|financial_records|bank_statements|\.env)(/|\.|$)', re.I)
 

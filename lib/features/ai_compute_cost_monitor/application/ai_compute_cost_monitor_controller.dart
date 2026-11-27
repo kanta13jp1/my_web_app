@@ -187,6 +187,92 @@ class AiComputeCostMonitorState {
   bool get isThresholdAlertActive =>
       isDailyThresholdExceeded || isMonthlyThresholdExceeded;
 
+  List<ModelTokenCostBreakdown> get modelBreakdowns {
+    final grouped = <String, List<AiComputeTelemetryEntry>>{};
+    var grandTotalCost = 0.0;
+    for (final entry in entries) {
+      final key =
+          entry.modelId.trim().isEmpty ? 'unknown' : entry.modelId.trim();
+      grouped.putIfAbsent(key, () => <AiComputeTelemetryEntry>[]).add(entry);
+      grandTotalCost += entry.estimatedComputeCostUsd;
+    }
+    final items = grouped.entries.map((
+      final MapEntry<String, List<AiComputeTelemetryEntry>> kv,
+    ) {
+      var reqs = 0;
+      var inTok = 0;
+      var outTok = 0;
+      var costSum = 0.0;
+      for (final item in kv.value) {
+        reqs += item.apiRequestCount;
+        inTok += item.inputTokens;
+        outTok += item.outputTokens;
+        costSum += item.estimatedComputeCostUsd;
+      }
+      final roundedCost = (costSum * 1000000).roundToDouble() / 1000000;
+      final sharePct = grandTotalCost > 0
+          ? (((roundedCost / grandTotalCost) * 10000).roundToDouble() / 100)
+          : 0.0;
+      return ModelTokenCostBreakdown(
+        modelId: kv.key,
+        requestCount: reqs,
+        inputTokens: inTok,
+        outputTokens: outTok,
+        totalTokens: inTok + outTok,
+        estimatedCostUsd: roundedCost,
+        costSharePct: sharePct,
+      );
+    }).toList();
+    items.sort(
+      (final ModelTokenCostBreakdown a, final ModelTokenCostBreakdown b) {
+        final costCmp = b.estimatedCostUsd.compareTo(a.estimatedCostUsd);
+        if (costCmp != 0) return costCmp;
+        return b.totalTokens.compareTo(a.totalTokens);
+      },
+    );
+    return List<ModelTokenCostBreakdown>.unmodifiable(items);
+  }
+
+  AgentLoopDetectionReport get loopDetection {
+    var consecutive = 0;
+    var maxConsecutive = 0;
+    String? prevSignature;
+    for (final entry in entries) {
+      final sig = '${entry.toolName.trim()}::${entry.modelId.trim()}';
+      if (sig == prevSignature) {
+        consecutive += 1;
+      } else {
+        consecutive = 1;
+        prevSignature = sig;
+      }
+      if (consecutive > maxConsecutive) {
+        maxConsecutive = consecutive;
+      }
+    }
+    final triggers = <String>[];
+    if (maxConsecutive >= 5) {
+      triggers.add('連続反復ループ ($maxConsecutive回)');
+    }
+    if (totalTokens >= 120000) {
+      triggers.add('トークン消費急騰 ($totalTokens tokens)');
+    }
+    if (isThresholdAlertActive) {
+      triggers.add('日別/月別コスト上限超過');
+    }
+    final autoHalted = triggers.isNotEmpty;
+    final haltMessage = autoHalted
+        ? '異常ループまたはコスト上限超過を検知したため自動停止しました (${triggers.join(' / ')})。'
+        : '';
+    final tokSum = totalTokens;
+    return AgentLoopDetectionReport(
+      autoHalted: autoHalted,
+      triggers: List<String>.unmodifiable(triggers),
+      maxConsecutiveRepeats: maxConsecutive,
+      totalWindowTokens: tokSum,
+      haltMessage: haltMessage,
+    );
+  }
+
   AiComputeCostMonitorState copyWith({
     List<AiComputeTelemetryEntry>? entries,
     AiComputeThresholdSettings? thresholdSettings,
@@ -289,6 +375,16 @@ class AiComputeCostMonitorController extends ChangeNotifier {
     required int apiRequestCount,
     required int latencyMs,
   }) async {
+    final loopStatus = _state.loopDetection;
+    if (loopStatus.autoHalted) {
+      _setState(
+        _state.copyWith(
+          isSubmitting: false,
+          errorMessage: loopStatus.haltMessage,
+        ),
+      );
+      return false;
+    }
     _setState(_state.copyWith(isSubmitting: true, clearError: true));
     try {
       final draft = AiComputeCostEstimator.createDraft(

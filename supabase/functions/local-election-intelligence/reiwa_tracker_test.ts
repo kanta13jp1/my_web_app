@@ -874,3 +874,35 @@ Deno.test(
     assertEquals(classifyPostArchetype(lead), "data_report");
   },
 );
+
+Deno.test(
+  "persistReiwaSnapshot suppresses HITL candidate when only member label changes with zero count or roster delta",
+  async () => {
+    const { store, candidates } = createMemoryStore();
+    const baseline = parseReiwaMemberPageHtml(
+      REAL_REIWA_MEMBER_CORE_HTML,
+    ) as ReiwaMemberSnapshot;
+    const target = baseline.members[0];
+    const updated: ReiwaMemberSnapshot = {
+      ...baseline,
+      members: baseline.members.map((m) =>
+        m.profileUrl === target.profileUrl
+          ? { ...m, assemblyLabel: `${m.assemblyLabel}（表記更新）` }
+          : m
+      ),
+    };
+
+    await persistReiwaSnapshot(store, baseline, "2026-11-25T10:30:00.000Z");
+    const next = await persistReiwaSnapshot(
+      store,
+      updated,
+      "2026-11-26T10:30:00.000Z",
+    );
+
+    assertEquals(next.snapshotCreated, true);
+    assertEquals(next.hasChanges, false);
+    assertEquals(next.candidateCount, 0);
+    assertEquals(next.candidatesCreated, 0);
+    assertEquals(candidates.length, 0);
+  },
+);

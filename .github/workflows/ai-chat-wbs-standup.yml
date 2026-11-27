@@ -1,0 +1,42 @@
+name: AI Chat Chronicle and WBS Standup Tests
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ai-chat-wbs-standup.yml"
+      - "scripts/ai_chat_chronicle.py"
+      - "scripts/ai_chat_standup_wbs.py"
+      - "test/scripts/test_ai_chat_chronicle_wbs.py"
+  workflow_dispatch:
+
+concurrency:
+  group: ai-chat-wbs-standup-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  verify:
+    name: Verify AI chat SQLite chronicle and WBS standup bridge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run Python chronicle and WBS standup tests
+        run: |
+          python3 -B -m unittest discover -s test/scripts -p "test_ai_chat_chronicle_wbs.py" -v
+          python3 -B scripts/ai_chat_chronicle.py --self-test
+          python3 -B scripts/ai_chat_standup_wbs.py --self-test
+          python3 -m py_compile scripts/ai_chat_chronicle.py scripts/ai_chat_standup_wbs.py test/scripts/test_ai_chat_chronicle_wbs.py

@@ -273,3 +273,17 @@ enabled = true
 # constant-time service_role authentication before proxying to D-ID MCP/REST.
 verify_jwt = false
 entrypoint = "./functions/did-mcp-proxy/index.ts"
+
+[functions.external-ai-webhook]
+enabled = true
+# External automation callers (n8n/Zapier/analytics) authenticate via
+# X-Webhook-Api-Key (SHA-256 hashed lookup) or user JWT verified in-function.
+verify_jwt = false
+entrypoint = "./functions/external-ai-webhook/index.ts"
+
+[functions.workos-scim-webhook]
+enabled = true
+# WorkOS Directory Sync webhooks authenticate via WorkOS-Signature
+# (HMAC-SHA256 timestamped signature verified with constant-time compare).
+verify_jwt = false
+entrypoint = "./functions/workos-scim-webhook/index.ts"

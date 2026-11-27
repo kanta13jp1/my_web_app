@@ -1,5 +1,9 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { buildQueryRouteDecision, parseQueryReport } from "./query_report.ts";
+import {
+  buildHeuristicQueryReport,
+  buildQueryRouteDecision,
+  parseQueryReport,
+} from "./query_report.ts";
 
 Deno.test("parseQueryReport reads reformulated XML style tags", () => {
   const report = parseQueryReport(`
@@ -57,7 +61,7 @@ Deno.test("buildQueryRouteDecision falls back to original query for trivial repo
   assertEquals(route.searchQuery, "Pleias citation tokens");
 });
 
-Deno.test("buildQueryRouteDecision asks for clarification when reformulated query is missing", () => {
+Deno.test("buildQueryRouteDecision asks clarify on missing query", () => {
   const route = buildQueryRouteDecision(
     "Pleias",
     "status: reformulated",
@@ -65,4 +69,61 @@ Deno.test("buildQueryRouteDecision asks for clarification when reformulated quer
 
   assertEquals(route.action, "clarify");
   assertEquals(route.state, "reformulated");
+});
+
+Deno.test("parseQueryReport extracts Pleias sentinel envelope only", () => {
+  const raw = [
+    "<|thought|>Query might seem unclear at first.<|/thought|>",
+    "<|query_report_start|>",
+    "<|state|>reformulated",
+    "<|reformulated_query|>Pleias Open Data Layers enterprise RAG",
+    "<|reason|>Focused broad topic on enterprise RAG architecture",
+    "<|query_report_end|>",
+    "<|answer_start|>Ignored prose<|answer_end|>",
+  ].join("\n");
+  const report = parseQueryReport(raw);
+
+  assertEquals(report.state, "reformulated");
+  assertEquals(
+    report.reformulatedQuery,
+    "Pleias Open Data Layers enterprise RAG",
+  );
+  assertEquals(
+    report.reason,
+    "Focused broad topic on enterprise RAG architecture",
+  );
+});
+
+Deno.test("parseQueryReport handles partial unclosed sentinel stream", () => {
+  const report = parseQueryReport(
+    "<|query_report_start|><|state|>unclear<|reason|>Specify target file",
+  );
+
+  assertEquals(report.state, "unclear");
+  assertEquals(report.reason, "Specify target file");
+});
+
+Deno.test("parseQueryReport maps not clear to unclear state", () => {
+  const report = parseQueryReport(
+    "<|query_report_start|><|state|>not clear<|query_report_end|>",
+  );
+
+  assertEquals(report.state, "unclear");
+});
+
+Deno.test("buildHeuristicQueryReport detects vague and clear queries", () => {
+  const vague = buildQueryRouteDecision(
+    "あれを調べて",
+    buildHeuristicQueryReport("あれを調べて"),
+  );
+  assertEquals(vague.action, "clarify");
+  assertEquals(vague.state, "unclear");
+
+  const clear = buildQueryRouteDecision(
+    "Pleias Open Data Layers",
+    buildHeuristicQueryReport("Pleias Open Data Layers"),
+  );
+  assertEquals(clear.action, "search");
+  assertEquals(clear.state, "trivial");
+  assertEquals(clear.searchQuery, "Pleias Open Data Layers");
 });

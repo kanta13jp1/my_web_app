@@ -395,6 +395,37 @@ def evaluate_target(
                     f"Run: {run_url(latest)}"
                 ),
             }
+        if target.event == "schedule" and created_at is not None and fallback_runs:
+            latest_fallback = fallback_runs[0]
+            fallback_created_at = parse_time(str(latest_fallback.get("created_at") or ""))
+            fallback_age_hours = (
+                (now - fallback_created_at).total_seconds() / 3600
+                if fallback_created_at is not None
+                else None
+            )
+            if (
+                str(latest_fallback.get("event") or "") == "workflow_dispatch"
+                and str(latest_fallback.get("status") or "") == "completed"
+                and str(latest_fallback.get("conclusion") or "") == "success"
+                and fallback_created_at is not None
+                and fallback_created_at > created_at
+                and fallback_age_hours is not None
+                and (target.max_age_hours <= 0 or fallback_age_hours <= target.max_age_hours)
+            ):
+                return {
+                    "target": target.key,
+                    "workflow_file": target.workflow_file,
+                    "run_id": latest_fallback.get("id"),
+                    "run_attempt": int(latest_fallback.get("run_attempt") or 1),
+                    "status": "completed",
+                    "conclusion": "success",
+                    "url": run_url(latest_fallback),
+                    "created_at": latest_fallback.get("created_at"),
+                    "age_hours": round(fallback_age_hours, 2),
+                    "action": "healthy",
+                    "reason": "recovered-via-workflow-dispatch",
+                    "superseded_run_id": latest.get("id"),
+                }
         if run_attempt < max_attempts:
             return {
                 **base,
@@ -813,15 +844,43 @@ def main(argv: list[str]) -> int:
                 raise RuntimeError("Event-driven workflow freshness could not be verified")
 
             should_bootstrap = not runs and target.event == "schedule"
-            fallback_runs = (
-                client.repository_workflow_runs(
+            latest_run = runs[0] if runs else None
+            latest_created_at = (
+                parse_time(str(latest_run.get("created_at") or ""))
+                if isinstance(latest_run, dict)
+                else None
+            )
+            latest_age_hours = (
+                (now - latest_created_at).total_seconds() / 3600
+                if latest_created_at is not None
+                else None
+            )
+            should_check_dispatch_recovery = (
+                target.event == "schedule"
+                and isinstance(latest_run, dict)
+                and str(latest_run.get("status") or "") == "completed"
+                and str(latest_run.get("conclusion") or "") in BAD_CONCLUSIONS
+                and latest_created_at is not None
+                and (
+                    target.max_age_hours <= 0
+                    or (latest_age_hours is not None and latest_age_hours <= target.max_age_hours)
+                )
+            )
+            if should_bootstrap and target.require_bootstrap_success:
+                fallback_runs = client.repository_workflow_runs(
                     target.workflow_file,
                     event="workflow_dispatch",
                     created_after=repository_revalidation_start(target, [], now),
                 )
-                if should_bootstrap and target.require_bootstrap_success
-                else []
-            )
+            elif should_check_dispatch_recovery:
+                assert latest_created_at is not None
+                fallback_runs = client.repository_workflow_runs(
+                    target.workflow_file,
+                    event="workflow_dispatch",
+                    created_after=latest_created_at,
+                )
+            else:
+                fallback_runs = []
             workflow_state = (
                 client.workflow_state(target.workflow_file) if should_bootstrap else "active"
             )

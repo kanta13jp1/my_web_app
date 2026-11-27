@@ -1936,6 +1936,8 @@ class AssetManagementInsightPromptBuilder {
     AssetManagementInsightReport report, {
     Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
         const <String, Map<String, dynamic>>{},
+    bool includeRowLevelTables = true,
+    bool includeImplementationContext = true,
   }) {
     final severityCounts = _countBy(
       report.actionItems.map((item) => item.severity.name),
@@ -2087,10 +2089,18 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('- 今月: ${_availabilityBand(report.monthAvailable)}')
       ..writeln()
       ..writeln('## 口座一覧')
-      ..write(_accountLines(workbook))
+      ..write(
+        includeRowLevelTables
+            ? _accountLines(workbook)
+            : _accountSummaryLines(workbook),
+      )
       ..writeln()
       ..writeln('## 負債マスタ詳細')
-      ..write(_debtMasterLines(workbook))
+      ..write(
+        includeRowLevelTables
+            ? _debtMasterLines(workbook)
+            : _debtMasterSummaryLines(workbook),
+      )
       ..writeln()
       ..writeln('## 支払日別リスク')
       ..write(_paymentDayRiskLines(workbook))
@@ -2098,7 +2108,11 @@ class AssetManagementInsightPromptBuilder {
       ..write(assetPaymentStatusPrompt(workbook))
       ..writeln()
       ..writeln('## 今月キャッシュフロー')
-      ..write(_cashflowLines(workbook))
+      ..write(
+        includeRowLevelTables
+            ? _cashflowLines(workbook)
+            : _cashflowSummaryLines(workbook),
+      )
       ..writeln()
       ..writeln('## 収入予定と口座移動')
       ..write(_incomeAndTransferLines(workbook))
@@ -2129,7 +2143,12 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('- 緊急アドバイス重要度別: ${_formatCounts(emergencyCounts)}')
       ..writeln()
       ..writeln('## 現実装コンテキスト（ドキュメント・ソースコード抜粋）')
-      ..write(_implementationContextLines(report.implementationContexts))
+      ..write(
+        includeImplementationContext
+            ? _implementationContextLines(report.implementationContexts)
+            : '- 現実装コンテキスト件数: ${report.implementationContexts.length}'
+                '（詳細は詳細ペイロード内 implementation_context を参照）\n',
+      )
       ..writeln()
       ..writeln('## 開発者向け改善提案候補')
       ..writeln('- 合計: ${report.developerRequests.length}')
@@ -2163,6 +2182,39 @@ class AssetManagementInsightPromptBuilder {
     if (counts.isEmpty) return 'none';
     final keys = counts.keys.toList(growable: false)..sort();
     return keys.map((key) => '$key=${counts[key]}').join(', ');
+  }
+
+  String _accountSummaryLines(AssetLiabilityWorkbook workbook) {
+    final currentAccounts = workbook.currentAccounts;
+    if (currentAccounts.isEmpty) {
+      return '- 口座データはありません。\n';
+    }
+    return '- 口座数: ${currentAccounts.length} / '
+        '現金同等資産: ${_formatAmount(workbook.cashLikeTotal)} / '
+        '資産合計: ${_formatAmount(workbook.positiveAssetTotal)}'
+        '（各口座の詳細は詳細ペイロード内 accounts を参照）\n';
+  }
+
+  String _debtMasterSummaryLines(AssetLiabilityWorkbook workbook) {
+    final currentDebtRows = workbook.currentDebtRows;
+    if (currentDebtRows.isEmpty) {
+      return '- 負債はありません。\n';
+    }
+    return '- 負債件数: ${currentDebtRows.length} / '
+        '負債合計: ${_formatAmount(workbook.liabilityTotal)} / '
+        '今月支払予定合計: ${_formatAmount(workbook.monthlyScheduledPaymentTotal)} / '
+        '今月未払い合計: ${_formatAmount(workbook.monthlyUnpaidPaymentTotal)}'
+        '（各負債の詳細は詳細ペイロード内 debt_master_rows を参照）\n';
+  }
+
+  String _cashflowSummaryLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.cashflowRows.isEmpty) {
+      return '- キャッシュフロー行はありません。\n';
+    }
+    return '- キャッシュフロー件数: ${workbook.cashflowRows.length} / '
+        '今月実支払合計: ${_formatAmount(workbook.monthlyActualPaymentTotal)} / '
+        '今月未受取入金合計: ${_formatAmount(workbook.monthlyUnreceivedIncomeTotal)}'
+        '（各行の詳細は詳細ペイロード内 cashflow_rows を参照）\n';
   }
 
   String _accountLines(AssetLiabilityWorkbook workbook) {
@@ -2263,11 +2315,19 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _cashflowLines(AssetLiabilityWorkbook workbook) {
-    if (workbook.cashflowRows.isEmpty) {
+    final activeRows = workbook.cashflowRows.where((row) {
+      if (row.isPayment &&
+          row.paymentAmount <= 0 &&
+          (row.actualPaymentAmount ?? 0) <= 0) {
+        return false;
+      }
+      return true;
+    }).toList();
+    if (activeRows.isEmpty) {
       return '- キャッシュフロー行はありません。\n';
     }
     final buffer = StringBuffer();
-    for (final row in workbook.cashflowRows) {
+    for (final row in activeRows) {
       buffer.writeln(
         '- ${_formatDate(row.paymentDate)} / ${row.eventType.name} / '
         '項目:${row.accountName} / 金額:${_formatAmount(row.paymentAmount)} / '
