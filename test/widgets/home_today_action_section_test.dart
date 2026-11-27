@@ -51,7 +51,13 @@ void main() {
         find.byKey(const Key('home_next_action_criticalTasks')),
         findsOneWidget,
       );
-      expect(find.text('今日の1件'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(HomeTodayActionSection.headerKey),
+          matching: find.text('今日の1件'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('必須タスクを完了する'), findsOneWidget);
       expect(find.text('まずは1件だけ片付けましょう。'), findsOneWidget);
 
