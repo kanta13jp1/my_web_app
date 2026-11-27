@@ -159,3 +159,51 @@ Deno.test(
     }
   },
 );
+
+Deno.test(
+  "index.ts enforces actionPolicy and authorizeAction before switch",
+  async () => {
+    const indexSource = await Deno.readTextFile(
+      new URL("./index.ts", import.meta.url),
+    );
+    const policyIdx = indexSource.indexOf("actionPolicy(action)");
+    const authIdx = indexSource.indexOf("authorizeAction(action,");
+    const switchIdx = indexSource.indexOf("switch (action)");
+
+    assert(policyIdx > 0, "actionPolicy(action) check must exist");
+    assert(authIdx > policyIdx, "authorizeAction must follow actionPolicy");
+    assert(switchIdx > authIdx, "switch (action) must follow authorizeAction");
+  },
+);
+
+Deno.test(
+  "prototype keys and write actions without auth fail closed",
+  () => {
+    for (const key of ["__proto__", "constructor", "toString", "valueOf"]) {
+      assertEquals(actionPolicy(key), null, key);
+      assertEquals(requiredAuthLevel(key), null, key);
+      assertEquals(
+        authorizeAction(key, {
+          authenticatedUser: true,
+          serviceRoleRequest: true,
+        }),
+        { allowed: false, error: "UnknownAction", status: 400 },
+        key,
+      );
+    }
+
+    for (const action of SCHEDULE_HUB_ACTIONS) {
+      const policy = ACTION_POLICIES[action];
+      if (policy.sideEffect === "user_scoped_write") {
+        assertEquals(
+          authorizeAction(action, {
+            authenticatedUser: false,
+            serviceRoleRequest: false,
+          }),
+          { allowed: false, error: "Unauthorized", status: 401 },
+          `${action}: unauthenticated user_scoped_write must fail`,
+        );
+      }
+    }
+  },
+);
