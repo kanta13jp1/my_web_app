@@ -61,12 +61,27 @@ test('switches to 4th tab プロ譜面ラボ, renders same-origin alphaTab ifram
   );
 
   const frame = page.frameLocator('iframe[title="プロ譜面ラボ (alphaTab)"]');
+  await expect(frame.locator('#score-viewport')).toHaveAttribute(
+    'data-render-state',
+    'ready',
+    { timeout: 25_000 },
+  );
   await expect(frame.locator('#alphaTab-surface svg').first()).toBeVisible({
-    timeout: 25_000,
+    timeout: 15_000,
   });
-  await expect(frame.locator('#attribution-link')).toContainText('alphaTab.net');
+  await expect(frame.locator('.studio-footer')).toContainText(
+    'alphaTab 1.9.0 (MPL-2.0)',
+  );
   await page.waitForTimeout(400);
   await page.screenshot({ path: info.outputPath('05-flutter-host-pro-tab.png') });
+
+  if ((page.viewportSize()?.width ?? 1440) < 600) {
+    await frame.locator('#score-viewport').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    await page.screenshot({
+      path: info.outputPath('06-flutter-host-pro-tab-score.png'),
+    });
+  }
 
   const catalogTab = page.getByRole('button', { name: /練習カタログ/ });
   await expect(catalogTab).toBeVisible();
