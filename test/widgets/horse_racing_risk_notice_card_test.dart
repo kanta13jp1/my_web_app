@@ -48,8 +48,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('horse-racing-responsible-use-card')),
-          findsOneWidget);
+      expect(
+        find.byKey(const Key('horse-racing-responsible-use-card')),
+        findsOneWidget,
+      );
       expect(find.textContaining('AI予測は購入を勧めず、結果を保証しません'), findsOneWidget);
       expect(find.textContaining('損失の可能性があります'), findsOneWidget);
 
@@ -191,8 +193,10 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byKey(const Key('horse-racing-responsible-use-card')),
-          findsOneWidget);
+      expect(
+        find.byKey(const Key('horse-racing-responsible-use-card')),
+        findsOneWidget,
+      );
       expect(find.text('ログインすると購入馬券を記録できます'), findsOneWidget);
     });
 
@@ -219,8 +223,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('horse-racing-responsible-use-card')),
-          findsOneWidget);
+      expect(
+        find.byKey(const Key('horse-racing-responsible-use-card')),
+        findsOneWidget,
+      );
       expect(find.text('ネットワーク接続エラー'), findsOneWidget);
       expect(find.text('再試行'), findsOneWidget);
     });
@@ -279,8 +285,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('horse-racing-responsible-use-card')),
-          findsOneWidget);
+      expect(
+        find.byKey(const Key('horse-racing-responsible-use-card')),
+        findsOneWidget,
+      );
       await tester.tap(find.text('テスト記念'));
       await tester.pumpAndSettle();
       expect(find.textContaining('見送り'), findsWidgets);
