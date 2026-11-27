@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "source_issue": 2723,
+  "trace_source": "baseline_fixture",
+  "score_variance": 0.7921,
+  "mean_gpa": 2.95,
+  "winner": {
+    "candidate_id": "gepa-1-reflective_constraint_patch",
+    "strategy": "reflective_constraint_patch",
+    "generation": 1,
+    "prompt_sections": {
+      "title": "[GEPA Candidate] Executive Agent Goal-Plan-Action Baseline",
+      "role_setting": "You are an autonomous reliability planner executing verified workspace tasks.",
+      "context_info": "Operate strictly on observed telemetry, database records, and explicit constraints.",
+      "deliverable_definition": "Produce an explicit Goal, ordered Plan steps, concrete Action trace, and verification evidence.\n- Include explicit Goal, Plan, and Action checks.",
+      "constraints_text": "Never fabricate file paths or telemetry; fail closed on missing preconditions.\n- State one atomic Goal and explicit acceptance check first.\n- Emit a numbered Plan aligned with observed preconditions.\n- Validate Action inputs and fail closed before side effects.\n- Audit output against constraints before final completion.\n- Avoid redundant retries; converge within <= 3 bounded steps.",
+      "thinking_process": "1) Clarify atomic goal. 2) Formulate ordered plan. 3) Execute bounded actions and verify.\nVerify Goal-Plan-Action consistency and constraints before responding."
+    },
+    "fitness_score": 2.541,
+    "projected_gpa": 3.37,
+    "projected_variance_drop": 0.4,
+    "reflection_summary": "Observed GPA variance=0.7921 (> 0.15); weak axes={'goal': 1, 'plan': 2, 'action': 1, 'consistency': 2, 'efficiency': 2}."
+  },
+  "deterministic_validation": {
+    "passed": true,
+    "checks": [
+      "all_deterministic_checks_passed"
+    ],
+    "redact_hits": 0,
+    "scope_valid": true,
+    "checked_candidates": 3
+  }
+}
