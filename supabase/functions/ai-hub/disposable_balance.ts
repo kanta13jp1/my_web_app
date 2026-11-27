@@ -254,7 +254,7 @@ export async function handleDisposableBalanceAction(options: {
     if (aiEnabled && options.invokeProvider) {
       const providerResult = await options.invokeProvider({
         provider: "google",
-        model: readString(options.body.model) || "gemini-2.5-pro",
+        model: readString(options.body.model) || "gemini-4-neon",
         messages: buildDisposableBalanceMessages(base),
       });
       if (providerResult.ok && providerResult.text) {
@@ -263,7 +263,7 @@ export async function handleDisposableBalanceAction(options: {
           requiredActions = mergeActions(requiredActions, providerActions);
           status = "ai_actions_generated";
           provider = "google";
-          model = providerResult.modelUsed ?? "gemini-2.5-pro";
+          model = providerResult.modelUsed ?? "gemini-4-neon";
         }
       } else {
         warnings.push(

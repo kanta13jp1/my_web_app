@@ -230,7 +230,7 @@ export async function handleClassifyExpenseAction(options: {
     ) {
       const providerResult = await options.invokeProvider({
         provider: "google",
-        model: readString(options.body.model) || "gemini-2.5-flash",
+        model: readString(options.body.model) || "gemini-4-hydrogen",
         messages: buildExpenseClassificationMessages(expense),
       });
       if (providerResult.ok && providerResult.text) {
@@ -321,7 +321,7 @@ export async function handleWeeklySpendingCoachingAction(options: {
   if (aiEnabled && options.invokeProvider) {
     const providerResult = await options.invokeProvider({
       provider: "google",
-      model: readString(options.body.model) || "gemini-2.5-pro",
+      model: readString(options.body.model) || "gemini-4-neon",
       messages: buildWeeklyCoachingMessages(payload),
     });
     if (providerResult.ok && providerResult.text) {
@@ -330,7 +330,7 @@ export async function handleWeeklySpendingCoachingAction(options: {
         actions = providerActions.slice(0, 5);
         status = "ai_generated";
         provider = "google";
-        model = providerResult.modelUsed ?? "gemini-2.5-pro";
+        model = providerResult.modelUsed ?? "gemini-4-neon";
       }
     } else {
       warnings.push(
