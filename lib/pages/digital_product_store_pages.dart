@@ -421,9 +421,7 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
   final _reviewsKey = GlobalKey();
   late final ShopCommunityRepository? _communityRepository =
       widget.communityRepository ??
-          (widget.service == null
-              ? SupabaseShopCommunityRepository()
-              : null);
+          (widget.service == null ? SupabaseShopCommunityRepository() : null);
   late final ShopProductViewModel _viewModel = ShopProductViewModel(
     gateway: widget.service ?? ShopService(),
     productId: widget.productId,
