@@ -49,7 +49,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     'claude-3-haiku-20240307',
     'gemini-4-hydrogen',
     'gemma-3n-e2b-it',
-    'deepseek-chat',
+    'deepseek-v4-flash',
   ];
 
   static List<Map<String, dynamic>> _defaultBoardMeetingModels() {
