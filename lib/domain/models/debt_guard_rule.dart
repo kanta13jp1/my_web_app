@@ -1,4 +1,5 @@
 import 'debt_guard_emotion.dart';
+import 'debt_guard_stall_thought.dart';
 
 enum DebtGuardCategory {
   debt,
@@ -404,6 +405,7 @@ class DebtGuardEvent {
     required this.createdAt,
     this.note,
     this.emotion,
+    this.stallThought,
   });
 
   final int id;
@@ -415,6 +417,9 @@ class DebtGuardEvent {
 
   /// The feeling the user named behind this urge or violation, if any.
   final DebtGuardEmotion? emotion;
+
+  /// The thought that was holding the user back from starting, if named.
+  final DebtGuardStallThought? stallThought;
 }
 
 enum DebtGuardRuleStatus { unrecorded, kept, violated }
