@@ -12,7 +12,15 @@ RECEIPT = Path(__file__).resolve().parents[1] / 'config/ai-review-public-assets.
 RECEIPT_5893 = RECEIPT.with_name('ai-review-public-assets-5893.json')
 RECEIPT_6244 = RECEIPT.with_name('ai-review-public-assets-6244.json')
 RECEIPT_6273 = RECEIPT.with_name('ai-review-public-assets-6273.json')
+RECEIPT_6489 = RECEIPT.with_name('ai-review-public-assets-6489.json')
 VISUAL_BASELINE_PREFIX = 'test/e2e/visual_regression.spec.ts-snapshots/'
+PUBLIC_WEB_ICON_PATHS = frozenset({
+    'web/favicon.png',
+    'web/icons/Icon-192.png',
+    'web/icons/Icon-512.png',
+    'web/icons/Icon-maskable-192.png',
+    'web/icons/Icon-maskable-512.png',
+})
 BLOB_RE = re.compile(r'^[0-9a-f]{40}$')
 MAX_BYTES = 3_000_000
 MAX_DECODED = 8_388_608
@@ -82,12 +90,14 @@ def load_receipt(pr):
         path = RECEIPT_6244
     elif pr == 6273:
         path = RECEIPT_6273
+    elif pr == 6489:
+        path = RECEIPT_6489
     else:
         path = RECEIPT
     receipt = json.loads(path.read_text(encoding='utf-8'))
     require(receipt.get('schema_version') == 1 and receipt.get('provider') == 'google-gemini' and receipt.get('endpoint') == ENDPOINT and receipt.get('method') == 'generateContent', 'Unsupported public asset consent')
     assets = receipt.get('assets', [])
-    expected_count = 2 if pr in (6244, 6273) else 1
+    expected_count = 5 if pr == 6489 else (2 if pr in (6244, 6273) else 1)
     require(isinstance(assets, list) and len(assets) == expected_count and all(isinstance(a, dict) for a in assets), 'Unsupported approved PNG count')
     return receipt
 
@@ -106,6 +116,10 @@ def is_visual_baseline_png(path):
         return False
     posix = PurePosixPath(path)
     return posix.suffix.lower() == '.png' and len(posix.relative_to(VISUAL_BASELINE_PREFIX.rstrip('/')).parts) == 1
+
+
+def is_replaceable_public_png(path):
+    return is_visual_baseline_png(path) or path in PUBLIC_WEB_ICON_PATHS
 
 
 def prepare_assets(state, paths, git, directory):
@@ -137,7 +151,7 @@ def prepare_assets(state, paths, git, directory):
         require(entry == '100644 blob '+asset['head_blob']+'\t'+path, 'PNG is not the approved regular Git blob')
         base_entry = git('ls-tree', '-z', state['base'], '--', path).decode().rstrip('\0')
         if 'base_blob' in asset:
-            require(is_visual_baseline_png(path), 'PNG replacement is restricted to reviewed visual baselines')
+            require(is_replaceable_public_png(path), 'PNG replacement is restricted to reviewed visual baselines')
             require(
                 isinstance(asset['base_blob'], str)
                 and BLOB_RE.fullmatch(asset['base_blob'])
