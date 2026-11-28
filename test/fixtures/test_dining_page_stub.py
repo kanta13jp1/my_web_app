@@ -1,6 +1,7 @@
+import io
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import subprocess
 
 import dining_page_stub as fixture
@@ -77,6 +78,37 @@ class SyntheticBackendTest(unittest.TestCase):
         self.assertEqual(fixture.COUNTS['rejected_writes'], 1)
         self.assertTrue(callable(handler.do_TRACE))
 
+    @patch.object(fixture, 'report_rejection')
+    def test_ai_hub_rejects_oversized_bodies_with_bounded_diagnostics(self, report):
+        request = b'{"action":"provider.chat_auto"}'
+        timed_out = Mock()
+        timed_out.read1.side_effect = TimeoutError
+        for size, stream, category in (
+            (1025, io.BytesIO(request.ljust(1025)), 'provider_chat_auto'),
+            (4096, io.BytesIO(request.ljust(4096)), 'provider_chat_auto'),
+            (4097, io.BytesIO(request.ljust(4097)), None),
+            (1025, io.BytesIO(request), None),
+            (1025, timed_out, None),
+        ):
+            with self.subTest(size=size, category=category, stream=stream):
+                handler = object.__new__(fixture.Handler)
+                handler.headers = {'content-length': str(size)}
+                handler.command = 'POST'
+                handler.path = '/functions/v1/ai-hub'
+                handler.connection = Mock()
+                handler.connection.gettimeout.return_value = 8
+                handler.rfile = stream
+                handler.send_error = Mock()
+                handler._handle()
+                handler.send_error.assert_called_once_with(413)
+                self.assertEqual(report.call_args.kwargs['action_category'], category)
+                if size > 4096:
+                    self.assertEqual(stream.tell(), 0)
+                    handler.connection.settimeout.assert_not_called()
+                else:
+                    handler.connection.settimeout.assert_called_with(8)
+        self.assertEqual(fixture.COUNTS['rejected_writes'], 5)
+
     def test_invalid_length_and_transfer_encoding_are_counted(self):
         for headers in [
             {'content-length': '-1'},
@@ -92,6 +124,26 @@ class SyntheticBackendTest(unittest.TestCase):
             handler._handle()
             self.assertEqual(errors, [400])
         self.assertEqual(fixture.COUNTS['rejected_writes'], 4)
+
+    def test_ai_hub_action_category_only_returns_fixed_labels(self):
+        self.assertEqual(fixture.ai_hub_action_category(
+            b'{"action":"provider.chat","private":"synthetic_secret"}'), 'provider_chat')
+        for trace, label in (
+            ('asset-management-ai-summary', 'provider_chat_auto_asset_summary'),
+            ('savings-life-plan-proposal', 'provider_chat_auto_savings_plan'),
+            ('synthetic_secret', 'provider_chat_auto'),
+        ):
+            body = json.dumps({'action': 'provider.chat_auto', 'trace_id': trace}).encode()
+            self.assertEqual(fixture.ai_hub_action_category(body), label)
+        prefix = 'あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。'
+        for message, category in (
+            (prefix + ' synthetic_private_tail', 'provider_chat_auto_waste_training'),
+            ('unrecognized synthetic_private_tail', 'provider_chat_auto'),
+        ):
+            body = json.dumps({'action': 'provider.chat_auto', 'message': message}).encode()
+            self.assertEqual(fixture.ai_hub_action_category(body), category)
+        for body in (b'{"action":"synthetic_secret"}', b'{"action":[]}', b'['):
+            self.assertEqual(fixture.ai_hub_action_category(body), 'unknown')
 
     @patch('builtins.print')
     def test_rejection_diagnostic_uses_only_fixed_categories(self, output):
@@ -146,6 +198,9 @@ class SyntheticBackendTest(unittest.TestCase):
                  '/rest/v1/rpc/synthetic_secret?token=synthetic_secret': 'rest_rpc_other',
                  '/rest/v1/synthetic_secret?token=synthetic_secret': 'rest_table_other',
                  '/functions/v1/synthetic_secret?token=synthetic_secret': 'functions_other',
+                 '/functions/v1/core-hub?token=synthetic_secret': 'functions_core_hub',
+                 '/functions/v1/ai-hub?token=synthetic_secret': 'functions_ai_hub',
+                 '/functions/v1/growth-hub?token=synthetic_secret': 'functions_growth_hub',
                  '/storage/v1/synthetic_secret?token=synthetic_secret': 'storage_other',
                  '/realtime/synthetic_secret?token=synthetic_secret': 'realtime_other',
                  '/private/synthetic_secret?token=synthetic_secret': 'other'}

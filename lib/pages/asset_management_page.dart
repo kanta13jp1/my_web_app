@@ -450,6 +450,7 @@ class AssetManagementPage extends StatefulWidget {
   final InvestmentAssetRepository? investmentAssetRepository;
   final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
   final AssetManagementAiSummaryService? aiSummaryService;
+  final AssetWasteTrainingAiService? wasteTrainingAiService;
   final AssetManagementAiAnalysisHistoryService? aiAnalysisHistoryService;
 
   @visibleForTesting
@@ -634,6 +635,7 @@ class AssetManagementPage extends StatefulWidget {
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
     this.aiSummaryService,
+    this.wasteTrainingAiService,
     this.aiAnalysisHistoryService,
     this.debugNow,
     this.entryLabel,
@@ -1359,8 +1361,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
-  final AssetWasteTrainingAiService _wasteTrainingAiService =
-      AssetWasteTrainingAiService();
+  late final AssetWasteTrainingAiService _wasteTrainingAiService =
+      widget.wasteTrainingAiService ?? AssetWasteTrainingAiService();
   bool _isGeneratingDebtPlan = false;
   String? _debtPlanMarkdown;
   DateTime? _debtPlanGeneratedAt;
