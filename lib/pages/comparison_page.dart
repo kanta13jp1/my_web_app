@@ -67189,14 +67189,10 @@ class _ComparisonShell extends StatefulWidget {
 class _ComparisonShellState extends State<_ComparisonShell> {
   static const _acquisitionService = GrowthAcquisitionService();
   static const _pageBackground = Color(0xFF080812);
-  static const _surfacePrimary = Color(0xFF12131E);
-  static const _surfaceSecondary = Color(0xFF171A27);
-  static const _surfaceMuted = Color(0xFF1F2333);
   static const _borderColor = Color(0xFF2A3044);
   static const _textPrimary = Color(0xFFF5F7FB);
   static const _textSecondary = Color(0xFFB2BDD3);
   static const _textMuted = Color(0xFF7E8AA6);
-  static const _orange = Color(0xFFFF6B35);
   static const _indigo = Color(0xFF3D5AFE);
 
   static const _featuredCompetitorKeys = <String>[
