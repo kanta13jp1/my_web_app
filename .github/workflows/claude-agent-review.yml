@@ -111,6 +111,9 @@ jobs:
       - name: Verify high-risk workflow event and security boundaries
         run: python -B scripts/check_claude_review_workflow_test.py
 
+      - name: Test bounded gate status generation
+        run: python -B scripts/test_gate_status_workflow.py
+
       - name: Collect changed files
         run: |
           mkdir -p .ci-logs
@@ -125,6 +128,7 @@ jobs:
             > .ci-logs/high-risk-changed-files.txt
 
       - name: Check high-risk ultrareview contract
+        id: high_risk_contract
         run: |
           set +e
           python scripts/check_high_risk_ultrareview_gate.py \
@@ -136,13 +140,32 @@ jobs:
           cat .ci-logs/high-risk-ultrareview-gate.txt >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
 
-      - name: Upload gate evidence
+      # PR-controlled logs and filenames may contain sensitive text. Publish
+      # only a fixed step status; this is not an independent review artifact.
+      - name: Prepare bounded gate status
+        id: gate_status
+        if: always()
+        run: |
+          set -euo pipefail
+          status_dir=$(mktemp -d "${RUNNER_TEMP}/high-risk-gate-status.XXXXXX")
+          # GitHub Actions supplies this field as a fixed step-outcome enum.
+          case '${{ steps.high_risk_contract.outcome }}' in
+            success) status=success ;;
+            failure) status=failure ;;
+            cancelled) status=cancelled ;;
+            skipped) status=skipped ;;
+            *) status=unknown ;;
+          esac
+          printf 'high-risk-gate-step: %s\nindependent-review-evidence: not-established\n' "$status" > "$status_dir/status.txt"
+          echo "path=$status_dir/status.txt" >> "$GITHUB_OUTPUT"
+
+      - name: Upload gate status
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: high-risk-ultrareview-gate
-          path: .ci-logs/high-risk-*.txt
-          if-no-files-found: ignore
+          name: high-risk-ultrareview-gate-status
+          path: ${{ steps.gate_status.outputs.path }}
+          if-no-files-found: error
 
   # --- bc58b50b #1765/#1779: claude ultrareview (opt-in, workflow_dispatch only) ---
   # Runs comprehensive multi-agent review via Claude Code CLI.
