@@ -5,10 +5,14 @@ on:
   push:
     branches: [codex/spreadsheet-xlsx-20261001]
     paths: [.github/workflows/spreadsheet-windows-test-build.yml]
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: spreadsheet-windows-test-build-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   windows:
+    permissions:
+      contents: read
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
