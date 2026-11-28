@@ -6,6 +6,7 @@ import {
   buildAccountAcquisitionLine,
   buildAnalyticsImportMetadata,
   parseXAnalyticsCsv,
+  parseXAnalyticsCsvWithDiagnostics,
   splitCsvRows,
   type XAnalyticsCsvRow,
 } from "./x_analytics_import.ts";
@@ -107,4 +108,87 @@ Deno.test("buildAccountAcquisitionLine stays silent without clicks or samples", 
     urlClicks: 0,
   }));
   assertEquals(buildAccountAcquisitionLine(zeroClick), null);
+});
+
+Deno.test("parseXAnalyticsCsvWithDiagnostics strips BOM before quoted header", () => {
+  const csv = '\ufeff"Post id",Impressions\n2074000000000000001,100\n';
+  const result = parseXAnalyticsCsvWithDiagnostics(csv);
+  assertEquals(result.bomStripped, true);
+  assertEquals(result.rows.length, 1);
+  assertEquals(result.rows[0].postId, "2074000000000000001");
+  assertEquals(result.rows[0].impressions, 100);
+});
+
+Deno.test("parseXAnalyticsCsvWithDiagnostics deduplicates whitespace-variant Post id", () => {
+  const csv = [
+    "Post id,Impressions,URL Clicks",
+    "2074000000000000001,20,2",
+    " 2074000000000000001 ,20,2",
+    "2074000000000000002,20,2",
+    "2074000000000000003,20,2",
+  ].join("\n");
+  const result = parseXAnalyticsCsvWithDiagnostics(csv);
+  assertEquals(result.rows.length, 3);
+  assertEquals(result.duplicatePostIdsSkipped, 1);
+  assertEquals(
+    result.issues.filter((issue) => issue.code === "duplicate_post_id").length,
+    1,
+  );
+  const line = buildAccountAcquisitionLine(result.rows);
+  assert(line !== null);
+  assert(line!.includes("n=3"));
+  assert(line!.includes("impressions=60"));
+  assert(line!.includes("url clicks=6"));
+});
+
+Deno.test("parseXAnalyticsCsvWithDiagnostics flags non-ASCII fullwidth digits", () => {
+  const csv = "Post id,Impressions\n2074000000000000001,１００\n";
+  const result = parseXAnalyticsCsvWithDiagnostics(csv);
+  assertEquals(result.rows.length, 1);
+  assertEquals(result.rows[0].impressions, 0);
+  assertEquals(result.invalidNumericCells, 1);
+  assertEquals(
+    result.issues.filter((issue) => issue.code === "non_ascii_digit").length,
+    1,
+  );
+});
+
+Deno.test("parseXAnalyticsCsvWithDiagnostics flags negative numeric values", () => {
+  const csv = "Post id,Impressions,Likes\n2074000000000000001,-10,-1\n";
+  const result = parseXAnalyticsCsvWithDiagnostics(csv);
+  assertEquals(result.rows.length, 1);
+  assertEquals(result.rows[0].impressions, 0);
+  assertEquals(result.rows[0].likes, 0);
+  assertEquals(result.invalidNumericCells, 2);
+  assertEquals(
+    result.issues.filter((issue) => issue.code === "negative_numeric").length,
+    2,
+  );
+});
+
+Deno.test("parseXAnalyticsCsvWithDiagnostics flags duplicate headers and keeps first column", () => {
+  const csv = "Post id,Impressions,Impressions\n2074000000000000001,10,999\n";
+  const result = parseXAnalyticsCsvWithDiagnostics(csv);
+  assertEquals(result.rows.length, 1);
+  assertEquals(result.rows[0].impressions, 10);
+  assertEquals(result.duplicateHeadersIgnored, ["impressions"]);
+  assertEquals(
+    result.issues.filter((issue) => issue.code === "duplicate_header").length,
+    1,
+  );
+});
+
+Deno.test("parseXAnalyticsCsv handles CRLF with intermediate and trailing blank lines", () => {
+  const csv = [
+    "Post id,Impressions,Likes",
+    "",
+    "2074000000000000001,150,5",
+    "   ,   ,   ",
+    "2074000000000000002,250,10",
+    "",
+  ].join("\r\n");
+  const rows = parseXAnalyticsCsv(csv);
+  assertEquals(rows.length, 2);
+  assertEquals(rows[0].impressions, 150);
+  assertEquals(rows[1].likes, 10);
 });

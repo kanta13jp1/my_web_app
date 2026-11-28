@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SNS反応CSV 12境界セルフチェック</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <main>
+    <a href="/">自分株式会社へ</a>
+    <h1>SNS反応CSV 12境界セルフチェック</h1>
+    <p class="lead">
+      空行・BOM・全角数字・重複ID・重複ヘッダを含むCSVが、集計ロジックで正しく扱われるかをブラウザ内で検証できます。
+      <strong>入力したCSVはブラウザ内だけで計算し、外部送信・サーバー保存は一切行いません。</strong>
+      初期表示は架空の合成例です。
+    </p>
+
+    <section aria-labelledby="section-input-heading">
+      <h2 id="section-input-heading">CSV入力と検査モード</h2>
+      <form id="csv-form" novalidate>
+        <fieldset class="mode-group">
+          <legend>検査モード</legend>
+          <label class="radio-label">
+            <input type="radio" name="mode" value="article" checked>
+            記事の6列仕様（厳密検査）
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="mode" value="x_analytics">
+            X Analytics CSV（警告診断）
+          </label>
+        </fieldset>
+
+        <div class="presets" role="group" aria-label="検証用の合成CSVプリセット">
+          <button type="button" data-preset="weighted_vs_mean">重み付け（1% vs 5%）</button>
+          <button type="button" data-preset="blank_and_bom">BOM・引用符・空行</button>
+          <button type="button" data-preset="fullwidth_digit">全角数字 １００</button>
+          <button type="button" data-preset="duplicate_id">重複 post_id</button>
+          <button type="button" data-preset="x_analytics_edge">X Analytics 境界例</button>
+        </div>
+
+        <label for="csv-input">CSVテキスト（ヘッダ行＋データ行）</label>
+        <textarea id="csv-input" rows="7" spellcheck="false">post_id,views,likes,reposts,replies,bookmarks
+a,100,10,0,0,0
+b,900,0,0,0,0</textarea>
+
+        <div class="actions">
+          <button type="submit">検査する</button>
+          <button type="button" id="run-twelve" class="secondary">12ケース一括セルフチェックを実行</button>
+          <button type="button" id="download-json" class="secondary">結果をJSON保存</button>
+        </div>
+      </form>
+
+      <p role="alert" id="error" aria-live="assertive"></p>
+      <div role="status" id="result" aria-live="polite">集計を読み込み中…</div>
+      <div id="detail-area"></div>
+    </section>
+
+    <section aria-labelledby="section-guide-heading">
+      <h2 id="section-guide-heading">見方のポイント（合成仕様と実アプリの違い）</h2>
+      <ul>
+        <li><strong>重み付き反応率</strong>：<code>反応数合計 ÷ 表示数合計 × 100</code>（小数4桁 <code>ROUND_HALF_UP</code>）。投稿ごとの率を単純平均しません。</li>
+        <li><strong>厳密検査モード</strong>：記事の6列仕様に従い、全角数字・負数・重複 <code>post_id</code>・重複ヘッダ・列数不一致を即座にエラー拒否します。</li>
+        <li><strong>X Analytics CSV診断モード</strong>：<code>my_web_app</code> の取込処理と同等の規則で、BOM除去・重複 <code>Post id</code> 除外・全角数字/負数の0丸め警告・重複ヘッダ警告を一覧化します。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

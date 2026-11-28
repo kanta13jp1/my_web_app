@@ -49,6 +49,15 @@
         ]
       },
       {
+        "source": "/labs/sns-csv-check/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "/labs/astra-price-boundary/**",
         "headers": [
           {
