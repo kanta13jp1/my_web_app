@@ -3,7 +3,7 @@
 > AI エージェント参照用
 > このファイルは [Awesome Design MD JP](https://github.com/kzhrknt/awesome-design-md-jp) フォーマットに準拠しています。
 > Flutter/Dart コードを生成する際は、このファイルのデザイントークンを参照してください。
-> 更新日: 2026-08-15
+> 更新日: 2026-11-26
 
 ---
 
@@ -52,7 +52,7 @@ UI の色、タイポグラフィ、余白、角丸、コンポーネント、�
 
 指定されたファイルまたは差分だけを対象にし、次の順序で確認します。
 
-1. **カラーとテーマ**: ダーク背景、Orange CTA、Indigo AI、semantic color、テキスト階層、`withValues(alpha:)` が本書と一致するか。
+1. **カラーとテーマ**: ダーク／ライト両テーマ（`Theme.of(context)` / `ThemeService`）、Orange CTA、Indigo AI、semantic color、テキスト階層、`withValues(alpha:)` が本書と一致するか。
 2. **タイポグラフィ**: Noto Sans JP 系、本文 line-height 1.5 以上、本文への `letterSpacing` 禁止、10px 未満の文字禁止を満たすか。
 3. **レイアウト**: 4px スケール、標準角丸、長文幅、overflow、desktop / mobile 両方の制約を満たすか。
 4. **コンポーネント**: ボタン、カード、入力、チップ、AppBar、feedback state が本書の役割と視覚階層に一致するか。
@@ -65,10 +65,10 @@ UI の色、タイポグラフィ、余白、角丸、コンポーネント、�
 
 ## ブランドアイデンティティ
 
-**コンセプト**: 「プロフェッショナルなダーク × 生命力のあるオレンジ」
+**コンセプト**: 「プロフェッショナルなダーク基調 × 生命力のあるオレンジ（ライト／ダーク切替対応）」
 
 自分株式会社は「ギタリスト・クリエイター・経営者の全機能をひとつに」する AI 統合プラットフォーム。
-ダークテーマで集中力を高め、オレンジアクセントでエネルギーと行動を喚起する。
+ダークテーマを基調としつつ、`ThemeService` によるライト／ダーク両モード切替を公式サポートし、いずれのテーマでも十分なコントラストとオレンジアクセントの視認性を維持する。
 
 ---
 
@@ -84,6 +84,20 @@ static const Color surface2    = Color(0xFF1E1E1E);          // カードコン�
 static const Color surface3    = Color(0xFF2A2A2A);          // チップ・インプット背景
 static const Color surface4    = Color(0xFF333333);          // ホバー・セレクト状態
 static const Color divider     = Color(0xFF2A2A2A);          // 区切り線
+```
+
+### ベースカラー (ライトテーマ — ThemeService 準拠)
+
+`lib/services/theme_service.dart` が提供するライトテーマトークンです。UI ウィジェットではライト専用・ダーク専用のハードコード色直書きを避け、`Theme.of(context).colorScheme` / `ThemeService`（または `Theme.of(context).brightness == Brightness.dark` に応じた適応トークン）を使用します。
+
+```dart
+// 背景・テキストレイヤー (lib/services/theme_service.dart)
+static const Color lightBackground = Color(0xFFF5F7FA);     // メイン背景
+static const Color lightSurface    = Colors.white;          // カード背景
+static const Color lightSurfaceAlt = Color(0xFFF0F3F7);     // 補助面・入力欄背景
+static const Color lightText       = Color(0xFF08131A);     // メインテキスト
+static const Color lightTextMuted  = Color(0xFF5C6B76);     // サブテキスト
+static const Color lightBorder     = Color(0x2208131A);     // 境界線
 ```
 
 ### アクセントカラー
@@ -703,9 +717,9 @@ Text(
 
 ## 禁止事項
 
-1. ライトテーマの使用 (アプリ全体を常にダークモードで維持)
+1. テーマ非追従のハードコード色直書き（`Theme.of(context)` / `ThemeService` を経由せずライト専用・ダーク専用の背景色・文字色を固定し、テーマ切替時にコントラスト破綻させること）
 2. `withOpacity()` の使用 → 代わりに `withValues(alpha: x)` を使用
-3. 白背景 (#FFFFFF) の使用 → surface1〜4 を使用
+3. ダークテーマ下での白背景 (`#FFFFFF`) 直書き → `Theme.of(context).colorScheme.surface` / `surfaceContainer*` を使用（ライトテーマでは `ThemeService` の surface トークンを使用）
 4. オレンジ以外のメインアクセントカラーの追加 (ブランド一貫性のため)
 5. 日本語本文への `letterSpacing` 設定 (見出しのみ 0.5px まで許容)
 6. 10px 未満のフォントサイズ (アクセシビリティのため)
@@ -721,10 +735,10 @@ Text(
 ### クイックリファレンス
 
 ```text
-■ カラー
-Background:     #0A0A0A  (最暗・メイン背景)
-Surface Card:   #1E1E1E  (カード背景)
-Surface Input:  #2A2A2A  (入力欄・チップ)
+■ カラー (ダーク基準 / ライト時は ThemeService 準拠へ切替)
+Background:     #0A0A0A (Dark) / #F5F7FA (Light)
+Surface Card:   #1E1E1E (Dark) / #FFFFFF (Light)
+Surface Input:  #2A2A2A (Dark) / #F0F3F7 (Light)
 Accent Orange:  #FF6B35  (CTA・メインアクション)
 Accent Indigo:  #3D5AFE  (AI機能・プレミアム)
 Accent Green:   #4CAF50  (成功・完了・KPI)
@@ -762,12 +776,12 @@ Supabase:    https://smmkxxavexumewbfaqpy.supabase.co/
 
 ```text
 自分株式会社のデザインシステムに従って Flutter Widget を作成してください。
-- 背景: Color(0xFF0A0A0A)
-- カード: Color(0xFF1E1E1E) + BorderRadius.circular(12)
+- 背景: Theme.of(context).scaffoldBackgroundColor (Dark #0A0A0A / Light #F5F7FA)
+- カード: Theme.of(context).colorScheme.surfaceContainerLow / ThemeService + BorderRadius.circular(12)
 - CTAボタン: Color(0xFFFF6B35) → orangeGradient + borderRadius 12
 - 日本語フォント: NotoSansJP / height: 1.7 (本文) / 1.4 (見出し)
 - 見出し letterSpacing: 0.96px (H1) / 0.72px (H2) / 0 (本文)
 - deprecated withOpacity() を使わず withValues(alpha: x) を使用
-- ライトテーマ不可 (常にダークテーマ)
+- ダーク／ライト両テーマ対応（Theme.of(context).colorScheme / ThemeService を優先しハードコード色を避ける）
 - Edge Function 呼び出し: Supabase Edge Function ファースト
 ```
