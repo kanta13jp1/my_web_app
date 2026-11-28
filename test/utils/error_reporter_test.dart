@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/utils/error_reporter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() {
   test(
@@ -162,6 +163,148 @@ at RenderFlex.performLayout (main.dart.js:3:1)
       expect(snap.suppressedDuplicateCount, 1);
       expect(snap.suppressedThrottleCount, 3);
       expect(hubPayloads.length, 10);
+    });
+  });
+
+  group('Sentry beforeSend session dedupe and cap (MY-WEB-APP-4)', () {
+    tearDown(() {
+      ErrorReporter.instance.resetForTesting();
+    });
+
+    SentryEvent buildExceptionEvent({
+      required String type,
+      required String value,
+      required String fileName,
+      required String function,
+      required int lineNo,
+      required int colNo,
+    }) {
+      return SentryEvent(
+        exceptions: [
+          SentryException(
+            type: type,
+            value: value,
+            stackTrace: SentryStackTrace(
+              frames: [
+                SentryStackFrame(
+                  fileName: 'lib/app_root.dart',
+                  function: 'runFrame',
+                  lineNo: 10,
+                  colNo: 1,
+                ),
+                SentryStackFrame(
+                  fileName: fileName,
+                  function: function,
+                  lineNo: lineNo,
+                  colNo: colNo,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    test('configures beforeSend while keeping sendDefaultPii disabled', () {
+      final options = SentryFlutterOptions();
+      ErrorReporter.instance.configureSentryForTesting(options);
+      expect(options.beforeSend, isNotNull);
+      expect(options.sendDefaultPii, isFalse);
+    });
+
+    test('deduplicates repeated CanvasKit null-check events per session', () {
+      final hint = Hint();
+      SentryEvent? first;
+      var dropped = 0;
+
+      for (var i = 0; i < 20; i++) {
+        final event = buildExceptionEvent(
+          type: 'NoSuchMethodError',
+          value: 'Null check operator used on a null value',
+          fileName: 'main.dart.js',
+          function: 'hm1.a',
+          lineNo: 117119,
+          colNo: 33,
+        );
+        final res = ErrorReporter.instance.beforeSendSentryEvent(event, hint);
+        if (i == 0) {
+          first = res;
+        } else if (res == null) {
+          dropped++;
+        }
+      }
+
+      expect(first, isNotNull);
+      expect(dropped, 19);
+      final snap = ErrorReporter.instance.diagnosticSnapshot();
+      expect(snap.sentryReportedCount, 1);
+      expect(snap.suppressedSentryDuplicateCount, 19);
+      expect(snap.suppressedSentryThrottleCount, 0);
+    });
+
+    test('allows distinct exception locations while capping session at 10', () {
+      final hint = Hint();
+
+      final e1 = buildExceptionEvent(
+        type: 'NoSuchMethodError',
+        value: 'Null check operator used on a null value',
+        fileName: 'surface.dart',
+        function: 'Surface.rasterizeToCanvas',
+        lineNo: 132,
+        colNo: 20,
+      );
+      final e2 = buildExceptionEvent(
+        type: 'NoSuchMethodError',
+        value: 'Null check operator used on a null value',
+        fileName: 'other_widget.dart',
+        function: 'OtherWidget.build',
+        lineNo: 42,
+        colNo: 5,
+      );
+
+      expect(ErrorReporter.instance.beforeSendSentryEvent(e1, hint), isNotNull);
+      expect(ErrorReporter.instance.beforeSendSentryEvent(e2, hint), isNotNull);
+      var snap = ErrorReporter.instance.diagnosticSnapshot();
+      expect(snap.sentryReportedCount, 2);
+      expect(snap.suppressedSentryDuplicateCount, 0);
+
+      for (var i = 0; i < 11; i++) {
+        final distinct = SentryEvent(
+          message: SentryMessage('Synthetic distinct failure #$i'),
+        );
+        ErrorReporter.instance.beforeSendSentryEvent(distinct, hint);
+      }
+
+      snap = ErrorReporter.instance.diagnosticSnapshot();
+      expect(snap.sentryReportedCount, 10);
+      expect(snap.suppressedSentryThrottleCount, 3);
+    });
+
+    test('sanitizes PII emails inside exception values before deduplicating',
+        () {
+      final hint = Hint();
+      final e1 = buildExceptionEvent(
+        type: 'StateError',
+        value: 'Sync failed for alice@example.com',
+        fileName: 'sync_service.dart',
+        function: 'sync',
+        lineNo: 88,
+        colNo: 12,
+      );
+      final e2 = buildExceptionEvent(
+        type: 'StateError',
+        value: 'Sync failed for bob@example.org',
+        fileName: 'sync_service.dart',
+        function: 'sync',
+        lineNo: 88,
+        colNo: 12,
+      );
+
+      expect(ErrorReporter.instance.beforeSendSentryEvent(e1, hint), isNotNull);
+      expect(ErrorReporter.instance.beforeSendSentryEvent(e2, hint), isNull);
+      final snap = ErrorReporter.instance.diagnosticSnapshot();
+      expect(snap.sentryReportedCount, 1);
+      expect(snap.suppressedSentryDuplicateCount, 1);
     });
   });
 }
