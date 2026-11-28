@@ -21,15 +21,15 @@ import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef SentryCaptureCallback =
-    FutureOr<void> Function(
-      String message, {
-      Object? error,
-      StackTrace? stackTrace,
-    });
+typedef SentryCaptureCallback = FutureOr<void> Function(
+  String message, {
+  Object? error,
+  StackTrace? stackTrace,
+});
 
-typedef SupabaseTelemetryCallback =
-    FutureOr<void> Function(Map<String, Object?> payload);
+typedef SupabaseTelemetryCallback = FutureOr<void> Function(
+  Map<String, Object?> payload,
+);
 
 class ErrorReporterDiagnosticSnapshot {
   const ErrorReporterDiagnosticSnapshot({
@@ -64,9 +64,8 @@ class ErrorReporter {
   static const int _maxPerSession = 10;
   static const int _maxSentryEventsPerSession = 10;
   static const String _sentryDsn = String.fromEnvironment('SENTRY_DSN');
-  static const String _sentryEnvironment = String.fromEnvironment(
-    'SENTRY_ENVIRONMENT',
-  );
+  static const String _sentryEnvironment =
+      String.fromEnvironment('SENTRY_ENVIRONMENT');
   static const String _sentryRelease = String.fromEnvironment('SENTRY_RELEASE');
   static const bool _sentryDebug = bool.fromEnvironment('SENTRY_DEBUG');
   static const int _sentryTracesSampleRatePercent = int.fromEnvironment(
@@ -169,8 +168,7 @@ class ErrorReporter {
     final stackLines = stackTrace == null
         ? ''
         : sanitizeMessage(stackTrace.toString().split('\n').take(6).join('\n'));
-    final content =
-        '[自動エラー報告]\n'
+    final content = '[自動エラー報告]\n'
         '$cleanMessage'
         '${stackLines.isNotEmpty ? '\n\n$stackLines' : ''}';
     return <String, Object?>{
@@ -212,7 +210,9 @@ class ErrorReporter {
 
   /// `main()` の Supabase.initialize() 直後に呼ぶ。
   /// SENTRY_DSN が設定されていれば、Sentry の zone 内で appRunner を実行する。
-  Future<void> install({required FutureOr<void> Function() appRunner}) async {
+  Future<void> install({
+    required FutureOr<void> Function() appRunner,
+  }) async {
     if (_handlersInstalled) {
       await appRunner();
       return;
@@ -230,7 +230,10 @@ class ErrorReporter {
 
     if (_hasSentryDsn) {
       try {
-        await SentryFlutter.init(_configureSentry, appRunner: guardedAppRunner);
+        await SentryFlutter.init(
+          _configureSentry,
+          appRunner: guardedAppRunner,
+        );
         return;
       } catch (error) {
         _sentryEnabled = false;
@@ -270,9 +273,9 @@ class ErrorReporter {
       final frameSig = topFrame == null
           ? ''
           : '${topFrame.fileName ?? topFrame.absPath ?? ''}:'
-                '${topFrame.function ?? ''}:'
-                '${topFrame.lineNo ?? ''}:'
-                '${topFrame.colNo ?? ''}';
+              '${topFrame.function ?? ''}:'
+              '${topFrame.lineNo ?? ''}:'
+              '${topFrame.colNo ?? ''}';
       return 'exc|$type|$clippedValue|$frameSig';
     }
 
@@ -313,9 +316,8 @@ class ErrorReporter {
     final environment = _sentryEnvironment.trim().isNotEmpty
         ? _sentryEnvironment.trim()
         : (kReleaseMode ? 'production' : 'development');
-    final tracesSampleRatePercent = _sentryTracesSampleRatePercent
-        .clamp(0, 100)
-        .toDouble();
+    final tracesSampleRatePercent =
+        _sentryTracesSampleRatePercent.clamp(0, 100).toDouble();
 
     options
       ..dsn = _sentryDsn.trim()
@@ -400,8 +402,7 @@ class ErrorReporter {
     // Flutter Web can dispatch a delayed hover/focus callback to an
     // InkResponse after its Element has already been unmounted. In release,
     // dart2js minifies the same framework path; keep the signatures narrow.
-    final hasReleaseInkStack =
-        (stack.contains('.auU') &&
+    final hasReleaseInkStack = (stack.contains('.auU') &&
             stack.contains('.uT') &&
             stack.contains('.cgd')) ||
         (stack.contains('.avQ') &&
@@ -448,16 +449,14 @@ class ErrorReporter {
     final stack = stackTrace?.toString() ?? '';
     final hasDebugFocusTraversalStack =
         stack.contains('FocusTraversalPolicy') ||
-        stack.contains('FocusTraversalGroup');
-    final hasReleaseFocusTraversalStackV1 =
-        stack.contains('.gN') &&
+            stack.contains('FocusTraversalGroup');
+    final hasReleaseFocusTraversalStackV1 = stack.contains('.gN') &&
         stack.contains('.gn') &&
         stack.contains('.ge') &&
         stack.contains('Object.e') &&
         stack.contains('Object.dy') &&
         stack.contains('.ak');
-    final hasReleaseFocusTraversalStackV2 =
-        stack.contains('.gn') &&
+    final hasReleaseFocusTraversalStackV2 = stack.contains('.gn') &&
         stack.contains('.ge') &&
         stack.contains('Object.e') &&
         stack.contains('Object.d') &&
@@ -553,7 +552,10 @@ class ErrorReporter {
     // 非同期で静かに送信
     Future.microtask(() async {
       try {
-        await supabase.functions.invoke('core-hub', body: payload);
+        await supabase.functions.invoke(
+          'core-hub',
+          body: payload,
+        );
       } catch (_) {
         // 報告失敗は無視（無限ループ防止）
       }
@@ -569,7 +571,11 @@ class ErrorReporter {
 
     if (_testSentrySink != null) {
       try {
-        _testSentrySink!(message, error: error, stackTrace: stackTrace);
+        _testSentrySink!(
+          message,
+          error: error,
+          stackTrace: stackTrace,
+        );
       } catch (_) {
         // 報告失敗は無視
       }
