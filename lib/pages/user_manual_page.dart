@@ -171,8 +171,11 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-          _buildSectionTitle('4. 競合21製品を上回る独自機能', textColor),
+          _buildSectionTitle('4. 独自機能・機能差の一覧（比較条件の明記）', textColor),
           _buildContent(
+            '※ この一覧は公開情報に基づく機能有無（実装済み✅ / 未実装❌）の整理であり、'
+            '他社専用アプリに対する顧客成果の優位性を実証したものではありません。'
+            '標本数・観察期間・比較条件を備えた実ユーザー比較成果は未検証です。\n\n'
             '【AI エグゼクティブ組織 (AI組織OS)】\n'
             'ホーム画面「QUICK ACCESS」→「知識・意思決定」→「AI組織OS」をタップ。\n'
             'CEO/CFO/CMO/CHROなどのAIペルソナが多角的にアドバイスします。\n\n'
@@ -304,7 +307,8 @@ class UserManualPage extends StatelessWidget {
             'KPI・獲得チャネル・週次ダイジェストを確認できます。\n\n'
             '【競合機能比較カード】\n'
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
-            '競合21社（Notion〜GitHub）の機能一覧と本サービスの実装状況を確認できます。\n\n'
+            '競合21社（Notion〜GitHub）の公開機能一覧と本サービスの実装有無を比較確認できます'
+            '（機能差の整理であり、顧客成果の比較検証ではありません）。\n\n'
             '【競合比較ページ（SEO対応）】\n'
             'アドレスバーに /vs-notion, /vs-line, /vs-cursor, /vs-shopify など1894社分の比較ページが用意されています。',
             subColor,
