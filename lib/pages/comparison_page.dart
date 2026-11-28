@@ -7,6 +7,7 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_feature_table_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_outcome_cards_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
@@ -67702,7 +67703,22 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   evidenceStatus: widget.evidenceStatus,
                   otherEvidence: _otherEvidence,
                 ),
-                _buildFeatureTable(),
+                ComparisonFeatureTableSection(
+                  competitorName: _info.name,
+                  accentColor: _info.accentColor,
+                  features: _info.features
+                      .map(
+                        (item) => ComparisonFeatureRowItem(
+                          feature: item.feature,
+                          competitorHas: item.competitorHas,
+                          weHave: item.weHave,
+                        ),
+                      )
+                      .toList(growable: false),
+                  showLegacyClaims: _showLegacyClaims,
+                  evidenceStatus: widget.evidenceStatus,
+                  featureEvidence: _featureEvidence,
+                ),
                 if (_hasImportSupport)
                   MigrationParitySection(
                     competitorKey: widget.competitorKey,
@@ -67972,120 +67988,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildFeatureTable() {
-    if (!_showLegacyClaims) {
-      return ComparisonEvidenceSection(
-        title: '根拠確認済みの機能比較',
-        status: widget.evidenceStatus,
-        claims: _featureEvidence,
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '機能比較',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${_info.name} と共通で持っている核は残しつつ、自分株式会社側の追加メリットを見える化しています。',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                decoration: BoxDecoration(
-                  color: _surfacePrimary,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _borderColor),
-                ),
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _surfaceSecondary,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            flex: 5,
-                            child: Text(
-                              '比較項目',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _textPrimary,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              _info.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _textSecondary,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              '自分株式会社',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _indigo,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    for (final feature in _info.features)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _FeatureRowCard(
-                          feature: feature,
-                          competitorName: _info.name,
-                          accentColor: _info.accentColor,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildRelatedComparisons(BuildContext context) {
     return ComparisonRelatedComparisonsSection(
       items: _relatedCompetitors
@@ -68254,147 +68156,6 @@ class _BenefitPill extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FeatureRowCard extends StatelessWidget {
-  final _FeatureComparison feature;
-  final String competitorName;
-  final Color accentColor;
-
-  const _FeatureRowCard({
-    required this.feature,
-    required this.competitorName,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Widget buildStatus(String label, bool value, Color highlight) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: highlight.withValues(alpha: value ? 0.16 : 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: highlight.withValues(alpha: value ? 0.3 : 0.18),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              value ? Icons.check_circle_rounded : Icons.cancel_rounded,
-              size: 18,
-              color: value ? highlight : _ComparisonShellState._textMuted,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: value
-                    ? _ComparisonShellState._textPrimary
-                    : _ComparisonShellState._textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 640;
-
-        if (compact) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _ComparisonShellState._surfaceSecondary,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  feature.feature,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _ComparisonShellState._textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    buildStatus(
-                      competitorName,
-                      feature.competitorHas,
-                      accentColor,
-                    ),
-                    buildStatus(
-                      '自分株式会社',
-                      feature.weHave,
-                      _ComparisonShellState._indigo,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _ComparisonShellState._surfaceSecondary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Text(
-                  feature.feature,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: _ComparisonShellState._textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: buildStatus(
-                    competitorName,
-                    feature.competitorHas,
-                    accentColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: buildStatus(
-                    '自分株式会社',
-                    feature.weHave,
-                    _ComparisonShellState._indigo,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
