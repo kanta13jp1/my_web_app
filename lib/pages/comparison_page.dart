@@ -13,6 +13,7 @@ import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
+import 'package:my_web_app/widgets/comparison_breadcrumb_section.dart';
 
 import '../services/growth_acquisition_service.dart';
 
@@ -67191,8 +67192,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   static const _pageBackground = Color(0xFF080812);
   static const _borderColor = Color(0xFF2A3044);
   static const _textPrimary = Color(0xFFF5F7FB);
-  static const _textSecondary = Color(0xFFB2BDD3);
-  static const _textMuted = Color(0xFF7E8AA6);
   static const _indigo = Color(0xFF3D5AFE);
 
   static const _featuredCompetitorKeys = <String>[
@@ -67764,68 +67763,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   }
 
   Widget _buildBreadcrumb(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Wrap(
-            spacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              InkWell(
-                onTap: () => Navigator.of(context).pushNamed('/'),
-                borderRadius: BorderRadius.circular(6),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
-                    '自分株式会社',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _textMuted,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-              const Text(
-                '/',
-                style: TextStyle(fontSize: 12, color: _textMuted, height: 1.5),
-              ),
-              InkWell(
-                onTap: () => Navigator.of(context).pushNamed('/competitors'),
-                borderRadius: BorderRadius.circular(6),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
-                    '競合比較',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _textMuted,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-              const Text(
-                '/',
-                style: TextStyle(fontSize: 12, color: _textMuted, height: 1.5),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Text(
-                  '${_info.emoji} ${_info.name}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ComparisonBreadcrumbSection(
+      emoji: _info.emoji,
+      name: _info.name,
     );
   }
 
