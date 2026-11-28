@@ -1,0 +1,92 @@
+name: Architectural Safety Checkpoints
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/architectural_safety_checkpoints.py'
+      - 'test/scripts/test_architectural_safety_checkpoints.py'
+      - 'supabase/functions/ai-hub/safety_checkpoints.ts'
+      - 'supabase/functions/ai-hub/safety_checkpoints_test.ts'
+      - '.github/workflows/architectural-safety-checkpoints.yml'
+  workflow_dispatch:
+    inputs:
+      tool_name:
+        description: 'MCP tool name to evaluate (e.g. deploy.edge_function)'
+        required: false
+        default: 'deploy.edge_function'
+      requested_scopes:
+        description: 'Comma-separated MCP scopes (e.g. read,update)'
+        required: false
+        default: 'update'
+      actor_role:
+        description: 'Agent role for permission-level gate'
+        required: false
+        default: 'admin'
+      run_key:
+        description: 'Safety checkpoint run key'
+        required: false
+        default: 'manual-safety-checkpoint'
+      github_issue_number:
+        description: 'Optional GitHub Issue number tracking approval'
+        required: false
+        default: ''
+
+concurrency:
+  group: architectural-safety-checkpoints-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  safety-checkpoint-gate:
+    name: Verify safety checkpoints and MCP permission gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run architectural safety checkpoints unit tests
+        run: python3 -B test/scripts/test_architectural_safety_checkpoints.py -v
+
+      - name: Run safety checkpoint self-test and evaluate gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TOOL_NAME_INPUT: ${{ github.event.inputs.tool_name || 'deploy.edge_function' }}
+          SCOPES_INPUT: ${{ github.event.inputs.requested_scopes || 'update' }}
+          ACTOR_ROLE_INPUT: ${{ github.event.inputs.actor_role || 'admin' }}
+          RUN_KEY_INPUT: ${{ github.event.inputs.run_key || 'manual-safety-checkpoint' }}
+          ISSUE_NUM_INPUT: ${{ github.event.inputs.github_issue_number || '' }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 -B scripts/architectural_safety_checkpoints.py --self-test --json-out safety_selftest.json
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            args=(
+              "--tool-name" "${TOOL_NAME_INPUT}"
+              "--scopes" "${SCOPES_INPUT}"
+              "--actor-role" "${ACTOR_ROLE_INPUT}"
+              "--run-key" "${RUN_KEY_INPUT}"
+              "--github-repo" "${GITHUB_REPO}"
+              "--json-out" "safety_dispatch_decision.json"
+            )
+            if [ -n "${ISSUE_NUM_INPUT}" ]; then
+              args+=("--github-issue" "${ISSUE_NUM_INPUT}")
+            fi
+            set +e
+            python3 -B scripts/architectural_safety_checkpoints.py "${args[@]}"
+            rc=$?
+            set -e
+            echo "Evaluation exit code: ${rc} (0=allowed, 3=paused_for_approval, 2=blocked)"
+          fi

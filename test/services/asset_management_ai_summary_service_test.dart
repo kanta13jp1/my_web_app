@@ -1197,6 +1197,82 @@ void main() {
     });
 
     test(
+        'accepts an AI summary that explains a paid debt was covered via a '
+        'different payment method using 完了/とはなりません phrasing', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'au'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は72,605円、負債合計は27,395円です。\n'
+                'なお、auの通信費27,395円はauPAYカード払いとして処理され、'
+                'auPAYカードの支払いは今月既に完了しておりますので、'
+                '個別の未払いとはなりません。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNull);
+    });
+
+    test('rejects registration-only payment evidence', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'au'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は72,605円、負債合計は27,395円です。'
+                'auの支払い登録完了ですが未払いです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, isNot(AssetManagementAiSummaryStatus.aiGenerated));
+      expect(result.usedExternalAi, isFalse);
+      expect(result.errorMessage, isNotNull);
+    });
+
+    test(
         'rejects an AI summary when a received salary is claimed to be '
         'unreceived or urged for deposit check', () async {
       const planner = AssetLiabilityPlanningService();
@@ -2272,6 +2348,75 @@ void main() {
         await service.generateSummary(report: report);
         expect(capturedMessage, contains('支払差額ルール'));
         expect(capturedMessage, contains('リボ解消目標ルール'));
+      },
+    );
+
+    test(
+      'deduplicates Markdown tables and implementation_context in AI prompt while keeping 8-section & JSON contract',
+      () async {
+        final report = _reportWithDeveloperRequests();
+        String? capturedMessage;
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async {
+              capturedMessage = body['message']?.toString();
+              return <String, dynamic>{
+                'success': true,
+                'text': 'AIが生成した日本語要約です。',
+                'provider': 'groq',
+              };
+            },
+          ),
+          now: () => DateTime(2026, 6, 12, 12),
+        );
+
+        await service.generateSummary(report: report);
+
+        final message = capturedMessage ?? '';
+        final fullLegacyPromptLength =
+            const AssetManagementInsightPromptBuilder()
+                .buildDetailedAdvicePrompt(report)
+                .length;
+        final payloadMarkerIndex = message.indexOf('## AIに渡す詳細ペイロード');
+        expect(payloadMarkerIndex, greaterThan(0));
+        final markdownPrefix = message.substring(0, payloadMarkerIndex);
+
+        expect(markdownPrefix.length, lessThan(fullLegacyPromptLength));
+        expect(markdownPrefix, contains('## 口座一覧'));
+        expect(markdownPrefix, contains('## 負債マスタ詳細'));
+        expect(markdownPrefix, contains('## 今月キャッシュフロー'));
+        expect(markdownPrefix, isNot(contains('今月支払予定日:')));
+        expect(markdownPrefix, isNot(contains('支払前現金:')));
+        expect(
+          markdownPrefix,
+          contains('詳細は詳細ペイロード内 implementation_context を参照'),
+        );
+        expect(message, contains('1. 確認できている状況'));
+        expect(message, contains('8. まとめ'));
+        expect(message, contains('ai-new-proposals'));
+      },
+    );
+
+    test(
+      'condenses billing_confirmation_pending_rows and payment_source_missing_rows to ID lists',
+      () {
+        final service = AssetManagementAiSummaryService(
+          now: () => DateTime(2026, 4, 30, 12),
+        );
+        final payload = service.buildAiDetailedPayload(_report());
+        final workbook = payload['workbook'] as Map<String, dynamic>;
+        final review = workbook['debt_control_review'] as Map<String, dynamic>;
+
+        expect(review['billing_confirmation_pending_count'], isA<int>());
+        expect(review['billing_confirmation_pending_total'], isA<num>());
+        expect(
+          review['billing_confirmation_pending_rows'],
+          isA<List<String>>(),
+        );
+        expect(review['payment_source_missing_count'], isA<int>());
+        expect(review['payment_source_missing_total'], isA<num>());
+        expect(review['payment_source_missing_rows'], isA<List<String>>());
       },
     );
   });

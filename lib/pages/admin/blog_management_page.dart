@@ -360,10 +360,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       final ok = res.status == 200;
       final data = res.data as Map<String, dynamic>?;
       final results = data?['results'] as Map<String, dynamic>? ?? {};
+      final appOk = (results['app'] as Map?)?['ok'] == true;
       final qiitaOk = (results['qiita'] as Map?)?['ok'] == true;
       final devtoOk = (results['devto'] as Map?)?['ok'] == true;
       final msg = ok
           ? '✅ 投稿完了 ${[
+              if (appOk) '公式ブログ',
               if (qiitaOk) 'Qiita',
               if (devtoOk) 'dev.to',
             ].join(' + ')}'
@@ -660,16 +662,17 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                         '投稿先: ',
                         style: TextStyle(color: Colors.white54, height: 1.5),
                       ),
-                      ...['qiita', 'devto', 'qiita,devto'].map(
+                      ...['app', 'qiita', 'devto', 'qiita,devto'].map(
                         (p) {
                           // Qiita 停止中は Qiita を含む投稿先を選ばせない。
                           final disabled =
                               kQiitaAccountSuspended && p.contains('qiita');
+                          final label = p == 'app' ? '公式ブログ' : p;
                           return Padding(
                             padding: const EdgeInsets.only(left: 8),
                             child: ChoiceChip(
                               label: Text(
-                                disabled ? '$p (停止中)' : p,
+                                disabled ? '$label (停止中)' : label,
                                 style: const TextStyle(height: 1.5),
                               ),
                               selected: selectedPlatform == p,
@@ -1110,6 +1113,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               children: [
                 _filterBtn('all', '全て'),
                 const SizedBox(width: 6),
+                _filterBtn('app', '公式ブログ'),
+                const SizedBox(width: 6),
                 _filterBtn(
                   'qiita',
                   kQiitaAccountSuspended ? 'Qiita (停止中)' : 'Qiita',
@@ -1439,6 +1444,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     final views = e['views_count'] as int? ?? 0;
 
     final platformColor = switch (platform) {
+      'app' => const Color(0xFFFF6B35),
       'qiita' => const Color(0xFF55C500),
       'devto' => const Color(0xFF3D5AFE),
       _ => Colors.white38,
@@ -1465,7 +1471,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     border: Border.all(color: platformColor.withAlpha(100)),
                   ),
                   child: Text(
-                    platform.toUpperCase(),
+                    platform == 'app' ? '公式ブログ' : platform.toUpperCase(),
                     style: TextStyle(
                       color: platformColor,
                       fontSize: 10,

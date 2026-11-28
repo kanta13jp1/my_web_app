@@ -45,12 +45,15 @@ def query_gemini_with_log(
     )
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2000},
+        "generationConfig": {
+            "thinkingConfig": {"thinkingLevel": "LOW"},
+            "maxOutputTokens": 65536,
+        },
     }
     data = json.dumps(payload).encode("utf-8")
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-1.5-flash:generateContent?key={api_key}"
+        f"gemini-4-hydrogen:generateContent?key={api_key}"
     )
     req = urllib.request.Request(
         url, data=data, headers={"Content-Type": "application/json"}, method="POST"

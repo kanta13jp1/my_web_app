@@ -597,6 +597,8 @@ class AssetManagementAiSummaryService {
       _promptBuilder.buildDetailedAdvicePrompt(
         report,
         existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
+        includeRowLevelTables: false,
+        includeImplementationContext: false,
       ),
       '',
       '## AIに渡す詳細ペイロード',
@@ -815,13 +817,13 @@ class AssetManagementAiSummaryService {
             workbook.billingConfirmationPendingTotal,
         'billing_confirmation_pending_rows': workbook
             .billingConfirmationPendingRows
-            .map((row) => _debtRowToJson(row, workbook.baseDate))
+            .map((row) => row.id)
             .toList(growable: false),
         'payment_source_missing_count':
             workbook.paymentSourceMissingRows.length,
         'payment_source_missing_total': workbook.paymentSourceMissingTotal,
         'payment_source_missing_rows': workbook.paymentSourceMissingRows
-            .map((row) => _debtRowToJson(row, workbook.baseDate))
+            .map((row) => row.id)
             .toList(growable: false),
       },
       // 現在残高の事実だけを渡す。固定費・サブスクの将来予定は
@@ -1791,7 +1793,8 @@ class AssetManagementAiSummaryService {
         // must directly modify the debt without crossing clauses.
         const paidMarker =
             r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込|口座振替|振替|処理|確認|清算|精算)'
-            r'(?:済(?:み)?|完了|終了)|済(?:み)?|完済|引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
+            r'(?:は|が)?(?:今月)?(?:既に|すでに)?(?:済(?:み)?|完了|終了)|済(?:み)?|完済|'
+            r'引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
         final paidPattern = RegExp(
           '${RegExp.escape(row.name)}([^。;；\\r\\n]{0,60}?)($paidMarker)'
           '|($paidMarker)(?:の|である)?([^。、;；\\r\\n]{0,20}?)${RegExp.escape(row.name)}',
@@ -1983,6 +1986,10 @@ class AssetManagementAiSummaryService {
     '必要はありません',
     '必要ありません',
     '必要がない',
+    'とはなりません',
+    'とはならない',
+    'にはなりません',
+    'にはならない',
   ];
 
   bool _containsUnnegatedKeyword(String context, List<String> keywords) {

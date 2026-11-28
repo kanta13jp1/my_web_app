@@ -2,7 +2,7 @@ export const LANDING_TRIAL_PROMPT_MAX_LENGTH = 280;
 export const LANDING_TRIAL_ACTION_MAX_LENGTH = 40;
 export const LANDING_TRIAL_REASON_MAX_LENGTH = 100;
 export const DEFAULT_LANDING_TRIAL_MODEL = "gpt-4o-mini";
-export const DEFAULT_LANDING_TRIAL_GEMINI_MODEL = "gemini-2.5-flash";
+export const DEFAULT_LANDING_TRIAL_GEMINI_MODEL = "gemini-4-hydrogen";
 export const LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS = 512;
 
 export type LandingTrialPrimaryProvider = "gemini" | "openai";
@@ -348,6 +348,10 @@ async function formatProviderErrorDetails(
   return parts.length > 0 ? ` [${parts.join(" ")}]` : "";
 }
 
+function isGemini4Model(model: string): boolean {
+  return /^gemini-4(?:$|-)/i.test(model.trim());
+}
+
 function shouldDisableGeminiThinking(model: string): boolean {
   return /^gemini-2\.5-flash(?:-\d+)?$/i.test(model.trim());
 }
@@ -443,12 +447,16 @@ export async function generateLandingTrialSuggestionWithGemini(args: {
         encodeURIComponent(model)
       }:generateContent`;
     const generationConfig: Record<string, unknown> = {
-      temperature: 0.15,
-      maxOutputTokens: LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS,
       responseMimeType: "application/json",
     };
-    if (shouldDisableGeminiThinking(model)) {
-      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    if (isGemini4Model(model)) {
+      generationConfig.thinkingConfig = { thinkingLevel: "LOW" };
+    } else {
+      generationConfig.temperature = 0.15;
+      generationConfig.maxOutputTokens = LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS;
+      if (shouldDisableGeminiThinking(model)) {
+        generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      }
     }
     const response = await fetchImpl(endpoint, {
       method: "POST",

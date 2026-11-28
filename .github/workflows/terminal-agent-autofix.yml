@@ -1,0 +1,146 @@
+name: Terminal Agent Autofix
+
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    paths:
+      - 'scripts/terminal_agent_autofix.py'
+      - 'test/scripts/test_terminal_agent_autofix.py'
+      - '.github/workflows/terminal-agent-autofix.yml'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Target GitHub Issue number (optional for dry-run validation)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Plan repairs without mutating repository files (true/false)'
+        required: false
+        default: 'true'
+      diagnostics_file:
+        description: 'Optional workspace-relative analyzer/build diagnostics file'
+        required: false
+        default: ''
+
+concurrency:
+  group: terminal-agent-autofix-${{ github.event.issue.number || github.event.inputs.issue_number || github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  terminal-agent-autofix:
+    if: github.event_name != 'issues' || github.event.label.name == 'ai-autofix'
+    name: Run terminal agent autofix checks and dry-run plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run terminal agent autofix unit tests and self-test
+        run: |
+          set -euo pipefail
+          python3 -B test/scripts/test_terminal_agent_autofix.py -v
+          python3 -B scripts/terminal_agent_autofix.py --self-test
+
+      - name: Prepare issue context and run autofix dry-run
+        id: autofix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_NUMBER_EVENT: ${{ github.event.issue.number || '' }}
+          ISSUE_TITLE_EVENT: ${{ github.event.issue.title || '' }}
+          ISSUE_BODY_EVENT: ${{ github.event.issue.body || '' }}
+          ISSUE_NUMBER_INPUT: ${{ github.event.inputs.issue_number || '' }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          DIAGNOSTICS_FILE_INPUT: ${{ github.event.inputs.diagnostics_file || '' }}
+        run: |
+          set -euo pipefail
+          python3 -B - <<'PY'
+          import json
+          import os
+          import pathlib
+          import sys
+
+          event_name = os.environ.get("EVENT_NAME", "")
+          issue_num = (
+              os.environ.get("ISSUE_NUMBER_EVENT")
+              or os.environ.get("ISSUE_NUMBER_INPUT")
+              or "0"
+          )
+          try:
+              parsed_num = int(issue_num)
+          except ValueError:
+              print(f"::error::Invalid issue number: {issue_num}", file=sys.stderr)
+              sys.exit(1)
+
+          payload = {
+              "number": parsed_num,
+              "title": os.environ.get("ISSUE_TITLE_EVENT") or f"Dry-run autofix smoke ({event_name})",
+              "body": os.environ.get("ISSUE_BODY_EVENT") or "Validate deterministic terminal autofix discovery and checks.",
+              "labels": [{"name": "ai-autofix"}],
+          }
+          pathlib.Path("autofix_issue_payload.json").write_text(
+              json.dumps(payload, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          PY
+
+          if [ "${DRY_RUN_INPUT}" != "true" ]; then
+            echo "::notice::Workflow enforces read-only contents permission; forcing --dry-run."
+          fi
+
+          args=(
+            scripts/terminal_agent_autofix.py
+            --issue-json autofix_issue_payload.json
+            --dry-run
+            --json-out terminal_agent_autofix_report.json
+            --markdown-out terminal_agent_autofix_report.md
+            --github-output "${GITHUB_OUTPUT}"
+          )
+          if [ -n "${DIAGNOSTICS_FILE_INPUT}" ] && [ -f "${DIAGNOSTICS_FILE_INPUT}" ]; then
+            args+=(--diagnostics-file "${DIAGNOSTICS_FILE_INPUT}")
+          fi
+          python3 -B "${args[@]}"
+
+      - name: Upload terminal agent autofix report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: terminal-agent-autofix-report
+          path: |
+            terminal_agent_autofix_report.json
+            terminal_agent_autofix_report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append step summary
+        if: always()
+        env:
+          AUTOFIX_MODE: ${{ steps.autofix.outputs.mode }}
+          MATCHED_COUNT: ${{ steps.autofix.outputs.matched_count }}
+          ACTION_COUNT: ${{ steps.autofix.outputs.action_count }}
+          CONVERGED: ${{ steps.autofix.outputs.converged }}
+          VALIDATION_PASSED: ${{ steps.autofix.outputs.validation_passed }}
+        run: |
+          {
+            echo "## Terminal Agent Autofix"
+            echo "- Mode: \`${AUTOFIX_MODE}\`"
+            echo "- Matched Targets: \`${MATCHED_COUNT}\`"
+            echo "- Planned Actions: \`${ACTION_COUNT}\`"
+            echo "- Converged: \`${CONVERGED}\`"
+            echo "- Validation Passed: \`${VALIDATION_PASSED}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

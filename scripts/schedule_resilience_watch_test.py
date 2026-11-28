@@ -864,6 +864,159 @@ class ScheduleResilienceWatchTest(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(client.writes, ["close"])
 
+    def test_manual_dispatch_success_after_failed_schedule_recovers_within_window(self) -> None:
+        backup = next(target for target in TARGETS if target.key == "supabase-backup-restore")
+        failed_schedule = run(
+            id=45078347960,
+            html_url="https://github.example/runs/45078347960",
+            conclusion="failure",
+            run_attempt=2,
+            created_at=(NOW - timedelta(hours=72)).isoformat().replace("+00:00", "Z"),
+        )
+        recovered_dispatch = run(
+            id=45537802074,
+            html_url="https://github.example/runs/45537802074",
+            event="workflow_dispatch",
+            conclusion="success",
+            run_attempt=1,
+            created_at=(NOW - timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
+        )
+
+        result = evaluate_target(
+            backup,
+            [failed_schedule],
+            NOW,
+            max_attempts=2,
+            fallback_runs=[recovered_dispatch],
+        )
+
+        self.assertEqual(result["action"], "healthy")
+        self.assertEqual(result["reason"], "recovered-via-workflow-dispatch")
+        self.assertEqual(result["run_id"], 45537802074)
+        self.assertEqual(result["url"], "https://github.example/runs/45537802074")
+        self.assertEqual(result["superseded_run_id"], 45078347960)
+
+    def test_manual_dispatch_cannot_mask_stale_failed_schedule(self) -> None:
+        stale_failed = run(
+            id=101,
+            conclusion="failure",
+            run_attempt=2,
+            created_at=(NOW - timedelta(hours=5)).isoformat().replace("+00:00", "Z"),
+        )
+        recovered_dispatch = run(
+            id=102,
+            event="workflow_dispatch",
+            conclusion="success",
+            created_at=(NOW - timedelta(minutes=10)).isoformat().replace("+00:00", "Z"),
+        )
+
+        result = evaluate_target(
+            TARGET,
+            [stale_failed],
+            NOW,
+            max_attempts=2,
+            fallback_runs=[recovered_dispatch],
+        )
+
+        self.assertEqual(result["action"], "alert")
+        self.assertEqual(result["reason"], "stale-failure")
+
+    def test_manual_dispatch_failure_or_older_success_does_not_recover(self) -> None:
+        failed_schedule = run(
+            id=201,
+            conclusion="failure",
+            run_attempt=2,
+            created_at=(NOW - timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
+        )
+        older_success = run(
+            id=200,
+            event="workflow_dispatch",
+            conclusion="success",
+            created_at=(NOW - timedelta(hours=2)).isoformat().replace("+00:00", "Z"),
+        )
+        newer_failed_dispatch = run(
+            id=202,
+            event="workflow_dispatch",
+            conclusion="failure",
+            created_at=(NOW - timedelta(minutes=20)).isoformat().replace("+00:00", "Z"),
+        )
+
+        older_result = evaluate_target(
+            TARGET,
+            [failed_schedule],
+            NOW,
+            max_attempts=2,
+            fallback_runs=[older_success],
+        )
+        newer_failed_result = evaluate_target(
+            TARGET,
+            [failed_schedule],
+            NOW,
+            max_attempts=2,
+            fallback_runs=[older_success, newer_failed_dispatch],
+        )
+
+        self.assertEqual(older_result["action"], "alert")
+        self.assertEqual(older_result["reason"], "retry-exhausted")
+        self.assertEqual(newer_failed_result["action"], "alert")
+        self.assertEqual(newer_failed_result["reason"], "retry-exhausted")
+
+    def test_main_closes_issue_when_manual_dispatch_recovers_failed_schedule(self) -> None:
+        now_utc = datetime.now(timezone.utc)
+        failed_schedule = run(
+            id=301,
+            html_url="https://github.example/runs/301",
+            conclusion="failure",
+            run_attempt=2,
+            created_at=(now_utc - timedelta(hours=2)).isoformat().replace("+00:00", "Z"),
+        )
+        recovered_dispatch = run(
+            id=302,
+            html_url="https://github.example/runs/302",
+            event="workflow_dispatch",
+            conclusion="success",
+            created_at=(now_utc - timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
+        )
+
+        class DispatchRecoveredClient:
+            def __init__(self) -> None:
+                self.writes: list[str] = []
+                self.closed_results: list[dict] = []
+
+            def workflow_runs(self, *_args, **_kwargs):
+                return [failed_schedule]
+
+            def repository_workflow_runs(self, *_args, **kwargs):
+                if kwargs.get("event") == "workflow_dispatch":
+                    return [recovered_dispatch]
+                return [failed_schedule]
+
+            def rerun_failed_jobs(self, *_args, **_kwargs):
+                self.writes.append("rerun")
+
+            def open_or_update_issue(self, *_args, **_kwargs):
+                self.writes.append("issue")
+                return ""
+
+            def close_recovered_issues(self, _target, result, _now):
+                self.writes.append("close")
+                self.closed_results.append(result)
+                return ["https://github.example/issues/6330"]
+
+        client = DispatchRecoveredClient()
+        with (
+            patch.dict(os.environ, {"GITHUB_TOKEN": "test-token"}, clear=False),
+            patch("schedule_resilience_watch.GitHubClient", return_value=client),
+            patch("schedule_resilience_watch.TARGETS", (TARGET,)),
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            exit_code = main(["--repo", "owner/repo"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(client.writes, ["close"])
+        self.assertEqual(client.closed_results[0]["reason"], "recovered-via-workflow-dispatch")
+        self.assertEqual(client.closed_results[0]["url"], "https://github.example/runs/302")
+
     def test_summary_mentions_actions(self) -> None:
         summary = render_summary(
             [

@@ -1,0 +1,57 @@
+name: AI Investment Trend Collection
+
+on:
+  schedule:
+    - cron: "25 22 * * 1,4" # Twice weekly (Mon/Thu 07:25 JST)
+  workflow_dispatch:
+
+concurrency:
+  group: ai-investment-collection-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  collect:
+    name: Collect and normalize 2026Q2 AI investment trends
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.9.1
+
+      - name: Run AI investment ingestor unit tests
+        run: |
+          deno test \
+            supabase/functions/app-hub/ai_investment_ingestor_test.ts \
+            supabase/functions/app-hub/ai_investment_test.ts
+
+      - name: Collect and normalize public AI investment feeds
+        run: |
+          mkdir -p .artifacts/ai-investment
+          deno run \
+            --allow-net=openai.com,www.openai.com,blog.google,huggingface.co \
+            --allow-write=.artifacts \
+            supabase/functions/app-hub/ai_investment_ingestor.ts \
+            --out-json .artifacts/ai-investment/latest.json \
+            --out-md .artifacts/ai-investment/latest.md
+          cat .artifacts/ai-investment/latest.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload normalized AI investment report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ai-investment-collection
+          path: .artifacts/ai-investment/
+          if-no-files-found: warn
+          retention-days: 30

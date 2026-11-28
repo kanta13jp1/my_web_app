@@ -37,11 +37,15 @@ def review_input_digest(source, state):
 
 
 CHECK = 'AI Review Gate'
+COMMENT_MARKER = '<!-- ai-review-confidence -->'
 MAX_DIFF = 240_000
 MAX_FILES = 40
 AREAS = {'correctness', 'security', 'tests'}
 SAFE_SUFFIXES = {'.dart', '.ts', '.js', '.mjs', '.cjs', '.py', '.ps1', '.sh',
-                 '.yaml', '.yml', '.json', '.sql', '.md', '.toml', '.txt', '.lock', '.html', '.css'}
+                 '.yaml', '.yml', '.json', '.sql', '.md', '.toml', '.txt', '.lock', '.html', '.css',
+                 '.code-workspace', '.mdc'}
+SAFE_EXACT_NAMES = {'.gitattributes', '.cursorignore'}
+SAFE_EXACT_PATHS = {'.githooks/pre-push'}
 PRIVATE_PATH = re.compile(r'(^|/)(attachments|receipts|payslips|financial_records|bank_statements|\.env)(/|\.|$)', re.I)
 
 
@@ -109,7 +113,15 @@ def validate_scope(paths, diff, assets=()):
     require(not re.search(r'^(?:(?:new file|deleted file|new|old) mode |index [0-9a-f]+\.\.[0-9a-f]+ )(?:120000|160000)', diff, re.M), 'Symlink/submodule changes need a dedicated review')
     for path in paths:
         require(not PRIVATE_PATH.search(path), 'Private records must not be sent to AI review')
-        require(Path(path).suffix.lower() in SAFE_SUFFIXES or path in approved, 'Unsupported file type; expand policy through review')
+        path_obj = Path(path)
+        normalized_path = path.replace('\\', '/').lower()
+        require(
+            path_obj.suffix.lower() in SAFE_SUFFIXES
+            or path_obj.name.lower() in SAFE_EXACT_NAMES
+            or normalized_path in SAFE_EXACT_PATHS
+            or path in approved,
+            'Unsupported file type; expand policy through review',
+        )
 
 
 def prepare(directory):
@@ -267,6 +279,20 @@ def review(directory):
                 'Actually inspect both updated landing page Playwright visual regression screenshots (desktop and mobile) '
                 'for dark hero sample preview harmonization, text/button contrast readability, layout integrity, and alignment with the Flutter code diff. '
             )
+        elif state['pr'] == 6273:
+            image_guidance = (
+                'Actually inspect both updated landing page Playwright visual regression screenshots (desktop and mobile) '
+                'for removal of the 5-question guided-intake copy, clean hero headline phrase wrapping without mid-word breaks, '
+                'WCAG 1.4.11 input border contrast, layout integrity, and alignment with the Flutter code diff. '
+            )
+        elif state['pr'] == 6489:
+            image_guidance = (
+                'Actually inspect all five updated Nano Banana favicon and PWA/maskable PNG icons '
+                '(web/favicon.png 48x48, web/icons/Icon-192.png, web/icons/Icon-512.png, '
+                'web/icons/Icon-maskable-192.png, web/icons/Icon-maskable-512.png) '
+                'for visual consistency, 80% safe-zone circular maskable clearance, small-size legibility, '
+                'absence of unintended text or gradient seams, and alignment with web/index.html. '
+            )
         else:
             image_guidance = 'Actually inspect all three character cells, transparency, visual content and code integration. '
         rules += (
@@ -300,6 +326,230 @@ def review(directory):
           'usage': result.get('usageMetadata'), 'response_sha256': digest(text)})
 
 
+def evaluate_review_confidence(review, state, provider=None):
+    expected_files = [p for p in (state.get('files') or []) if isinstance(p, str)]
+    review_files = review.get('files') if isinstance(review.get('files'), list) else []
+    covered_files = {
+        item.get('path')
+        for item in review_files
+        if isinstance(item, dict)
+        and item.get('path') in expected_files
+        and isinstance(item.get('assessment'), str)
+        and len(item['assessment'].strip()) >= 30
+    }
+    review_areas = review.get('areas') if isinstance(review.get('areas'), list) else []
+    covered_areas = {
+        item.get('area')
+        for item in review_areas
+        if isinstance(item, dict)
+        and item.get('area') in AREAS
+        and isinstance(item.get('assessment'), str)
+        and len(item['assessment'].strip()) >= 30
+    }
+
+    texts = []
+    if isinstance(review.get('summary'), str) and review['summary'].strip():
+        texts.append(len(review['summary'].strip()))
+    for collection in (review_files, review_areas):
+        for item in collection:
+            if isinstance(item, dict) and isinstance(item.get('assessment'), str) and item['assessment'].strip():
+                texts.append(len(item['assessment'].strip()))
+    avg_depth = (sum(texts) / len(texts)) if texts else 0.0
+
+    complete_ok = state.get('complete_diff') is True
+    complete_score = 20 if complete_ok else 0
+
+    redactions = int(state.get('redactions') or 0)
+    if redactions == 0:
+        redaction_score = 15
+    elif redactions == 1:
+        redaction_score = 5
+    else:
+        redaction_score = 0
+
+    file_score = round(20 * len(covered_files) / len(expected_files)) if expected_files else 0
+    area_score = round(15 * len(covered_areas) / len(AREAS))
+
+    if avg_depth >= 60:
+        depth_score = 15
+    elif avg_depth >= 45:
+        depth_score = 10
+    elif avg_depth >= 30:
+        depth_score = 5
+    else:
+        depth_score = 0
+
+    binding_keys = [k for k in ('head', 'base', 'input_sha256') if state.get(k)]
+    bindings_ok = bool(binding_keys) and all(review.get(k) == state.get(k) for k in binding_keys)
+    provider_ok = True
+    if isinstance(provider, dict):
+        provider_ok = (
+            provider.get('finish_reasons') == ['STOP']
+            and not provider.get('prompt_block_reason')
+        )
+    integrity_score = (10 if bindings_ok else 0) + (5 if provider_ok else 0)
+
+    factors = [
+        {
+            'name': 'complete_diff',
+            'score': complete_score,
+            'max_score': 20,
+            'detail': '完全差分レビュー' if complete_ok else '不完全差分',
+        },
+        {
+            'name': 'redactions',
+            'score': redaction_score,
+            'max_score': 15,
+            'detail': f'機密マスキング {redactions} 件',
+        },
+        {
+            'name': 'file_coverage',
+            'score': file_score,
+            'max_score': 20,
+            'detail': f'{len(covered_files)}/{len(expected_files)} ファイル評価',
+        },
+        {
+            'name': 'area_coverage',
+            'score': area_score,
+            'max_score': 15,
+            'detail': f'{len(covered_areas)}/{len(AREAS)} 観点評価',
+        },
+        {
+            'name': 'assessment_depth',
+            'score': depth_score,
+            'max_score': 15,
+            'detail': f'平均根拠記述長 {round(avg_depth)} 文字',
+        },
+        {
+            'name': 'binding_integrity',
+            'score': integrity_score,
+            'max_score': 15,
+            'detail': 'SHA/応答整合確認済み' if (bindings_ok and provider_ok) else '整合または完了状態に不備',
+        },
+    ]
+    score = max(0, min(100, sum(item['score'] for item in factors)))
+    if score >= 80:
+        tier, label = 'high', '高信頼 (High)'
+    elif score >= 55:
+        tier, label = 'medium', '中信頼 (Medium)'
+    else:
+        tier, label = 'low', '低信頼 (Low)'
+
+    rationale = (
+        f"完全差分={'あり' if complete_ok else 'なし'}, "
+        f"ファイル網羅={len(covered_files)}/{len(expected_files)}, "
+        f"観点網羅={len(covered_areas)}/{len(AREAS)}, "
+        f"機密マスク={redactions}件, 平均記述長={round(avg_depth)}文字。"
+    )
+    return {
+        'score': score,
+        'tier': tier,
+        'label': label,
+        'factors': factors,
+        'rationale': rationale,
+    }
+
+
+def evaluate_evidence_confidence(evidence):
+    if isinstance(evidence.get('review'), dict):
+        return evaluate_review_confidence(
+            evidence['review'],
+            evidence,
+            provider=evidence.get('provider'),
+        )
+    detail = evidence.get('error', 'review missing')
+    return {
+        'score': 0,
+        'tier': 'low',
+        'label': '低信頼 (Low)',
+        'factors': [
+            {
+                'name': 'review_availability',
+                'score': 0,
+                'max_score': 100,
+                'detail': f'レビュー未完了: {detail}',
+            }
+        ],
+        'rationale': f'AIレビュー結果が取得できなかったため信頼度は低評価です ({detail})。',
+    }
+
+
+def format_confidence_comment(evidence):
+    confidence = (
+        evidence['confidence']
+        if isinstance(evidence.get('confidence'), dict)
+        else evaluate_evidence_confidence(evidence)
+    )
+    pr_num = evidence.get('pr', '?')
+    head_short = str(evidence.get('head', ''))[:12] or '-'
+    base_short = str(evidence.get('base', ''))[:12] or '-'
+    status = evidence.get('status', 'unknown')
+    run_url = evidence.get('run_url', '')
+    review_data = evidence.get('review') if isinstance(evidence.get('review'), dict) else {}
+    findings = review_data.get('findings') if isinstance(review_data.get('findings'), list) else []
+
+    lines = [
+        COMMENT_MARKER,
+        '## AI Code Review 信頼度レポート',
+        '',
+        f"- **対象 PR**: #{pr_num} (`{head_short}` <- `{base_short}`)",
+        f"- **レビュー結果**: `{status}`",
+        f"- **信頼度スコア**: **{confidence['score']}/100 ({confidence['label']})**",
+        f"- **評価根拠**: {confidence['rationale']}",
+    ]
+    if run_url:
+        lines.append(f"- **実行証拠**: [Actions Run]({run_url})")
+    lines.extend([
+        '',
+        '| 評価軸 | 得点 | 上限 | 詳細 |',
+        '| --- | ---: | ---: | --- |',
+    ])
+    for factor in confidence.get('factors', []):
+        lines.append(
+            f"| {factor['name']} | {factor['score']} | {factor['max_score']} | {factor['detail']} |"
+        )
+    if findings:
+        lines.extend(['', f"### 検出された指摘 ({len(findings)} 件)"])
+        for item in findings[:10]:
+            lines.append(
+                f"- `{item.get('path', '?')}:{item.get('line', 0)}` "
+                f"[{item.get('severity', 'info')}]: {item.get('explanation', '')}"
+            )
+    elif review_data.get('summary'):
+        lines.extend(['', f"### レビュー要約\n{review_data['summary']}"])
+    elif evidence.get('error'):
+        lines.extend(['', f"### エラー情報\n`{evidence['error']}`"])
+
+    body = '\n'.join(lines) + '\n'
+    redacted, _ = redact_secrets_with_count(body)
+    return redacted
+
+
+def post_confidence_comment(evidence, api=None):
+    client = api or github
+    pr_num = int(evidence['pr'])
+    body = format_confidence_comment(evidence)
+    existing_id = None
+    for page in range(1, 6):
+        comments = client(f'/issues/{pr_num}/comments?per_page=100&page={page}')
+        if not isinstance(comments, list) or not comments:
+            break
+        for comment_obj in comments:
+            if COMMENT_MARKER in (comment_obj.get('body') or ''):
+                existing_id = comment_obj.get('id')
+                break
+        if existing_id is not None or len(comments) < 100:
+            break
+
+    if existing_id is not None:
+        client(f'/issues/comments/{existing_id}', {'body': body}, 'PATCH')
+        return {'action': 'updated', 'comment_id': existing_id}
+
+    created = client(f'/issues/{pr_num}/comments', {'body': body}, 'POST')
+    comment_id = created.get('id') if isinstance(created, dict) else None
+    return {'action': 'created', 'comment_id': comment_id}
+
+
 def publish(directory):
     state_path = directory/'state.json'
     require(state_path.exists(), 'No check was opened; approval is unavailable')
@@ -318,9 +568,13 @@ def publish(directory):
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as exc:
         evidence['status'] = 'failed'
         evidence['error'] = type(exc).__name__+': '+str(exc)[:300]
+    confidence = evaluate_evidence_confidence(evidence)
+    evidence['confidence'] = confidence
     write(directory/'evidence.json', evidence)
     summary = (f"PR #{state['pr']} | head `{state['head']}` | base `{state['base']}`\n\n"
-               f"Result: **{evidence['status']}**. [Machine evidence and run]({state['run_url']})\n\n")
+               f"Result: **{evidence['status']}**. "
+               f"Confidence: **{confidence['score']}/100 ({confidence['label']})** — {confidence['rationale']} "
+               f"[Machine evidence and run]({state['run_url']})\n\n")
     if 'review' in evidence:
         summary += evidence['review']['summary']+'\n\n'
         summary += '\n'.join(f"- {f['path']}:{f['line']} [{f['severity']}]: {f['explanation']} {f['recommendation']}" for f in evidence['review']['findings'])
@@ -335,10 +589,41 @@ def publish(directory):
     require(approved, 'AI Review Gate failed; inspect the evidence and review again')
 
 
+def comment(directory):
+    evidence_path = directory/'evidence.json'
+    require(evidence_path.exists(), 'Review evidence is unavailable for comment')
+    evidence = json.loads(evidence_path.read_text(encoding='utf-8'))
+    return post_confidence_comment(evidence)
+
+
+def run_self_test():
+    sample_state = {
+        'pr': 1, 'head': 'a'*40, 'base': 'b'*40, 'input_sha256': digest('diff'),
+        'files': ['a.py'], 'complete_diff': True, 'redactions': 0,
+        'run_url': 'https://example.invalid/run',
+    }
+    sample_review = {
+        'schema_version': 1, 'head': 'a'*40, 'base': 'b'*40, 'input_sha256': sample_state['input_sha256'],
+        'verdict': 'approve',
+        'summary': 'Reviewed every changed file and verified input validation and test coverage thoroughly.',
+        'files': [{'path': 'a.py', 'assessment': 'Verified diff lines, error handling paths, and regression tests cleanly.'}],
+        'areas': [{'area': area, 'assessment': 'No security or correctness regressions detected across the changed area.'} for area in sorted(AREAS)],
+        'findings': [],
+    }
+    conf = evaluate_review_confidence(sample_review, sample_state)
+    require(conf['tier'] == 'high' and conf['score'] >= 80, 'Self-test failed: expected high confidence')
+    body = format_confidence_comment(dict(sample_state, status='approved', review=sample_review, confidence=conf))
+    require(COMMENT_MARKER in body, 'Self-test failed: missing idempotency comment marker')
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == '--self-test':
+        run_self_test()
+        print('OK: ai_review_gate confidence evaluation and comment formatter self-test passed')
+        return
     directory = Path(os.environ['REVIEW_DIR'])
     directory.mkdir(parents=True, exist_ok=True)
-    {'prepare': prepare, 'review': review, 'publish': publish}[sys.argv[1]](directory)
+    {'prepare': prepare, 'review': review, 'publish': publish, 'comment': comment}[sys.argv[1]](directory)
 
 
 if __name__ == '__main__':

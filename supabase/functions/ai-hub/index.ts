@@ -1,3 +1,4 @@
+import { previewAgentToolPolicy } from "./agent_tool_policy_preview.ts";
 import { decideMario, MarioError } from "./jev_mario.ts";
 import { classifyJevExpense, JevExpenseError } from "./jev_expense.ts";
 // ai-hub — AI・エージェント・AI大学統合EF
@@ -27,6 +28,14 @@ import {
   resolveAuthenticatedUserId,
 } from "./action_access_policy.ts";
 import {
+  DEFAULT_BUDGET_TIER_PROVIDERS,
+  isProviderPaymentRequired,
+  ProviderPaymentCooldownTracker,
+  QUOTA_FALLBACK_CHAIN,
+  selectEligibleProviders,
+  shouldSkipProviderForBilling,
+} from "./provider_payment_cooldown.ts";
+import {
   AI_CHARACTER_PREAMBLE,
   buildAiSystemPrompt,
   prependCharacter,
@@ -39,6 +48,7 @@ import {
   type AgentToolApproval,
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
+  parseAgentToolRequestedScopes,
 } from "../_shared/agent_tool_policy.ts";
 import {
   selectClaudeModelForEffort,
@@ -59,6 +69,11 @@ import {
   normalizeAiRouterPreference,
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
+import {
+  createSupabaseVoiceCloneConsentStore,
+  guardClonedVoiceGeneration,
+  handleVoiceCloneConsentAction,
+} from "./voice_clone_consent.ts";
 import {
   buildGuardrailBlockedPayload,
   evaluateComplianceGuardrail,
@@ -86,6 +101,20 @@ import {
 } from "./monthly_asset_report.ts";
 import { AssetChatActionError, handleAssetChatAction } from "./asset_chat.ts";
 import { createSupabaseAssetChatStore } from "./asset_chat_supabase.ts";
+import {
+  ANTHROPIC_EXTENDED_CACHE_TTL_BETA,
+  buildAnthropicCachedBodySync,
+  handlePromptCacheAction,
+  type PromptCacheDb,
+} from "./prompt_cache_1h.ts";
+import { handleTokenCacheMonitorAction } from "./token_cache_monitor.ts";
+import {
+  createSupabaseTokenCacheMonitorDb,
+} from "./token_cache_monitor_supabase.ts";
+import {
+  handleSafetyCheckpointAction,
+  type SafetyCheckpointDb,
+} from "./safety_checkpoints.ts";
 import {
   DepartmentFinanceSummaryActionError,
   type DepartmentFinanceSummaryDb,
@@ -121,7 +150,16 @@ import {
   MarketPriceActionError,
   type MarketPriceDb,
 } from "./market_price.ts";
-import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
+import {
+  applyProviderGenerationOptions,
+  applyStructuredGenerationOptions,
+} from "./provider_generation_options.ts";
+import {
+  extractStructuredOutputOptions,
+  handleStructuredRoutingAction,
+  validateAgainstJsonSchema,
+} from "./structured_routing.ts";
+import { createSupabaseStructuredRoutingStore } from "./structured_routing_supabase.ts";
 import {
   concatenateAudio,
   normalizeVoiceId,
@@ -265,6 +303,9 @@ type ProviderCallOptions = {
   /// この 1 呼び出しの timeout (ms)。未指定なら providerFetchTimeoutMs()。
   /// chat_auto はリクエスト全体予算から残り時間を配分して渡す。
   timeoutMs?: number;
+  responseMimeType?: string;
+  responseSchema?: Record<string, unknown>;
+  schemaName?: string;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -429,13 +470,15 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     envKey: "ANTHROPIC_API_KEY",
     chatUrl: "https://api.anthropic.com/v1/messages",
     defaultModel: "claude-haiku-4-5-20251001",
-    buildBody: (messages, model) => ({
-      model,
-      max_tokens: 512,
-      messages: (messages as { role: string; content: string }[]).filter(
-        (m) => m.role !== "system",
-      ),
-    }),
+    extraHeaders: {
+      "anthropic-beta": ANTHROPIC_EXTENDED_CACHE_TTL_BETA,
+    },
+    buildBody: (messages, model) =>
+      buildAnthropicCachedBodySync({
+        model,
+        messages: messages as { role: string; content: string }[],
+        cacheTtl: "1h",
+      }),
     parseResponse: (data) => String(pick(data, "content", 0, "text") ?? ""),
   },
   // Google Gemini は Bearer ではなく ?key=xxx クエリ認証 — provider.chat で特殊分岐
@@ -443,26 +486,42 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     displayName: "Google Gemini",
     envKey: "GEMINI_API_KEY",
     chatUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-    defaultModel: "gemini-2.5-flash",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent",
+    defaultModel: "gemini-4-hydrogen",
     buildBody: (messages, _model, inlineFiles) =>
       buildGoogleGeminiBody(messages, inlineFiles),
-    parseResponse: (data) =>
-      String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
+    parseResponse: (data) => {
+      const parts = pick(data, "candidates", 0, "content", "parts");
+      if (Array.isArray(parts)) {
+        const text = parts
+          .filter((p) => (p as { thought?: unknown })?.thought !== true)
+          .map((p) => String((p as { text?: unknown })?.text ?? ""))
+          .join("");
+        if (text) return text;
+      }
+      return String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? "");
+    },
   },
-  // Master Brain 提案 #1 (Win版#132 part 29 / 2026-04-26): バッチ処理向け軽量・低コスト Gemini
-  // 用途: competitor-monitoring / ai-university-update 等の大量バッチ推論
-  // コスト目安: gemini-2.5-flash-lite は通常 flash の 1/3 価格・1M tokens context
+  // バッチ処理・既定呼び出し向け高速 Gemini 4 Hydrogen
   google_flash_lite: {
-    displayName: "Google Gemini Flash-Lite",
+    displayName: "Google Gemini 4 Hydrogen",
     envKey: "GEMINI_API_KEY",
     chatUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-    defaultModel: "gemini-2.5-flash-lite",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent",
+    defaultModel: "gemini-4-hydrogen",
     buildBody: (messages, _model, inlineFiles) =>
       buildGoogleGeminiBody(messages, inlineFiles),
-    parseResponse: (data) =>
-      String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
+    parseResponse: (data) => {
+      const parts = pick(data, "candidates", 0, "content", "parts");
+      if (Array.isArray(parts)) {
+        const text = parts
+          .filter((p) => (p as { thought?: unknown })?.thought !== true)
+          .map((p) => String((p as { text?: unknown })?.text ?? ""))
+          .join("");
+        if (text) return text;
+      }
+      return String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? "");
+    },
   },
   cerebras: {
     displayName: "Cerebras",
@@ -690,15 +749,7 @@ const TIER_PROVIDERS: Record<Tier, string[]> = {
   // 焼き尽くし 2 連続 503。高速推論ホスト(groq/cerebras)を先頭に置く。
   // key 未設定のプロバイダは callSingleProvider が即 fail するので無害。
   free: ["groq", "cerebras", "deepseek", "siliconflow", "novita_ai"],
-  budget: [
-    "sambanova",
-    "arcee_ai",
-    "minimax",
-    "deepinfra",
-    "together_ai",
-    "fireworks_ai",
-    "moonshot",
-  ],
+  budget: [...DEFAULT_BUDGET_TIER_PROVIDERS],
   performance: [
     "google",
     "openai",
@@ -776,21 +827,7 @@ function isProviderOutputLengthLimited(reason: string | null): boolean {
     normalized === "maxoutputtokens";
 }
 
-function isProviderPaymentRequired(
-  status: number,
-  responseText: string,
-): boolean {
-  const text = responseText.toLowerCase();
-  return status === 402 ||
-    text.includes("paid_plan_required") ||
-    text.includes("payment_required") ||
-    text.includes("insufficient_quota") ||
-    text.includes("positive balance") ||
-    text.includes("add balance") ||
-    text.includes("top-up") ||
-    text.includes("billing") ||
-    text.includes("credit");
-}
+const providerPaymentCooldown = new ProviderPaymentCooldownTracker();
 
 async function callSingleProvider(
   providerId: string,
@@ -811,6 +848,18 @@ async function callSingleProvider(
 > {
   const cfg = PROVIDER_CONFIGS[providerId];
   if (!cfg) return { ok: false, error: "unknown provider", isRetriable: false };
+  const billingSkip = shouldSkipProviderForBilling(
+    providerId,
+    providerPaymentCooldown,
+    Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+  );
+  if (billingSkip.skip) {
+    return {
+      ok: false,
+      error: `paidPlanRequired: ${providerId}: skipped (${billingSkip.reason})`,
+      isRetriable: true,
+    };
+  }
   const apiKey = Deno.env.get(cfg.envKey) ?? "";
   if (!apiKey) {
     return { ok: false, error: "apiKeyRequired", isRetriable: false };
@@ -846,9 +895,13 @@ async function callSingleProvider(
           ...(cfg.extraHeaders ?? {}),
         },
         body: JSON.stringify(
-          applyProviderGenerationOptions(
+          applyStructuredGenerationOptions(
             providerId,
-            cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+            applyProviderGenerationOptions(
+              providerId,
+              cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+              { ...options, model: model ?? cfg.defaultModel },
+            ),
             options,
           ),
         ),
@@ -860,6 +913,9 @@ async function callSingleProvider(
     }
     if (!resp.ok) {
       const paymentRequired = isProviderPaymentRequired(resp.status, respText);
+      if (paymentRequired) {
+        providerPaymentCooldown.markExhausted(providerId);
+      }
       const isRetriable = paymentRequired || resp.status === 429 ||
         resp.status >= 500;
       return {
@@ -3506,7 +3562,7 @@ async function evaluateAgentToolGate(
   );
   const actorRole = normalizeActorRole(body.actor_role ?? body.actorRole) ??
     await loadAgentRole(admin, userId, actorAgentId);
-  const requestedScopes = asStringArray(
+  const requestedScopes = parseAgentToolRequestedScopes(
     body.requested_scopes ?? body.requestedScopes ?? body.scopes,
   );
   const allowedScopesRaw = body.allowed_scopes ?? body.allowedScopes;
@@ -4223,11 +4279,14 @@ async function callGemini(
     });
   }
   const res = await fetchWithProviderTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }] }),
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { thinkingConfig: { thinkingLevel: "LOW" } },
+      }),
     },
   );
   if (!res.ok) {
@@ -4952,6 +5011,10 @@ serve(async (req: Request) => {
         return json({ success: true, agent: item });
       }
 
+      case "agent.tool_policy.preview": {
+        return json({ success: true, preview: previewAgentToolPolicy(body) });
+      }
+
       case "agent.tool_policy.evaluate": {
         const gate = await evaluateAgentToolGate(admin, userId!, body);
         return json({
@@ -4967,7 +5030,88 @@ serve(async (req: Request) => {
         }, gate.decision.allowed ? 200 : 403);
       }
 
+      case "agent.safety_checkpoint.evaluate":
+      case "agent.safety_checkpoint.list":
+      case "agent.safety_checkpoint.approve":
+      case "agent.safety_checkpoint.reject": {
+        const res = await handleSafetyCheckpointAction({
+          db: admin as unknown as SafetyCheckpointDb,
+          action,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "agent.sandbox.evaluate":
+      case "agent.sandbox.execute_isolated":
+      case "agent.sandbox.audit_list":
+      case "agent.sandbox.policy_upsert": {
+        const { handleSandboxSecurityAction } = await import(
+          "./sandbox_security.ts"
+        );
+        return await handleSandboxSecurityAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          admin,
+          json,
+        });
+      }
+
       case "agent.run": {
+        const {
+          evaluateAgentSandboxPreflight,
+          recordSandboxAuditEntry,
+        } = await import("./sandbox_security.ts");
+        const sandboxToolName = asString(
+          body.tool_name ?? body.toolName ?? body.target_tool,
+        ) || "agent.run";
+        const sandboxDecision = evaluateAgentSandboxPreflight({
+          userId: userId!,
+          sessionId: asString(body.session_id) || "agent-run",
+          sandboxId: asString(body.sandbox_id) || "isolated_worker",
+          actorRole: normalizeActorRole(body.actor_role ?? body.actorRole) ??
+            "generated_ui_sandbox",
+          toolName: sandboxToolName,
+          requestedScopes: parseAgentToolRequestedScopes(
+            body.requested_scopes ?? body.requestedScopes ?? body.scopes ??
+              ["read"],
+          ),
+          toolArgs: body.tool_args ?? body.toolArgs ?? {
+            task: body.task ?? "",
+          },
+          promptText: asString(body.task ?? body.prompt_text),
+          retryAttempt: Number(body.retry_attempt ?? 0),
+          recentAttemptCount: Number(body.recent_attempt_count ?? 0),
+          networkEgressTarget: asString(body.network_egress_target) || null,
+          enforceIsolatedToolAllowlist: body.sandbox_mode === true,
+          approval: parseAgentToolApproval(body),
+        });
+        if (!sandboxDecision.allowed) {
+          const audit = await recordSandboxAuditEntry(admin, {
+            userId: userId!,
+            sessionId: asString(body.session_id) || "agent-run",
+            sandboxId: asString(body.sandbox_id) || "isolated_worker",
+            actorRole: normalizeActorRole(body.actor_role ?? body.actorRole) ??
+              "generated_ui_sandbox",
+            toolName: sandboxToolName,
+            actionKind: "agent_run_preflight",
+            decision: sandboxDecision,
+            retryAttempt: Number(body.retry_attempt ?? 0),
+            networkEgressTarget: asString(body.network_egress_target) || null,
+            latencyMs: 0,
+          });
+          return json({
+            success: false,
+            error: "agent_sandbox_blocked",
+            decision: sandboxDecision,
+            audit_logged: audit.logged,
+          }, 403);
+        }
+
         const shouldEvaluateToolPolicy = body.tool_name !== undefined ||
           body.toolName !== undefined ||
           body.requested_scopes !== undefined ||
@@ -5011,6 +5155,33 @@ serve(async (req: Request) => {
           success: true,
           org: { agents, departments: ["CEO", "CMO", "CTO", "CFO", "COO"] },
         });
+      }
+
+      case "prompt_cache.build_payload":
+      case "prompt_cache.record_metric":
+      case "prompt_cache.monitor_summary":
+      case "prompt_cache.check_renewal": {
+        const res = await handlePromptCacheAction({
+          db: admin as unknown as PromptCacheDb,
+          action,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "ai_monitor.token_cache.summary":
+      case "ai_monitor.token_cache.diagnose_prefix":
+      case "ai_monitor.token_cache.record_tool_usage": {
+        const res = await handleTokenCacheMonitorAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          db: createSupabaseTokenCacheMonitorDb(admin),
+        });
+        return json(res.body, res.status);
       }
 
       case "my_agent.chat": {
@@ -6565,7 +6736,7 @@ serve(async (req: Request) => {
         return json({
           success: true,
           provider: "google",
-          model: "gemini-2.5-flash",
+          model: "gemini-4-hydrogen",
           candidates,
           candidate_count: candidates.length,
           image_persisted: false,
@@ -6733,7 +6904,7 @@ serve(async (req: Request) => {
             analysis: payload.analysis,
             comparison: payload.comparison,
             provider: "google",
-            model: "gemini-2.5-flash",
+            model: "gemini-4-hydrogen",
             schema_version: 1,
             quality_score: payload.analysis.photo_quality.score,
           })
@@ -6818,41 +6989,69 @@ serve(async (req: Request) => {
       }
 
       case "mario.jev_decide": {
-        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        if (req.method !== "POST") {
+          return json({ error: "method_not_allowed" }, 405);
+        }
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         if (shouldBlockExternalProviderCall(offlinePolicy)) {
-          return json(buildOfflineBlockedResponseBody(offlinePolicy, { action, provider: "typesafe" }), 409);
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: "typesafe",
+            }),
+            409,
+          );
         }
-        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        const account = userId
+          ? await admin.auth.admin.getUserById(userId)
+          : null;
         try {
-          return json(await decideMario({
-            userId: account?.error ? null : account?.data.user?.id ?? null,
-            anonymous: account?.data.user?.is_anonymous !== false,
-            allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(",").map(s => s.trim()).filter(Boolean),
-            apiKey: Deno.env.get("JEV_API_KEY") ?? "", body,
-            reserve: async (id) => {
-              const { data, error } = await admin.rpc("reserve_jev_mario_call", { p_user_id: id });
-              if (error) throw new Error("quota_unavailable");
-              return data === true;
-            },
-          }));
+          return json(
+            await decideMario({
+              userId: account?.error ? null : account?.data.user?.id ?? null,
+              anonymous: account?.data.user?.is_anonymous !== false,
+              allowedUsers: (Deno.env.get("JEV_MARIO_USER_IDS") ?? "").split(
+                ",",
+              ).map((s) => s.trim()).filter(Boolean),
+              apiKey: Deno.env.get("JEV_API_KEY") ?? "",
+              body,
+              reserve: async (id) => {
+                const { data, error } = await admin.rpc(
+                  "reserve_jev_mario_call",
+                  { p_user_id: id },
+                );
+                if (error) throw new Error("quota_unavailable");
+                return data === true;
+              },
+            }),
+          );
         } catch (error) {
-          if (error instanceof MarioError) return json({ error: error.code }, error.status);
+          if (error instanceof MarioError) {
+            return json({ error: error.code }, error.status);
+          }
           return json({ error: "provider_unavailable" }, 503);
         }
       }
 
       case "expense.jev_search":
       case "expense.jev_suggest": {
-        if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+        if (req.method !== "POST") {
+          return json({ error: "method_not_allowed" }, 405);
+        }
         const offlinePolicy = parseOfflineSecureModePolicy(body);
         if (shouldBlockExternalProviderCall(offlinePolicy)) {
-          return json(buildOfflineBlockedResponseBody(offlinePolicy, {
-            action, provider: "typesafe",
-          }), 409);
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: "typesafe",
+            }),
+            409,
+          );
         }
         // Re-read the authenticated account; anonymous sessions must not spend.
-        const account = userId ? await admin.auth.admin.getUserById(userId) : null;
+        const account = userId
+          ? await admin.auth.admin.getUserById(userId)
+          : null;
         try {
           const result = await classifyJevExpense({
             semanticSearch: action === "expense.jev_search",
@@ -6861,10 +7060,15 @@ serve(async (req: Request) => {
             body,
             apiKey: Deno.env.get("JEV_API_KEY") ?? "",
             reserve: async (id) => {
-              const { data, error } = await admin.rpc("reserve_jev_expense_call", {
-                p_user_id: id,
-              });
-              if (error) throw new Error("quota_unavailable");
+              const { data, error } = await admin.rpc(
+                "reserve_jev_expense_call",
+                {
+                  p_user_id: id,
+                },
+              );
+              if (error) {
+                throw new Error("quota_unavailable");
+              }
               return data === true;
             },
           });
@@ -7302,6 +7506,22 @@ serve(async (req: Request) => {
         if (!userId && !isServiceRoleRequest(req)) {
           return json({ error: "Unauthorized" }, 401);
         }
+        const directBillingSkip = shouldSkipProviderForBilling(
+          providerId,
+          providerPaymentCooldown,
+          Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+        );
+        if (directBillingSkip.skip) {
+          return json({
+            success: false,
+            status: "paidPlanRequired",
+            provider: providerId,
+            cooldown_skipped: true,
+            skip_reason: directBillingSkip.reason,
+            message:
+              `${cfg.displayName} はプロバイダー側で課金残高不足のため一時スキップ中です。`,
+          });
+        }
         if (userId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7338,10 +7558,9 @@ serve(async (req: Request) => {
               remaining: dailyQuota.remaining ?? 0,
               quota_date: dailyQuota.quotaDate,
               reset_at: dailyQuota.resetAt,
-              message:
-                `本日のプラン別AI利用上限(${
-                  dailyQuota.dailyLimit ?? 0
-                }回)に達しました。`,
+              message: `本日のプラン別AI利用上限(${
+                dailyQuota.dailyLimit ?? 0
+              }回)に達しました。`,
             }, 429);
           }
         }
@@ -7443,6 +7662,7 @@ serve(async (req: Request) => {
           if (!resp.ok) {
             // Free tier / 課金制限検知
             if (isProviderPaymentRequired(resp.status, respText)) {
+              providerPaymentCooldown.markExhausted(providerId);
               await logProviderChat({
                 success: false,
                 statusCode: resp.status,
@@ -7747,10 +7967,9 @@ serve(async (req: Request) => {
               remaining: dailyQuota.remaining ?? 0,
               quota_date: dailyQuota.quotaDate,
               reset_at: dailyQuota.resetAt,
-              message:
-                `本日のプラン別AI利用上限(${
-                  dailyQuota.dailyLimit ?? 0
-                }回)に達しました。`,
+              message: `本日のプラン別AI利用上限(${
+                dailyQuota.dailyLimit ?? 0
+              }回)に達しました。`,
             }, 429);
           }
         }
@@ -8025,8 +8244,11 @@ serve(async (req: Request) => {
           }, 429);
         }
 
+        const structuredOutputOpts = extractStructuredOutputOptions(body);
         const requestedResponseFormat = asString(body.response_format);
-        const responseFormat = requestedResponseFormat === "json"
+        const responseFormat = requestedResponseFormat === "json" ||
+            structuredOutputOpts.responseSchema != null ||
+            structuredOutputOpts.responseMimeType === "application/json"
           ? "json"
           : requestedResponseFormat === "markdown"
           ? "markdown"
@@ -8116,6 +8338,8 @@ serve(async (req: Request) => {
             finalMessages,
             explicitModel ??
               (providerId === "anthropic" ? claudeRoute.model : undefined),
+            undefined,
+            structuredOutputOpts,
           );
           if (result.ok && result.text) {
             resultText = result.text;
@@ -8126,15 +8350,19 @@ serve(async (req: Request) => {
             usedInputTokens = result.inputTokens;
             usedOutputTokens = result.outputTokens;
           } else if (result.isRetriable) {
-            // Quota/rate-limit: try fallback chain (anthropic → google → openai)
-            const fallbackChain = ["anthropic", "google", "openai"].filter(
-              (p) => p !== providerId && p in PROVIDER_CONFIGS,
-            );
+            // Quota/rate-limit: try eligible fallback chain (google/nebius prioritized)
+            const fallbackChain = selectEligibleProviders(
+              QUOTA_FALLBACK_CHAIN,
+              providerPaymentCooldown,
+              Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+            ).filter((p) => p !== providerId && p in PROVIDER_CONFIGS);
             for (const fbPid of fallbackChain) {
               const fbResult = await callSingleProvider(
                 fbPid,
                 finalMessages,
                 fbPid === "anthropic" ? claudeRoute.model : undefined,
+                undefined,
+                structuredOutputOpts,
               );
               if (fbResult.ok && fbResult.text) {
                 console.warn(
@@ -8177,6 +8405,8 @@ serve(async (req: Request) => {
                 (manualPreference.provider === "anthropic"
                   ? claudeRoute.model
                   : undefined),
+              undefined,
+              structuredOutputOpts,
             );
             if (result.ok && result.text) {
               resultText = result.text;
@@ -8196,15 +8426,19 @@ serve(async (req: Request) => {
             outerLoop:
             for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
               const tier = TIER_ORDER[ti];
-              const providers = TIER_PROVIDERS[tier].filter((p) =>
-                p in PROVIDER_CONFIGS
-              );
+              const providers = selectEligibleProviders(
+                TIER_PROVIDERS[tier],
+                providerPaymentCooldown,
+                Deno.env.get("AI_HUB_DISABLED_PROVIDERS"),
+              ).filter((p) => p in PROVIDER_CONFIGS);
               for (const pid of providers) {
                 const result = await callSingleProvider(
                   pid,
                   finalMessages,
                   explicitModel ??
                     (pid === "anthropic" ? claudeRoute.model : undefined),
+                  undefined,
+                  structuredOutputOpts,
                 );
                 if (result.ok && result.text) {
                   resultText = result.text;
@@ -8270,11 +8504,27 @@ serve(async (req: Request) => {
         );
         let parsedJson: unknown = null;
         let parseError: string | undefined;
+        let schemaValidation:
+          | ReturnType<typeof validateAgainstJsonSchema>
+          | undefined;
         if (responseFormat === "json") {
-          try {
-            parsedJson = JSON.parse(stripMarkdownCodeFence(resultText));
-          } catch (error) {
-            parseError = String(error);
+          if (structuredOutputOpts.responseSchema != null) {
+            schemaValidation = validateAgainstJsonSchema(
+              resultText,
+              structuredOutputOpts.responseSchema,
+            );
+            parsedJson = schemaValidation.parsed;
+            if (!schemaValidation.valid) {
+              parseError = schemaValidation.issues
+                .map((issue) => `${issue.path}: ${issue.message}`)
+                .join("; ");
+            }
+          } else {
+            try {
+              parsedJson = JSON.parse(stripMarkdownCodeFence(resultText));
+            } catch (error) {
+              parseError = String(error);
+            }
           }
         }
 
@@ -8317,6 +8567,8 @@ serve(async (req: Request) => {
           response_format: responseFormat,
           parsed_json: parsedJson,
           parse_error: parseError,
+          schema_valid: schemaValidation?.valid ?? null,
+          schema_issues: schemaValidation?.issues ?? [],
           observability: {
             provider: usedProvider,
             model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
@@ -8332,6 +8584,20 @@ serve(async (req: Request) => {
             routing_use_case: routingUseCase,
           },
         });
+      }
+
+      case "ai_router.structured.route":
+      case "ai_router.structured.validate_and_save":
+      case "ai_router.structured.list_preferences": {
+        const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const result = await handleStructuredRoutingAction({
+          action,
+          body,
+          userId,
+          isElevatedAutomation: isServiceRoleRequest(req),
+          store: createSupabaseStructuredRoutingStore(admin),
+        });
+        return json(result.body, result.status);
       }
 
       case "provider.list": {
@@ -8516,6 +8782,15 @@ serve(async (req: Request) => {
 
       case "voice.tts": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const clonedTtsBlock = await guardClonedVoiceGeneration({
+          store: createSupabaseVoiceCloneConsentStore(admin),
+          userId,
+          body,
+          action: "voice.tts",
+        });
+        if (clonedTtsBlock) {
+          return json(clonedTtsBlock.body, clonedTtsBlock.status);
+        }
         const text = String(body.text ?? "").slice(0, 5000);
         const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
@@ -8701,6 +8976,15 @@ serve(async (req: Request) => {
 
       case "voice.dubbing.generate": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const clonedDubbingBlock = await guardClonedVoiceGeneration({
+          store: createSupabaseVoiceCloneConsentStore(admin),
+          userId,
+          body,
+          action: "voice.dubbing.generate",
+        });
+        if (clonedDubbingBlock) {
+          return json(clonedDubbingBlock.body, clonedDubbingBlock.status);
+        }
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
         if (!elevenKey) {
           return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
@@ -9089,6 +9373,36 @@ serve(async (req: Request) => {
         return json({ success: true, transcript: transcriptText });
       }
 
+      case "voice.clone.consent.status":
+      case "voice.clone.consent.accept":
+      case "voice.clone.consent.submit_recording":
+      case "voice.clone.consent.revoke":
+      case "voice.clone.generate": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        try {
+          const result = await handleVoiceCloneConsentAction({
+            action,
+            store: createSupabaseVoiceCloneConsentStore(admin),
+            userId,
+            body,
+          });
+          return json(result.body, result.status);
+        } catch (err) {
+          const errorId = crypto.randomUUID();
+          console.error("voice.clone action failed", {
+            errorId,
+            action,
+            detail: err instanceof Error
+              ? err.message.slice(0, 500)
+              : String(err).slice(0, 500),
+          });
+          return json({
+            error: "voice_clone_consent_unavailable",
+            error_id: errorId,
+          }, 503);
+        }
+      }
+
       case "home.recommend": {
         // Windows版#94: home_tier AI おすすめ機能 (VSCode#98)
         // 現状はヒューリスティックで user_feature_usage を集計し、
@@ -9315,7 +9629,7 @@ serve(async (req: Request) => {
 `;
         try {
           const r = await fetchWithProviderTimeout(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiApiKey}`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -9323,7 +9637,7 @@ serve(async (req: Request) => {
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                   responseMimeType: "application/json",
-                  temperature: 0.2,
+                  thinkingConfig: { thinkingLevel: "LOW" },
                 },
               }),
             },

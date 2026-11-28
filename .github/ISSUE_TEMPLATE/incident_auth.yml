@@ -1,0 +1,99 @@
+name: 障害報告（認証）
+description: ログイン・セッション・MFA・OAuth など認証まわりの不具合や障害を報告する
+title: "[Incident][Auth] "
+labels: ["bug", "supabase"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        認証まわりの不具合・障害の報告フォームです。手順は [`docs/INCIDENT_ESCALATION_RUNBOOK.md`](https://github.com/kanta13jp1/my_web_app/blob/main/docs/INCIDENT_ESCALATION_RUNBOOK.md) を参照してください。
+
+        **パスワード・トークン・JWT・ワンタイムコード・Cookie・メールアドレスは絶対に貼らないでください。**
+        認可や秘密情報の漏えいが疑われる場合は、この公開フォームに詳細を書かず、所有者へ直接連絡してください。
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重大度の目安（docs/ONCALL_INCIDENT_SOP.md §1）
+      description: 迷ったら一段上を選んでください。最終判断は担当者が行います。
+      options:
+        - SEV1（広範に利用不能・データ毀損や秘密情報露出の恐れ）
+        - SEV2（主要機能の一部が劣化・回避が難しい）
+        - SEV3（軽微・回避策あり）
+    validations:
+      required: true
+  - type: input
+    id: occurred_at
+    attributes:
+      label: 発生時刻（タイムゾーン付き）
+      placeholder: 例 2026-11-26 03:30 JST
+    validations:
+      required: true
+  - type: dropdown
+    id: auth_flow
+    attributes:
+      label: 影響を受けた認証の流れ
+      multiple: true
+      options:
+        - メール/パスワードでのログイン
+        - OAuth / ソーシャルログイン
+        - マジックリンク / ワンタイムコード
+        - セッション維持・自動ログアウト
+        - MFA
+        - 新規登録・アカウント削除
+        - その他
+    validations:
+      required: true
+  - type: dropdown
+    id: status_check
+    attributes:
+      label: 公式 Status ページの確認結果
+      description: https://status.supabase.com/ を確認してください。
+      options:
+        - 未確認
+        - 該当するインシデントの掲載なし
+        - 該当するインシデントが掲載されている（URLを下の欄に記載）
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影響範囲
+      description: 影響を受けるユーザー・環境・件数の目安（個人を特定する情報は書かない）
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: 期待する動作 / 実際の動作
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: エラーコード・秘匿情報を除いたログ
+      description: HTTP ステータス・エラーコード・Sentry/CI のリンクなど。トークンや個人情報は必ず除いてください。
+      render: text
+  - type: textarea
+    id: tried
+    attributes:
+      label: 試した対処と結果（調査の段階）
+      description: 自前確認 → 公式ドキュメント → コミュニティ → AI 支援 → 外部サポート のどこまで進めたか
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 確認事項
+      options:
+        - label: 既存の Issue と docs/incident-reports を検索し、重複していないことを確認しました
+          required: true
+        - label: 秘匿情報・個人情報を含めていません
+          required: true

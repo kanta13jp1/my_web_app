@@ -131,6 +131,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
         title: const Row(
           children: [
             Icon(Icons.music_note, color: Color(0xFFFF6B35)),
