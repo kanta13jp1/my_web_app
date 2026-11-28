@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/landing_story_journey.dart';
 
@@ -9,6 +10,7 @@ void main() {
     VoidCallback? onPrimaryAction,
     VoidCallback? onSecondaryAction,
     bool disableAnimations = false,
+    double textScale = 1,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -21,9 +23,10 @@ void main() {
       MaterialApp(
         home: Builder(
           builder: (context) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(disableAnimations: disableAnimations),
+            data: MediaQuery.of(context).copyWith(
+              disableAnimations: disableAnimations,
+              textScaler: TextScaler.linear(textScale),
+            ),
             child: Scaffold(
               body: SingleChildScrollView(
                 controller: controller,
@@ -90,6 +93,24 @@ void main() {
     expect(secondaryTaps, 1);
   });
 
+  testWidgets(
+    'immediate reduced-motion chapter switching never drops sequential taps',
+    (tester) async {
+      await pumpJourney(
+        tester,
+        size: const Size(1200, 900),
+        disableAnimations: true,
+      );
+
+      for (final index in <int>[0, 1, 2, 3, 0]) {
+        await tester.tap(find.byKey(Key('landing_story_dot_$index')));
+        await tester.pump();
+        expect(find.byKey(Key('landing_story_chapter_$index')), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('mobile layout keeps the final chapter usable without overflow', (
     tester,
   ) async {
@@ -109,6 +130,98 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('landing_story_media_3')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'ultra-short landscape, enlarged text, and rotation keep CTAs unclipped',
+    (tester) async {
+      await pumpJourney(
+        tester,
+        size: const Size(667, 375),
+        disableAnimations: true,
+      );
+      await tester.tap(find.byKey(const Key('landing_story_dot_3')));
+      await tester.pump();
+      final shortPrimary = tester.getRect(
+        find.byKey(const Key('landing_story_primary_cta')),
+      );
+      final shortSecondary = tester.getRect(
+        find.byKey(const Key('landing_story_secondary_cta')),
+      );
+      final shortProgress = tester.getRect(
+        find.byKey(const Key('landing_story_progress')),
+      );
+      expect(shortPrimary.height, greaterThanOrEqualTo(44));
+      expect(shortSecondary.height, greaterThanOrEqualTo(44));
+      expect(shortPrimary.bottom, lessThanOrEqualTo(shortProgress.top));
+      expect(shortSecondary.bottom, lessThanOrEqualTo(shortProgress.top));
+      expect(tester.takeException(), isNull);
+
+      await pumpJourney(
+        tester,
+        size: const Size(390, 844),
+        disableAnimations: true,
+        textScale: 1.5,
+      );
+      await tester.tap(find.byKey(const Key('landing_story_dot_3')));
+      await tester.pump();
+      final scaledPrimary = tester.getRect(
+        find.byKey(const Key('landing_story_primary_cta')),
+      );
+      final scaledSecondary = tester.getRect(
+        find.byKey(const Key('landing_story_secondary_cta')),
+      );
+      final scaledProgress = tester.getRect(
+        find.byKey(const Key('landing_story_progress')),
+      );
+      expect(scaledPrimary.top, greaterThanOrEqualTo(0));
+      expect(scaledPrimary.height, greaterThanOrEqualTo(44));
+      expect(scaledSecondary.height, greaterThanOrEqualTo(44));
+      expect(scaledSecondary.bottom, lessThanOrEqualTo(scaledProgress.top));
+      expect(scaledSecondary.bottom, lessThanOrEqualTo(844));
+      expect(tester.takeException(), isNull);
+
+      tester.view.physicalSize = const Size(844, 390);
+      await tester.pump();
+      await tester.pump();
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pump();
+      await tester.pump();
+      expect(
+        find.byKey(const Key('landing_story_primary_cta')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('keyboard navigation moves through story chapters', (
+    tester,
+  ) async {
+    await pumpJourney(
+      tester,
+      size: const Size(1200, 900),
+      disableAnimations: true,
+    );
+
+    final firstDot = find.byKey(const Key('landing_story_dot_0'));
+    await tester.tap(firstDot);
+    await tester.pump();
+    expect(find.byKey(const Key('landing_story_chapter_0')), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(find.byKey(const Key('landing_story_chapter_1')), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pump();
+    expect(find.byKey(const Key('landing_story_chapter_3')), findsOneWidget);
+    expect(find.byKey(const Key('landing_story_primary_cta')), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    await tester.pump();
+    expect(find.byKey(const Key('landing_story_chapter_0')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
