@@ -108,8 +108,7 @@ void main() {
       ]) {
         expect(sql, contains(metric));
       }
-      const grantPrefix =
-          'grant execute on function '
+      const grantPrefix = 'grant execute on function '
           'public.get_tiger_plan_economics_summary(integer)';
       final expectedGrantRole = <String>['service', 'role'].join('_');
       expect(sql, contains('$grantPrefix\n  to $expectedGrantRole'));
