@@ -30,6 +30,12 @@ import {
   REIWA_MEMBER_PAGE_URL,
 } from "./reiwa_tracker.ts";
 import {
+  buildCdpMemberSnapshot,
+  CDP_DATASET,
+  parseCdpSnapshotRecord,
+  persistCdpSnapshot,
+} from "./cdp_tracker.ts";
+import {
   buildElectionIntelligenceSnapshot,
   type ElectionModeId,
   type ElectionModeRegistry,
@@ -506,12 +512,18 @@ interface ReiwaSnapshotRequest {
   action: "reiwaSnapshot" | "reiwaSnapshotAndQueue";
 }
 
+interface CdpSnapshotRequest {
+  action: "cdpSnapshot" | "cdpSnapshotAndQueue";
+  snapshotPayload?: unknown;
+}
+
 type ParsedRequest =
   | SnapshotRequest
   | MemberDetailRequest
   | KomeitoSnapshotRequest
   | IshinSnapshotRequest
-  | ReiwaSnapshotRequest;
+  | ReiwaSnapshotRequest
+  | CdpSnapshotRequest;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -658,6 +670,79 @@ serve(async (req) => {
               candidatesCreated: reiwaPersistence.candidatesCreated,
               snapshotId: reiwaPersistence.snapshotRow.id,
               candidateIds: reiwaPersistence.candidateRows.map((row) => row.id),
+            },
+          }
+          : {}),
+      });
+    }
+    if (
+      parsedRequest.action === "cdpSnapshot" ||
+      parsedRequest.action === "cdpSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "cdpSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      if (
+        parsedRequest.action === "cdpSnapshot" &&
+        parsedRequest.snapshotPayload === undefined
+      ) {
+        const latestRow = await createLocalElectionHubStore().getLatestSnapshot(
+          CDP_DATASET,
+        );
+        const persisted = latestRow
+          ? parseCdpSnapshotRecord(latestRow.metadata.snapshot)
+          : null;
+        if (!latestRow || !persisted) {
+          throw new HttpError(
+            404,
+            "No persisted CDP member snapshot found.",
+          );
+        }
+        const rawObservedAt = latestRow.metadata.observed_at;
+        const observedAt =
+          typeof rawObservedAt === "string" && rawObservedAt.trim() !== ""
+            ? rawObservedAt.trim()
+            : latestRow.created_at;
+        return jsonResponse({
+          success: true,
+          snapshot: persisted,
+          snapshotId: latestRow.id,
+          observedAt,
+        });
+      }
+      const cdpSnapshot = buildCdpMemberSnapshot(parsedRequest.snapshotPayload);
+      if (!cdpSnapshot) {
+        throw new HttpError(
+          400,
+          "CDP member snapshot payload is invalid or below sanity thresholds.",
+        );
+      }
+      const cdpPersistence = parsedRequest.action === "cdpSnapshotAndQueue"
+        ? await persistCdpSnapshot(
+          createLocalElectionHubStore(),
+          cdpSnapshot,
+          new Date().toISOString(),
+        )
+        : null;
+      return jsonResponse({
+        success: true,
+        snapshot: cdpSnapshot,
+        ...(cdpPersistence
+          ? {
+            persistence: {
+              dataset: cdpPersistence.dataset,
+              datasetVersion: cdpPersistence.datasetVersion,
+              snapshotHash: cdpPersistence.snapshotHash,
+              previousSnapshotId: cdpPersistence.previousSnapshotId,
+              previousSnapshotHash: cdpPersistence.previousSnapshotHash,
+              baselineCreated: cdpPersistence.baselineCreated,
+              snapshotCreated: cdpPersistence.snapshotCreated,
+              deduplicated: cdpPersistence.deduplicated,
+              hasChanges: cdpPersistence.hasChanges,
+              candidateCount: cdpPersistence.candidateCount,
+              candidatesCreated: cdpPersistence.candidatesCreated,
+              snapshotId: cdpPersistence.snapshotRow.id,
+              candidateIds: cdpPersistence.candidateRows.map((row) => row.id),
             },
           }
           : {}),
@@ -1105,6 +1190,24 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   ) {
     return { action: "reiwaSnapshotAndQueue" };
   }
+  if (
+    requestedAction === "cdpSnapshot" ||
+    requestedAction === "cdp_snapshot"
+  ) {
+    return {
+      action: "cdpSnapshot",
+      snapshotPayload: body.snapshotPayload,
+    };
+  }
+  if (
+    requestedAction === "cdpSnapshotAndQueue" ||
+    requestedAction === "cdp_snapshot_and_queue"
+  ) {
+    return {
+      action: "cdpSnapshotAndQueue",
+      snapshotPayload: body.snapshotPayload,
+    };
+  }
 
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -1126,6 +1229,12 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
       queryAction === "reiwa_snapshot"
     ) {
       return { action: "reiwaSnapshot" };
+    }
+    if (
+      queryAction === "cdpSnapshot" ||
+      queryAction === "cdp_snapshot"
+    ) {
+      return { action: "cdpSnapshot" };
     }
     return {
       action: "snapshot",

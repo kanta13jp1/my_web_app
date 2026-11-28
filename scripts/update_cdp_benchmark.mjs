@@ -10,7 +10,7 @@
 // 週次デプロイを避ける)。スクレイプ失敗の都道府県は出力から除外し、Flutter 側は seed を
 // 維持する。明らかな取得失敗 (大量 0) では書き込まず exit 1 して既存データを守る。
 
-import { writeFile, readFile } from "node:fs/promises";
+import { writeFile, readFile, mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -112,7 +112,29 @@ async function mapWithConcurrency(items, limit, task) {
   return results;
 }
 
+function parseSnapshotOutArg(argv) {
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--snapshot-out") {
+      const next = argv[i + 1];
+      if (!next || next.startsWith("--")) {
+        throw new Error("--snapshot-out requires a file path.");
+      }
+      return next;
+    }
+    if (arg.startsWith("--snapshot-out=")) {
+      const value = arg.slice("--snapshot-out=".length);
+      if (!value) {
+        throw new Error("--snapshot-out= requires a non-empty file path.");
+      }
+      return value;
+    }
+  }
+  return null;
+}
+
 async function main() {
+  const snapshotOut = parseSnapshotOutArg(process.argv.slice(2));
   const scraped = await mapWithConcurrency(
     PREFECTURES,
     CONCURRENCY,
@@ -150,6 +172,16 @@ async function main() {
     process.exit(1);
   }
 
+  const payload = { source: BASE_URL, prefectures: byPrefecture };
+  const json = `${JSON.stringify(payload, null, 2)}\n`;
+
+  if (snapshotOut) {
+    await mkdir(dirname(snapshotOut), { recursive: true });
+    await writeFile(snapshotOut, json, "utf8");
+    console.log(`Wrote snapshot payload to ${snapshotOut}`);
+    return;
+  }
+
   const outputPath = join(
     dirname(fileURLToPath(import.meta.url)),
     "..",
@@ -157,8 +189,6 @@ async function main() {
     "data",
     "cdp_local_members.json",
   );
-  const payload = { source: BASE_URL, prefectures: byPrefecture };
-  const json = `${JSON.stringify(payload, null, 2)}\n`;
 
   let previous = "";
   try {
