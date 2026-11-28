@@ -72,6 +72,7 @@ const List<String> kAllAppRoutes = <String>[
   '/auction-marketplace',
   '/audio-effects-processor',
   '/agent-board',
+  '/deadline-weight',
   '/autonomous-ops',
   '/autonomous-ops-console',
   '/behavior-log',

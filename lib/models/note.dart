@@ -17,6 +17,7 @@ class Note {
   final String captureSource;
   final DateTime? inboxSavedAt;
   final List<String> tags;
+  final int? parentNoteId;
 
   Note({
     required this.id,
@@ -35,7 +36,14 @@ class Note {
     this.captureSource = 'editor',
     this.inboxSavedAt,
     this.tags = const <String>[],
+    this.parentNoteId,
   });
+
+  static int? _parseNullableInt(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return raw == null ? null : int.tryParse(raw.toString());
+  }
 
   factory Note.fromJson(Map<String, dynamic> json) {
     return Note(
@@ -61,6 +69,7 @@ class Note {
           ? DateTime.parse(json['inbox_saved_at'] as String)
           : null,
       tags: NoteTagService.normalize(json['tags']),
+      parentNoteId: _parseNullableInt(json['parent_note_id']),
     );
   }
 
@@ -82,6 +91,7 @@ class Note {
       'capture_source': captureSource,
       'inbox_saved_at': inboxSavedAt?.toIso8601String(),
       'tags': tags,
+      'parent_note_id': parentNoteId,
     };
   }
 
