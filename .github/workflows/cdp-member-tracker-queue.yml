@@ -1,0 +1,102 @@
+name: CDP Member Tracker Queue
+
+# Issue #4026: Scrapes official CDP 47-prefecture local member pages via
+# scripts/update_cdp_benchmark.mjs daily and creates HITL review candidates
+# via local-election-intelligence when counts change. Never calls x.post.
+on:
+  schedule:
+    # Daily 23:45 UTC (= 08:45 JST).
+    - cron: "45 23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Scrape and validate snapshot without persisting or queueing"
+        type: boolean
+        default: true
+
+concurrency:
+  group: cdp-member-tracker-queue
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  queue:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+
+    steps:
+      - name: Validate service-role secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_SERVICE_ROLE_KEY:-}" || {
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "22"
+
+      - name: Scrape CDP local members via update_cdp_benchmark.mjs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/update_cdp_benchmark.mjs --snapshot-out "${RUNNER_TEMP}/cdp-scraped.json"
+
+      - name: Post and optionally queue CDP member snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          dry_run="${DRY_RUN_INPUT:-false}"
+          action="cdpSnapshotAndQueue"
+          if [ "${dry_run}" = "true" ]; then
+            action="cdpSnapshot"
+          fi
+          request_file="${RUNNER_TEMP}/cdp-request.json"
+          response_file="${RUNNER_TEMP}/cdp-snapshot.json"
+          jq -n \
+            --arg action "${action}" \
+            --slurpfile snap "${RUNNER_TEMP}/cdp-scraped.json" \
+            '{action: $action, snapshotPayload: $snap[0]}' \
+            > "${request_file}"
+          if ! curl --fail-with-body --silent --show-error \
+            --max-time 60 \
+            --retry 2 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --request POST \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data-binary "@${request_file}" \
+            --output "${response_file}" \
+            "${SUPABASE_URL}/functions/v1/local-election-intelligence"; then
+            if jq -e . "${response_file}" >/dev/null 2>&1; then
+              jq '{success, error}' "${response_file}"
+            fi
+            exit 1
+          fi
+          jq -e '.success == true and (.snapshot.totalLocalMembers | type == "number")' \
+            "${response_file}" >/dev/null
+          jq '{
+            success,
+            totalLocalMembers: .snapshot.totalLocalMembers,
+            reportedPrefectureCount: .snapshot.reportedPrefectureCount,
+            activePrefectureCount: .snapshot.activePrefectureCount,
+            persistence: (.persistence // null)
+          }' "${response_file}"
