@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 import requests
 
 ANTHROPIC_API = "https://api.anthropic.com/v1/messages"
-GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent"
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 4000
 QUOTA_ERRORS = {429, 529}
@@ -63,7 +63,10 @@ def call_gemini(api_key: str, prompt: str) -> str:
     resp = requests.post(
         f"{GEMINI_API}?key={api_key}",
         headers={"content-type": "application/json"},
-        json={"contents": [{"parts": [{"text": prompt}]}]},
+        json={
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"thinkingConfig": {"thinkingLevel": "LOW"}},
+        },
         timeout=120,
     )
     if resp.status_code in QUOTA_ERRORS:

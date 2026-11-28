@@ -20,12 +20,14 @@ class AssetBorrowingCalendarBadge extends StatelessWidget {
     required bool hasBorrowing,
     required bool hasRevolvingUsage,
     required bool hasDebtGuardViolation,
+    Brightness brightness = Brightness.light,
   }) {
+    final isDark = brightness == Brightness.dark;
     if (hasRevolvingUsage || hasDebtGuardViolation) {
-      return const Color(0xFFFFE4E6);
+      return isDark ? const Color(0xFF4C0519) : const Color(0xFFFFE4E6);
     }
     if (hasBorrowing) {
-      return const Color(0xFFFEF3C7);
+      return isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7);
     }
     return null;
   }
@@ -49,27 +51,34 @@ class AssetBorrowingCalendarBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pills = <Widget>[
       if (hasBorrowing)
-        const _DebtBadgePill(
+        _DebtBadgePill(
           label: '借入',
-          backgroundColor: Color(0xFFFEF3C7),
-          borderColor: Color(0xFFD97706),
-          textColor: Color(0xFF92400E),
+          backgroundColor:
+              isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7),
+          borderColor:
+              isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706),
+          textColor: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
         ),
       if (hasRevolvingUsage)
-        const _DebtBadgePill(
+        _DebtBadgePill(
           label: 'リボ',
-          backgroundColor: Color(0xFFFFE4E6),
-          borderColor: Color(0xFFE11D48),
-          textColor: Color(0xFF9F1239),
+          backgroundColor:
+              isDark ? const Color(0xFF4C0519) : const Color(0xFFFFE4E6),
+          borderColor:
+              isDark ? const Color(0xFFFB7185) : const Color(0xFFE11D48),
+          textColor: isDark ? const Color(0xFFFECDD3) : const Color(0xFF9F1239),
         ),
       if (hasDebtGuardViolation)
-        const _DebtBadgePill(
+        _DebtBadgePill(
           label: '借金違反',
-          backgroundColor: Color(0xFFFEE2E2),
-          borderColor: Color(0xFFB91C1C),
-          textColor: Color(0xFF991B1B),
+          backgroundColor:
+              isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2),
+          borderColor:
+              isDark ? const Color(0xFFF87171) : const Color(0xFFB91C1C),
+          textColor: isDark ? const Color(0xFFFECACA) : const Color(0xFF991B1B),
         ),
     ];
 
