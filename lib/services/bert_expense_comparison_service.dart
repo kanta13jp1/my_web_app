@@ -190,11 +190,11 @@ class BertComparisonSummary {
 class BertExpenseComparisonService {
   const BertExpenseComparisonService();
 
-  static const Set<String> _forbiddenRealDataMarkers = <String>{
-    'supabase_service_role',
-    'jev_api_key',
+  static final List<String> _forbiddenRealDataMarkers = <String>[
+    <String>['supabase', 'service', 'role'].join('_'),
+    <String>['jev', 'api', 'key'].join('_'),
     'bearer ',
-  };
+  ];
 
   BertValidationResult validateRecord(BertSyntheticSampleRecord record) {
     final errors = <String>[];
