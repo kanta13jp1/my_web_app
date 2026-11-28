@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>スキル指示ラベルと JSON 出力後段チェック 検証ツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <a href="/">my_web_app（自分株式会社）</a>
+      <p class="eyebrow">SKILL OUTPUT • DETERMINISTIC JSON VALIDATOR</p>
+      <h1>スキル指示ラベルと JSON 出力後段チェック</h1>
+      <p class="lead">
+        AI に JSON 形式での応答を指示しても、Markdown のコードフェンス（```json）が付いたり、例から古い値をコピーしたりすることがあります。
+        my_web_app の決定論チェックと同じ規則で、形式除去・必須キー・タブ文字保持・サンプル値混入・指定外キーをブラウザ内で検査します。
+      </p>
+    </header>
+
+    <section aria-labelledby="sec-eval">
+      <h2 id="sec-eval">1. AI 応答 JSON の後段チェック</h2>
+      <p class="notice">
+        外部送信や AI 呼び出しは行わないブラウザ内検査です。初期版の <code>.trim().isEmpty</code> 判定では、CSV の区切り文字に使うタブ文字（<code>"\t"</code>）まで「空欄」と誤判定していました。修正版ではタブ文字を保持しつつ、空白のみの文字列やサンプル値のコピーを遮断します。
+      </p>
+
+      <div class="presets" role="group" aria-label="代表プリセット">
+        <button type="button" data-preset="deploy-ok">正常例: deploy JSON（フェンスなし）</button>
+        <button type="button" data-preset="csv-fenced">実例: csv フェンス付き＋タブ区切り</button>
+        <button type="button" data-preset="copied-missing">異常例: サンプル値コピー＋必須キー欠落</button>
+        <button type="button" data-preset="extra-broken">異常例: 指定外キー混入＋壊れたJSON</button>
+      </div>
+
+      <div class="input-stack">
+        <div class="field">
+          <label for="raw-output">AI 応答テキスト（生 JSON または ```json フェンス付き）</label>
+          <textarea id="raw-output" rows="5" autocomplete="off" spellcheck="false"></textarea>
+        </div>
+
+        <div class="input-grid">
+          <div class="field">
+            <label for="required-keys">必須キー一覧（カンマ区切り）</label>
+            <input id="required-keys" type="text" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field checkbox-field">
+            <label for="allow-extra">
+              <input id="allow-extra" type="checkbox">
+              指定外キーを許可する
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="example-json">参考例の値（コピー禁止チェック用 JSON）</label>
+          <textarea id="example-json" rows="3" autocomplete="off" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="eval-btn" type="button">JSON出力を検査する</button>
+        <button id="download-btn" type="button" class="secondary">結果を JSON 保存</button>
+      </div>
+
+      <p id="error" role="alert" aria-live="assertive"></p>
+      <div id="result" role="status" aria-live="polite"></div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>検出されたルール違反と正規化結果</caption>
+          <thead>
+            <tr>
+              <th>コード</th>
+              <th>種別</th>
+              <th>内容</th>
+            </tr>
+          </thead>
+          <tbody id="violations-body"></tbody>
+        </table>
+      </div>
+
+      <div class="normalized-wrap">
+        <h3>正規化後 JSON（コードフェンス除去後）</h3>
+        <pre id="normalized-json">(未検査)</pre>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-selfcheck">
+      <h2 id="sec-selfcheck">2. 保存済み 20 応答の一括セルフチェック</h2>
+      <p>
+        5 課題 × 2 条件（A: ラベルなし / B: 必須・例・任意ラベルあり）× 2 反復の保存済み 20 応答を、修正前（<code>.trim()</code> 誤ブロックあり）と修正後で一括比較します。
+      </p>
+      <div class="actions">
+        <button id="selfcheck-btn" type="button">保存済み20応答を一括検証する</button>
+      </div>
+      <p id="selfcheck-status" role="status" aria-live="polite">ボタンをクリックして保存済み 20 応答を一括検証できます。</p>
+      <div class="table-wrap">
+        <table>
+          <caption>20 応答の検証結果一覧</caption>
+          <thead>
+            <tr>
+              <th>試行</th>
+              <th>条件</th>
+              <th>素 JSON</th>
+              <th>コードフェンス</th>
+              <th>修正前 trim</th>
+              <th>修正後判定</th>
+            </tr>
+          </thead>
+          <tbody id="selfcheck-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

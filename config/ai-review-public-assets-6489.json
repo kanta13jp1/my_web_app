@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "repository": "kanta13jp1/my_web_app",
+  "pull_request": 6489,
+  "provider": "google-gemini",
+  "endpoint": "https://generativelanguage.googleapis.com/v1beta/",
+  "method": "generateContent",
+  "owner_consent": "2026-11-28 owner selection of Nano Banana Candidate 3 minimal emblem and sequential approval in Antigravity chat",
+  "related_paths": [
+    "web/favicon.png",
+    "web/icons/Icon-192.png",
+    "web/icons/Icon-512.png",
+    "web/icons/Icon-maskable-192.png",
+    "web/icons/Icon-maskable-512.png",
+    "web/index.html"
+  ],
+  "assets": [
+    {
+      "path": "web/favicon.png",
+      "base_blob": "8aaa46ac1ae21512746f852a42ba87e4165dfdd1",
+      "head_blob": "aab369ea3afa6e5e3ed5455a160edd69b348bbfc",
+      "sha256": "53582eda4bbe5cb80d1c1d8e2781a66e37db7cb15009f7f46c9c7b83351d30e3",
+      "bytes": 2614,
+      "width": 48,
+      "height": 48,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "e1eb7d4668f9a4c39c66356fc68df728138d3712"
+    },
+    {
+      "path": "web/icons/Icon-192.png",
+      "base_blob": "b749bfef07473333cf1dd31e9eed89862a5d52aa",
+      "head_blob": "35d8df9e8cde433d4a156f5e3a5f8f9653601e50",
+      "sha256": "d5e8f49f193da3a9743ccc3c4c3687b901d9d44354bebd52d57384432dd14431",
+      "bytes": 23994,
+      "width": 192,
+      "height": 192,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "e1eb7d4668f9a4c39c66356fc68df728138d3712"
+    },
+    {
+      "path": "web/icons/Icon-512.png",
+      "base_blob": "88cfd48dff1169879ba46840804b412fe02fefd6",
+      "head_blob": "3ff9c76b5521cac90369a91c98645f2bf899cab2",
+      "sha256": "43a9623b16d44e0b80bdbb5cab229844db186e3d561bcfb3298472c9944bb32f",
+      "bytes": 172209,
+      "width": 512,
+      "height": 512,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "e1eb7d4668f9a4c39c66356fc68df728138d3712"
+    },
+    {
+      "path": "web/icons/Icon-maskable-192.png",
+      "base_blob": "eb9b4d76e525556d5d89141648c724331630325d",
+      "head_blob": "11c9df5d2cebf84eaea227a5680e2bba6375549e",
+      "sha256": "95049d993e7fbe273949ca3592826fb132f2bafe69e3b5afa2ca38af87066db3",
+      "bytes": 14746,
+      "width": 192,
+      "height": 192,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "e1eb7d4668f9a4c39c66356fc68df728138d3712"
+    },
+    {
+      "path": "web/icons/Icon-maskable-512.png",
+      "base_blob": "d69c56691fbdb0b7efa65097c7cc1edac12a6d3e",
+      "head_blob": "624b945c7f876f0872145f0555e1bee3a74e8fd7",
+      "sha256": "42fbcb672f3a54ae1d0f6d9c21b8efd30d1e9f539cf9262338c377cb55e23c26",
+      "bytes": 95159,
+      "width": 512,
+      "height": 512,
+      "bit_depth": 8,
+      "color_type": 2,
+      "mime_type": "image/png",
+      "source_commit": "e1eb7d4668f9a4c39c66356fc68df728138d3712"
+    }
+  ]
+}

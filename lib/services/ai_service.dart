@@ -144,7 +144,7 @@ class AIService {
       MagiSystemSettings.defaultBalthasarModel;
   static const String _defaultGeminiModel =
       MagiSystemSettings.defaultCasperModel;
-  static const String _defaultDeepSeekModel = 'deepseek-chat';
+  static const String _defaultDeepSeekModel = 'deepseek-v4-flash';
 
   AIService([
     SupabaseClient? supabaseClient,

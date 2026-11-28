@@ -285,6 +285,14 @@ def review(directory):
                 'for removal of the 5-question guided-intake copy, clean hero headline phrase wrapping without mid-word breaks, '
                 'WCAG 1.4.11 input border contrast, layout integrity, and alignment with the Flutter code diff. '
             )
+        elif state['pr'] == 6489:
+            image_guidance = (
+                'Actually inspect all five updated Nano Banana favicon and PWA/maskable PNG icons '
+                '(web/favicon.png 48x48, web/icons/Icon-192.png, web/icons/Icon-512.png, '
+                'web/icons/Icon-maskable-192.png, web/icons/Icon-maskable-512.png) '
+                'for visual consistency, 80% safe-zone circular maskable clearance, small-size legibility, '
+                'absence of unintended text or gradient seams, and alignment with web/index.html. '
+            )
         else:
             image_guidance = 'Actually inspect all three character cells, transparency, visual content and code integration. '
         rules += (
