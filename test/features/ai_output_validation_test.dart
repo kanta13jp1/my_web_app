@@ -171,6 +171,86 @@ void main() {
       );
 
       test(
+        'preserves tab delimiter, blocks blank strings, extra fields, and copied example values',
+        () {
+          final csvBare = DeterministicAiOutputValidator.evaluate(
+            prompt: 'CSV出力設定を作る',
+            candidateOutput:
+                r'{"delimiter":"\t","encoding":"utf-8","header":false,"columns":["sku","qty"]}',
+            formatContract: OutputFormatContract.jsonObject,
+            requiredFields: const <String>[
+              'delimiter',
+              'encoding',
+              'header',
+              'columns',
+            ],
+            disallowExtraFields: true,
+            forbiddenExampleValues: const <String, Object?>{
+              'delimiter': ',',
+              'encoding': 'shift_jis',
+              'header': true,
+            },
+            now: DateTime.utc(2026, 11, 28, 0, 30),
+          );
+          expect(csvBare.decision, ValidationDecision.passed);
+          expect(csvBare.violations, isEmpty);
+
+          final csvFenced = DeterministicAiOutputValidator.evaluate(
+            prompt: 'CSV出力設定を作る',
+            candidateOutput: '```json\n'
+                r'{"delimiter": "\t", "encoding": "utf-8", "header": false, "columns": ["sku", "qty"]}'
+                '\n```',
+            formatContract: OutputFormatContract.jsonObject,
+            requiredFields: const <String>[
+              'delimiter',
+              'encoding',
+              'header',
+              'columns',
+            ],
+            disallowExtraFields: true,
+            forbiddenExampleValues: const <String, Object?>{
+              'delimiter': ',',
+              'encoding': 'shift_jis',
+              'header': true,
+            },
+            now: DateTime.utc(2026, 11, 28, 0, 31),
+          );
+          expect(csvFenced.decision, ValidationDecision.remediated);
+          expect(
+            csvFenced.violations.map((v) => v.code).toList(),
+            <String>['json_code_fence_stripped'],
+          );
+
+          final blankAndCopied = DeterministicAiOutputValidator.evaluate(
+            prompt: 'deploy設定を作る',
+            candidateOutput:
+                '{"service":"demo","replicas":3,"region":"ap-northeast-1","health_path":"   ","timeout_s":17,"extra":true}',
+            formatContract: OutputFormatContract.jsonObject,
+            requiredFields: const <String>[
+              'service',
+              'replicas',
+              'region',
+              'health_path',
+              'timeout_s',
+            ],
+            disallowExtraFields: true,
+            forbiddenExampleValues: const <String, Object?>{
+              'service': 'demo',
+              'replicas': 1,
+              'region': 'us-east-1',
+            },
+            now: DateTime.utc(2026, 11, 28, 0, 32),
+          );
+          expect(blankAndCopied.decision, ValidationDecision.blocked);
+          final codes = blankAndCopied.violations.map((v) => v.code).toSet();
+          expect(codes.contains('missing_required_field_health_path'), isTrue);
+          expect(codes.contains('unexpected_extra_field_extra'), isTrue);
+          expect(codes.contains('copied_example_value_service'), isTrue);
+          expect(codes.contains('copied_example_value_replicas'), isFalse);
+        },
+      );
+
+      test(
         'filters logs by decision and search query and simulates new audit records',
         () async {
           final repo = _InMemoryAiOutputValidationRepository(
