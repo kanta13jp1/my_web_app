@@ -271,6 +271,7 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
       appBar: AppBar(
         title: const Text('AI Executive GPA'),
         backgroundColor: const Color(0xFF0A0A0A),
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(

@@ -21,12 +21,14 @@ class NoteSummary {
   final String title;
   final String content;
   final DateTime? updatedAt;
+  final String? parentNoteId;
 
   const NoteSummary({
     required this.id,
     required this.title,
     required this.content,
     this.updatedAt,
+    this.parentNoteId,
   });
 }
 
