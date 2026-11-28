@@ -210,3 +210,49 @@ Deno.test("anthropic skips response_format while keeping max_tokens", () => {
   assertEquals(body.max_tokens, 1024);
   assertEquals(body.response_format, undefined);
 });
+
+Deno.test("gemini-4 strips temperature and low maxOutputTokens while setting thinkingLevel LOW", () => {
+  const body = applyProviderGenerationOptions(
+    "google",
+    {
+      contents: [{ parts: [{ text: "hello" }] }],
+      generationConfig: {
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: 1024,
+      },
+    },
+    { maxTokens: 4096, model: "gemini-4-hydrogen" },
+  );
+  const generationConfig = body.generationConfig as Record<string, unknown>;
+  assertEquals(generationConfig.temperature, undefined);
+  assertEquals(generationConfig.topP, undefined);
+  assertEquals(generationConfig.topK, undefined);
+  assertEquals(generationConfig.maxOutputTokens, undefined);
+  const thinkingConfig = generationConfig.thinkingConfig as Record<
+    string,
+    unknown
+  >;
+  assertEquals(thinkingConfig.thinkingLevel, "LOW");
+});
+
+Deno.test("gemini-4 preserves caller thinkingConfig and keeps maxOutputTokens >= 65536", () => {
+  const body = applyProviderGenerationOptions(
+    "google_flash_lite",
+    {
+      contents: [{ parts: [{ text: "hello" }] }],
+      generationConfig: {
+        thinkingConfig: { thinkingLevel: "HIGH" },
+      },
+    },
+    { maxTokens: 65536, model: "gemini-4-hydrogen" },
+  );
+  const generationConfig = body.generationConfig as Record<string, unknown>;
+  assertEquals(generationConfig.maxOutputTokens, 65536);
+  const thinkingConfig = generationConfig.thinkingConfig as Record<
+    string,
+    unknown
+  >;
+  assertEquals(thinkingConfig.thinkingLevel, "HIGH");
+});

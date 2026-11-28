@@ -1,10 +1,14 @@
-export const DEFAULT_GEMINI_JSON_MODEL = "gemini-2.5-flash";
+export const DEFAULT_GEMINI_JSON_MODEL = "gemini-4-hydrogen";
 export const DEFAULT_OPENAI_JSON_MODEL = "gpt-4o-mini";
 
 type FetchLike = (
   input: string | URL | Request,
   init?: RequestInit,
 ) => Promise<Response>;
+
+function isGemini4Model(model: string): boolean {
+  return /^gemini-4(?:$|-)/i.test(model.trim());
+}
 
 function shouldDisableGeminiThinking(model: string): boolean {
   return /^gemini-2\.5-flash(?:-\d+)?$/i.test(model.trim());
@@ -64,12 +68,19 @@ export async function generateJsonWithGeminiFirst(args: {
           encodeURIComponent(geminiModel)
         }:generateContent`;
       const generationConfig: Record<string, unknown> = {
-        temperature,
-        maxOutputTokens,
         responseMimeType: "application/json",
       };
-      if (shouldDisableGeminiThinking(geminiModel)) {
-        generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      if (isGemini4Model(geminiModel)) {
+        generationConfig.thinkingConfig = { thinkingLevel: "LOW" };
+        if (args.maxOutputTokens != null && args.maxOutputTokens >= 65536) {
+          generationConfig.maxOutputTokens = args.maxOutputTokens;
+        }
+      } else {
+        generationConfig.temperature = temperature;
+        generationConfig.maxOutputTokens = maxOutputTokens;
+        if (shouldDisableGeminiThinking(geminiModel)) {
+          generationConfig.thinkingConfig = { thinkingBudget: 0 };
+        }
       }
       const response = await fetchImpl(endpoint, {
         method: "POST",

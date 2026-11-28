@@ -20,8 +20,8 @@ void main() {
         expect(route.candidates.map((candidate) => candidate.modelId), [
           'claude-opus-4-7',
           'gpt-5',
-          'gemini-3.1-pro',
-          'gemini-2.5-flash-lite',
+          'gemini-4-neon',
+          'gemini-4-hydrogen',
           'meta-llama/Llama-3.3-70B-Instruct',
         ]);
         expect(route.providerChoiceReason, contains(useCase.id));
