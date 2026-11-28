@@ -107,6 +107,7 @@ class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
       backgroundColor: const Color(0xFF0F0E1A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1830),
+        foregroundColor: Colors.white,
         elevation: 0,
         leading: const HomeBackButton(),
         title: const Text(

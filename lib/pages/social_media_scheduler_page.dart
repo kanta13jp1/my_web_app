@@ -195,6 +195,7 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
       appBar: AppBar(
         title: const Text('SNS投稿スケジューラー'),
         backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
