@@ -176,7 +176,7 @@ void main() {
           final csvBare = DeterministicAiOutputValidator.evaluate(
             prompt: 'CSV出力設定を作る',
             candidateOutput:
-                '{"delimiter":"\t","encoding":"utf-8","header":false,"columns":["sku","qty"]}',
+                r'{"delimiter":"\t","encoding":"utf-8","header":false,"columns":["sku","qty"]}',
             formatContract: OutputFormatContract.jsonObject,
             requiredFields: const <String>[
               'delimiter',
@@ -197,8 +197,9 @@ void main() {
 
           final csvFenced = DeterministicAiOutputValidator.evaluate(
             prompt: 'CSV出力設定を作る',
-            candidateOutput:
-                '```json\n{"delimiter": "\t", "encoding": "utf-8", "header": false, "columns": ["sku", "qty"]}\n```',
+            candidateOutput: '```json\n'
+                r'{"delimiter": "\t", "encoding": "utf-8", "header": false, "columns": ["sku", "qty"]}'
+                '\n```',
             formatContract: OutputFormatContract.jsonObject,
             requiredFields: const <String>[
               'delimiter',
