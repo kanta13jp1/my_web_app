@@ -53,6 +53,7 @@ import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/home_billing_nudge.dart';
+import '../widgets/home_calendar_detail_section.dart';
 import '../widgets/home_curated_calendar_section.dart';
 import '../widgets/home_emergency_meeting_card.dart';
 import '../widgets/home_eval_approval_card.dart';
@@ -3932,37 +3933,11 @@ abstinence_slip_details: $slipDetailsText
     required List<String> items,
     required String emptyLabel,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: accent,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (items.isEmpty)
-            Text(emptyLabel)
-          else
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text('・$item'),
-              ),
-            ),
-        ],
-      ),
+    return HomeCalendarDetailSection(
+      title: title,
+      accent: accent,
+      items: items,
+      emptyLabel: emptyLabel,
     );
   }
 
