@@ -454,6 +454,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
         leading: const HomeBackButton(),
         title: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -482,6 +483,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: const Color(0xFFFF6B35),
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           tabs: const [
             Tab(icon: Icon(Icons.today), text: '今日のレース'),
             Tab(icon: Icon(Icons.history), text: '予想履歴'),
