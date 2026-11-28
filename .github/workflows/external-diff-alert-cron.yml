@@ -1,0 +1,55 @@
+name: External Data Diff & Alert Monitor
+
+on:
+  schedule:
+    # 毎日 10:37 JST (01:37 UTC) に外部連携データの差分比較・トリガー検証を実行
+    - cron: '37 1 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run without live core-hub dispatch (true/false)'
+        required: false
+        default: 'true'
+
+concurrency:
+  group: external-diff-alert-cron-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  run-external-diff-monitor:
+    name: Evaluate external payload diffs and trigger rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run external diff monitor unit tests
+        run: python3 -B test/scripts/test_run_external_diff_monitor.py -v
+
+      - name: Run external diff monitor self-test
+        run: python3 -B scripts/run_external_diff_monitor.py --self-test
+
+      - name: Run batch diff evaluation
+        env:
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+        run: |
+          set -euo pipefail
+          mode_flag="--dry-run"
+          if [ "${DRY_RUN_INPUT}" = "false" ]; then
+            mode_flag="--no-dry-run"
+          fi
+          python3 -B scripts/run_external_diff_monitor.py "${mode_flag}" --json-out external_diff_report.json

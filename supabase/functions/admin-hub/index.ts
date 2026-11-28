@@ -26,6 +26,27 @@ import {
   handleCapacityReportList,
   handleCapacityReportNotify,
 } from "./capacity_report.ts";
+import {
+  createSupabaseOrgAuditQuotaStore,
+  handleOrgAuditList,
+  handleOrgAuditRecord,
+  handleOrgQuotaAcknowledgeAlert,
+  handleOrgQuotaConsume,
+  handleOrgQuotaStatus,
+  handleOrgQuotaUpdateLimit,
+} from "./organization_audit_quota.ts";
+import {
+  createSupabaseWorkosAdminStore,
+  handleWorkosPortalLink,
+  handleWorkosUpdateMemberRole,
+} from "./workos_admin.ts";
+import {
+  createSupabaseOrgIdpRbacStore,
+  handleOrgIdpMappingsDelete,
+  handleOrgIdpMappingsList,
+  handleOrgIdpMappingsUpsert,
+  handleOrgSsoEvaluate,
+} from "./idp_rbac_admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -946,6 +967,117 @@ serve(async (req: Request) => {
           { userId, isServiceRole },
           body,
         );
+        return json(res.body, res.status);
+      }
+
+      case "org_audit.record": {
+        const res = await handleOrgAuditRecord(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_audit.list": {
+        const res = await handleOrgAuditList(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.consume": {
+        const res = await handleOrgQuotaConsume(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+          {
+            slackWebhookUrl: Deno.env.get("ADMIN_QUOTA_ALERT_WEBHOOK_URL") ?? "",
+          },
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.status": {
+        const res = await handleOrgQuotaStatus(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.update_limit": {
+        const res = await handleOrgQuotaUpdateLimit(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "org_quota.acknowledge_alert": {
+        const res = await handleOrgQuotaAcknowledgeAlert(
+          createSupabaseOrgAuditQuotaStore(admin),
+          { userId, isServiceRole },
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "workos.portal_link": {
+        const res = await handleWorkosPortalLink({
+          store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.update_member_role": {
+        const res = await handleWorkosUpdateMemberRole({
+          store: createSupabaseWorkosAdminStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.list": {
+        const res = await handleOrgIdpMappingsList({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.upsert": {
+        const res = await handleOrgIdpMappingsUpsert({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.idp_mappings.delete": {
+        const res = await handleOrgIdpMappingsDelete({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
+        return json(res.body, res.status);
+      }
+
+      case "workos.sso_evaluate": {
+        const res = await handleOrgSsoEvaluate({
+          store: createSupabaseOrgIdpRbacStore(admin),
+          caller: { userId, isServiceRole },
+          body,
+        });
         return json(res.body, res.status);
       }
 

@@ -85,6 +85,7 @@ class _AgentBoardPageState extends State<AgentBoardPage> {
       backgroundColor: DesignTokens.background,
       appBar: AppBar(
         backgroundColor: DesignTokens.background,
+        foregroundColor: Colors.white,
         elevation: 0,
         title: const Row(
           children: [

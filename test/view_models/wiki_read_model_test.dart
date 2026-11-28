@@ -54,16 +54,74 @@ void main() {
     b.complete({
       'success': true,
       'page': {'id': 'b'},
+      'children': [
+        {'id': 'b-child'},
+      ],
+      'table_rows': [
+        {'id': 'b-row', 'content': 'B row'},
+      ],
     });
     await second;
     a.complete({
       'success': true,
       'page': {'id': 'a'},
+      'children': [
+        {'id': 'a-child'},
+      ],
+      'table_rows': [
+        {'id': 'a-row', 'content': 'A row'},
+      ],
     });
     await first;
     expect(model.selectedId, 'b');
     expect(model.selectedPage!['id'], 'b');
+    expect(model.children.single['id'], 'b-child');
+    expect(model.tableRows.single['id'], 'b-row');
     expect(model.detailLoading, isFalse);
+  });
+
+  test('select populates detail children, rows, flags, and clears on error',
+      () async {
+    var shouldFail = false;
+    final model = WikiReadModel(
+      WikiRepository((body) async {
+        if (shouldFail) throw StateError('offline');
+        return {
+          'success': true,
+          'page': {'id': body['id']},
+          'children': [
+            {
+              'id': 'c1',
+              'metadata': {'title': 'Child 1'},
+            },
+          ],
+          'children_has_more': true,
+          'table_rows': [
+            {
+              'id': 'r1',
+              'metadata': {
+                'data': {'content': 'Row 1'},
+              },
+            },
+          ],
+          'table_rows_has_more': true,
+        };
+      }),
+    );
+    addTearDown(model.dispose);
+    await model.select('a');
+    expect(model.children.single['title'], 'Child 1');
+    expect(model.tableRows.single['content'], 'Row 1');
+    expect(model.childrenHasMore, isTrue);
+    expect(model.tableRowsHasMore, isTrue);
+
+    shouldFail = true;
+    await model.select('b');
+    expect(model.detailError, isNotNull);
+    expect(model.children, isEmpty);
+    expect(model.tableRows, isEmpty);
+    expect(model.childrenHasMore, isFalse);
+    expect(model.tableRowsHasMore, isFalse);
   });
 
   test('response after disposal does not notify listeners', () async {
@@ -77,6 +135,7 @@ void main() {
     await request;
     expect(notifications, 1);
   });
+
   test('failed refresh retries from zero even after reaching final page',
       () async {
     var requests = 0;

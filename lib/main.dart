@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/agent_tool_policy_preview_page.dart';
 import 'package:my_web_app/pages/typing_game_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
@@ -5,6 +6,7 @@ import 'package:my_web_app/pages/vibe_sim_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/features/vision_benchmark/vision_benchmark_container.dart';
 import 'package:my_web_app/pages/neon_showcase_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
@@ -566,7 +568,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
+          shopLoginUri: uri,
         ),
+        settings: settings,
       );
     case '/jev-mario-lab':
       return MaterialPageRoute(
@@ -590,7 +594,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/shop':
       return MaterialPageRoute(
-        builder: (_) => const DigitalProductStorePage(),
+        builder: (_) => DigitalProductStorePage(attributionUri: uri),
         settings: settings,
       );
     case '/shop/product':
@@ -599,6 +603,7 @@ Route<dynamic> generateAppRoute(
           productId: uri.queryParameters['product_id'] ?? '',
           purchaseResult: uri.queryParameters['purchase'],
           funnel: ShopFunnelService(),
+          attributionUri: uri,
         ),
         settings: settings,
       );
@@ -615,6 +620,7 @@ Route<dynamic> generateAppRoute(
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
+          attributionUri: uri,
         ),
         settings: settings,
       );
@@ -1587,6 +1593,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
     case '/time-tracker':
       return MaterialPageRoute(builder: (_) => const TimeTrackerPage());
+    case '/vision-benchmark':
+      return MaterialPageRoute(
+        builder: (_) => const VisionBenchmarkDashboardPage(),
+      );
     case '/voice-memo':
       return MaterialPageRoute(
         builder: (_) => const VoiceMemoTranscriberPage(),
@@ -1903,6 +1913,10 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-hub':
       return MaterialPageRoute(builder: (_) => const AppHubPage());
+    case '/agent-tool-policy-preview':
+      return MaterialPageRoute(
+        builder: (_) => const AgentToolPolicyPreviewPage(),
+      );
     case '/agent-hub':
       return MaterialPageRoute(builder: (_) => const AgentHubPage());
     case '/admin-notifications':

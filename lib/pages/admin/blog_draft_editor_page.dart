@@ -183,7 +183,7 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
           style: TextStyle(color: Colors.white, height: 1.5),
         ),
         content: const Text(
-          'Qiita / dev.to に投稿します。よろしいですか？',
+          '選択中の投稿先に記事を公開します。よろしいですか？',
           style: TextStyle(color: Colors.white70, height: 1.5),
         ),
         actions: [
@@ -210,9 +210,11 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
       final res = await _service.publishPost(postId);
       if (!mounted) return;
       final results = res['results'] as Map<String, dynamic>? ?? {};
+      final appOk = (results['app'] as Map?)?['ok'] == true;
       final qiitaOk = (results['qiita'] as Map?)?['ok'] == true;
       final devtoOk = (results['devto'] as Map?)?['ok'] == true;
       final platforms = [
+        if (appOk) '公式ブログ',
         if (qiitaOk) 'Qiita',
         if (devtoOk) 'dev.to',
       ].join(' + ');
@@ -419,12 +421,12 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
           style: TextStyle(color: Colors.white54, height: 1.5),
         ),
         const SizedBox(width: 12),
-        for (final p in ['qiita', 'devto'])
+        for (final p in ['app', 'qiita', 'devto'])
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               label: Text(
-                p == 'devto' ? 'dev.to' : 'Qiita',
+                p == 'app' ? '公式ブログ' : (p == 'devto' ? 'dev.to' : 'Qiita'),
                 style: const TextStyle(height: 1.5),
               ),
               selected: _targetPlatforms.contains(p),

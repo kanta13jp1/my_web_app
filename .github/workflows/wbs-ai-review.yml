@@ -146,7 +146,10 @@ jobs:
 
               payload = json.dumps({
                   "contents": [{"parts": [{"text": prompt}]}],
-                  "generationConfig": {"temperature": 0.3, "maxOutputTokens": 300}
+                  "generationConfig": {
+                      "maxOutputTokens": 65536,
+                      "thinkingConfig": {"thinkingLevel": "LOW"},
+                  },
               })
 
               # Gemini call
@@ -158,7 +161,7 @@ jobs:
               try:
                   proc = subprocess.run(
                       ['curl', '-s', '-X', 'POST',
-                       f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}',
+                       f'https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key={gemini_key}',
                        '-H', 'Content-Type: application/json',
                        '-d', payload, '--max-time', '30'],
                       capture_output=True, text=True, timeout=35

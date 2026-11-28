@@ -48,6 +48,11 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "agent.create",
   "agent.run",
   "agent.tool_policy.evaluate",
+  "agent.tool_policy.preview",
+  "agent.sandbox.evaluate",
+  "agent.sandbox.execute_isolated",
+  "agent.sandbox.audit_list",
+  "agent.sandbox.policy_upsert",
   "org.get",
   "my_agent.chat",
   "my_agent.history",
@@ -105,6 +110,9 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "knowledge_graph.upload",
   "knowledge_graph.query",
   "knowledge_graph.delete_document",
+  "ai_monitor.token_cache.summary",
+  "ai_monitor.token_cache.diagnose_prefix",
+  "ai_monitor.token_cache.record_tool_usage",
   "voice.tts",
   "voice.catalog",
   "voice.usage",
@@ -112,6 +120,11 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "voice.stt",
   "voice.cartesia_session.start",
   "voice.cartesia_session.finish",
+  "voice.clone.consent.status",
+  "voice.clone.consent.accept",
+  "voice.clone.consent.submit_recording",
+  "voice.clone.consent.revoke",
+  "voice.clone.generate",
   "english_reading.submit_attempt",
   "english_reading.ability",
   "english_reading.generate_lesson",
@@ -119,6 +132,9 @@ export const AUTHENTICATED_AI_HUB_ACTIONS = new Set([
   "quota.daily_status",
   "data_sources.status",
   "data_sources.register",
+  "ai_router.structured.route",
+  "ai_router.structured.validate_and_save",
+  "ai_router.structured.list_preferences",
 ]);
 
 // Paid LLM gateways: callable by a signed-in user, or by other Edge Functions
@@ -128,6 +144,14 @@ export const AUTHENTICATED_OR_SERVICE_ROLE_AI_HUB_ACTIONS = new Set([
   "provider.chat",
   "provider.chat_auto",
   "edge_llm.invoke",
+  "prompt_cache.build_payload",
+  "prompt_cache.record_metric",
+  "prompt_cache.monitor_summary",
+  "prompt_cache.check_renewal",
+  "agent.safety_checkpoint.evaluate",
+  "agent.safety_checkpoint.list",
+  "agent.safety_checkpoint.approve",
+  "agent.safety_checkpoint.reject",
 ]);
 
 export const SERVICE_ROLE_AI_HUB_ACTIONS = new Set([

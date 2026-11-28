@@ -64,10 +64,11 @@ class HorseRacingResponsibleUseCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(
-            width: 170,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 260),
             child: DropdownButtonFormField<int>(
               key: const Key('horse-racing-budget-limit'),
+              isExpanded: true,
               initialValue: dailyBudgetYen,
               decoration: const InputDecoration(
                 labelText: '1日の予算上限',

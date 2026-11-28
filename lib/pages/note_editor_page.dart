@@ -12,12 +12,15 @@ import '../services/ai_service.dart';
 import '../services/attachment_cache_service.dart';
 import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
+import '../services/markdown_block_service.dart';
 import '../services/note_comments_service.dart';
+import '../services/note_hierarchy_service.dart';
 import '../services/note_version_history_service.dart';
 import '../services/note_prompt_library_service.dart';
 import '../services/note_semantic_search_service.dart';
 import '../services/note_tag_service.dart';
 import '../services/note_task_service.dart';
+import '../services/note_wiki_link_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_clipboard_helper.dart';
@@ -28,7 +31,11 @@ import '../widgets/ai_free_limit_upgrade_dialog.dart';
 import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
+import '../widgets/note_editor/block_reorder_sheet.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/note_editor/inline_slash_block_menu.dart';
+import '../widgets/note_editor/note_backlinks_panel.dart';
+import '../widgets/note_editor/note_hierarchy_bar.dart';
 import '../widgets/note_editor/note_range_select_page.dart';
 import '../widgets/note_tags_field.dart';
 import '../widgets/note_version_history_sheet.dart';
@@ -39,6 +46,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? noteId;
   final String? initialTitle;
   final String? initialContent;
+  final String? initialParentNoteId;
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
   final NoteSemanticSearchDataSource? semanticSearchService;
@@ -50,6 +58,7 @@ class NoteEditorPage extends StatefulWidget {
     this.noteId,
     this.initialTitle,
     this.initialContent,
+    this.initialParentNoteId,
     this.supabaseClient,
     this.aiService,
     this.semanticSearchService,
@@ -176,9 +185,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool? _persistedIsFavorite;
   bool? _persistedIsPinned;
   List<String>? _persistedTags;
+  String? _persistedParentNoteId;
   DateTime? _serverUpdatedAt;
   bool _showMarkdownPreview = false;
   bool? _isSlashCommandBarExpanded;
+  InlineSlashMatch? _inlineSlashMatch;
+  bool _showBlockInsertPalette = false;
+  List<NoteSummary> _workspaceNoteSummaries = const <NoteSummary>[];
+  String? _parentNoteId;
   int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
@@ -242,6 +256,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _semanticSearchService =
         widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _currentNoteId = widget.noteId;
+    _parentNoteId = widget.initialParentNoteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
         TextEditingController(text: widget.initialContent ?? '');
@@ -272,6 +287,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       unawaited(_loadCommentCount());
       unawaited(_loadRelatedNotes());
     }
+    unawaited(_loadWorkspaceNoteSummaries());
     await _loadAttachments();
     await _restoreDraftFromLocal();
     _initializeEditorHistory();
@@ -488,6 +504,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _syncObservedText();
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
+    _contentController.addListener(_onContentSelectionOrTextChanged);
   }
 
   /// listener が「本文が変わった」と判断するための基準値を現在値に合わせる。
@@ -506,6 +523,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required bool isFavorite,
     required bool isPinned,
     required List<String> tags,
+    required String? parentNoteId,
   }) {
     _persistedTitle = title;
     _persistedContent = content;
@@ -513,6 +531,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _persistedIsFavorite = isFavorite;
     _persistedIsPinned = isPinned;
     _persistedTags = NoteTagService.normalize(tags);
+    _persistedParentNoteId = parentNoteId;
   }
 
   /// サーバー側の内容を一度でも取得できているか。取得できていない状態で
@@ -528,18 +547,257 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required bool isFavorite,
     required bool isPinned,
     required List<String> tags,
+    required String? parentNoteId,
   }) {
     return _persistedTitle == title &&
         _persistedContent == content &&
         _persistedReminderIso == reminderIso &&
         _persistedIsFavorite == isFavorite &&
         _persistedIsPinned == isPinned &&
-        NoteTagService.equals(_persistedTags, tags);
+        NoteTagService.equals(_persistedTags, tags) &&
+        _persistedParentNoteId == parentNoteId;
+  }
+
+  dynamic _serializedParentNoteId(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    return int.tryParse(raw) ?? raw;
   }
 
   void _detachTextListeners() {
     _titleController.removeListener(_onTextChanged);
     _contentController.removeListener(_onTextChanged);
+    _contentController.removeListener(_onContentSelectionOrTextChanged);
+  }
+
+  void _onContentSelectionOrTextChanged() {
+    if (_isApplyingSnapshot || _showMarkdownPreview) return;
+    final TextSelection sel = _contentController.selection;
+    final InlineSlashMatch? nextMatch = sel.isCollapsed
+        ? MarkdownBlockService.detectInlineSlashTrigger(
+            _contentController.text,
+            sel.baseOffset,
+          )
+        : null;
+    final bool changed =
+        nextMatch?.startOffset != _inlineSlashMatch?.startOffset ||
+            nextMatch?.endOffset != _inlineSlashMatch?.endOffset ||
+            nextMatch?.query != _inlineSlashMatch?.query;
+    if (!changed || !mounted) return;
+    setState(() {
+      _inlineSlashMatch = nextMatch;
+    });
+  }
+
+  void _onSlashTemplateSelected(SlashBlockTemplate template) {
+    final InlineSlashMatch? match = _inlineSlashMatch;
+    final TextEditingValue updated = match != null
+        ? MarkdownBlockService.applySlashTemplate(
+            _contentController.value,
+            match,
+            template,
+          )
+        : MarkdownBlockService.insertTemplateAtSelection(
+            _contentController.value,
+            template,
+          );
+    setState(() {
+      _inlineSlashMatch = null;
+      _showBlockInsertPalette = false;
+    });
+    _contentController.value = updated;
+    _contentFocusNode.requestFocus();
+  }
+
+  Future<void> _openBlockReorderSheet() async {
+    final String? reordered = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => BlockReorderSheet(
+        initialMarkdown: _contentController.text,
+      ),
+    );
+    if (!mounted || reordered == null) return;
+    if (reordered == _contentController.text) return;
+    _contentController.value = TextEditingValue(
+      text: reordered,
+      selection: TextSelection.collapsed(offset: reordered.length),
+    );
+  }
+
+  Future<void> _loadWorkspaceNoteSummaries() async {
+    try {
+      final User? user = _supabase.auth.currentUser;
+      if (user == null) return;
+      final dynamic rows = await _supabase
+          .from('notes')
+          .select('id, title, content, updated_at, parent_note_id')
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
+          .order('updated_at', ascending: false)
+          .limit(100);
+      if (rows is! List) return;
+      final List<NoteSummary> parsed = <NoteSummary>[];
+      for (final dynamic item in rows) {
+        if (item is! Map) continue;
+        final String? id = item['id']?.toString();
+        if (id == null || id.isEmpty) continue;
+        final String title = (item['title'] as String?) ?? '';
+        final String content = (item['content'] as String?) ?? '';
+        final String? updatedRaw = item['updated_at'] as String?;
+        parsed.add(
+          NoteSummary(
+            id: id,
+            title: title,
+            content: content,
+            updatedAt:
+                updatedRaw == null ? null : DateTime.tryParse(updatedRaw),
+            parentNoteId: item['parent_note_id']?.toString(),
+          ),
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _workspaceNoteSummaries = parsed;
+      });
+    } catch (_) {
+      // Fail-open so offline/fake clients in unit tests never break.
+    }
+  }
+
+  Future<void> _handleWikiLinkTap(String targetTitle) async {
+    final NoteSummary? existing = NoteWikiLinkService.resolveLink(
+      targetTitle,
+      _workspaceNoteSummaries,
+      excludeNoteId: _currentNoteId,
+    );
+    if (existing != null) {
+      await _openLinkedNote(existing);
+      return;
+    }
+    await _createLinkedNote(targetTitle);
+  }
+
+  Future<void> _openLinkedNote(NoteSummary target) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          noteId: target.id,
+          supabaseClient: _supabase,
+          aiService: _aiService,
+        ),
+      ),
+    );
+    if (mounted) {
+      unawaited(_loadWorkspaceNoteSummaries());
+    }
+  }
+
+  Future<void> _createLinkedNote(String targetTitle) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          initialTitle: targetTitle,
+          supabaseClient: _supabase,
+          aiService: _aiService,
+        ),
+      ),
+    );
+    if (mounted) {
+      unawaited(_loadWorkspaceNoteSummaries());
+    }
+  }
+
+  Future<void> _createSubpage() async {
+    final String? parentId = _currentNoteId;
+    if (parentId == null || parentId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('先に現在のノートを保存してからサブページを追加してください。')),
+        );
+      }
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/note-editor'),
+        builder: (_) => NoteEditorPage(
+          initialParentNoteId: parentId,
+          supabaseClient: _supabase,
+          aiService: _aiService,
+        ),
+      ),
+    );
+    if (mounted) {
+      unawaited(_loadWorkspaceNoteSummaries());
+    }
+  }
+
+  Future<void> _openParentNotePicker() async {
+    final String? picked = await showParentNotePickerSheet(
+      context,
+      currentNoteId: _currentNoteId ?? '',
+      currentParentId: _parentNoteId,
+      allNotes: _workspaceNoteSummaries,
+    );
+    if (picked == null || !mounted) return;
+    final String? normalized = picked.isEmpty ? null : picked;
+    if (normalized == _parentNoteId) return;
+    await _updateParentNote(normalized);
+  }
+
+  Future<void> _updateParentNote(String? nextParentId) async {
+    final String noteId = _currentNoteId ?? '';
+    if (!NoteHierarchyService.canSetParent(
+      noteId: noteId,
+      newParentNoteId: nextParentId,
+      allNotes: _workspaceNoteSummaries,
+    )) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('循環参照または階層上限のため親ページに設定できません。')),
+        );
+      }
+      return;
+    }
+
+    if (noteId.isEmpty) {
+      if (mounted) {
+        setState(() => _parentNoteId = nextParentId);
+      }
+      return;
+    }
+
+    final User? user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      await _autoSaveService.runExclusive(() async {
+        if (!mounted || _supabase.auth.currentUser?.id != user.id) return;
+        await _supabase
+            .from('notes')
+            .update(<String, dynamic>{
+              'parent_note_id': _serializedParentNoteId(nextParentId),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', noteId)
+            .eq('user_id', user.id);
+        if (!mounted) return;
+        setState(() {
+          _parentNoteId = nextParentId;
+          _persistedParentNoteId = nextParentId;
+        });
+      });
+      if (mounted) {
+        unawaited(_loadWorkspaceNoteSummaries());
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('親ページの更新に失敗しました: $e')),
+        );
+      }
+    }
   }
 
   NoteSnapshot _buildCurrentSnapshot() {
@@ -572,6 +830,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           isFavorite: _isFavorite,
           isPinned: _isPinned,
           tags: _tags,
+          parentNoteId: _parentNoteId,
         );
 
     if (matchesServer || (_currentNoteId == null && !hasAnyInput)) {
@@ -1487,7 +1746,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       final data = await _supabase
           .from('notes')
           .select(
-            'title, content, reminder_date, is_favorite, is_pinned, tags, updated_at',
+            'title, content, reminder_date, is_favorite, is_pinned, tags, updated_at, parent_note_id',
           )
           .eq('id', id)
           .single();
@@ -1507,6 +1766,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           _isFavorite = _boolFromValue(data['is_favorite']);
           _isPinned = _boolFromValue(data['is_pinned']);
           _tags = NoteTagService.normalize(data['tags']);
+          _parentNoteId = data['parent_note_id']?.toString();
         });
         _markStatePersisted(
           title: _titleController.text.trim(),
@@ -1515,6 +1775,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           isFavorite: _isFavorite,
           isPinned: _isPinned,
           tags: _tags,
+          parentNoteId: _parentNoteId,
         );
         _syncObservedText();
       }
@@ -1607,6 +1868,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isFavorite = _isFavorite;
     final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
+    final parentNoteId = _parentNoteId;
 
     if (!allowEmpty && !_hasPersistableState && _currentNoteId == null) {
       return;
@@ -1628,6 +1890,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         isFavorite: isFavorite,
         isPinned: isPinned,
         tags: tags,
+        parentNoteId: parentNoteId,
       )) {
         _autoSaveService.markAsSaved();
         await _clearDraftFromLocal(alsoClearNewDraft: widget.noteId == null);
@@ -1642,6 +1905,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'is_favorite': isFavorite,
             'is_pinned': isPinned,
             'tags': tags,
+            'parent_note_id': _serializedParentNoteId(parentNoteId),
             // timestamptz 列にはオフセット付きで渡す。ローカル時刻のまま送ると
             // サーバー側で UTC と解釈され JST 環境では 9 時間ずれる。
             'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -1660,6 +1924,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'tags': tags,
             'is_archived': false,
             'is_pinned': isPinned,
+            if (parentNoteId != null && parentNoteId.isNotEmpty)
+              'parent_note_id': _serializedParentNoteId(parentNoteId),
           })
           .select('id')
           .maybeSingle();
@@ -1699,6 +1965,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       isFavorite: isFavorite,
       isPinned: isPinned,
       tags: tags,
+      parentNoteId: parentNoteId,
     );
 
     final currentMatchesSavedRequest = _matchesPersistedState(
@@ -1708,6 +1975,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       isFavorite: _isFavorite,
       isPinned: _isPinned,
       tags: _tags,
+      parentNoteId: _parentNoteId,
     );
     if (currentMatchesSavedRequest) {
       _autoSaveService.markAsSaved();
@@ -1817,18 +2085,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (confirm != true || !mounted) return;
 
     final service = PublicMemoService(_supabase);
-    final ok = await service.publishMemo(
+    final published = await service.upsertMemo(
       noteId: int.tryParse(noteId.toString()) ?? 0,
       userId: user.id,
       title: title,
       content: _contentController.text.trim(),
     );
     if (!mounted) return;
-    if (ok) {
+    if (published != null) {
+      final String url = PublicMemoService.buildPublicMemoUrl(published.id);
+      await Clipboard.setData(ClipboardData(text: url));
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('公開しました！ /public-memos で確認できます'),
-          duration: Duration(seconds: 3),
+          content: Text('公開しました！複製CTA付きの公開URLをコピーしました'),
+          duration: Duration(seconds: 4),
         ),
       );
     } else {
@@ -2919,8 +3190,45 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                               icon: const Icon(Icons.checklist_rtl_outlined),
                               label: Text(isNarrow ? 'タスク' : 'タスクを管理'),
                             ),
+                          if (!_showMarkdownPreview)
+                            OutlinedButton.icon(
+                              key: const Key(
+                                'note_editor_insert_block_button',
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _showBlockInsertPalette =
+                                      !_showBlockInsertPalette;
+                                });
+                              },
+                              icon: const Icon(Icons.add_box_outlined),
+                              label: Text(isNarrow ? 'ブロック' : 'ブロック挿入'),
+                            ),
+                          OutlinedButton.icon(
+                            key: const Key('note_editor_block_reorder_button'),
+                            onPressed: _openBlockReorderSheet,
+                            icon: const Icon(Icons.swap_vert_rounded),
+                            label: Text(isNarrow ? '並替' : 'ブロック並替'),
+                          ),
                         ],
                       ),
+                      if (!compactForKeyboard) ...[
+                        const SizedBox(height: 8),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _titleController,
+                          builder: (context, titleValue, _) {
+                            return NoteHierarchyBar(
+                              currentNoteId: _currentNoteId,
+                              parentNoteId: _parentNoteId,
+                              currentTitle: titleValue.text,
+                              allNotes: _workspaceNoteSummaries,
+                              onOpenNote: _openLinkedNote,
+                              onAddSubpage: _createSubpage,
+                              onChangeParent: _openParentNotePicker,
+                            );
+                          },
+                        ),
+                      ],
                       if (!isNarrow) ...[
                         const SizedBox(height: 8),
                         Text(
@@ -2942,6 +3250,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                         ),
                       ],
                       SizedBox(height: compactForKeyboard ? 6 : 8),
+                      if (!_showMarkdownPreview &&
+                          (_inlineSlashMatch != null ||
+                              _showBlockInsertPalette))
+                        InlineSlashBlockMenu(
+                          templates: MarkdownBlockService.filterTemplates(
+                            _inlineSlashMatch?.query ?? '',
+                          ),
+                          query: _inlineSlashMatch?.query ?? '',
+                          onSelect: _onSlashTemplateSelected,
+                          onDismiss: () {
+                            setState(() {
+                              _inlineSlashMatch = null;
+                              _showBlockInsertPalette = false;
+                            });
+                          },
+                        ),
                       NoteImageDropZone(
                         onImageDropped: (bytes, fileName, mimeType) =>
                             _handlePastedImage(
@@ -2975,7 +3299,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                                     constraints: BoxConstraints(
                                       minHeight: bodyMinHeight,
                                     ),
-                                    child: MarkdownPreview(data: value.text),
+                                    child: MarkdownPreview(
+                                      data: value.text,
+                                      onWikiLinkTap: _handleWikiLinkTap,
+                                    ),
                                   );
                                 },
                               )
@@ -3010,6 +3337,27 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                                   ),
                                 ),
                               ),
+                      ),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _contentController,
+                        builder: (context, value, _) {
+                          final List<WikiLinkRef> outgoing =
+                              NoteWikiLinkService.extractWikiLinks(value.text);
+                          final List<NoteBacklink> backlinks =
+                              NoteWikiLinkService.findBacklinks(
+                            currentNoteTitle: _titleController.text,
+                            allNotes: _workspaceNoteSummaries,
+                            currentNoteId: _currentNoteId,
+                          );
+                          return NoteBacklinksPanel(
+                            outgoingLinks: outgoing,
+                            allNotes: _workspaceNoteSummaries,
+                            currentNoteId: _currentNoteId,
+                            backlinks: backlinks,
+                            onOpenNote: _openLinkedNote,
+                            onCreateLinkedNote: _createLinkedNote,
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -3081,6 +3429,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isFavorite = _isFavorite;
     final isPinned = _isPinned;
     final tags = NoteTagService.normalize(_tags);
+    final parentNoteId = _parentNoteId;
     if (_matchesPersistedState(
           title: title,
           content: content,
@@ -3088,6 +3437,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           isFavorite: isFavorite,
           isPinned: isPinned,
           tags: tags,
+          parentNoteId: parentNoteId,
         ) &&
         !_autoSaveService.hasPendingOperations) {
       return;
@@ -3108,6 +3458,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               'is_favorite': isFavorite,
               'is_pinned': isPinned,
               'tags': tags,
+              'parent_note_id': _serializedParentNoteId(parentNoteId),
               'updated_at': DateTime.now().toUtc().toIso8601String(),
             })
             .eq('id', noteId)

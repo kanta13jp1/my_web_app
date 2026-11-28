@@ -9,7 +9,7 @@ import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / ".github/workflows/wbs-user-tasks-notify.yml").read_text(encoding="utf-8")
+SOURCE = (ROOT / ".github/workflows/wbs-user-notify.yml").read_text(encoding="utf-8")
 
 def block(name, source):
     section = source.split("      - name: " + name + "\n", 1)[1].split("\n      - name:", 1)[0]
@@ -105,8 +105,9 @@ curl() {
 
     def test_no_fixed_key_or_skip_gate(self):
         self.assertNotRegex(SOURCE, r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.")
-        self.assertIn("SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}", SOURCE)
+        self.assertIn("SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}", SOURCE)
         self.assertNotIn("steps.precheck.outputs.skip", SOURCE)
+        self.assertFalse((ROOT / ".github/workflows/wbs-user-tasks-notify.yml").exists())
         self.assertIn("python scripts/wbs_notify_privacy_test.py",
                       (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
 

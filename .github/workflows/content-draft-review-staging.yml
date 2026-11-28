@@ -1,0 +1,105 @@
+name: Content Draft Human-Review Staging
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/content_draft_review_staging.py'
+      - 'test/scripts/test_content_draft_review_staging.py'
+      - '.github/workflows/content-draft-review-staging.yml'
+      - 'docs/metrics/daily-metrics.json'
+  schedule:
+    - cron: '19 22 * * 0'
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: 'Optional target YYYY-MM-DD date for dry-run staging package'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run review staging in non-mutating dry-run mode (true)'
+        required: false
+        default: 'true'
+
+concurrency:
+  group: content-draft-review-staging-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  stage-review:
+    name: Validate KPI aggregation and human-review staging gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 20
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Run content review staging tests and self-test
+        run: |
+          set -euo pipefail
+          python3 -B test/scripts/test_content_draft_review_staging.py -v
+          python3 -B scripts/content_draft_review_staging.py --self-test
+
+      - name: Run daily KPI aggregation and staging package dry-run
+        id: staging
+        env:
+          TARGET_DATE_INPUT: ${{ github.event.inputs.target_date || '' }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+        run: |
+          set -euo pipefail
+          if [ "${DRY_RUN_INPUT}" != "true" ]; then
+            echo "::notice::Staging workflow runs read-only without automatic publication."
+          fi
+          args=(
+            scripts/content_draft_review_staging.py
+            --audit-contracts
+            --metrics-json docs/metrics/daily-metrics.json
+            --dry-run
+            --json-out content_staging_report.json
+            --markdown-out content_staging_report.md
+            --issue-payload-out content_review_issue_payload.json
+            --github-output "${GITHUB_OUTPUT}"
+          )
+          if [ -n "${TARGET_DATE_INPUT}" ]; then
+            args+=(--target-date "${TARGET_DATE_INPUT}")
+          fi
+          python3 -B "${args[@]}"
+
+      - name: Upload content review staging report artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: content-draft-review-staging-report
+          path: |
+            content_staging_report.json
+            content_staging_report.md
+            content_review_issue_payload.json
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append job summary
+        if: always()
+        env:
+          STAGING_ID: ${{ steps.staging.outputs.staging_id }}
+          REVIEW_STATUS: ${{ steps.staging.outputs.review_status }}
+          AUTO_PUBLISH: ${{ steps.staging.outputs.auto_publish_allowed }}
+        run: |
+          {
+            echo "## Content Draft Human-Review Staging"
+            echo "- Staging ID: \`${STAGING_ID}\`"
+            echo "- Review Status: \`${REVIEW_STATUS}\`"
+            echo "- Auto-Publish Allowed: \`${AUTO_PUBLISH}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

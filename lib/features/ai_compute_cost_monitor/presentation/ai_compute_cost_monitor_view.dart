@@ -167,6 +167,10 @@ class AiComputeCostMonitorView extends StatelessWidget {
             _buildKpiRow(palette),
             const SizedBox(height: 14),
             _buildThresholdCard(palette),
+            if (state.loopDetection.autoHalted) ...<Widget>[
+              const SizedBox(height: 12),
+              _buildLoopHaltBanner(palette, state.loopDetection),
+            ],
             if (state.errorMessage != null) ...<Widget>[
               const SizedBox(height: 12),
               _buildErrorBanner(palette, state.errorMessage!),
@@ -175,6 +179,8 @@ class AiComputeCostMonitorView extends StatelessWidget {
             _buildChartSection(palette),
             const SizedBox(height: 14),
             _buildUserUtilizationSection(palette),
+            const SizedBox(height: 14),
+            _buildModelBreakdownSection(palette),
             const SizedBox(height: 14),
             _buildTelemetryRecorder(palette),
             const SizedBox(height: 14),
@@ -641,6 +647,118 @@ class AiComputeCostMonitorView extends StatelessWidget {
                             ),
                             Text(
                               '${u.requestCount}回 | ${u.totalTokens} tokens | 平均 ${u.avgLatencyMs.toStringAsFixed(1)} ms | USD ${u.totalEstimatedCostUsd.toStringAsFixed(4)}',
+                              style: TextStyle(
+                                color: palette.inkSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(growable: false),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoopHaltBanner(
+    final _ComputeCostPalette palette,
+    final AgentLoopDetectionReport report,
+  ) {
+    return DecoratedBox(
+      key: const ValueKey<String>('ai-compute-loop-halt-banner'),
+      decoration: BoxDecoration(
+        color: palette.dangerBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: palette.dangerBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            Icon(Icons.pause_circle_filled, color: palette.dangerInk, size: 20),
+            Text(
+              '異常ループ・コスト上限自動停止中: ${report.haltMessage}',
+              softWrap: true,
+              style: TextStyle(
+                color: palette.dangerInk,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModelBreakdownSection(final _ComputeCostPalette palette) {
+    final breakdowns = state.modelBreakdowns;
+    return DecoratedBox(
+      key: const ValueKey<String>('ai-compute-model-breakdown-card'),
+      decoration: BoxDecoration(
+        color: palette.surfaceSubtle,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: palette.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              'モデル別トークン消費・推論コスト内訳',
+              style: TextStyle(
+                color: palette.ink,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (breakdowns.isEmpty)
+              Text(
+                'モデル別の推論コストデータはまだありません。',
+                style: TextStyle(color: palette.inkSecondary, fontSize: 13),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: breakdowns.map((final ModelTokenCostBreakdown item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: palette.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: palette.border),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          alignment: WrapAlignment.spaceBetween,
+                          children: <Widget>[
+                            Text(
+                              item.modelId,
+                              style: TextStyle(
+                                color: palette.ink,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '${item.requestCount}回 | 入力 ${item.inputTokens} / 出力 ${item.outputTokens} (計 ${item.totalTokens} tok) | USD ${item.estimatedCostUsd.toStringAsFixed(4)} (${item.costSharePct.toStringAsFixed(1)}%)',
                               style: TextStyle(
                                 color: palette.inkSecondary,
                                 fontSize: 12,

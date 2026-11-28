@@ -106,6 +106,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
       appBar: AppBar(
         title: const Text('AI Observability'),
         backgroundColor: const Color(0xFF0A0A0A),
+        foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
           controller: _tab,

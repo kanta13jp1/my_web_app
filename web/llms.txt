@@ -5,6 +5,7 @@
 ## コア体験・導入ガイド
 
 - [トップページ / 無料 AI 体験](https://my-web-app-b67f4.web.app/): いま気になっていることを1行入力して「今日やる1件」と提案理由を登録前に試せます。
+- [公式ブログ](https://my-web-app-b67f4.web.app/blog): 家計・習慣・タスク整理・AI活用の実践記録と開発ログを公開しています。
 - [自分株式会社の考え方](https://my-web-app-b67f4.web.app/philosophy): 人生を1つの会社として経営する設計思想・よくある質問を確認できます。
 - [競合比較一覧](https://my-web-app-b67f4.web.app/competitors): Notion や家計・タスク管理ツールとの違いとデータ移行の概要を比較できます。
 - [Notion との比較](https://my-web-app-b67f4.web.app/vs-notion): メモ・タスク散在からのシンプルな意思決定導線との違いを解説します。

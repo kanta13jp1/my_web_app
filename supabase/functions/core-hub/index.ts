@@ -11,8 +11,8 @@ import {
   type MemoReactionAction,
 } from "./memo_reactions.ts";
 import {
+  notifySlackWithDiscordFailover,
   sendDiscordWebhook,
-  wantsDiscordSecondary,
 } from "./notification_channels.ts";
 import {
   externalSaasGateReason,
@@ -65,6 +65,10 @@ import {
   handleStageGateList,
   handleStageGateSubmit,
 } from "./stage_gate.ts";
+import { handleExternalDiffAction } from "./external_diff_monitor.ts";
+import {
+  createSupabaseExternalDiffStore,
+} from "./external_diff_monitor_supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -378,7 +382,7 @@ async function analyzeFeatureRequestAttachment(params: {
 
   try {
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -395,8 +399,7 @@ async function analyzeFeatureRequestAttachment(params: {
             ],
           }],
           generationConfig: {
-            temperature: 0.25,
-            maxOutputTokens: 1200,
+            thinkingConfig: { thinkingLevel: "LOW" },
           },
         }),
       },
@@ -417,7 +420,7 @@ async function analyzeFeatureRequestAttachment(params: {
     return normalizeFeatureRequestAnalysis(parsed, {
       ...fallback,
       confidence: "medium",
-      generated_by: "gemini-2.5-flash",
+      generated_by: "gemini-4-hydrogen",
     });
   } catch (e) {
     return {
@@ -496,20 +499,19 @@ async function buildProactiveAiReview(input: {
   "summary": "全体状況を1-2文で要約",
   "root_cause": "主な原因仮説",
   "next_actions": ["次の一手1", "次の一手2", "次の一手3"],
-  "generated_by": "gemini-2.5-flash"
+  "generated_by": "gemini-4-hydrogen"
 }`;
 
   try {
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 900,
+            thinkingConfig: { thinkingLevel: "LOW" },
           },
         }),
       },
@@ -533,7 +535,7 @@ async function buildProactiveAiReview(input: {
         500,
       ),
       next_actions: nextActions.slice(0, 4),
-      generated_by: "gemini-2.5-flash",
+      generated_by: "gemini-4-hydrogen",
     };
   } catch {
     return { ...fallback, generated_by: "heuristic:exception" };
@@ -862,6 +864,8 @@ export interface CoreHubRequestDependencies {
   handleMemoReaction?: typeof handleMemoReactionAction;
   serviceRoleKey?: string;
   reportError?: (error: unknown) => void;
+  fetcher?: typeof fetch;
+  getEnv?: (name: string) => string | undefined;
 }
 
 export async function handleCoreHubRequest(
@@ -1511,66 +1515,15 @@ export async function handleCoreHubRequest(
           }
         }
 
-        const webhookEnvMap: Record<string, string> = {
-          "default": "SLACK_WEBHOOK_URL",
-          "quota": "SLACK_WEBHOOK_QUOTA",
-          "ci": "SLACK_WEBHOOK_CI",
-          "alerts": "SLACK_WEBHOOK_ALERTS",
-          "daily": "SLACK_WEBHOOK_DAILY",
-          "handoff": "SLACK_WEBHOOK_HANDOFF",
-        };
-        const envKey = webhookEnvMap[channel] ?? "SLACK_WEBHOOK_URL";
-        const url = Deno.env.get(envKey);
-        if (!url) {
-          return json({
-            error: `webhook not configured: ${envKey}`,
-            channel,
-          }, 500);
-        }
-
-        const slackPayload: Record<string, unknown> = {};
-        if (text) slackPayload.text = text;
-        if (blocks) slackPayload.blocks = blocks;
-
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(slackPayload),
-        });
-
-        if (!resp.ok) {
-          const errBody = await resp.text();
-          const discord = await sendDiscordWebhook({
-            enabled: wantsDiscordSecondary(body),
-            webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
-            text: text || `Slack ${channel} notification failed.`,
-            username: body.discord_username ?? body.username,
-            channel,
-          });
-          return json({
-            error: `slack webhook failed: ${resp.status}`,
-            detail: errBody.slice(0, 500),
-            channel,
-            envKey,
-            discord,
-          }, 502);
-        }
-
-        const discord = await sendDiscordWebhook({
-          enabled: wantsDiscordSecondary(body),
-          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
-          text: text || `Slack ${channel} notification mirrored to Discord.`,
-          username: body.discord_username ?? body.username,
+        const notifyRes = await notifySlackWithDiscordFailover({
+          body,
           channel,
+          text,
+          blocks,
+          getEnv: dependencies.getEnv,
+          fetcher: dependencies.fetcher,
         });
-
-        return json({
-          success: true,
-          channel,
-          envKey,
-          status: resp.status,
-          discord,
-        });
+        return json(notifyRes.payload, notifyRes.status);
       }
 
       case "discord.notify": {
@@ -1583,12 +1536,15 @@ export async function handleCoreHubRequest(
           return json({ error: "text or message required" }, 400);
         }
 
+        const getEnv = dependencies.getEnv ??
+          ((name: string) => Deno.env.get(name));
         const discord = await sendDiscordWebhook({
           enabled: true,
-          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+          webhookUrl: getEnv("DISCORD_WEBHOOK_URL") ?? "",
           text,
           username: body.discord_username ?? body.username,
           channel: typeof body.channel === "string" ? body.channel : undefined,
+          fetcher: dependencies.fetcher,
         });
 
         return json(
@@ -2772,15 +2728,14 @@ description: ${pageDescription}
 
           try {
             const resp = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   contents: [{ parts: [{ text: prompt }] }],
                   generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 300,
+                    thinkingConfig: { thinkingLevel: "LOW" },
                   },
                 }),
               },
@@ -3030,6 +2985,26 @@ description: ${pageDescription}
           { userId, isServiceRole },
           body,
         );
+        return json(res.body, res.status);
+      }
+
+      case "external_diff.rule.list":
+      case "external_diff.rule.upsert":
+      case "external_diff.alert.list":
+      case "external_diff.alert.acknowledge":
+      case "external_diff.snapshot_and_detect":
+      case "external_diff.batch_scan": {
+        const res = await handleExternalDiffAction({
+          action,
+          body,
+          userId,
+          isServiceRole,
+          store: createSupabaseExternalDiffStore(
+            admin,
+            dependencies.fetcher,
+            dependencies.getEnv,
+          ),
+        });
         return json(res.body, res.status);
       }
 

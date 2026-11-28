@@ -12,6 +12,8 @@ class ContextCacheMonitorState {
     this.userFilter = '',
     this.selectedModelId = 'claude-sonnet-4',
     this.simulateCacheHit = true,
+    this.selectedCacheTtl = PromptCacheTtl.fiveMinutes,
+    this.lastRecachePlan,
     this.metrics = const <ContextCacheUsageMetric>[],
     this.errorMessage,
   });
@@ -22,6 +24,8 @@ class ContextCacheMonitorState {
   final String userFilter;
   final String selectedModelId;
   final bool simulateCacheHit;
+  final PromptCacheTtl selectedCacheTtl;
+  final LongTaskRecachePlan? lastRecachePlan;
   final List<ContextCacheUsageMetric> metrics;
   final String? errorMessage;
 
@@ -78,6 +82,22 @@ class ContextCacheMonitorState {
   int get cacheHitCount =>
       filteredMetrics.where((item) => item.cacheHit).length;
 
+  int get ttl1hCount => filteredMetrics
+      .where((item) => item.cacheTtl == PromptCacheTtl.oneHour)
+      .length;
+
+  double? get averageLatencyReductionPercent {
+    final samples = filteredMetrics
+        .map((item) => item.latencyReductionPercent)
+        .whereType<double>()
+        .toList(growable: false);
+    if (samples.isEmpty) {
+      return null;
+    }
+    final total = samples.reduce((a, b) => a + b);
+    return double.parse((total / samples.length).toStringAsFixed(1));
+  }
+
   ContextCacheMonitorState copyWith({
     bool? isLoading,
     bool? isSubmitting,
@@ -85,6 +105,8 @@ class ContextCacheMonitorState {
     String? userFilter,
     String? selectedModelId,
     bool? simulateCacheHit,
+    PromptCacheTtl? selectedCacheTtl,
+    LongTaskRecachePlan? lastRecachePlan,
     List<ContextCacheUsageMetric>? metrics,
     String? errorMessage,
     bool clearError = false,
@@ -96,6 +118,8 @@ class ContextCacheMonitorState {
       userFilter: userFilter ?? this.userFilter,
       selectedModelId: selectedModelId ?? this.selectedModelId,
       simulateCacheHit: simulateCacheHit ?? this.simulateCacheHit,
+      selectedCacheTtl: selectedCacheTtl ?? this.selectedCacheTtl,
+      lastRecachePlan: lastRecachePlan ?? this.lastRecachePlan,
       metrics: metrics ?? this.metrics,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
@@ -152,6 +176,37 @@ class ContextCacheMonitorController extends ChangeNotifier {
     _emit(_state.copyWith(simulateCacheHit: value));
   }
 
+  void selectCacheTtl(PromptCacheTtl ttl) {
+    if (_disposed) {
+      return;
+    }
+    _emit(_state.copyWith(selectedCacheTtl: ttl));
+  }
+
+  void evaluateLongTaskRecache({
+    required String workflowKey,
+    int elapsedMinutes = 65,
+    int idleSinceRefreshMinutes = 62,
+    String pendingStep = 'step_continue_after_1h',
+  }) {
+    if (_disposed) {
+      return;
+    }
+    final plan = ContextCacheEstimator.buildLongTaskRecachePlan(
+      workflowKey: workflowKey,
+      elapsedMinutes: elapsedMinutes,
+      idleSinceRefreshMinutes: idleSinceRefreshMinutes,
+      recacheSeq: _state.lastRecachePlan?.recacheSeq ?? 0,
+      pendingStep: pendingStep,
+    );
+    _emit(
+      _state.copyWith(
+        selectedCacheTtl: PromptCacheTtl.oneHour,
+        lastRecachePlan: plan,
+      ),
+    );
+  }
+
   Future<void> loadMetrics() async {
     if (_disposed) {
       return;
@@ -205,6 +260,9 @@ class ContextCacheMonitorController extends ChangeNotifier {
         modelId: _state.selectedModelId,
         simulateCacheHit: _state.simulateCacheHit,
         userId: userId,
+        cacheTtl: _state.selectedCacheTtl,
+        latencyMs: _state.simulateCacheHit ? 420 : 1850,
+        baselineLatencyMs: 1850,
       );
       final saved = await _repository.recordUsageMetric(draft);
       if (_disposed) {

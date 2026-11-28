@@ -133,6 +133,18 @@ class ClaudeReviewWorkflowTest(unittest.TestCase):
                 paid,
             )
 
+    def test_confidence_comment_job_preserves_security_boundaries(self) -> None:
+        comment_job = job_block(self.workflow, "confidence-comment")
+        self.assertIn("    needs: [review]\n", comment_job)
+        self.assertEqual(
+            permissions(comment_job),
+            {"contents: read", "pull-requests: write"},
+        )
+        self.assertIn("ref: ${{ github.sha }}", comment_job)
+        self.assertIn("persist-credentials: false", comment_job)
+        self.assertNotIn("secrets.", comment_job)
+        self.assertIn("python -B scripts/ai_review_gate.py comment", comment_job)
+
 
 if __name__ == "__main__":
     unittest.main()

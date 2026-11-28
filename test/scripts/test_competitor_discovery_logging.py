@@ -44,8 +44,10 @@ class _FakeHttpResponse:
 class CompetitorDiscoveryLoggingTests(unittest.TestCase):
     def test_query_gemini_with_log_captures_query_and_sanitizes_errors(self) -> None:
         fake_key = "test-gem-placeholder-value"
+        captured_reqs: list[tuple[str, dict[str, Any]]] = []
 
-        def ok_opener(_req: Any, timeout: int = 30) -> _FakeHttpResponse:
+        def ok_opener(req: Any, timeout: int = 30) -> _FakeHttpResponse:
+            captured_reqs.append((req.full_url, json.loads(req.data.decode("utf-8"))))
             payload = {
                 "candidates": [
                     {
@@ -81,6 +83,12 @@ class CompetitorDiscoveryLoggingTests(unittest.TestCase):
         self.assertEqual(qlog["candidate_count"], 1)
         self.assertIsNone(qlog["error"])
         self.assertNotIn(fake_key, qlog["prompt_preview"])
+        self.assertEqual(len(captured_reqs), 1)
+        self.assertIn("gemini-4-hydrogen:generateContent", captured_reqs[0][0])
+        gen_cfg = captured_reqs[0][1]["generationConfig"]
+        self.assertEqual(gen_cfg["thinkingConfig"]["thinkingLevel"], "LOW")
+        self.assertEqual(gen_cfg["maxOutputTokens"], 65536)
+        self.assertNotIn("temperature", gen_cfg)
 
         def fail_opener(_req: Any, timeout: int = 30) -> _FakeHttpResponse:
             raise RuntimeError(
