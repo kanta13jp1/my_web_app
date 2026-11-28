@@ -52,7 +52,10 @@ class DisposableTimeSettings {
         (sum, weekday) => sum + (minutesByWeekday[weekday] ?? 0).clamp(0, 1440),
       );
 
-  DisposableTimeSettings copyWith({required int weekday, required int minutes}) {
+  DisposableTimeSettings copyWith({
+    required int weekday,
+    required int minutes,
+  }) {
     final next = Map<int, int>.from(minutesByWeekday);
     next[weekday] = minutes.clamp(0, 1440);
     return DisposableTimeSettings(minutesByWeekday: next);
