@@ -69,4 +69,49 @@ void main() {
       );
     });
   });
+
+  group('Tiger plan economics AI hub cost migration', () {
+    late final String sql;
+
+    setUpAll(() {
+      sql = File(
+        'supabase/migrations/'
+        '20261128031500_tiger_plan_economics_ai_hub_cost.sql',
+      ).readAsStringSync().replaceAll('\r\n', '\n').toLowerCase();
+    });
+
+    test('surfaces ai_feature_usage_cost_daily USD totals & attribution', () {
+      expect(sql, contains('from public.ai_feature_usage_cost_daily'));
+      expect(sql, contains('from public.ai_hub_chat_logs'));
+      for (final marker in <String>[
+        "'aihubcostwindow'",
+        "'estimatedcostusd'",
+        "'planattributedrequests'",
+        "'unattributedrequests'",
+        "'byfeature'",
+        'user-to-plan attribution on ai_hub_chat_logs',
+      ]) {
+        expect(sql, contains(marker));
+      }
+    });
+
+    test('keeps service-role security, null metrics, and zero PII', () {
+      expect(sql, contains('security invoker'));
+      expect(sql, isNot(contains('security definer')));
+      expect(sql, contains("set search_path = ''"));
+      for (final metric in <String>[
+        "'grossmarginrate', null",
+        "'customeracquisitioncostyen', null",
+        "'paybackmonths', null",
+        "'monthlychurnrate', null",
+        "'lifetimevalueyen', null",
+      ]) {
+        expect(sql, contains(metric));
+      }
+      const grantPrefix = 'grant execute on function '
+          'public.get_tiger_plan_economics_summary(integer)';
+      final expectedGrantRole = <String>['service', 'role'].join('_');
+      expect(sql, contains('$grantPrefix\n  to $expectedGrantRole'));
+    });
+  });
 }
