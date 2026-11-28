@@ -217,6 +217,7 @@ jobs:
           python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
           python scripts/ai_university_rss_manifest_test.py
           python -m unittest discover -s test/scripts -p test_check_commit_message.py
+          python -m unittest discover -s test/scripts -p 'test_publish_app_blog_post.py'
 
       - name: Test high-risk dual security review
         run: >-
