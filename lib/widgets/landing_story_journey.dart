@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 @immutable
 class LandingStoryChapter {
@@ -84,7 +85,7 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
   double _progress = 0;
   double _pinOffset = 0;
   double _maxPinDistance = 0;
-  double _lastStageHeight = 0;
+  Size _lastStageSize = Size.zero;
   int _activeChapter = 0;
 
   @override
@@ -117,11 +118,16 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
 
   double _stageHeight(Size viewport, double availableWidth) {
     if (viewport.height < 560) {
-      return (viewport.height - 96).clamp(220.0, 480.0);
+      return (viewport.height - 84).clamp(240.0, 480.0);
     }
     final compact = availableWidth < _compactBreakpoint;
     final target = viewport.height * (compact ? 0.72 : 0.78);
     return target.clamp(compact ? 500.0 : 560.0, compact ? 660.0 : 720.0);
+  }
+
+  double _computeMaxPinDistance(RenderBox trackRenderObject, Size viewport) {
+    final stageHeight = _stageHeight(viewport, trackRenderObject.size.width);
+    return math.max(0.0, trackRenderObject.size.height - stageHeight);
   }
 
   void _syncWithScroll() {
@@ -136,13 +142,9 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
     final viewportTop = viewportRenderObject is RenderBox
         ? viewportRenderObject.localToGlobal(Offset.zero).dy
         : MediaQuery.paddingOf(context).top;
-    final stageHeight = _stageHeight(
+    final maxPinDistance = _computeMaxPinDistance(
+      trackRenderObject,
       MediaQuery.sizeOf(context),
-      trackRenderObject.size.width,
-    );
-    final maxPinDistance = math.max(
-      0.0,
-      trackRenderObject.size.height - stageHeight,
     );
     final nextPinOffset = (viewportTop + 8 - trackTop).clamp(
       0.0,
@@ -170,9 +172,14 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
   }
 
   void _goToChapter(int index) {
-    if (!widget.scrollController.hasClients || _maxPinDistance <= 0) return;
+    if (!widget.scrollController.hasClients) return;
     final trackRenderObject = _trackKey.currentContext?.findRenderObject();
     if (trackRenderObject is! RenderBox || !trackRenderObject.hasSize) return;
+    final maxPinDistance = _computeMaxPinDistance(
+      trackRenderObject,
+      MediaQuery.sizeOf(context),
+    );
+    if (maxPinDistance <= 0) return;
 
     final position = widget.scrollController.position;
     final notificationContext = position.context.notificationContext;
@@ -184,20 +191,26 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
     final trackStartOffset =
         widget.scrollController.offset + trackTop - viewportTop - 8;
     final chapterProgress = index / (LandingStoryJourney.chapters.length - 1);
-    final targetOffset = trackStartOffset + (_maxPinDistance * chapterProgress);
+    final targetOffset = trackStartOffset + (maxPinDistance * chapterProgress);
     final clampedTarget = targetOffset.clamp(
       position.minScrollExtent,
       position.maxScrollExtent,
     );
     if (MediaQuery.disableAnimationsOf(context)) {
       widget.scrollController.jumpTo(clampedTarget);
+      _syncWithScroll();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncWithScroll());
       return;
     }
-    widget.scrollController.animateTo(
-      clampedTarget,
-      duration: const Duration(milliseconds: 520),
-      curve: Curves.easeOutCubic,
-    );
+    widget.scrollController
+        .animateTo(
+          clampedTarget,
+          duration: const Duration(milliseconds: 520),
+          curve: Curves.easeOutCubic,
+        )
+        .whenComplete(() {
+          if (mounted) _syncWithScroll();
+        });
   }
 
   double _imageOpacity(int index, bool reduceMotion) {
@@ -216,8 +229,9 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
         final compact = constraints.maxWidth < _compactBreakpoint;
         final stageHeight = _stageHeight(viewport, constraints.maxWidth);
         final trackHeight = stageHeight * (compact ? 3.35 : 3.75);
-        if ((_lastStageHeight - stageHeight).abs() > 0.5) {
-          _lastStageHeight = stageHeight;
+        if ((_lastStageSize.width - constraints.maxWidth).abs() > 0.5 ||
+            (_lastStageSize.height - stageHeight).abs() > 0.5) {
+          _lastStageSize = Size(constraints.maxWidth, stageHeight);
           WidgetsBinding.instance.addPostFrameCallback(
             (_) => _syncWithScroll(),
           );
@@ -305,18 +319,28 @@ class _JourneyStage extends StatelessWidget {
     final chapter = LandingStoryJourney.chapters[activeChapter];
     final isFinal = activeChapter == LandingStoryJourney.chapters.length - 1;
     final visibleMediaIndices = _visibleMediaIndices();
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final shortViewport = availableSize.height < 500;
+    final ultraDense = availableSize.height < 360 ||
+        (shortViewport && textScale > 1.1) ||
+        (compact && textScale > 1.35);
     var copyWidth = compact
-        ? availableSize.width - 60
+        ? (availableSize.width - 74).clamp(200.0, 680.0)
         : (availableSize.width * 0.40).clamp(300.0, 510.0);
     var headingSize = compact ? 30.0 : (copyWidth / 9.9).clamp(30.0, 52.0);
     if (shortViewport) {
-      copyWidth = availableSize.width - 96;
+      copyWidth =
+          (availableSize.width - (compact ? 74 : 168)).clamp(200.0, 680.0);
       headingSize = 26;
     }
+    if (ultraDense) {
+      headingSize = (24 / math.max(1.0, textScale * 0.85)).clamp(18.0, 24.0);
+    }
     final exampleWidth = (availableSize.width * 0.30).clamp(220.0, 350.0);
-    final showExample =
-        !compact || MediaQuery.textScalerOf(context).scale(1) <= 1.15;
+    final showExample = !shortViewport &&
+        !ultraDense &&
+        (!compact || textScale <= 1.15) &&
+        textScale <= 1.35;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -382,14 +406,14 @@ class _JourneyStage extends StatelessWidget {
               const Positioned.fill(
                 child: ColoredBox(color: Color(0xC0050C1D)),
               ),
-            if (!shortViewport)
+            if (!shortViewport && !ultraDense)
               Positioned(
                 left: compact ? 18 : 36,
                 right: compact ? 18 : 36,
                 top: compact ? 16 : 24,
                 child: _JourneyTopBar(compact: compact),
               ),
-            if (showExample && !shortViewport)
+            if (showExample)
               Positioned(
                 left: compact ? 18 : null,
                 right: compact ? 56 : 144,
@@ -407,9 +431,9 @@ class _JourneyStage extends StatelessWidget {
               ),
             Positioned(
               left: compact ? 18 : 48,
-              right: compact ? 42 : 120,
+              right: compact ? 56 : 120,
               top: compact ? null : 0,
-              bottom: shortViewport ? 32 : (compact ? 58 : 0),
+              bottom: shortViewport || ultraDense ? 36 : (compact ? 58 : 0),
               child: Align(
                 alignment:
                     compact ? Alignment.bottomLeft : Alignment.centerLeft,
@@ -436,6 +460,9 @@ class _JourneyStage extends StatelessWidget {
                     chapter: chapter,
                     chapterIndex: activeChapter,
                     compact: compact || shortViewport,
+                    ultraDense: ultraDense,
+                    textScale: textScale,
+                    availableHeight: availableSize.height,
                     copyWidth: copyWidth,
                     headingSize: headingSize,
                     showActions: isFinal,
@@ -461,7 +488,7 @@ class _JourneyStage extends StatelessWidget {
             Positioned(
               left: compact ? 18 : 36,
               right: compact ? 18 : 36,
-              bottom: compact ? 18 : 24,
+              bottom: compact ? 16 : 24,
               child: Row(
                 children: [
                   Expanded(
@@ -759,6 +786,9 @@ class _JourneyCopy extends StatelessWidget {
   final LandingStoryChapter chapter;
   final int chapterIndex;
   final bool compact;
+  final bool ultraDense;
+  final double textScale;
+  final double availableHeight;
   final double copyWidth;
   final double headingSize;
   final bool showActions;
@@ -770,6 +800,9 @@ class _JourneyCopy extends StatelessWidget {
     required this.chapter,
     required this.chapterIndex,
     required this.compact,
+    required this.ultraDense,
+    required this.textScale,
+    required this.availableHeight,
     required this.copyWidth,
     required this.headingSize,
     required this.showActions,
@@ -779,6 +812,13 @@ class _JourneyCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bodyFontSize = ultraDense
+        ? (12.5 / math.max(1.0, textScale * 0.9)).clamp(11.0, 12.5)
+        : (compact ? 13.0 : 16.0);
+    final omitNote = ultraDense && availableHeight < 320 && showActions;
+    final buttonMinHeight = ultraDense ? 44.0 : 48.0;
+    final buttonMinWidth = ultraDense ? 156.0 : 184.0;
+
     return Semantics(
       key: Key('landing_story_chapter_$chapterIndex'),
       container: true,
@@ -798,7 +838,7 @@ class _JourneyCopy extends StatelessWidget {
                 letterSpacing: 1.2,
               ),
             ),
-            SizedBox(height: compact ? 10 : 18),
+            SizedBox(height: ultraDense ? 6 : (compact ? 10 : 18)),
             Semantics(
               header: true,
               child: Text(
@@ -812,31 +852,33 @@ class _JourneyCopy extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: compact ? 12 : 20),
+            SizedBox(height: ultraDense ? 6 : (compact ? 12 : 20)),
             Text(
               chapter.body,
               style: TextStyle(
                 color: const Color(0xD9FFFFFF),
-                fontSize: compact ? 13 : 16,
-                height: compact ? 1.55 : 1.75,
+                fontSize: bodyFontSize,
+                height: ultraDense ? 1.4 : (compact ? 1.55 : 1.75),
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: compact ? 12 : 18),
-            Text(
-              chapter.note,
-              style: const TextStyle(
-                color: Color(0xFFB8C6D2),
-                fontSize: 11,
-                height: 1.5,
-                fontWeight: FontWeight.w500,
+            if (!omitNote) ...[
+              SizedBox(height: ultraDense ? 6 : (compact ? 12 : 18)),
+              Text(
+                chapter.note,
+                style: const TextStyle(
+                  color: Color(0xFFB8C6D2),
+                  fontSize: 11,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
+            ],
             if (showActions) ...[
-              SizedBox(height: compact ? 14 : 22),
+              SizedBox(height: ultraDense ? 8 : (compact ? 14 : 22)),
               Wrap(
                 spacing: 10,
-                runSpacing: 10,
+                runSpacing: 8,
                 children: [
                   FilledButton.icon(
                     key: const Key('landing_story_primary_cta'),
@@ -847,7 +889,7 @@ class _JourneyCopy extends StatelessWidget {
                       backgroundColor: const Color(0xFFF0E5D0),
                       foregroundColor: const Color(0xFF101A24),
                       visualDensity: VisualDensity.standard,
-                      minimumSize: const Size(184, 48),
+                      minimumSize: Size(buttonMinWidth, buttonMinHeight),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
                       ),
@@ -862,7 +904,7 @@ class _JourneyCopy extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       visualDensity: VisualDensity.standard,
-                      minimumSize: const Size(184, 48),
+                      minimumSize: Size(buttonMinWidth, buttonMinHeight),
                       side: const BorderSide(color: Color(0x80FFFFFF)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
@@ -880,7 +922,7 @@ class _JourneyCopy extends StatelessWidget {
   }
 }
 
-class _JourneyRail extends StatelessWidget {
+class _JourneyRail extends StatefulWidget {
   final int activeChapter;
   final bool compact;
   final bool reduceMotion;
@@ -894,73 +936,134 @@ class _JourneyRail extends StatelessWidget {
   });
 
   @override
+  State<_JourneyRail> createState() => _JourneyRailState();
+}
+
+class _JourneyRailState extends State<_JourneyRail> {
+  late final List<FocusNode> _focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNodes = List<FocusNode>.generate(
+      LandingStoryJourney.chapters.length,
+      (index) => FocusNode(debugLabel: 'landing_story_dot_$index'),
+    );
+  }
+
+  @override
+  void dispose() {
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  void _selectAndFocus(int index) {
+    final clamped = index.clamp(0, LandingStoryJourney.chapters.length - 1);
+    widget.onChapterSelected(clamped);
+    _focusNodes[clamped].requestFocus();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var index = 0;
-            index < LandingStoryJourney.chapters.length;
-            index++)
-          Semantics(
-            button: true,
-            selected: index == activeChapter,
-            label: '${LandingStoryJourney.chapters[index].label}の章へ移動',
-            onTap: () => onChapterSelected(index),
-            child: ExcludeSemantics(
-              child: IconButton(
-                key: Key('landing_story_dot_$index'),
-                onPressed: () => onChapterSelected(index),
-                tooltip: LandingStoryJourney.chapters[index].label,
-                icon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!compact) ...[
-                      Text(
-                        LandingStoryJourney.chapters[index].label,
-                        style: TextStyle(
-                          color: index == activeChapter
-                              ? const Color(0xFFF0E5D0)
-                              : const Color(0xFFB8C6D2),
-                          fontSize: 11,
-                          fontWeight: index == activeChapter
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+    final lastIndex = LandingStoryJourney.chapters.length - 1;
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+            _selectAndFocus(widget.activeChapter + 1),
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+            _selectAndFocus(widget.activeChapter + 1),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+            _selectAndFocus(widget.activeChapter - 1),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+            _selectAndFocus(widget.activeChapter - 1),
+        const SingleActivator(LogicalKeyboardKey.home): () =>
+            _selectAndFocus(0),
+        const SingleActivator(LogicalKeyboardKey.end): () =>
+            _selectAndFocus(lastIndex),
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0;
+              index < LandingStoryJourney.chapters.length;
+              index++)
+            MergeSemantics(
+              child: Semantics(
+                selected: index == widget.activeChapter,
+                label: '${LandingStoryJourney.chapters[index].label}の章へ移動',
+                child: IconButton(
+                  key: Key('landing_story_dot_$index'),
+                  focusNode: _focusNodes[index],
+                  onPressed: () => widget.onChapterSelected(index),
+                  color: Colors.white,
+                  style: IconButton.styleFrom(
+                    focusColor: const Color(0x4DFFA85C),
+                    hoverColor: const Color(0x26FFA85C),
+                    padding: EdgeInsets.all(widget.compact ? 10 : 12),
+                    minimumSize: const Size(44, 44),
+                    visualDensity: VisualDensity.standard,
+                  ).copyWith(
+                    side: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.focused)) {
+                        return const BorderSide(
+                          color: Color(0xFFFFA85C),
+                          width: 2,
+                        );
+                      }
+                      return null;
+                    }),
+                  ),
+                  icon: ExcludeSemantics(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!widget.compact) ...[
+                          Text(
+                            LandingStoryJourney.chapters[index].label,
+                            style: TextStyle(
+                              color: index == widget.activeChapter
+                                  ? const Color(0xFFF0E5D0)
+                                  : const Color(0xFFB8C6D2),
+                              fontSize: 11,
+                              fontWeight: index == widget.activeChapter
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        AnimatedContainer(
+                          duration: widget.reduceMotion
+                              ? Duration.zero
+                              : const Duration(milliseconds: 180),
+                          width: index == widget.activeChapter ? 12 : 7,
+                          height: index == widget.activeChapter ? 12 : 7,
+                          decoration: BoxDecoration(
+                            color: index == widget.activeChapter
+                                ? const Color(0xFFFFA85C)
+                                : const Color(0x99FFFFFF),
+                            shape: BoxShape.circle,
+                            boxShadow: index == widget.activeChapter
+                                ? const [
+                                    BoxShadow(
+                                      color: Color(0x66FFA85C),
+                                      blurRadius: 10,
+                                      spreadRadius: 3,
+                                    ),
+                                  ]
+                                : null,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    AnimatedContainer(
-                      duration: reduceMotion
-                          ? Duration.zero
-                          : const Duration(milliseconds: 180),
-                      width: index == activeChapter ? 12 : 7,
-                      height: index == activeChapter ? 12 : 7,
-                      decoration: BoxDecoration(
-                        color: index == activeChapter
-                            ? const Color(0xFFFFA85C)
-                            : const Color(0x99FFFFFF),
-                        shape: BoxShape.circle,
-                        boxShadow: index == activeChapter
-                            ? const [
-                                BoxShadow(
-                                  color: Color(0x66FFA85C),
-                                  blurRadius: 10,
-                                  spreadRadius: 3,
-                                ),
-                              ]
-                            : null,
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                color: Colors.white,
-                visualDensity: VisualDensity.standard,
-                padding: EdgeInsets.all(compact ? 10 : 12),
-                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

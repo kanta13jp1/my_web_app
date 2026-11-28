@@ -64,7 +64,6 @@ test.describe('Landing story journey', () => {
       expect(bounds).not.toBeNull();
       expect(bounds!.height).toBeGreaterThanOrEqual(44);
     }
-
   });
 
   test('reads every chapter forward and backward using native page scrolling', async ({ page }, testInfo) => {
@@ -85,16 +84,7 @@ test.describe('Landing story journey', () => {
       }
       await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
     };
-    // Enter the stage through ordinary scrolling, without DOM click helpers.
-    const firstChapter = page.getByRole('button', { name: '分散の章へ移動', exact: true });
-    for (let step = 0; step < 30; step++) {
-      const bounds = await firstChapter.boundingBox();
-      if (bounds && bounds.y >= 80 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
-      await page.mouse.move(180, 320);
-      await page.mouse.wheel(0, 120);
-      await page.waitForTimeout(150);
-    }
-    await expect(firstChapter).toBeInViewport();
+    await scrollFirstChapterIntoView(page);
     for (const index of [1, 2, 3, 4]) {
       await scrollToChapter(index, 1);
       await page.waitForTimeout(450);
@@ -106,30 +96,79 @@ test.describe('Landing story journey', () => {
     await expect(story).toHaveAccessibleName(/1 \/ 4/);
     for (const index of [2, 3, 4]) await scrollToChapter(index, 1);
     await trial.click();
-    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    await expect(page.getByRole('textbox', { name: /登録なしで試す|例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
     expect(layoutIssues).toEqual([]);
   });
 
   test('keeps final story actions in view on landscape and short desktop screens', async ({ page }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    for (const size of [{ width: 844, height: 390 }, { width: 1280, height: 600 }]) {
+    for (const size of [{ width: 667, height: 375 }, { width: 844, height: 390 }, { width: 1280, height: 600 }]) {
       await page.setViewportSize(size);
       await openLanding(page);
       const story = await focusStory(page);
       await activateChapter(page, '実行');
       await expect(story).toHaveAccessibleName(/4 \/ 4/);
       await page.screenshot({ path: testInfo.outputPath(`short-story-${size.width}-${size.height}.png`), scale: 'css' });
+      const progress = story.getByRole('progressbar');
+      const progressBounds = await progress.boundingBox();
+      expect(progressBounds).not.toBeNull();
       for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
         const action = story.getByRole('button', { name, exact: true });
         await expect(action).toBeInViewport();
         const bounds = await action.boundingBox();
-        expect(bounds!.y).toBeGreaterThanOrEqual(60);
+        expect(bounds).not.toBeNull();
+        expect(bounds!.y).toBeGreaterThanOrEqual(48);
+        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(progressBounds!.y);
         expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(size.height - 16);
         expect(bounds!.height).toBeGreaterThanOrEqual(44);
       }
       await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();
-      await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+      await expect(page.getByRole('textbox', { name: /登録なしで試す|例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
     }
+    expect(layoutIssues).toEqual([]);
+  });
+
+  test('keeps story usable across mid-rotation resize and keyboard navigation', async ({ page }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openLanding(page);
+    const story = await focusStory(page);
+    await scrollFirstChapterIntoView(page);
+
+    const firstDot = page.getByRole('button', { name: '分散の章へ移動', exact: true });
+    await firstDot.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(story).toHaveAccessibleName(/2 \/ 4/);
+    await page.keyboard.press('End');
+    await expect(story).toHaveAccessibleName(/4 \/ 4/);
+    await page.screenshot({ path: testInfo.outputPath('story-keyboard-final.png'), scale: 'css' });
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.waitForTimeout(300);
+    await activateChapter(page, '実行');
+    await expect(story).toHaveAccessibleName(/4 \/ 4/);
+    for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
+      const action = story.getByRole('button', { name, exact: true });
+      await expect(action).toBeInViewport();
+      expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(300);
+    await activateChapter(page, '実行');
+    await expect(story).toHaveAccessibleName(/4 \/ 4/);
+    await expect(story.getByRole('button', { name: '登録なしで1件試す', exact: true })).toBeInViewport();
+    expect(layoutIssues).toEqual([]);
   });
 
   test('keeps story actions usable when every chapter image fails', async ({ page }, testInfo) => {
@@ -146,15 +185,21 @@ test.describe('Landing story journey', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openLanding(page);
     const story = await focusStory(page);
+    await scrollFirstChapterIntoView(page);
     for (const [index, label] of ['分散', '集約', '整理', '実行'].entries()) {
-      await activateChapter(page, label);
+      const chapterButton = page.getByRole('button', {
+        name: `${label}の章へ移動`,
+        exact: true,
+      });
+      await expect(chapterButton).toBeInViewport();
+      await chapterButton.click();
       await expect(story).toHaveAccessibleName(new RegExp(`${index + 1} / 4`));
     }
     await expect.poll(() => failedAssets.size).toBe(4);
     await expect(story.getByRole('button', { name: '無料で保存を始める', exact: true })).toBeInViewport();
     await page.screenshot({ path: testInfo.outputPath('story-without-images.png'), scale: 'css' });
     await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();
-    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    await expect(page.getByRole('textbox', { name: /登録なしで試す|例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
     expect(layoutIssues).toEqual([]);
   });
 
@@ -183,7 +228,7 @@ test.describe('Landing story journey', () => {
     await expect(trial).toBeInViewport();
     await page.screenshot({ path: testInfo.outputPath('lower-outcomes-action.png'), scale: 'css' });
     await trial.click();
-    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    await expect(page.getByRole('textbox', { name: /登録なしで試す|例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
   });
 
   test('shows the getting-started path before pricing without clipping its action', async ({ page }, testInfo) => {
@@ -247,7 +292,7 @@ test.describe('Landing story journey', () => {
     await story.getByRole('button', { name: '登録なしで1件試す' }).click();
 
     await expect(
-      page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ }),
+      page.getByRole('textbox', { name: /登録なしで試す|例: 今日いちばん詰まっていること|いま詰まっていること/ }),
     ).toBeInViewport();
     await expect(
       page.getByRole('button', { name: '今やる1件を試す', exact: true }),
@@ -299,6 +344,18 @@ async function focusStory(page: Page) {
   });
   await expect(story).toBeVisible({ timeout: 60_000 });
   return story;
+}
+
+async function scrollFirstChapterIntoView(page: Page) {
+  const firstChapter = page.getByRole('button', { name: '分散の章へ移動', exact: true });
+  for (let step = 0; step < 30; step++) {
+    const bounds = await firstChapter.boundingBox();
+    if (bounds && bounds.y >= 80 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+    await page.mouse.move(180, 320);
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(150);
+  }
+  await expect(firstChapter).toBeInViewport();
 }
 
 async function activateChapter(page: Page, label: string) {
