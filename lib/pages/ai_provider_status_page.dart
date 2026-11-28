@@ -91,6 +91,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
       appBar: AppBar(
         title: const Text('AIプロバイダー実装状況'),
         backgroundColor: const Color(0xFF0A0A0A),
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: <Widget>[
           IconButton(

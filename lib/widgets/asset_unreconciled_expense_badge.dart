@@ -11,17 +11,20 @@ class AssetUnreconciledExpenseBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const row = Row(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final foreground =
+        isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E);
+    final row = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.help_outline, size: 10, color: Color(0xFF92400E)),
-        SizedBox(width: 2),
+        Icon(Icons.help_outline, size: 10, color: foreground),
+        const SizedBox(width: 2),
         Text(
           '不明',
           style: TextStyle(
             fontSize: 10,
             height: 1.4,
-            color: Color(0xFF92400E),
+            color: foreground,
           ),
         ),
       ],
@@ -30,7 +33,7 @@ class AssetUnreconciledExpenseBadge extends StatelessWidget {
       message: '使途不明金あり（内訳未照合・日別支出に含む）',
       child: preserveTextScale
           ? row
-          : const FittedBox(fit: BoxFit.scaleDown, child: row),
+          : FittedBox(fit: BoxFit.scaleDown, child: row),
     );
   }
 }
