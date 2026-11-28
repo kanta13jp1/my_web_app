@@ -17,6 +17,15 @@ void main() {
     expect(find.textContaining('AIチャット・文章生成'), findsWidgets);
     expect(find.textContaining('AI分析・提案'), findsWidgets);
     expect(find.textContaining('AI動画生成'), findsWidgets);
+    expect(find.textContaining('AI画像生成・運営向け広告動画生成'), findsWidgets);
+
+    final aiDataMap = await rootBundle.loadString(
+      PrivacyPolicyPage.aiDataMapAssetPath,
+    );
+    expect(aiDataMap, isNot(contains('第三者の動画生成APIには送信しない')));
+    expect(aiDataMap, contains('運営者管理の専用GPUワーカー'));
+    expect(aiDataMap, contains('fal.run'));
+    expect(aiDataMap, contains('AI画像生成・運営向け広告動画生成'));
 
     final policy = await rootBundle.loadString(PrivacyPolicyPage.assetPath);
     expect(policy, contains('## 1. 適用範囲'));
