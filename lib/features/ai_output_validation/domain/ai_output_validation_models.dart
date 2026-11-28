@@ -256,6 +256,45 @@ class DeterministicAiOutputValidator {
     r'^```(?:json|JSON)?\s*\n([\s\S]*?)\n```$',
   );
 
+  static bool _jsonValuesEqual(Object? a, Object? b) {
+    if (identical(a, b)) {
+      return true;
+    }
+    if (a == null || b == null) {
+      return a == null && b == null;
+    }
+    if (a is bool || b is bool) {
+      return a is bool && b is bool && a == b;
+    }
+    if (a is num && b is num) {
+      return a == b;
+    }
+    if (a is List<Object?> && b is List<Object?>) {
+      if (a.length != b.length) {
+        return false;
+      }
+      for (var i = 0; i < a.length; i++) {
+        if (!_jsonValuesEqual(a[i], b[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if (a is Map<Object?, Object?> && b is Map<Object?, Object?>) {
+      if (a.length != b.length) {
+        return false;
+      }
+      for (final entry in a.entries) {
+        if (!b.containsKey(entry.key) ||
+            !_jsonValuesEqual(entry.value, b[entry.key])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return a == b;
+  }
+
   static String maskSensitiveText(String raw, {int maxChars = 1000}) {
     final masked = raw
         .replaceAll(_emailRe, '***')
@@ -277,6 +316,8 @@ class DeterministicAiOutputValidator {
     OutputFormatContract formatContract = OutputFormatContract.markdownSections,
     List<String> requiredHeadings = const <String>['## 結論', '## 根拠'],
     List<String> requiredFields = const <String>[],
+    bool disallowExtraFields = false,
+    Map<String, Object?> forbiddenExampleValues = const <String, Object?>{},
     List<String> bannedTerms = const <String>[],
     int maxLength = 4000,
     DateTime? now,
@@ -407,14 +448,18 @@ class DeterministicAiOutputValidator {
             for (final entry in rawDecoded.entries)
               if (entry.key != null) entry.key.toString(): entry.value,
           };
+          final allowedFields = <String>{};
           for (final rawField in requiredFields) {
             final field = rawField.trim();
             if (field.isEmpty) {
               continue;
             }
+            allowedFields.add(field);
             final fieldVal = fieldMap[field];
-            if (fieldVal == null ||
-                (fieldVal is String && fieldVal.trim().isEmpty)) {
+            final isBlankString = fieldVal is String &&
+                fieldVal.trim().isEmpty &&
+                !fieldVal.contains('\t');
+            if (fieldVal == null || isBlankString) {
               violations.add(
                 ValidationViolation(
                   code: 'missing_required_field_$field',
@@ -422,6 +467,34 @@ class DeterministicAiOutputValidator {
                   message: '必須JSONフィールド「$field」が欠落しています。',
                 ),
               );
+            }
+          }
+          if (disallowExtraFields && allowedFields.isNotEmpty) {
+            for (final extraKey in fieldMap.keys) {
+              if (!allowedFields.contains(extraKey)) {
+                violations.add(
+                  ValidationViolation(
+                    code: 'unexpected_extra_field_$extraKey',
+                    severity: ViolationSeverity.block,
+                    message: '指定外のJSONフィールド「$extraKey」が含まれています。',
+                  ),
+                );
+              }
+            }
+          }
+          if (forbiddenExampleValues.isNotEmpty) {
+            for (final entry in forbiddenExampleValues.entries) {
+              if (fieldMap.containsKey(entry.key) &&
+                  _jsonValuesEqual(fieldMap[entry.key], entry.value)) {
+                violations.add(
+                  ValidationViolation(
+                    code: 'copied_example_value_${entry.key}',
+                    severity: ViolationSeverity.block,
+                    message:
+                        'サンプル値と同一の値がフィールド「${entry.key}」に混入しています。',
+                  ),
+                );
+              }
             }
           }
           working = jsonEncode(fieldMap);
