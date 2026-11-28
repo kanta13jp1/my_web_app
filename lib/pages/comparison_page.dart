@@ -6,7 +6,12 @@ import 'package:my_web_app/services/competitor_claim_evidence_repository.dart';
 import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
-import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_feature_table_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_hero_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_outcome_cards_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
 import '../services/growth_acquisition_service.dart';
@@ -67184,14 +67189,10 @@ class _ComparisonShell extends StatefulWidget {
 class _ComparisonShellState extends State<_ComparisonShell> {
   static const _acquisitionService = GrowthAcquisitionService();
   static const _pageBackground = Color(0xFF080812);
-  static const _surfacePrimary = Color(0xFF12131E);
-  static const _surfaceSecondary = Color(0xFF171A27);
-  static const _surfaceMuted = Color(0xFF1F2333);
   static const _borderColor = Color(0xFF2A3044);
   static const _textPrimary = Color(0xFFF5F7FB);
   static const _textSecondary = Color(0xFFB2BDD3);
   static const _textMuted = Color(0xFF7E8AA6);
-  static const _orange = Color(0xFFFF6B35);
   static const _indigo = Color(0xFF3D5AFE);
 
   static const _featuredCompetitorKeys = <String>[
@@ -67689,22 +67690,70 @@ class _ComparisonShellState extends State<_ComparisonShell> {
             child: Column(
               children: [
                 _buildBreadcrumb(context),
-                _buildHero(context),
-                _buildOutcomeCards(),
-                _buildPainPoints(),
-                _buildFeatureTable(),
+                ComparisonHeroSection(
+                  competitorName: _info.name,
+                  emoji: _info.emoji,
+                  searchKeyword: _info.searchKeyword,
+                  accentColor: _info.accentColor,
+                  hasImportSupport: _hasImportSupport,
+                  evidenceStatus: widget.evidenceStatus,
+                  verifiedEvidenceCount: widget.evidenceClaims.length,
+                  withheldLegacyClaimCount: _withheldLegacyClaimCount,
+                  primaryButton: _buildPrimaryHeroButton(context),
+                  secondaryButton: _buildSecondaryHeroButton(context),
+                ),
+                ComparisonOutcomeCardsSection(accentColor: _info.accentColor),
+                ComparisonPainPointsSection(
+                  competitorName: _info.name,
+                  painPoints: _info.painPoints,
+                  showLegacyClaims: _showLegacyClaims,
+                  evidenceStatus: widget.evidenceStatus,
+                  otherEvidence: _otherEvidence,
+                ),
+                ComparisonFeatureTableSection(
+                  competitorName: _info.name,
+                  accentColor: _info.accentColor,
+                  features: _info.features
+                      .map(
+                        (item) => ComparisonFeatureRowItem(
+                          feature: item.feature,
+                          competitorHas: item.competitorHas,
+                          weHave: item.weHave,
+                        ),
+                      )
+                      .toList(growable: false),
+                  showLegacyClaims: _showLegacyClaims,
+                  evidenceStatus: widget.evidenceStatus,
+                  featureEvidence: _featureEvidence,
+                ),
                 if (_hasImportSupport)
                   MigrationParitySection(
                     competitorKey: widget.competitorKey,
                     competitorName: _info.name,
                     accentColor: _info.accentColor,
                   ),
-                _buildSwitchPlan(context),
+                ComparisonSwitchPlanSection(
+                  accentColor: _info.accentColor,
+                  stepOneTitle: _switchStepTitle,
+                  stepOneBody: _switchStepBody,
+                  primaryButton: _buildPrimaryHeroButton(context),
+                  secondaryButton: _buildSecondaryHeroButton(context),
+                ),
                 _buildRelatedComparisons(context),
                 ComparisonCtaPanel(
                   competitorName: _info.name,
                   accentColor: _info.accentColor,
                   hasImportSupport: _hasImportSupport,
+                  onPrimaryCtaTap: () {
+                    final recorder = widget.touchRecorder ??
+                        _acquisitionService.recordComparisonTouch;
+                    return recorder('${widget.competitorKey}:primary_cta');
+                  },
+                  onSecondaryCtaTap: () {
+                    final recorder = widget.touchRecorder ??
+                        _acquisitionService.recordComparisonTouch;
+                    return recorder('${widget.competitorKey}:secondary_cta');
+                  },
                 ),
               ],
             ),
@@ -67780,832 +67829,18 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildHero(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Container(
-            decoration: BoxDecoration(
-              color: _surfacePrimary,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(
-                color: _info.accentColor.withValues(alpha: 0.26),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _info.accentColor.withValues(alpha: 0.15),
-                  blurRadius: 36,
-                  offset: const Offset(0, 18),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(28),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 760;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildTag(
-                          icon: Icons.compare_arrows_rounded,
-                          label: '294社比較',
-                          backgroundColor:
-                              _info.accentColor.withValues(alpha: 0.18),
-                          foregroundColor: _textPrimary,
-                        ),
-                        _buildTag(
-                          icon: Icons.search_rounded,
-                          label: _info.searchKeyword,
-                          backgroundColor: _surfaceMuted,
-                          foregroundColor: _textSecondary,
-                        ),
-                        if (_hasImportSupport)
-                          _buildTag(
-                            icon: Icons.publish_rounded,
-                            label: 'インポート対応',
-                            backgroundColor: _orange.withValues(alpha: 0.18),
-                            foregroundColor: _textPrimary,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-                    Text(
-                      '${_info.emoji} ${_info.name} の代わりに\n自分株式会社を使う',
-                      style: const TextStyle(
-                        fontFamily: 'NotoSansJP',
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.96,
-                        color: _textPrimary,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      '公開する比較情報は、根拠URLと確認日を持つ項目だけに限定しています。',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _textSecondary,
-                        height: 1.75,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ComparisonEvidenceStatusBanner(
-                      status: widget.evidenceStatus,
-                      verifiedCount: widget.evidenceClaims.length,
-                      withheldLegacyClaimCount: _withheldLegacyClaimCount,
-                    ),
-                    const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 14,
-                      children: [
-                        _buildMetricCard(
-                          icon: Icons.verified_rounded,
-                          label: '根拠確認済み',
-                          value: '${widget.evidenceClaims.length}件',
-                          accent: _info.accentColor,
-                        ),
-                        _buildMetricCard(
-                          icon: Icons.visibility_off_rounded,
-                          label: '旧比較文の公開保留',
-                          value: '$_withheldLegacyClaimCount件',
-                          accent: _indigo,
-                        ),
-                        _buildMetricCard(
-                          icon: _hasImportSupport
-                              ? Icons.move_down_rounded
-                              : Icons.timer_rounded,
-                          label: _hasImportSupport ? '移行方法' : '開始時間',
-                          value: _hasImportSupport ? 'データ引継ぎ可' : '30秒で開始',
-                          accent: _orange,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 26),
-                    if (compact)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildPrimaryHeroButton(context),
-                          const SizedBox(height: 12),
-                          _buildSecondaryHeroButton(context),
-                        ],
-                      )
-                    else
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _buildPrimaryHeroButton(context),
-                          _buildSecondaryHeroButton(context),
-                        ],
-                      ),
-                    const SizedBox(height: 20),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: _surfaceSecondary,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _borderColor),
-                      ),
-                      child: const Wrap(
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          _BenefitPill(
-                            icon: Icons.check_circle_outline_rounded,
-                            label: 'タスク・ノート・習慣を横断',
-                          ),
-                          _BenefitPill(
-                            icon: Icons.savings_outlined,
-                            label: '無料で比較しながら移行',
-                          ),
-                          _BenefitPill(
-                            icon: Icons.psychology_alt_outlined,
-                            label: 'AIが今日の最優先を整理',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOutcomeCards() {
-    final cards = [
-      _buildOutcomeCard(
-        icon: Icons.hub_rounded,
-        title: '日常の作業をひとつに集約',
-        body: 'ノート・タスク・財務・習慣・AI大学まで、別アプリで分かれていた流れをまとめます。',
-        accent: _info.accentColor,
-      ),
-      _buildOutcomeCard(
-        icon: Icons.currency_yen_rounded,
-        title: 'まず無料で始めて、必要になってから広げる',
-        body: '比較検討の段階でも登録しやすく、月額の積み上がりを気にせず試せます。',
-        accent: _orange,
-      ),
-      _buildOutcomeCard(
-        icon: Icons.auto_graph_rounded,
-        title: 'AI が「今日やること」を1件に絞る',
-        body: '判断・実行・振り返りまでを、ひとつの流れとして支援します。',
-        accent: _indigo,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 760) {
-                return Column(
-                  children: cards
-                      .map(
-                        (card) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: card,
-                        ),
-                      )
-                      .toList(),
-                );
-              }
-
-              return Row(
-                children: [
-                  for (var i = 0; i < cards.length; i++) ...[
-                    Expanded(child: cards[i]),
-                    if (i != cards.length - 1) const SizedBox(width: 12),
-                  ],
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPainPoints() {
-    if (!_showLegacyClaims) {
-      return ComparisonEvidenceSection(
-        title: '根拠確認済みの比較情報',
-        status: widget.evidenceStatus,
-        claims: _otherEvidence,
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${_info.name} を使っていて詰まりやすいポイント',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '今のツールで十分そうに見えても、日々の運用ではここがボトルネックになりがちです。',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 760;
-                  final items = <Widget>[];
-
-                  for (var i = 0; i < _info.painPoints.length; i++) {
-                    items.add(
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: _surfacePrimary,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: _borderColor),
-                        ),
-                        child: Text(
-                          '${i + 1}. ${_info.painPoints[i]}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: _textSecondary,
-                            height: 1.7,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (compact) {
-                    return Column(
-                      children: items
-                          .map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: item,
-                            ),
-                          )
-                          .toList(),
-                    );
-                  }
-
-                  return Row(
-                    children: [
-                      for (var i = 0; i < items.length; i++) ...[
-                        Expanded(child: items[i]),
-                        if (i != items.length - 1) const SizedBox(width: 12),
-                      ],
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureTable() {
-    if (!_showLegacyClaims) {
-      return ComparisonEvidenceSection(
-        title: '根拠確認済みの機能比較',
-        status: widget.evidenceStatus,
-        claims: _featureEvidence,
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '機能比較',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${_info.name} と共通で持っている核は残しつつ、自分株式会社側の追加メリットを見える化しています。',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                decoration: BoxDecoration(
-                  color: _surfacePrimary,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _borderColor),
-                ),
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _surfaceSecondary,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            flex: 5,
-                            child: Text(
-                              '比較項目',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _textPrimary,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              _info.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _textSecondary,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              '自分株式会社',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _indigo,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    for (final feature in _info.features)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _FeatureRowCard(
-                          feature: feature,
-                          competitorName: _info.name,
-                          accentColor: _info.accentColor,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchPlan(BuildContext context) {
-    final steps = [
-      _buildStepCard(
-        number: '01',
-        title: _switchStepTitle,
-        body: _switchStepBody,
-        accent: _info.accentColor,
-      ),
-      _buildStepCard(
-        number: '02',
-        title: '今日の最重要タスクを AI に任せる',
-        body: 'ノート・タスク・習慣・財務を横断して、今やるべき1件を先に見つけられます。',
-        accent: _indigo,
-      ),
-      _buildStepCard(
-        number: '03',
-        title: '必要になった機能だけ横に増やす',
-        body: '資産管理・AI大学・部署AIまで、必要になった機能を後から同じアプリ内で広げられます。',
-        accent: _orange,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: _surfacePrimary,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: _borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '乗り換えの進め方',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.72,
-                    color: _textPrimary,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  '一気に全部を置き換えなくても大丈夫です。まず入口をひとつにして、そこから必要な機能を足していけます。',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _textSecondary,
-                    height: 1.7,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth < 760) {
-                      return Column(
-                        children: steps
-                            .map(
-                              (step) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: step,
-                              ),
-                            )
-                            .toList(),
-                      );
-                    }
-
-                    return Row(
-                      children: [
-                        for (var i = 0; i < steps.length; i++) ...[
-                          Expanded(child: steps[i]),
-                          if (i != steps.length - 1) const SizedBox(width: 12),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _buildPrimaryHeroButton(context),
-                    _buildSecondaryHeroButton(context),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildRelatedComparisons(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '他の比較ページも見る',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '比較検討の途中なら、近いカテゴリの競合ページもすぐ見比べられます。',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _relatedCompetitors.map((entry) {
-                  final key = entry.key;
-                  final info = entry.value;
-                  return InkWell(
-                    onTap: () => Navigator.of(context).pushNamed('/vs-$key'),
-                    borderRadius: BorderRadius.circular(18),
-                    child: Ink(
-                      width: 190,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _surfacePrimary,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: _borderColor),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${info.emoji} ${info.name}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _textPrimary,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            info.searchKeyword,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: _textSecondary,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              InkWell(
-                onTap: () => Navigator.of(context).pushNamed('/competitors'),
-                borderRadius: BorderRadius.circular(12),
-                child: Ink(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _surfaceMuted,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.grid_view_rounded,
-                        size: 16,
-                        color: _textSecondary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '全294社の競合ランドスケープを見る →',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: _textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTag({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: foregroundColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: foregroundColor,
-              height: 1.4,
+    return ComparisonRelatedComparisonsSection(
+      items: _relatedCompetitors
+          .map(
+            (entry) => RelatedComparisonItem(
+              competitorKey: entry.key,
+              emoji: entry.value.emoji,
+              name: entry.value.name,
+              searchKeyword: entry.value.searchKeyword,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color accent,
-  }) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 170),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _surfaceSecondary,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withValues(alpha: 0.34)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 20, color: accent),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: _textMuted,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOutcomeCard({
-    required IconData icon,
-    required String title,
-    required String body,
-    required Color accent,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surfacePrimary,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _textPrimary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(
-              fontSize: 13,
-              color: _textSecondary,
-              height: 1.7,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepCard({
-    required String number,
-    required String title,
-    required String body,
-    required Color accent,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surfaceSecondary,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            number,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: accent,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _textPrimary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(
-              fontSize: 13,
-              color: _textSecondary,
-              height: 1.7,
-            ),
-          ),
-        ],
-      ),
+          )
+          .toList(growable: false),
     );
   }
 
@@ -68639,184 +67874,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
         side: const BorderSide(color: _borderColor),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       ),
-    );
-  }
-}
-
-class _BenefitPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _BenefitPill({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _ComparisonShellState._pageBackground,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _ComparisonShellState._borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: _ComparisonShellState._textSecondary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: _ComparisonShellState._textSecondary,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureRowCard extends StatelessWidget {
-  final _FeatureComparison feature;
-  final String competitorName;
-  final Color accentColor;
-
-  const _FeatureRowCard({
-    required this.feature,
-    required this.competitorName,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Widget buildStatus(String label, bool value, Color highlight) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: highlight.withValues(alpha: value ? 0.16 : 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: highlight.withValues(alpha: value ? 0.3 : 0.18),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              value ? Icons.check_circle_rounded : Icons.cancel_rounded,
-              size: 18,
-              color: value ? highlight : _ComparisonShellState._textMuted,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: value
-                    ? _ComparisonShellState._textPrimary
-                    : _ComparisonShellState._textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 640;
-
-        if (compact) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _ComparisonShellState._surfaceSecondary,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  feature.feature,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _ComparisonShellState._textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    buildStatus(
-                      competitorName,
-                      feature.competitorHas,
-                      accentColor,
-                    ),
-                    buildStatus(
-                      '自分株式会社',
-                      feature.weHave,
-                      _ComparisonShellState._indigo,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _ComparisonShellState._surfaceSecondary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Text(
-                  feature.feature,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: _ComparisonShellState._textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: buildStatus(
-                    competitorName,
-                    feature.competitorHas,
-                    accentColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: buildStatus(
-                    '自分株式会社',
-                    feature.weHave,
-                    _ComparisonShellState._indigo,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

@@ -753,15 +753,14 @@ async function generateWbsUserTaskAssist(
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent?key=${geminiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.25,
-            maxOutputTokens: 2200,
+            thinkingConfig: { thinkingLevel: "LOW" },
             responseMimeType: "application/json",
           },
         }),
@@ -794,7 +793,7 @@ async function generateWbsUserTaskAssist(
       parsed,
       fallback,
       mode,
-      "gemini-2.5-flash",
+      "gemini-4-hydrogen",
     );
   } catch (err) {
     console.warn(`wbs.user_task_ai_assist fallback: ${String(err)}`);
@@ -3673,7 +3672,7 @@ type HorseProviderConfig = {
 const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
   {
     provider: "google",
-    model: "gemini-2.5-flash",
+    model: "gemini-4-hydrogen",
     apiKeyEnv: "GEMINI_API_KEY",
     estimatedCostUsd: 0.0005,
     tier: "base",

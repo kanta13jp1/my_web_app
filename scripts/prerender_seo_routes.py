@@ -68,6 +68,17 @@ def remove_homepage_faq_schema(html_text: str) -> str:
     )
 
 
+def remove_homepage_about_section(html_text: str) -> str:
+    """公開サブルートに引き継がれたホーム専用「自分株式会社とは」ブロックを除去する。"""
+    return re.sub(
+        r'\s*<section\s+class="seo-about"[^>]*>.*?</section>',
+        "",
+        html_text,
+        count=1,
+        flags=re.DOTALL,
+    )
+
+
 def _apply_social_image(
     html_text: str,
     image: str | None,
@@ -108,6 +119,7 @@ def build_route_html(
     esc_url = html.escape(url)
 
     out = remove_homepage_faq_schema(template)
+    out = remove_homepage_about_section(out)
 
     # <title>
     out = re.sub(r"<title>.*?</title>",
@@ -239,6 +251,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     esc_url = html.escape(url)
 
     out = remove_homepage_faq_schema(template)
+    out = remove_homepage_about_section(out)
     out = re.sub(r"<title>.*?</title>",
                  f"<title>{esc_title}</title>", out, count=1, flags=re.DOTALL)
     out = re.sub(r'(<link rel="canonical" href=")[^"]*(">)',

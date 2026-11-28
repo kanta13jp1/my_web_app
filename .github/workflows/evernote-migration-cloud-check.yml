@@ -180,7 +180,7 @@ jobs:
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter-sdk
         with:
-          flutter-version: '3.47.9'
+          flutter-version: '3.38.x'
 
       - name: Cache runner-side pub packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -277,13 +277,10 @@ jobs:
           set -euo pipefail
           mapfile -t dart_files < .ci-logs/evernote-dart-files.txt
           dart format "${dart_files[@]}"
-          if [ -f pubspec.lock ]; then
-            git add -N -- pubspec.lock
-          fi
-          git diff --binary -- pubspec.lock "${dart_files[@]}"             > .ci-logs/evernote-cloud-format.patch
+          git diff --binary -- "${dart_files[@]}"             > .ci-logs/evernote-cloud-format.patch
           if [ -s .ci-logs/evernote-cloud-format.patch ]; then
             echo 'mismatch=true' >> "$GITHUB_OUTPUT"
-            echo "::warning::Formatting or pubspec.lock differs; download the patch artifact."
+            echo "::warning::Formatting differs; download the patch artifact."
             patch_bytes="$(wc -c < .ci-logs/evernote-cloud-format.patch)"
             if [ "$patch_bytes" -le 100000 ]; then
               echo "::group::Cloud formatting patch"

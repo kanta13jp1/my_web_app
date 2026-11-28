@@ -199,6 +199,11 @@ jobs:
             .privacy.containsEmail == false and
             .privacy.containsPromptText == false and
             (.plans | type == "array") and
+            (.aiHubCostWindow | type == "object") and
+            .aiHubCostWindow.currency == "USD" and
+            (.aiHubCostWindow.totalRequests | type == "number") and
+            (.aiHubCostWindow.estimatedCostUsd | type == "number") and
+            (.aiHubCostWindow.byFeature | type == "array") and
             (.missingInputs | type == "array" and length > 0) and
             .decisionMetrics.grossMarginRate == null and
             .decisionMetrics.customerAcquisitionCostYen == null and
@@ -258,7 +263,7 @@ jobs:
             echo "### Plan economics readiness"
             echo
             echo '```json'
-            jq '{plans, decisionMetrics, missingInputs}' "${economics}"
+            jq '{plans, aiHubCostWindow, decisionMetrics, missingInputs}' "${economics}"
             echo '```'
             echo
             echo "Metric definitions are included in the JSON reports. The artifact contains aggregate counts only; user, customer, and visitor IDs are omitted."
