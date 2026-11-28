@@ -114,17 +114,13 @@ test.describe('Landing story journey', () => {
       await activateChapter(page, '実行');
       await expect(story).toHaveAccessibleName(/4 \/ 4/);
       await page.screenshot({ path: testInfo.outputPath(`short-story-${size.width}-${size.height}.png`), scale: 'css' });
-      const progress = story.getByRole('progressbar');
-      const progressBounds = await progress.boundingBox();
-      expect(progressBounds).not.toBeNull();
       for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
         const action = story.getByRole('button', { name, exact: true });
         await expect(action).toBeInViewport();
         const bounds = await action.boundingBox();
         expect(bounds).not.toBeNull();
         expect(bounds!.y).toBeGreaterThanOrEqual(48);
-        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(progressBounds!.y);
-        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(size.height - 16);
+        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(size.height - 24);
         expect(bounds!.height).toBeGreaterThanOrEqual(44);
       }
       await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();

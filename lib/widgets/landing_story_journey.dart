@@ -204,13 +204,13 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
     }
     widget.scrollController
         .animateTo(
-          clampedTarget,
-          duration: const Duration(milliseconds: 520),
-          curve: Curves.easeOutCubic,
-        )
+      clampedTarget,
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+    )
         .whenComplete(() {
-          if (mounted) _syncWithScroll();
-        });
+      if (mounted) _syncWithScroll();
+    });
   }
 
   double _imageOpacity(int index, bool reduceMotion) {
@@ -996,7 +996,7 @@ class _JourneyRailState extends State<_JourneyRail> {
                 child: IconButton(
                   key: Key('landing_story_dot_$index'),
                   focusNode: _focusNodes[index],
-                  onPressed: () => widget.onChapterSelected(index),
+                  onPressed: () => _selectAndFocus(index),
                   color: Colors.white,
                   style: IconButton.styleFrom(
                     focusColor: const Color(0x4DFFA85C),

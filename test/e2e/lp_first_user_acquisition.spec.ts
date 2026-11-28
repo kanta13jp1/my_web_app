@@ -103,7 +103,7 @@ test.describe('LP first-user acquisition', () => {
     await trialAction.click();
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:?.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     const viewport = page.viewportSize();
@@ -126,9 +126,15 @@ test.describe('LP first-user acquisition', () => {
         triggerBoxAfterResult!.y + triggerBoxAfterResult!.height,
       ).toBeLessThan(viewport!.height * 0.7);
     }
-    await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
-    ).toHaveCount(0);
+    const resultEmail = trialResultCard.getByRole('textbox', {
+      name: 'メールアドレス', exact: true,
+    });
+    if (testInfo.project.name === 'mobile-chrome') {
+      await expect(resultEmail).toHaveCount(0);
+    } else {
+      await expect(resultEmail).toBeVisible();
+      await expect(resultEmail).not.toBeFocused();
+    }
   });
 
   test('H04 treatment reveals Google save and Magic Link fallback after value', async ({
@@ -144,12 +150,12 @@ test.describe('LP first-user acquisition', () => {
       .click();
 
     const trialResultCard = page.getByRole('group', {
-      name: /登録なしで試す:?.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
+      name: /登録なしで試す.*AIからの提案.*10分で連絡文の下書きまで進められるためです。/,
     });
     await expect(trialResultCard).toBeVisible();
     if (testInfo.project.name === 'mobile-chrome') {
       await expect(
-        page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+        trialResultCard.getByRole('textbox', { name: 'メールアドレス', exact: true }),
       ).toHaveCount(0);
       await page.getByRole('button', { name: /この提案を保存/ }).click();
     }
@@ -160,7 +166,7 @@ test.describe('LP first-user acquisition', () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: 'メールアドレス', exact: true }),
+      trialResultCard.getByRole('textbox', { name: 'メールアドレス', exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('button', {
@@ -181,6 +187,9 @@ test.describe('LP first-user acquisition', () => {
       if (message.type() === 'error') {
         browserIssues.push(`console: ${message.text()}`);
       }
+    });
+    page.on('requestfailed', (request) => {
+      browserIssues.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText}`);
     });
     page.on('pageerror', (error) => {
       browserIssues.push(`pageerror: ${error.message}`);
@@ -265,9 +274,11 @@ test.describe('LP first-user acquisition', () => {
     await expect(googleAction).toBeVisible();
     await expect(magicLinkAction).toBeVisible();
     await expect(lowerTrial).toBeVisible();
-    await expect(
-      page.getByRole('textbox', { name: /登録なしで試す|例: 今日いちばん詰まっていること|いま詰まっていること/ }),
-    ).toHaveCount(0);
+    const lowerInput = await page.getByRole('textbox', {
+      name: /例: 今日いちばん詰まっていること|いま詰まっていること/,
+    }).boundingBox();
+    expect(lowerInput).not.toBeNull();
+    expect(lowerInput!.y).toBeGreaterThanOrEqual(page.viewportSize()!.height);
 
     const authBox = await googleAction.boundingBox();
     const trialBox = await lowerTrial.boundingBox();
@@ -290,13 +301,23 @@ test.describe('LP first-user acquisition', () => {
 });
 
 async function openLanding(page: Page, path: string) {
-  await page.route('**/rest/v1/app_analytics*', async (route) => {
+  await page.route('**/rest/v1/**', async (route) => {
     const isRead = route.request().method() === 'GET';
     await route.fulfill({
       status: isRead ? 200 : 204,
       contentType: 'application/json',
       headers: isRead ? { 'content-range': '0-0/0' } : undefined,
       body: isRead ? '[]' : '',
+    });
+  });
+
+  await page.route('**/functions/v1/schedule-hub', async (route) => {
+    const body = JSON.parse(route.request().postData() ?? '{}');
+    expect(body.action).toBe('maintenance.list_active');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, windows: [] }),
     });
   });
 

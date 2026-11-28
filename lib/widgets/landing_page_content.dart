@@ -4793,6 +4793,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               style: OutlinedButton.styleFrom(
                 foregroundColor: secondaryCtaColor,
                 minimumSize: const Size.fromHeight(44),
+                visualDensity: VisualDensity.standard,
                 side: BorderSide(color: secondaryCtaBorderColor),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
