@@ -67,6 +67,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       appBar: AppBar(
         title: const Text('相性診断'),
         backgroundColor: const Color(0xFFFFE0B2),
+        foregroundColor: Colors.black87,
       ),
       body: SingleChildScrollView(
         child: Padding(
