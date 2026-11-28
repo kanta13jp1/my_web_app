@@ -444,6 +444,34 @@ void main() {
     );
     expect(find.textContaining('発行元は'), findsOneWidget);
   });
+
+  testWidgets('shows digital service, support boundary, and auto-renewal terms',
+      (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse('https://example.com/subscription-billing'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final noticeCard = find.byKey(const Key('billing_digital_product_notice'));
+    await tester.ensureVisible(noticeCard);
+    await tester.pumpAndSettle();
+
+    expect(noticeCard, findsOneWidget);
+    expect(find.textContaining('デジタルサービス'), findsWidgets);
+    expect(find.textContaining('補完'), findsOneWidget);
+    expect(find.textContaining('自動更新'), findsWidgets);
+    expect(find.textContaining('いつでも解約'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 final _treatment = ActivationRevenueAssignment(
