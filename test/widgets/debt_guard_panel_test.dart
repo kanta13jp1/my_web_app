@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
 import 'package:my_web_app/domain/models/debt_guard_emotion.dart';
 import 'package:my_web_app/domain/models/debt_guard_rule.dart';
+import 'package:my_web_app/domain/models/debt_guard_stall_thought.dart';
 import 'package:my_web_app/view_models/debt_guard_view_model.dart';
 import 'package:my_web_app/widgets/debt_guard_panel.dart';
 
@@ -292,6 +293,123 @@ void main() {
     expect(repository.events.single.ruleId, 'dishes_left_unwashed');
   });
 
+  testWidgets('names the thought that stalls a start and saves it', (
+    tester,
+  ) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+    expect(find.byKey(const Key('debt-guard-stall-insight')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('debt-guard-urge-help')));
+    await tester.pumpAndSettle();
+    // Only offered when the problem is starting, not when resisting.
+    expect(find.byKey(const Key('debt-guard-stall-futile')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('bug-mode-start')));
+    await tester.pumpAndSettle();
+    for (final thought in DebtGuardStallThought.values) {
+      expect(
+        find.byKey(Key('debt-guard-stall-${thought.wireName}')),
+        findsOneWidget,
+      );
+    }
+    expect(find.byKey(const Key('debt-guard-stall-counter')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('debt-guard-stall-pointless')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('debt-guard-stall-counter')))
+          .data,
+      DebtGuardStallThought.pointless.counter,
+    );
+    await tester.tap(find.text('今日はできなかった'));
+    await tester.pumpAndSettle();
+
+    final saved = repository.events.single;
+    expect(saved.type, DebtGuardEventType.violation);
+    expect(saved.stallThought, DebtGuardStallThought.pointless);
+    expect(find.text('頭の中の一言: 「やっても意味がない」'), findsOneWidget);
+    // One record: the box appears, but only as a hint, not as a pattern.
+    expect(find.byKey(const Key('debt-guard-stall-insight')), findsOneWidget);
+    expect(find.byKey(const Key('debt-guard-stall-stickiest')), findsNothing);
+  });
+
+  testWidgets('a thought chosen for starting is dropped when resisting', (
+    tester,
+  ) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    await tester.tap(find.byKey(const Key('debt-guard-urge-help')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bug-mode-start')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('debt-guard-stall-later')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bug-mode-resist')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('バグを弱めた'));
+    await tester.pumpAndSettle();
+
+    expect(repository.events.single.type, DebtGuardEventType.urgeResisted);
+    expect(repository.events.single.stallThought, isNull);
+  });
+
+  testWidgets('shows which thought ends in not starting from history', (
+    tester,
+  ) async {
+    final repository = _PanelRepository();
+    var id = 700;
+    DebtGuardEvent past(DebtGuardEventType type, DebtGuardStallThought t) {
+      return DebtGuardEvent(
+        id: id++,
+        ruleId: 'dishes_left_unwashed',
+        type: type,
+        eventDate: DateTime(2026, 8, 15),
+        createdAt: DateTime(2026, 8, 15, 20, 0, id),
+        stallThought: t,
+      );
+    }
+
+    repository.labelledHistory.addAll([
+      past(DebtGuardEventType.violation, DebtGuardStallThought.futile),
+      past(DebtGuardEventType.violation, DebtGuardStallThought.futile),
+      past(
+        DebtGuardEventType.requiredActionStarted,
+        DebtGuardStallThought.later,
+      ),
+      past(
+        DebtGuardEventType.requiredActionStarted,
+        DebtGuardStallThought.later,
+      ),
+    ]);
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    final stickiest = tester.widget<Text>(
+      find.byKey(const Key('debt-guard-stall-stickiest')),
+    );
+    expect(stickiest.data, contains('「どうせ無理」'));
+    expect(stickiest.data, contains('着手できなかった2回のうち2回'));
+    final loosest = tester.widget<Text>(
+      find.byKey(const Key('debt-guard-stall-loosest')),
+    );
+    expect(loosest.data, contains('「あとでやればいい」'));
+    expect(
+      find.textContaining(DebtGuardStallThought.futile.counter),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('a prohibited-rule dialog can switch to a required action', (
     tester,
   ) async {
@@ -402,7 +520,7 @@ class _PanelRepository implements DebtGuardRepository {
     return [
       ...labelledHistory,
       for (final event in events)
-        if (event.emotion != null) event,
+        if (event.emotion != null || event.stallThought != null) event,
     ];
   }
 
@@ -422,6 +540,7 @@ class _PanelRepository implements DebtGuardRepository {
           createdAt: date.add(Duration(microseconds: _nextId)),
           note: draft.note,
           emotion: draft.emotion,
+          stallThought: draft.stallThought,
         ),
     ];
     this.events.addAll(inserted);
