@@ -490,8 +490,7 @@ class DeterministicAiOutputValidator {
                   ValidationViolation(
                     code: 'copied_example_value_${entry.key}',
                     severity: ViolationSeverity.block,
-                    message:
-                        'サンプル値と同一の値がフィールド「${entry.key}」に混入しています。',
+                    message: 'サンプル値と同一の値がフィールド「${entry.key}」に混入しています。',
                   ),
                 );
               }
