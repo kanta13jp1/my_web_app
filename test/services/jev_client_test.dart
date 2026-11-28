@@ -185,7 +185,7 @@ void main() {
         );
         expect(
           decision.primaryExternalCandidate?.modelId,
-          'gemini-2.5-flash-lite',
+          'gemini-4-hydrogen',
         );
         expect(decision.jevClassification?.isHighConfidence, isTrue);
         expect(decision.reason, contains('jev classified as lightweight'));

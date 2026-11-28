@@ -4,12 +4,22 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
-from wbs_role_harness import build_plan, main, parse_due_date, plan_sort_key
+from wbs_role_harness import build_plan, fetch_issue, main, parse_due_date, plan_sort_key
 
 
 class WbsRoleHarnessTest(unittest.TestCase):
+    def test_fetch_issue_uses_json_comments_without_display_flag(self) -> None:
+        issue = {"number": 5747, "comments": [{"body": "review"}]}
+        with patch("wbs_role_harness.run_gh_json", return_value=issue) as run:
+            self.assertEqual(fetch_issue("owner/repo", 5747), issue)
+        args = run.call_args.args[0]
+        self.assertNotIn("--comments", args)
+        self.assertIn("comments", args[args.index("--json") + 1].split(","))
+        self.assertEqual(args[:3], ["issue", "view", "5747"])
+
     def test_automation_wbs_issue_routes_to_codex1_only(self) -> None:
         plan = build_plan(
             {

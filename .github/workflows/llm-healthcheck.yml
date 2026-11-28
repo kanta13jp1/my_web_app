@@ -1,0 +1,88 @@
+name: New LLM Provider Healthcheck
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/llm-healthcheck.yml"
+      - "scripts/llm_healthcheck_runner.ts"
+      - "scripts/llm_healthcheck_runner_test.ts"
+      - "supabase/functions/_shared/ssrf_probe_guard.ts"
+  schedule:
+    # 4時間おき毎時17分 UTC に新規LLMエンドポイント死活監視を実行
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run without outbound probes or webhooks (true/false)"
+        required: false
+        default: "true"
+
+concurrency:
+  group: llm-healthcheck-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  healthcheck:
+    name: Probe registered LLM provider endpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Run healthcheck runner checks and tests
+        run: |
+          deno check --config supabase/functions/deno.json \
+            scripts/llm_healthcheck_runner.ts \
+            scripts/llm_healthcheck_runner_test.ts
+          deno lint --config supabase/functions/deno.json \
+            scripts/llm_healthcheck_runner.ts \
+            scripts/llm_healthcheck_runner_test.ts
+          deno test --config supabase/functions/deno.json \
+            scripts/llm_healthcheck_runner_test.ts
+
+      - name: Execute scheduled healthcheck runner
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event_name == 'schedule' && 'false' || github.event.inputs.dry_run || 'true' }}
+          LLM_HEALTHCHECK_TARGETS_JSON: ${{ vars.LLM_HEALTHCHECK_TARGETS_JSON || '[]' }}
+          LLM_HEALTHCHECK_WEBHOOK_URL: ${{ secrets.LLM_HEALTHCHECK_ALERT_WEBHOOK_URL || '' }}
+        run: |
+          set -euo pipefail
+          deno run \
+            --allow-env=DRY_RUN_INPUT,LLM_HEALTHCHECK_TARGETS_JSON,LLM_HEALTHCHECK_WEBHOOK_URL \
+            --allow-net \
+            --allow-write=llm-healthcheck-report.json,llm-healthcheck-report.md \
+            scripts/llm_healthcheck_runner.ts
+
+      - name: Upload healthcheck report artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: llm-healthcheck-report
+          path: |
+            llm-healthcheck-report.json
+            llm-healthcheck-report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Append step summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f llm-healthcheck-report.md ]]; then
+            cat llm-healthcheck-report.md >> "${GITHUB_STEP_SUMMARY}"
+          fi

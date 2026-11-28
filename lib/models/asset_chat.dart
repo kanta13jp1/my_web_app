@@ -1,5 +1,16 @@
 enum AssetChatMessageRole { user, assistant }
 
+enum AssetChatThreadSortBy {
+  updatedAt('last_message_at', 'updatedAt', '更新日時順'),
+  createdAt('created_at', 'createdAt', '作成日時順');
+
+  final String columnName;
+  final String queryParam;
+  final String label;
+
+  const AssetChatThreadSortBy(this.columnName, this.queryParam, this.label);
+}
+
 class AssetChatUsage {
   final int tokensIn;
   final int tokensOut;

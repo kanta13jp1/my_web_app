@@ -23,11 +23,17 @@ async function open(page: Page) {
 }
 async function enter(page: Page, index: number, value: string) {
   const input = page.getByRole('textbox').nth(index);
-  await input.click();
+  // Reach the second field through Flutter's keyboard focus traversal rather
+  // than focusing its transient accessibility input with another DOM click.
+  if (index === 1) {
+    await expect(page.getByRole('textbox').nth(0)).toBeFocused();
+    await page.keyboard.press('Tab');
+  } else {
+    await input.click();
+  }
   await expect(input).toBeFocused();
-  const previous = await input.inputValue();
-  await page.keyboard.press('End');
-  for (let i = 0; i < previous.length; i++) await page.keyboard.press('Backspace');
+  await input.press('ControlOrMeta+A');
+  await input.press('Backspace');
   await expect(input).toHaveValue('');
   await page.keyboard.type(value);
   await expect(input).toHaveValue(value);

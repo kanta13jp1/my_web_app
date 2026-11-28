@@ -7,6 +7,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -668,6 +669,80 @@ def recent_flutter_crash_logs(root: Path) -> list[str]:
     return [path.relative_to(root).as_posix() for path in paths[:5]]
 
 
+DIAGNOSTIC_LINE_RE = re.compile(
+    r"^\s*(?:error|warning|info)\s+-\s+|\berror(?:\[|\s*:)|\b(?:Issues?\s+found|Analysis\s+failed|Unhandled\s+exception)\b",
+    re.IGNORECASE,
+)
+
+
+def extract_analyzer_diagnostics(output: str, *, limit: int = 80) -> list[str]:
+    """Extract bounded diagnostic or tail lines from analyzer output for error reports."""
+    non_empty = [line.rstrip() for line in output.splitlines() if line.strip()]
+    if not non_empty:
+        return []
+    matched = [line for line in non_empty if DIAGNOSTIC_LINE_RE.search(line)]
+    if matched:
+        return matched[:limit]
+    return non_empty[-min(limit, 40) :]
+
+
+def write_analyzer_error_report(
+    report_path: Path,
+    *,
+    status: str,
+    primary_command: GateCommand,
+    primary_result: CommandResult,
+    primary_classification: str,
+    primary_log_rel: str,
+    fallback_command: GateCommand | None,
+    fallback_result: CommandResult | None,
+    fallback_classification: str | None,
+    fallback_log_rel: str | None,
+    crash_logs: list[str],
+) -> None:
+    """Write a standalone Markdown static-analysis failure report artifact."""
+    lines = [
+        "# Static Analysis Error Report",
+        "",
+        f"- Status: `{status}`",
+        f"- Primary classification: `{primary_classification}`",
+        f"- Primary command: `{shlex.join(primary_command.args)}`",
+        f"- Primary exit code: `{primary_result.returncode}`",
+        f"- Primary elapsed: `{primary_result.elapsed_seconds:.3f}s`",
+        f"- Primary log: `{primary_log_rel}`",
+    ]
+    if (
+        fallback_command is not None
+        and fallback_result is not None
+        and fallback_log_rel is not None
+    ):
+        lines.extend(
+            [
+                f"- Fallback classification: `{fallback_classification}`",
+                f"- Fallback command: `{shlex.join(fallback_command.args)}`",
+                f"- Fallback exit code: `{fallback_result.returncode}`",
+                f"- Fallback log: `{fallback_log_rel}`",
+            ]
+        )
+    if crash_logs:
+        lines.append(f"- Flutter crash logs: `{', '.join(crash_logs)}`")
+
+    primary_diagnostics = extract_analyzer_diagnostics(primary_result.output)
+    lines.extend(["", "## Primary Analyzer Diagnostics", "", "```text"])
+    if primary_diagnostics:
+        lines.extend(primary_diagnostics)
+    else:
+        lines.append("(No diagnostic output captured)")
+    lines.append("```")
+
+    if fallback_result is not None and (fallback_result.returncode != 0 or fallback_result.output.strip()):
+        fallback_diagnostics = extract_analyzer_diagnostics(fallback_result.output)
+        if fallback_diagnostics:
+            lines.extend(["", "## Fallback Analyzer Diagnostics", "", "```text", *fallback_diagnostics, "```"])
+
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_analyzer_evidence(
     root: Path,
     artifact_dir: Path,
@@ -752,6 +827,30 @@ def write_analyzer_evidence(
     crash_logs = payload["flutter_crash_logs"]
     if crash_logs:
         lines.append(f"- Flutter crash logs: `{', '.join(crash_logs)}`")
+
+    error_report_path = resolved_dir / "analyzer-error-report.md"
+    if status == "success":
+        error_report_path.unlink(missing_ok=True)
+    else:
+        write_analyzer_error_report(
+            error_report_path,
+            status=status,
+            primary_command=primary_command,
+            primary_result=primary_result,
+            primary_classification=primary_classification,
+            primary_log_rel=primary_log.relative_to(root).as_posix(),
+            fallback_command=fallback_command,
+            fallback_result=fallback_result,
+            fallback_classification=fallback_classification,
+            fallback_log_rel=(
+                fallback_log.relative_to(root).as_posix()
+                if fallback_log is not None
+                else None
+            ),
+            crash_logs=crash_logs,
+        )
+        lines.append(f"- Error report: `{error_report_path.relative_to(root).as_posix()}`")
+
     summary = "\n".join(lines) + "\n"
     (resolved_dir / "summary.md").write_text(summary, encoding="utf-8")
 

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'fsrs_scheduler.dart';
+
 class FsrsCard {
   final String questionId;
   final String provider;
@@ -61,7 +63,7 @@ class FsrsStats {
 }
 
 class AiFsrsService {
-  final _supabase = Supabase.instance.client;
+  SupabaseClient get _supabase => Supabase.instance.client;
 
   /// grade: 1=Again, 2=Hard, 3=Good, 4=Easy
   static String gradeLabel(int grade) {
@@ -97,11 +99,48 @@ class AiFsrsService {
     }
   }
 
+  FsrsReviewOutcome gradeCardLocal(
+    FsrsCardState card, {
+    required int grade,
+    int? elapsedMs,
+    bool? isCorrect,
+    DateTime? now,
+  }) {
+    return FsrsScheduler.scheduleNext(
+      card,
+      grade: grade,
+      elapsedMs: elapsedMs,
+      isCorrect: isCorrect,
+      now: now,
+    );
+  }
+
   Future<({DateTime nextDue, double stability})> gradeCard({
     required String provider,
     required String questionId,
     required int grade,
+    int? elapsedMs,
+    double? difficulty,
+    bool? isCorrect,
+    FsrsCardState? currentState,
+    DateTime? now,
   }) async {
+    final normalizedGrade = normalizeGrade(grade);
+    final baseState = currentState ??
+        FsrsCardState(
+          questionId: questionId,
+          provider: provider,
+          dueDate: (now ?? DateTime.now()).toUtc(),
+          difficulty: difficulty ?? 5.0,
+        );
+    final localOutcome = FsrsScheduler.scheduleNext(
+      baseState,
+      grade: normalizedGrade,
+      elapsedMs: elapsedMs,
+      isCorrect: isCorrect,
+      now: now,
+    );
+
     try {
       final response = await _supabase.functions.invoke(
         'ai-hub',
@@ -109,21 +148,22 @@ class AiFsrsService {
           'action': 'quiz.fsrs_grade',
           'provider': provider,
           'question_id': questionId,
-          'grade': normalizeGrade(grade),
+          'grade': normalizedGrade,
+          if (elapsedMs != null) 'elapsed_ms': elapsedMs,
+          if (difficulty != null) 'difficulty': difficulty,
+          if (isCorrect != null) 'is_correct': isCorrect,
         },
       );
       final data = response.data as Map<String, dynamic>?;
       final nextDueStr = data?['next_due'] as String? ?? '';
-      final stability = (data?['stability'] as num?)?.toDouble() ?? 1.0;
+      final stability =
+          (data?['stability'] as num?)?.toDouble() ?? localOutcome.stability;
       final nextDue = nextDueStr.isNotEmpty
           ? DateTime.parse(nextDueStr)
-          : DateTime.now().add(const Duration(days: 1));
+          : localOutcome.nextDue;
       return (nextDue: nextDue, stability: stability);
     } catch (_) {
-      return (
-        nextDue: DateTime.now().add(const Duration(days: 1)),
-        stability: 1.0
-      );
+      return (nextDue: localOutcome.nextDue, stability: localOutcome.stability);
     }
   }
 

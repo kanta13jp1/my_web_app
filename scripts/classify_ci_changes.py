@@ -20,6 +20,10 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "analysis_options.yaml",
         "l10n.yaml",
         "firebase.json",
+        "playwright.config.ts",
+        "playwright.business-execution.config.ts",
+        "package.json",
+        "package-lock.json",
     ),
     "web": (
         "lib/**",
@@ -32,6 +36,33 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "l10n.yaml",
         "firebase.json",
     ),
+    "business_execution": (
+        "lib/models/business_execution.dart",
+        "lib/pages/virtual_organization_page.dart",
+        "lib/services/business_execution*.dart",
+        "lib/view_models/business_execution_controller.dart",
+        "lib/widgets/business_execution*.dart",
+        "test/models/business_execution_test.dart",
+        "test/view_models/business_execution_controller_test.dart",
+        "test/widgets/business_execution_panel_test.dart",
+        "test/web/business_execution_lock_test.dart",
+        "test/e2e/business_execution.spec.ts",
+        "test/fixtures/business_execution_app.dart",
+        "playwright.config.ts",
+        "playwright.business-execution.config.ts",
+        "package.json",
+        "package-lock.json",
+        "pubspec.yaml",
+        "pubspec.lock",
+        "web/**",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+        "scripts/serve_business_execution_fixture.py",
+        "scripts/serve_business_execution_fixture_test.py",
+        ".github/actions/setup-flutter-sdk/**",
+        "assets/**",
+    ),
     "edge": (
         "supabase/functions/**",
         "supabase/config.toml",
@@ -39,6 +70,31 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "caption": ("services/caption-transcoder/**",),
     "migration": ("supabase/migrations/**",),
     "tiger": ("assets/data/tiger_*",),
+    "web_seo_assets": (
+        "web/**",
+        "assets/**",
+        "scripts/optimize_web_fonts.py",
+        "scripts/prerender_seo_routes.py",
+        "scripts/generate_sitemap.py",
+        "scripts/generate_ogp_cards.mjs",
+        "scripts/ogp_cards.json",
+        "test/scripts/test_optimize_web_fonts.py",
+        "test/scripts/test_prerender_seo_routes.py",
+        "test/web/seo_shell_handoff.test.cjs",
+        "test/web/generate_ogp_cards.test.mjs",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+    ),
+    "high_risk_review_deps": (
+        "scripts/requirements-high-risk-security-review.txt",
+        "scripts/run_dual_security_review.py",
+        "scripts/test_run_dual_security_review.py",
+        ".github/workflows/high-risk-dual-security-review.yml",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+    ),
 }
 
 # These exact Python suites are executed by Agent Skill Contract on every
@@ -62,6 +118,8 @@ NOTION_AUDIT_TESTS = (
 IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
     "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS, *NOTION_AUDIT_TESTS),
     "web": ("assets/data/tiger_*",),
+    "business_execution": ("assets/data/tiger_*",),
+    "web_seo_assets": ("assets/data/tiger_*",),
 }
 
 
@@ -80,6 +138,8 @@ def classify(paths: list[str], force_all: bool = False) -> dict[str, bool]:
         )
         for group, patterns in GROUPS.items()
     }
+    # The fixture needs the existing SDK/dependency steps, but is not a release.
+    result["flutter"] = result["flutter"] or result["business_execution"]
     result["deployable"] = result["web"] or result["edge"] or result["migration"]
     return result
 

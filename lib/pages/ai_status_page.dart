@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../features/vision_benchmark/data/supabase_vision_benchmark_repository.dart';
+import '../features/vision_benchmark/domain/vision_benchmark_models.dart';
+import '../features/vision_benchmark/vision_benchmark_container.dart';
 import '../services/ai_model_preference_service.dart';
 import '../services/magi_system_settings_service.dart';
 
@@ -9,12 +12,14 @@ class AiStatusPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
   final AiModelPreferenceService modelPreferenceService;
   final MagiSystemSettingsService magiSettingsService;
+  final VisionBenchmarkRepository? visionBenchmarkRepository;
 
   const AiStatusPage({
     super.key,
     this.supabaseClient,
     this.modelPreferenceService = const AiModelPreferenceService(),
     this.magiSettingsService = const MagiSystemSettingsService(),
+    this.visionBenchmarkRepository,
   });
 
   @override
@@ -201,6 +206,78 @@ class _AiStatusPageState extends State<AiStatusPage> {
     }
   }
 
+  bool get _shouldPersistVisionBenchmark =>
+      widget.visionBenchmarkRepository != null || widget.supabaseClient == null;
+
+  void _openVisionBenchmarkDashboard() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/vision-benchmark'),
+        builder: (_) => VisionBenchmarkDashboardPage(
+          repository: widget.visionBenchmarkRepository,
+          supabaseClient: widget.supabaseClient,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _persistVisionBenchmarkRun({
+    required String modelName,
+    required Map<Object?, Object?>? benchmark,
+    required bool passed,
+    required String errorDetail,
+  }) async {
+    if (!_shouldPersistVisionBenchmark || _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final repo = widget.visionBenchmarkRepository ??
+          SupabaseVisionBenchmarkRepository(client: _supabase);
+      var provider = 'unknown';
+      for (final m in _models) {
+        if (m['model'] == modelName) {
+          provider = m['provider'] as String? ?? 'unknown';
+          break;
+        }
+      }
+      final rawScore = (benchmark?['score'] as num?)?.round() ?? 0;
+      final latencyMs = (benchmark?['latency'] as num?)?.round() ?? 0;
+      final detail = (benchmark?['detail'] as String?) ?? errorDetail;
+      final rawLevels = benchmark?['levels'];
+      final levels = <VisionBenchmarkLevel>[];
+      if (rawLevels is List<Object?>) {
+        for (var i = 0; i < rawLevels.length; i++) {
+          final item = rawLevels[i];
+          if (item is Map<Object?, Object?>) {
+            levels.add(
+              VisionBenchmarkLevel(
+                level: (item['level'] ?? 'level${i + 1}').toString(),
+                description: (item['description'] ?? '').toString(),
+                passed: item['passed'] as bool? ?? false,
+                score: ((item['score'] as num?)?.round() ?? 0).clamp(0, 100),
+                maxPoints: (item['maxPoints'] as num?)?.round() ?? 100,
+                latencyMs: (item['latency'] as num?)?.round() ?? 0,
+                response: (item['response'] ?? '').toString(),
+              ),
+            );
+          }
+        }
+      }
+      await repo.recordRun(
+        model: modelName,
+        provider: provider,
+        score: rawScore.clamp(0, 100),
+        latencyMs: latencyMs,
+        threshold: kDefaultVisionBenchmarkThreshold,
+        passed: passed,
+        detail: detail,
+        levels: levels,
+      );
+    } catch (error) {
+      debugPrint('vision benchmark persist skipped: $error');
+    }
+  }
+
   // 個別モデルのテスト実行（詳細ベンチマーク対応）
   Future<void> _testSingleModel(String modelName) async {
     setState(() {
@@ -217,12 +294,14 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
       final data = (res.data is String ? jsonDecode(res.data) : res.data)
           as Map<String, dynamic>;
+      final bool isSuccess = data['success'] == true;
+      final benchmark = data['benchmark'] as Map<String, dynamic>?;
+      final String errorText = data['error']?.toString() ?? '不明なエラー';
 
       setState(() {
-        if (data['success'] == true) {
+        if (isSuccess) {
           _testResults[modelName] = 'success';
 
-          final benchmark = data['benchmark'] as Map<String, dynamic>?;
           if (benchmark != null) {
             _visionScores[modelName] = benchmark;
 
@@ -245,7 +324,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           }
         } else {
           _testResults[modelName] = 'error';
-          _testErrors[modelName] = data['error']?.toString() ?? '不明なエラー';
+          _testErrors[modelName] = errorText;
 
           // エラー時はスコアを 0 にして末尾へ回す
           final index = _models.indexWhere(
@@ -257,12 +336,26 @@ class _AiStatusPageState extends State<AiStatusPage> {
           }
         }
       });
+
+      await _persistVisionBenchmarkRun(
+        modelName: modelName,
+        benchmark: benchmark,
+        passed: isSuccess,
+        errorDetail: isSuccess ? '' : errorText,
+      );
     } catch (e) {
       if (!mounted) return;
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
       setState(() {
         _testResults[modelName] = 'error';
-        _testErrors[modelName] = e.toString().replaceFirst('Exception: ', '');
+        _testErrors[modelName] = errorMessage;
       });
+      await _persistVisionBenchmarkRun(
+        modelName: modelName,
+        benchmark: null,
+        passed: false,
+        errorDetail: errorMessage,
+      );
     }
   }
 
@@ -275,6 +368,12 @@ class _AiStatusPageState extends State<AiStatusPage> {
         backgroundColor: navy,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            key: const Key('ai_status_vision_dashboard_button'),
+            icon: const Icon(Icons.analytics_outlined),
+            onPressed: _openVisionBenchmarkDashboard,
+            tooltip: 'AI監視ダッシュボード (Visionベンチマーク)',
+          ),
           IconButton(
             icon: const Icon(Icons.play_circle_outline),
             onPressed: _runAllTests,
@@ -309,8 +408,49 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     _buildMagiSystemCard(navy),
                     ..._models
                         .map((modelMap) => _buildModelCard(navy, modelMap)),
+                    _buildVisionDashboardCard(navy),
                   ],
                 ),
+    );
+  }
+
+  Widget _buildVisionDashboardCard(Color navy) {
+    return Container(
+      key: const Key('ai_status_open_vision_dashboard_card'),
+      margin: const EdgeInsets.only(top: 4, bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: navy.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.visibility_outlined, color: navy),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI監視ダッシュボード（Visionベンチマーク）',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  '過去の計測推移・閾値アラート履歴を確認',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            key: const Key('ai_status_open_vision_dashboard_button'),
+            onPressed: _openVisionBenchmarkDashboard,
+            child: const Text('開く'),
+          ),
+        ],
+      ),
     );
   }
 

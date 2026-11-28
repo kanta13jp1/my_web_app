@@ -1,0 +1,463 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/asset_payroll_deductions.dart';
+
+void main() {
+  Map<String, dynamic> fixture({
+    String id = 'synthetic-a',
+    String owner = 'owner-a',
+    String status = 'confirmed',
+    String date = '2030-02-20',
+  }) =>
+      {
+        'id': id,
+        'user_id': owner,
+        'pay_date': date,
+        'review_status': status,
+        'gross_amount': 1000,
+        'net_amount': 700,
+        'social_insurance_total': 200,
+        'deductions': <String, dynamic>{
+          'income_tax': 50,
+          'resident_tax': 40,
+          'health_insurance': 80,
+          'pension': 100,
+          'employment_insurance': 20,
+          'long_term_care_insurance': 0,
+          'employees_pension_fund_contribution': 0,
+          'ideco': 10,
+        },
+      };
+
+  test('summary separates retrieval verification missing conflict and mismatch',
+      () {
+    PayrollMonthDeductions month(List<Map<String, dynamic>> rows) =>
+        AssetPayrollDeductions.months(
+          ownerId: 'owner-a',
+          year: 2030,
+          rows: rows,
+        )[1];
+    expect(month([]).summaryStatus(social: false), '明細なし');
+    final automatic = month([fixture(status: 'auto')]);
+    expect(automatic.summaryStatus(social: false), contains('取得済み・本人未確認'));
+    expect(automatic.confirmedTaxYen, isNull);
+    final missing = fixture();
+    (missing['deductions'] as Map).remove('income_tax');
+    expect(
+      month([missing]).summaryStatus(social: false),
+      contains('本人確認済み／必要項目の記載なし'),
+    );
+    final alias = fixture();
+    (alias['deductions'] as Map)['employees_pension_insurance'] = 99;
+    expect(month([alias]).summaryStatus(social: true), contains('項目名違いが競合'));
+    final mismatch = fixture();
+    mismatch['social_insurance_total'] = 201;
+    expect(month([mismatch]).summaryStatus(social: true), contains('内訳が不一致'));
+    expect(month([mismatch]).confirmedSocialYen, isNull);
+    expect(month([fixture()]).summaryStatus(social: true), '本人確認済み');
+  });
+
+  test('missing optional premiums are unknown rather than inferred zero', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = null;
+    final items = raw['deductions'] as Map;
+    items.remove('long_term_care_insurance');
+    items.remove('employees_pension_fund_contribution');
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, isNull);
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, isNull);
+    items['long_term_care_insurance'] = 0;
+    items['employees_pension_fund_contribution'] = 0;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, 200);
+    items.remove('long_term_care_insurance');
+    raw['social_insurance_total'] = 200;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, 200);
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, isNull);
+  });
+  test('AI pension alias and care/fund remain one social total', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = 230;
+    raw['deductions'] = {
+      'income_tax': 50,
+      'resident_tax': 40,
+      'health_insurance': 80,
+      'employees_pension_insurance': 100,
+      'employment_insurance': 20,
+      'long_term_care_insurance': 10,
+      'employees_pension_fund_contribution': 20,
+      'ideco': 10,
+    };
+    final row = PayrollDeductions.fromRow(raw)!;
+    expect(row.items['pension'], 100);
+    expect(row.socialPartsTotalYen, 230);
+    expect(row.socialTotalYen, 230);
+    expect(row.identifiedSubtotalYen, 330);
+    expect(row.socialMismatchYen, 0);
+    expect(row.unclassified, isEmpty);
+  });
+  test('matching pension aliases count once and conflicting ones need review',
+      () {
+    final raw = fixture();
+    (raw['deductions'] as Map)['employees_pension_insurance'] = 100;
+    expect(PayrollDeductions.fromRow(raw)!.socialPartsTotalYen, 200);
+    (raw['deductions'] as Map)['employees_pension_insurance'] = 101;
+    final row = PayrollDeductions.fromRow(raw)!;
+    expect(row.conflictingPensionAliases, isTrue);
+    expect(row.socialPartsTotalYen, isNull);
+    final month = AssetPayrollDeductions.months(
+      ownerId: 'owner-a',
+      year: 2030,
+      rows: [raw],
+    )[1];
+    expect(month.confirmedSocialYen, isNull);
+  });
+  test('present unknown optional premium is not treated as zero', () {
+    final raw = fixture();
+    raw['social_insurance_total'] = null;
+    (raw['deductions'] as Map)['long_term_care_insurance'] = null;
+    expect(PayrollDeductions.fromRow(raw)!.socialTotalYen, isNull);
+  });
+  test(
+    'social total replaces components and iDeCo is neither tax nor social',
+    () {
+      final row = PayrollDeductions.fromRow(fixture())!;
+      expect(
+        row.taxTotalYen,
+        90,
+      );
+      expect(
+        row.socialTotalYen,
+        200,
+      );
+      expect(
+        row.socialMismatchYen,
+        0,
+      );
+      expect(
+        row.identifiedSubtotalYen,
+        300,
+      );
+      expect(
+        row.derivedDeductionTotalYen,
+        300,
+      );
+      expect(
+        row.unidentifiedDifferenceYen,
+        0,
+      );
+    },
+  );
+  test(
+    'missing values are unknown while explicitly reported zeros remain zero',
+    () {
+      final raw = fixture();
+      raw['deductions'] = {'income_tax': 0, 'resident_tax': 0};
+      raw['social_insurance_total'] = null;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.taxTotalYen,
+        0,
+      );
+      expect(
+        row.socialTotalYen,
+        isNull,
+      );
+      expect(
+        row.items['health_insurance'],
+        isNull,
+      );
+    },
+  );
+  test(
+    'partial tax extraction has no full tax total',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map).remove(
+        'resident_tax',
+      );
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.taxTotalYen,
+        isNull,
+      );
+      expect(
+        row.items['income_tax'],
+        50,
+      );
+    },
+  );
+  test(
+    'negative withholding adjustment retains its sign',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map)['income_tax'] = -50;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.taxTotalYen,
+        -10,
+      );
+      expect(
+        row.unidentifiedDifferenceYen,
+        100,
+      );
+    },
+  );
+  test(
+    'unknown keys and invalid numeric values retain unknown classification',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map)['unknown_component'] = 15;
+      (raw['deductions'] as Map)['income_tax'] = '50';
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.unclassified['unknown_component'],
+        15,
+      );
+      expect(
+        row.taxTotalYen,
+        isNull,
+      );
+      expect(
+        PayrollDeductions.readYen(double.infinity),
+        isNull,
+      );
+      expect(
+        PayrollDeductions.readYen(12.5),
+        isNull,
+      );
+    },
+  );
+  test(
+    'social mismatch is visible without adding two social totals',
+    () {
+      final raw = fixture();
+      raw['social_insurance_total'] = 210;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(
+        row.socialMismatchYen,
+        10,
+      );
+      expect(
+        row.identifiedSubtotalYen,
+        310,
+      );
+    },
+  );
+  test(
+    'only owner rows and confirmed months enter comparison',
+    () {
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [
+          fixture(),
+          fixture(id: 'foreign', owner: 'owner-b'),
+          fixture(id: 'auto', status: 'auto', date: '2030-03-20'),
+          fixture(id: 'rejected', status: 'rejected', date: '2030-04-20'),
+        ],
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        90,
+      );
+      expect(
+        months[2].confirmedTaxYen,
+        isNull,
+      );
+      expect(
+        months[3].statements,
+        isEmpty,
+      );
+      expect(
+        months[0].confirmedTaxYen,
+        isNull,
+      );
+    },
+  );
+  test(
+    'repeated same source is deduplicated and different content conflicts',
+    () {
+      var months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [fixture(), fixture()],
+      );
+      expect(
+        months[1].statements,
+        hasLength(1),
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        90,
+      );
+      final corrected = fixture();
+      corrected['net_amount'] = 600;
+      months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [fixture(), corrected],
+      );
+      expect(
+        months[1].conflicting,
+        isTrue,
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        isNull,
+      );
+    },
+  );
+  test(
+    'multiple distinct payslips in one month are combined without loss',
+    () {
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [fixture(), fixture(id: 'synthetic-b')],
+      );
+      expect(
+        months[1].statements,
+        hasLength(2),
+      );
+      expect(
+        months[1].confirmedTaxYen,
+        180,
+      );
+    },
+  );
+  test(
+    'invalid or missing dates never roll into another month',
+    () {
+      expect(
+        PayrollDeductions.fromRow(fixture(date: '2030-02-31')),
+        isNull,
+      );
+      expect(
+        PayrollDeductions.fromRow(fixture(date: '')),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'normalizes Japanese 8 deduction keys and singular English pension aliases',
+    () {
+      final mayLike = <String, dynamic>{
+        'id': 'synthetic-may',
+        'user_id': 'owner-a',
+        'pay_date': '2026-05-25',
+        'review_status': 'confirmed',
+        'gross_amount': 598307,
+        'net_amount': 452815,
+        'social_insurance_total': 86992,
+        'deductions': <String, dynamic>{
+          '健康保険料': 28224,
+          '介護保険料': 4536,
+          '厚生年金保険料': 51240,
+          '厚生年金基金掛金': 0,
+          '雇用保険料': 2992,
+          '所得税': 29800,
+          '住民税': 28700,
+          'iDeCo': 0,
+        },
+      };
+      final mayRow = PayrollDeductions.fromRow(mayLike)!;
+      expect(mayRow.taxTotalYen, 58500);
+      expect(mayRow.socialPartsTotalYen, 86992);
+      expect(mayRow.socialTotalYen, 86992);
+      expect(mayRow.socialMismatchYen, 0);
+      expect(mayRow.unidentifiedDifferenceYen, 0);
+      expect(mayRow.unclassified, isEmpty);
+
+      final augustLike = <String, dynamic>{
+        'id': 'synthetic-aug',
+        'user_id': 'owner-a',
+        'pay_date': '2026-08-25',
+        'review_status': 'confirmed',
+        'gross_amount': 561736,
+        'net_amount': 421277,
+        'social_insurance_total': 86809,
+        'deductions': <String, dynamic>{
+          'income_tax': 23850,
+          'resident_tax': 29800,
+          'health_insurance': 28224,
+          'long_term_care_insurance': 4536,
+          'employee_pension_insurance': 51240,
+          'employee_pension_fund_contribution': 0,
+          'employment_insurance': 2809,
+          'ideco': 0,
+        },
+      };
+      final augRow = PayrollDeductions.fromRow(augustLike)!;
+      expect(augRow.items['pension'], 51240);
+      expect(augRow.socialPartsTotalYen, 86809);
+      expect(augRow.socialMismatchYen, 0);
+      expect(augRow.unclassified, isEmpty);
+    },
+  );
+
+  test(
+    'conflicting Japanese or English aliases stay excluded from confirmed totals',
+    () {
+      final taxConflict = fixture();
+      (taxConflict['deductions'] as Map)['所得税'] = 60;
+      final taxRow = PayrollDeductions.fromRow(taxConflict)!;
+      expect(taxRow.conflictingTaxAliases, isTrue);
+      expect(taxRow.taxTotalYen, isNull);
+      expect(taxRow.identifiedSubtotalYen, 250);
+
+      final pensionConflict = fixture();
+      (pensionConflict['deductions'] as Map)['employee_pension_insurance'] =
+          101;
+      final pensionRow = PayrollDeductions.fromRow(pensionConflict)!;
+      expect(pensionRow.conflictingPensionAliases, isTrue);
+      expect(pensionRow.socialPartsTotalYen, isNull);
+      expect(pensionRow.socialTotalYen, isNull);
+      expect(pensionRow.identifiedSubtotalYen, 200);
+
+      final idecoConflict = fixture();
+      (idecoConflict['deductions'] as Map)['イデコ'] = 20;
+      final idecoRow = PayrollDeductions.fromRow(idecoConflict)!;
+      expect(idecoRow.hasConflictingAliases, isTrue);
+      expect(idecoRow.identifiedSubtotalYen, 290);
+
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [taxConflict],
+      );
+      expect(months[1].confirmedTaxYen, isNull);
+      expect(months[1].summaryStatus(social: false), contains('税金の項目名違いが競合'));
+    },
+  );
+
+  test(
+    'future pay_date payslip is excluded until the payday arrives',
+    () {
+      final novRow = fixture(id: 'nov-future', date: '2026-11-25');
+      final beforePayday = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2026,
+        rows: [novRow],
+        asOfDate: DateTime(2026, 11, 23),
+      )[10];
+      expect(beforePayday.hasFuturePayDate, isTrue);
+      expect(beforePayday.confirmed, isFalse);
+      expect(beforePayday.confirmedTaxYen, isNull);
+      expect(beforePayday.confirmedSocialYen, isNull);
+      expect(
+        beforePayday.summaryStatus(social: false),
+        contains('支給日が未来日（着金未確定）'),
+      );
+
+      final onPayday = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2026,
+        rows: [novRow],
+        asOfDate: DateTime(2026, 11, 25),
+      )[10];
+      expect(onPayday.hasFuturePayDate, isFalse);
+      expect(onPayday.confirmed, isTrue);
+      expect(onPayday.confirmedTaxYen, 90);
+      expect(onPayday.confirmedSocialYen, 200);
+    },
+  );
+}

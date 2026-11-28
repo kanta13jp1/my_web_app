@@ -37,6 +37,13 @@ export const WORKER_INVOKE_LIMIT_PER_MINUTE = 10;
 export const WORKER_RESPONSE_MAX_BYTES = 64 * 1024;
 export const NOTE_TITLE_MAX_LENGTH = 200;
 export const NOTE_CONTENT_MAX_LENGTH = 100_000;
+export const NOTE_CAPTURE_STATUSES = ["inbox", "organized"] as const;
+export type NoteCaptureStatus = (typeof NOTE_CAPTURE_STATUSES)[number];
+export const NOTE_CAPTURE_SOURCES = ["api", "web_clipper", "editor"] as const;
+export type NoteCaptureSource = (typeof NOTE_CAPTURE_SOURCES)[number];
+export const NOTE_MAX_TAGS = 20;
+export const NOTE_TAG_MAX_LENGTH = 40;
+export const NOTE_SOURCE_KEY_MAX_LENGTH = 160;
 const SLOW_REQUEST_THRESHOLD_MS = 5_000;
 export const JIBUN_API_WEBHOOK_EVENTS = [
   "note.created",
@@ -75,6 +82,24 @@ export function normalizeScopes(input: unknown): JibunApiScope[] | null {
     }
   }
   return out.length > 0 ? out : null;
+}
+
+export function normalizeNoteTags(input: unknown): string[] | null {
+  if (!Array.isArray(input)) return null;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input) {
+    if (typeof raw !== "string") return null;
+    const tag = raw.trim();
+    if (tag === "") continue;
+    if (tag.length > NOTE_TAG_MAX_LENGTH) return null;
+    if (!seen.has(tag)) {
+      seen.add(tag);
+      out.push(tag);
+      if (out.length > NOTE_MAX_TAGS) return null;
+    }
+  }
+  return out;
 }
 
 function base64UrlEncode(bytes: Uint8Array): string {
@@ -388,7 +413,14 @@ export interface JibunApiStore {
   ): Promise<NoteRow[]>;
   createNote(
     userId: string,
-    note: { title: string; content: string },
+    note: {
+      title: string;
+      content: string;
+      tags?: string[];
+      captureStatus?: NoteCaptureStatus;
+      captureSource?: NoteCaptureSource;
+      sourceKey?: string;
+    },
   ): Promise<NoteRow>;
   listUserTasks(limit: number): Promise<Record<string, unknown>[]>;
   listAchievements(limit: number): Promise<Record<string, unknown>[]>;
@@ -615,9 +647,25 @@ export function createSupabaseJibunApiStore(
       return (data ?? []) as NoteRow[];
     },
     async createNote(userId, note) {
+      const insertRow: Record<string, unknown> = {
+        user_id: userId,
+        created_by: userId,
+        title: note.title,
+        content: note.content,
+      };
+      if (note.tags !== undefined) insertRow.tags = note.tags;
+      if (note.captureStatus !== undefined) {
+        insertRow.capture_status = note.captureStatus;
+      }
+      if (note.captureSource !== undefined) {
+        insertRow.capture_source = note.captureSource;
+      }
+      if (note.sourceKey !== undefined) {
+        insertRow.source_key = note.sourceKey;
+      }
       const { data, error } = await admin
         .from("notes")
-        .insert({ user_id: userId, title: note.title, content: note.content })
+        .insert(insertRow)
         .select("id, title, content, created_at, updated_at")
         .single();
       if (error) throw new Error(error.message);
@@ -778,7 +826,7 @@ export interface JibunApiHandlerDeps {
   now?: () => Date;
 }
 
-function keyToSafeJson(row: ApiKeyRow): Record<string, unknown> {
+export function keyToSafeJson(row: ApiKeyRow): Record<string, unknown> {
   return {
     id: row.id,
     name: row.name,
@@ -791,7 +839,7 @@ function keyToSafeJson(row: ApiKeyRow): Record<string, unknown> {
   };
 }
 
-function workerToSafeJson(row: WorkerRow): Record<string, unknown> {
+export function workerToSafeJson(row: WorkerRow): Record<string, unknown> {
   return {
     id: row.id,
     name: row.name,
@@ -822,7 +870,7 @@ function webhookToSafeJson(row: WebhookRow): Record<string, unknown> {
 // Outbound webhook dispatch — fire-and-forget / best-effort.
 // 呼び出し側は await しない。Supabase Edge Functions では Response 返却後に
 // バックグラウンド Promise が完了するか保証されないが、MVP では best-effort とする。
-function fireWebhooks(
+export function fireWebhooks(
   store: JibunApiStore,
   userId: string,
   event: JibunApiWebhookEvent,
@@ -874,7 +922,7 @@ function clampLimit(raw: unknown, fallback: number, max: number): number {
   return Math.min(Math.max(Math.floor(value), 1), max);
 }
 
-function requestIp(req: Request): string | null {
+export function requestIp(req: Request): string | null {
   const forwarded = req.headers.get("x-forwarded-for") ?? "";
   const first = forwarded.split(",")[0]?.trim() ?? "";
   return parseInetOrNull(first);
@@ -883,7 +931,7 @@ function requestIp(req: Request): string | null {
 // Worker レスポンス body を最大 maxBytes バイトまでストリーム読みして打ち切る。
 // text() で全体をメモリに載せると悪意ある Worker が数百MB を返してメモリを
 // 枯渇させられるため、上限に達したらリーダーを cancel する。
-async function readBoundedBody(
+export async function readBoundedBody(
   response: Response,
   maxBytes: number,
 ): Promise<{ text: string; truncated: boolean }> {
@@ -1248,27 +1296,134 @@ interface ApiKeyContext {
   key: ApiKeyRow;
 }
 
+export type JibunMcpAuthResult =
+  | { ok: true; key: ApiKeyRow }
+  | {
+    ok: false;
+    status: 401 | 429;
+    error: string;
+    details?: Record<string, unknown>;
+  };
+
+async function verifyBearerKeyRow(
+  req: Request,
+  store: JibunApiStore,
+  now?: () => Date,
+): Promise<{ ok: true; key: ApiKeyRow } | { ok: false; error: string }> {
+  const header = req.headers.get("authorization") ?? "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  const bearer = match ? match[1].trim() : "";
+  if (bearer === "" || !bearer.startsWith(JIBUN_API_KEY_PREFIX)) {
+    return {
+      ok: false,
+      error: "Unauthorized: provide 'Authorization: Bearer jibun_sk_...'",
+    };
+  }
+  const keyHash = await sha256Hex(bearer);
+  const row = await store.findKeyByHash(keyHash);
+  if (!row) return { ok: false, error: "Unauthorized: unknown API key" };
+  if (row.revoked) return { ok: false, error: "Unauthorized: key revoked" };
+  if (row.expires_at !== null) {
+    const current = now ? now() : new Date();
+    if (new Date(row.expires_at).getTime() <= current.getTime()) {
+      return { ok: false, error: "Unauthorized: key expired" };
+    }
+  }
+  return { ok: true, key: row };
+}
+
+async function checkApiKeyRateLimit(
+  store: JibunApiStore,
+  keyId: string,
+  actionLabel: string,
+  now?: () => Date,
+): Promise<Record<string, unknown> | null> {
+  const current = now ? now() : new Date();
+  const minuteAgo = new Date(current.getTime() - 60_000).toISOString();
+  const dayAgo = new Date(current.getTime() - 86_400_000).toISOString();
+  const perMinute = await store.countAuditSince(keyId, minuteAgo);
+  if (perMinute >= API_RATE_LIMIT_PER_MINUTE) {
+    return {
+      error: "rate_limited",
+      limit: API_RATE_LIMIT_PER_MINUTE,
+      window_seconds: 60,
+    };
+  }
+  const perDay = await store.countAuditSince(keyId, dayAgo);
+  if (perDay >= API_RATE_LIMIT_PER_DAY) {
+    return {
+      error: "rate_limited",
+      limit: API_RATE_LIMIT_PER_DAY,
+      window_seconds: 86_400,
+    };
+  }
+  if (actionLabel === "api.workers.invoke") {
+    const invokesPerMinute = await store.countAuditSince(
+      keyId,
+      minuteAgo,
+      "api.workers.invoke",
+    );
+    if (invokesPerMinute >= WORKER_INVOKE_LIMIT_PER_MINUTE) {
+      return {
+        error: "rate_limited",
+        limit: WORKER_INVOKE_LIMIT_PER_MINUTE,
+        window_seconds: 60,
+        detail: "worker invocation limit",
+      };
+    }
+  } else if (actionLabel === "mcp.workers.invoke") {
+    const [mcpInvokes, apiInvokes] = await Promise.all([
+      store.countAuditSince(keyId, minuteAgo, "mcp.workers.invoke"),
+      store.countAuditSince(keyId, minuteAgo, "api.workers.invoke"),
+    ]);
+    if (mcpInvokes + apiInvokes >= WORKER_INVOKE_LIMIT_PER_MINUTE) {
+      return {
+        error: "rate_limited",
+        limit: WORKER_INVOKE_LIMIT_PER_MINUTE,
+        window_seconds: 60,
+        detail: "worker invocation limit",
+      };
+    }
+  }
+  return null;
+}
+
+export async function authenticateJibunApiBearerForMcp(
+  req: Request,
+  store: JibunApiStore,
+  actionLabel: string,
+  now?: () => Date,
+): Promise<JibunMcpAuthResult> {
+  const verified = await verifyBearerKeyRow(req, store, now);
+  if (!verified.ok) {
+    return { ok: false, status: 401, error: verified.error };
+  }
+  const limited = await checkApiKeyRateLimit(
+    store,
+    verified.key.id,
+    actionLabel,
+    now,
+  );
+  if (limited) {
+    const { error, ...details } = limited;
+    return {
+      ok: false,
+      status: 429,
+      error: String(error),
+      details,
+    };
+  }
+  return { ok: true, key: verified.key };
+}
+
 async function authenticateApiKey(
   deps: JibunApiHandlerDeps,
 ): Promise<ApiKeyContext | Response> {
-  const header = deps.req.headers.get("authorization") ?? "";
-  const bearer = header.replace(/^Bearer\s+/i, "").trim();
-  if (bearer === "" || !bearer.startsWith(JIBUN_API_KEY_PREFIX)) {
-    return json({
-      error: "Unauthorized: provide 'Authorization: Bearer jibun_sk_...'",
-    }, 401);
+  const verified = await verifyBearerKeyRow(deps.req, deps.store, deps.now);
+  if (!verified.ok) {
+    return json({ error: verified.error }, 401);
   }
-  const keyHash = await sha256Hex(bearer);
-  const row = await deps.store.findKeyByHash(keyHash);
-  if (!row) return json({ error: "Unauthorized: unknown API key" }, 401);
-  if (row.revoked) return json({ error: "Unauthorized: key revoked" }, 401);
-  if (row.expires_at !== null) {
-    const now = deps.now ? deps.now() : new Date();
-    if (new Date(row.expires_at).getTime() <= now.getTime()) {
-      return json({ error: "Unauthorized: key expired" }, 401);
-    }
-  }
-  return { key: row };
+  return { key: verified.key };
 }
 
 function requireApiScope(
@@ -1286,41 +1441,13 @@ async function checkRateLimit(
   deps: JibunApiHandlerDeps,
   ctx: ApiKeyContext,
 ): Promise<Response | null> {
-  const now = deps.now ? deps.now() : new Date();
-  const minuteAgo = new Date(now.getTime() - 60_000).toISOString();
-  const dayAgo = new Date(now.getTime() - 86_400_000).toISOString();
-  const perMinute = await deps.store.countAuditSince(ctx.key.id, minuteAgo);
-  if (perMinute >= API_RATE_LIMIT_PER_MINUTE) {
-    return json({
-      error: "rate_limited",
-      limit: API_RATE_LIMIT_PER_MINUTE,
-      window_seconds: 60,
-    }, 429);
-  }
-  const perDay = await deps.store.countAuditSince(ctx.key.id, dayAgo);
-  if (perDay >= API_RATE_LIMIT_PER_DAY) {
-    return json({
-      error: "rate_limited",
-      limit: API_RATE_LIMIT_PER_DAY,
-      window_seconds: 86_400,
-    }, 429);
-  }
-  if (deps.action === "api.workers.invoke") {
-    const invokesPerMinute = await deps.store.countAuditSince(
-      ctx.key.id,
-      minuteAgo,
-      "api.workers.invoke",
-    );
-    if (invokesPerMinute >= WORKER_INVOKE_LIMIT_PER_MINUTE) {
-      return json({
-        error: "rate_limited",
-        limit: WORKER_INVOKE_LIMIT_PER_MINUTE,
-        window_seconds: 60,
-        detail: "worker invocation limit",
-      }, 429);
-    }
-  }
-  return null;
+  const limited = await checkApiKeyRateLimit(
+    deps.store,
+    ctx.key.id,
+    deps.action,
+    deps.now,
+  );
+  return limited ? json(limited, 429) : null;
 }
 
 async function handleExternalApiAction(
@@ -1442,7 +1569,85 @@ async function dispatchExternalApiAction(
           workerId: null,
         };
       }
-      const note = await store.createNote(userId, { title, content });
+      let tags: string[] | undefined;
+      if (body.tags !== undefined) {
+        const normalizedTags = normalizeNoteTags(body.tags);
+        if (normalizedTags === null) {
+          return {
+            response: json({
+              error: `tags must be an array of at most ${NOTE_MAX_TAGS} strings (1-${NOTE_TAG_MAX_LENGTH} chars each)`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        tags = normalizedTags;
+      }
+      let captureStatus: NoteCaptureStatus | undefined;
+      if (body.capture_status !== undefined) {
+        if (
+          typeof body.capture_status !== "string" ||
+          !(NOTE_CAPTURE_STATUSES as readonly string[]).includes(
+            body.capture_status,
+          )
+        ) {
+          return {
+            response: json({
+              error: `capture_status must be one of: ${NOTE_CAPTURE_STATUSES.join(", ")}`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        captureStatus = body.capture_status as NoteCaptureStatus;
+      }
+      let captureSource: NoteCaptureSource | undefined;
+      if (body.capture_source !== undefined) {
+        if (
+          typeof body.capture_source !== "string" ||
+          !(NOTE_CAPTURE_SOURCES as readonly string[]).includes(
+            body.capture_source,
+          )
+        ) {
+          return {
+            response: json({
+              error: `capture_source must be one of: ${NOTE_CAPTURE_SOURCES.join(", ")}`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        captureSource = body.capture_source as NoteCaptureSource;
+      }
+      let sourceKey: string | undefined;
+      if (body.source_key !== undefined) {
+        if (typeof body.source_key !== "string") {
+          return {
+            response: json({
+              error: `source_key must be a string (1-${NOTE_SOURCE_KEY_MAX_LENGTH} chars)`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        const trimmedSourceKey = body.source_key.trim();
+        if (
+          trimmedSourceKey === "" ||
+          trimmedSourceKey.length > NOTE_SOURCE_KEY_MAX_LENGTH
+        ) {
+          return {
+            response: json({
+              error: `source_key must be a string (1-${NOTE_SOURCE_KEY_MAX_LENGTH} chars)`,
+            }, 400),
+            workerId: null,
+          };
+        }
+        sourceKey = trimmedSourceKey;
+      }
+      const note = await store.createNote(userId, {
+        title,
+        content,
+        ...(tags !== undefined ? { tags } : {}),
+        ...(captureStatus !== undefined ? { captureStatus } : {}),
+        ...(captureSource !== undefined ? { captureSource } : {}),
+        ...(sourceKey !== undefined ? { sourceKey } : {}),
+      });
       fireWebhooks(
         store,
         userId,

@@ -1,0 +1,42 @@
+{
+  "full": {
+    "result": "[\"A\", \"E\"]",
+    "is_error": false,
+    "models": [
+      "claude-haiku-4-5-20251001"
+    ],
+    "session_group": "full"
+  },
+  "shard1": {
+    "result": "```json\n[\"A\", \"B\", \"D\", \"E\"]\n```",
+    "is_error": false,
+    "models": [
+      "claude-haiku-4-5-20251001"
+    ],
+    "session_group": "sharded"
+  },
+  "shard2": {
+    "result": "```json\n[\"A\", \"D\", \"E\"]\n```",
+    "is_error": false,
+    "models": [
+      "claude-haiku-4-5-20251001"
+    ],
+    "session_group": "sharded"
+  },
+  "shard3": {
+    "result": "```json\n[\"A\", \"E\"]\n```",
+    "is_error": false,
+    "models": [
+      "claude-haiku-4-5-20251001"
+    ],
+    "session_group": "sharded"
+  },
+  "reset": {
+    "result": "```json\n[\"A\", \"E\"]\n```",
+    "is_error": false,
+    "models": [
+      "claude-haiku-4-5-20251001"
+    ],
+    "session_group": "reset"
+  }
+}

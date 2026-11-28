@@ -68,7 +68,46 @@ def remove_homepage_faq_schema(html_text: str) -> str:
     )
 
 
-def build_route_html(template: str, route: dict, base_url: str) -> str:
+def remove_homepage_about_section(html_text: str) -> str:
+    """公開サブルートに引き継がれたホーム専用「自分株式会社とは」ブロックを除去する。"""
+    return re.sub(
+        r'\s*<section\s+class="seo-about"[^>]*>.*?</section>',
+        "",
+        html_text,
+        count=1,
+        flags=re.DOTALL,
+    )
+
+
+def _apply_social_image(
+    html_text: str,
+    image: str | None,
+    image_alt: str | None,
+    base_url: str,
+    fallback_alt: str,
+) -> str:
+    """Update og/twitter social image and alt attributes when `image` is configured."""
+    if not image:
+        return html_text
+    image_url = image if image.startswith("http") else f"{base_url}{image}"
+    alt_text = image_alt or fallback_alt
+    out = replace_attr_content(
+        html_text, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")', image_url)
+    out = replace_attr_content(
+        out, r'(<meta\s+property="twitter:image"\s+content=")([^"]*)(")', image_url)
+    out = replace_attr_content(
+        out, r'(<meta property="og:image:alt" content=")([^"]*)(")', alt_text)
+    return replace_attr_content(
+        out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")', alt_text)
+
+
+def build_route_html(
+    template: str,
+    route: dict,
+    base_url: str,
+    default_image: str | None = None,
+    default_image_alt: str | None = None,
+) -> str:
     slug = route["slug"]
     title = route["title"]
     desc = route["description"]
@@ -80,6 +119,7 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
     esc_url = html.escape(url)
 
     out = remove_homepage_faq_schema(template)
+    out = remove_homepage_about_section(out)
 
     # <title>
     out = re.sub(r"<title>.*?</title>",
@@ -106,6 +146,13 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
         out, r'(<meta\s+property="twitter:description"\s+content=")([^"]*)(")', desc)
     out = replace_attr_content(
         out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
+    out = _apply_social_image(
+        out,
+        route.get("image") or default_image,
+        route.get("image_alt") or default_image_alt,
+        base_url,
+        f"{title} 比較",
+    )
 
     # ルート固有 JSON-LD (WebPage + BreadcrumbList + FAQPage) を </head> 直前に注入
     faq = [
@@ -204,6 +251,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     esc_url = html.escape(url)
 
     out = remove_homepage_faq_schema(template)
+    out = remove_homepage_about_section(out)
     out = re.sub(r"<title>.*?</title>",
                  f"<title>{esc_title}</title>", out, count=1, flags=re.DOTALL)
     out = re.sub(r'(<link rel="canonical" href=")[^"]*(">)',
@@ -223,22 +271,13 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     out = replace_attr_content(
         out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
 
-    image = route.get("image")
-    if image:
-        image_url = image if image.startswith("http") else f"{base_url}{image}"
-        image_alt = route.get("image_alt", title)
-        out = replace_attr_content(
-            out, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")',
-            image_url)
-        out = replace_attr_content(
-            out, r'(<meta\s+property="twitter:image"\s+content=")([^"]*)(")',
-            image_url)
-        out = replace_attr_content(
-            out, r'(<meta property="og:image:alt" content=")([^"]*)(")',
-            image_alt)
-        out = replace_attr_content(
-            out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")',
-            image_alt)
+    out = _apply_social_image(
+        out,
+        route.get("image"),
+        route.get("image_alt"),
+        base_url,
+        title,
+    )
 
     web_page = {
         "@context": "https://schema.org",
@@ -319,6 +358,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     markdown_html = _render_markdown_source(
         route.get("_markdown_text"),
         route.get("markdown_source"),
+        heading=route.get("markdown_heading") or f"{h1}原文",
     )
     updated_html = ""
     if route.get("date_modified"):
@@ -393,7 +433,11 @@ def _render_public_links(links: list[dict]) -> str:
     )
 
 
-def _render_markdown_source(markdown_text: str | None, source: str | None) -> str:
+def _render_markdown_source(
+    markdown_text: str | None,
+    source: str | None,
+    heading: str = "承認済み原文",
+) -> str:
     """Expose an approved Markdown source verbatim without re-authoring it.
 
     Legal copy is deliberately not interpreted as arbitrary HTML. A pre-wrapped,
@@ -405,9 +449,10 @@ def _render_markdown_source(markdown_text: str | None, source: str | None) -> st
     source_attr = (
         f' data-source="{html.escape(source, quote=True)}"' if source else ""
     )
+    heading_text = html.escape(heading or "承認済み原文")
     return (
         '<article aria-label="承認済み原文" data-prerender="markdown-source"'
-        f'{source_attr}><h2>プライバシーポリシー原文</h2>'
+        f'{source_attr}><h2>{heading_text}</h2>'
         '<pre style="white-space:pre-wrap;overflow-wrap:anywhere">'
         f"{html.escape(markdown_text)}</pre></article>"
     )
@@ -433,9 +478,17 @@ def main(argv: list[str]) -> int:
     base_url = (args.base_url or config["site"]).rstrip("/")
 
     outdir = Path(args.outdir)
+    default_comp_image = config.get("default_image")
+    default_comp_alt = config.get("default_image_alt")
     vs_written = 0
     for route in config["routes"]:
-        page = build_route_html(template, route, base_url)
+        page = build_route_html(
+            template,
+            route,
+            base_url,
+            default_image=default_comp_image,
+            default_image_alt=default_comp_alt,
+        )
         dest = outdir / f"vs-{route['slug']}" / "index.html"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(page, encoding="utf-8")

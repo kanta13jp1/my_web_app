@@ -241,7 +241,7 @@ class SettingsPage extends StatelessWidget {
                   : Icons.radio_button_unchecked,
               color: service.themeMode == mode
                   ? const Color(0xFF3D5AFE)
-                  : const Color(0xFFB0B0B0),
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 12),
             Text(text),

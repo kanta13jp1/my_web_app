@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../widgets/python_block_review_card.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/git_ignore_examples_card.dart';
 import '../utils/platform_view.dart' as platform_view;
 
 /// AI 開発 7 原則ページ (Rule 23)
@@ -70,8 +72,12 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _heroHeader(),
+                  const SizedBox(height: 24),
+                  const PythonBlockReviewCard(),
                   const SizedBox(height: 32),
                   _responsibleVibeCodingSection(),
+                  const SizedBox(height: 32),
+                  const GitIgnoreExamplesCard(),
                   const SizedBox(height: 32),
                   _videoSelector(),
                   const SizedBox(height: 16),

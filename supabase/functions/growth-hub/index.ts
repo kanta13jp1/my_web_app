@@ -22,6 +22,10 @@ import {
   isExternalRevenueCandidate,
   normalizeSupporterBuyerContext,
 } from "../_shared/supporter_buyer.ts";
+import {
+  aggregateGrowthSummaryCounts,
+  normalizeSinceUtcIso,
+} from "../_shared/growth_achievement_summary.ts";
 import { isSupportedAcquisitionSignal } from "./acquisition_signals.ts";
 import { analyticsActorHash } from "./analytics_actor.ts";
 import {
@@ -106,10 +110,11 @@ import {
 } from "./roadmap_share_stats.ts";
 import {
   DEFAULT_LANDING_TRIAL_MODEL,
-  generateLandingTrialSuggestion,
+  generateLandingTrialSuggestionWithFallback,
   hashLandingTrialClient,
   LandingTrialInputError,
   normalizeLandingTrialPrompt,
+  resolveLandingTrialPrimaryProvider,
 } from "./landing_trial.ts";
 import {
   buildFirstUserFunnelReport,
@@ -118,6 +123,10 @@ import {
   type FirstUserPayment,
   type FirstUserXPost,
 } from "./first_user_funnel.ts";
+import {
+  buildDashboardContext,
+  normalizeCandidateBatchStatuses,
+} from "./dashboard_context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -130,7 +139,13 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
+const LANDING_TRIAL_GEMINI_MODEL =
+  Deno.env.get("LANDING_TRIAL_GEMINI_MODEL") ?? "";
+const LANDING_TRIAL_PRIMARY_PROVIDER = resolveLandingTrialPrimaryProvider(
+  Deno.env.get("LANDING_TRIAL_PRIMARY_PROVIDER"),
+);
 const LANDING_TRIAL_RATE_LIMIT_SALT =
   Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
@@ -2394,6 +2409,79 @@ async function loadRoadmapProgress(
   };
 }
 
+type XCandidateQueryResult = {
+  candidates: unknown[];
+  total: number | null;
+};
+
+type XCandidateListResult =
+  | { success: true; byStatus: Record<string, XCandidateQueryResult> }
+  | { success: true; candidates: unknown[]; total: number | null };
+
+async function fetchXCandidateList(
+  admin: SupabaseClient,
+  options: {
+    limit: number;
+    batchStatuses: readonly string[];
+    requestedStatus: string;
+  },
+): Promise<XCandidateListResult> {
+  const { limit, batchStatuses, requestedStatus } = options;
+
+  // R34: count:"exact" で「limit で切る前の総数」も返す。従来は limit 件しか
+  // 返さないため client 側は上限に達したかしか分からず、承認待ちが 11 件でも
+  // 200 件でも「10件以上」としか出せなかった (backlog の規模が掴めない)。
+  // source は idx_hub_data_source があり EF は service_role なので、count は
+  // x_post_candidate 部分集合への index scan で収まる (agent_memories のような
+  // 無索引全表走査にはならない)。
+  // 🔑 per-status limit は維持する — 単一 IN() + 共有 limit にすると
+  // finalized 行が created_at 降順 window を埋めて古い承認待ちを黙って
+  // 押し出す F2 の窓圧迫が status 間で再発するため。
+  const runQuery = async (status: string): Promise<XCandidateQueryResult> => {
+    let query = admin
+      .from("hub_data")
+      .select("id, metadata, created_at", { count: "exact" })
+      .eq("source", X_POST_CANDIDATE_SOURCE)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (status) {
+      query = query.filter("metadata->>status", "eq", status);
+    }
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message);
+    return {
+      candidates: data ?? [],
+      // limit で切る前の総数。取得できないときは null (client は従来の
+      // 「N件以上」表示へ degrade する)。
+      total: typeof count === "number" ? count : null,
+    };
+  };
+
+  if (batchStatuses.length > 0) {
+    const results = await Promise.all(
+      batchStatuses.map(async (status) => ({
+        status,
+        ...(await runQuery(status)),
+      })),
+    );
+    const byStatus: Record<string, XCandidateQueryResult> = {};
+    for (const result of results) {
+      byStatus[result.status] = {
+        candidates: result.candidates,
+        total: result.total,
+      };
+    }
+    return { success: true, byStatus };
+  }
+
+  const single = await runQuery(requestedStatus);
+  return {
+    success: true,
+    candidates: single.candidates,
+    total: single.total,
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -2443,7 +2531,7 @@ serve(async (req: Request) => {
         }
 
         if (
-          !OPENAI_API_KEY || !SERVICE_ROLE_KEY ||
+          (!OPENAI_API_KEY && !GEMINI_API_KEY) || !SERVICE_ROLE_KEY ||
           !LANDING_TRIAL_RATE_LIMIT_SALT
         ) {
           return json({
@@ -2480,15 +2568,22 @@ serve(async (req: Request) => {
         }
 
         try {
-          const suggestion = await generateLandingTrialSuggestion({
-            apiKey: OPENAI_API_KEY,
+          const suggestion = await generateLandingTrialSuggestionWithFallback({
+            openAiApiKey: OPENAI_API_KEY,
+            geminiApiKey: GEMINI_API_KEY,
             prompt,
-            model: LANDING_TRIAL_AI_MODEL,
+            openAiModel: LANDING_TRIAL_AI_MODEL,
+            geminiModel: LANDING_TRIAL_GEMINI_MODEL,
+            primaryProvider: LANDING_TRIAL_PRIMARY_PROVIDER,
+            onPrimaryFailure: (detail) => {
+              console.warn("landing.trial primary provider failed", detail);
+            },
           });
           return json({
             success: true,
             ...suggestion,
-            model: LANDING_TRIAL_AI_MODEL || DEFAULT_LANDING_TRIAL_MODEL,
+            model: suggestion.model || LANDING_TRIAL_AI_MODEL ||
+              DEFAULT_LANDING_TRIAL_MODEL,
             remainingAttempts: quota.remaining_client,
           });
         } catch (error) {
@@ -2822,6 +2917,55 @@ serve(async (req: Request) => {
       case "achievement.list": {
         const items = await listItems(admin, "growth_achievement", userId!);
         return json({ success: true, items });
+      }
+
+      case "achievement.summary": {
+        if (!(await isXOperator(admin, userId!))) {
+          return json({ success: false, error: "Forbidden" }, 403);
+        }
+        const { sinceUtcIso, sinceDateKey } = normalizeSinceUtcIso(body.since);
+        const label = typeof body.label === "string" ? body.label : "すべて";
+
+        const [
+          newUsersRes,
+          totalUsersRes,
+          analyticsRes,
+          referralsRes,
+        ] = await Promise.all([
+          admin
+            .from("user_profiles")
+            .select("user_id", { count: "exact", head: true })
+            .gte("created_at", sinceUtcIso),
+          admin
+            .from("user_profiles")
+            .select("user_id", { count: "exact", head: true }),
+          admin
+            .from("app_analytics")
+            .select("source_details")
+            .gte("date", sinceDateKey),
+          admin
+            .from("referrals")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "completed")
+            .gte("completed_at", sinceUtcIso),
+        ]);
+
+        if (newUsersRes.error) throw new Error(newUsersRes.error.message);
+        if (totalUsersRes.error) throw new Error(totalUsersRes.error.message);
+        if (analyticsRes.error) throw new Error(analyticsRes.error.message);
+        if (referralsRes.error) throw new Error(referralsRes.error.message);
+
+        return json(
+          aggregateGrowthSummaryCounts({
+            newUsers: newUsersRes.count ?? 0,
+            totalUsersEver: totalUsersRes.count ?? 0,
+            referralsCompleted: referralsRes.count ?? 0,
+            analyticsRows: (analyticsRes.data ?? []) as Array<{
+              source_details?: Record<string, unknown> | null;
+            }>,
+            label,
+          }),
+        );
       }
 
       case "achievement.unlock": {
@@ -3199,64 +3343,108 @@ serve(async (req: Request) => {
         const requestedStatus = firstString(body.status);
         // #4080: statuses[] を渡すと 1 リクエストで複数 status を返す
         // (client は従来 3 status を 3 往復していた)。
-        // 🔑 **per-status limit は維持する** — 単一 IN() + 共有 limit にすると
-        // finalized 行が created_at 降順 window を埋めて古い承認待ちを黙って
-        // 押し出す F2 の窓圧迫が status 間で再発する。
         const rawStatuses = Array.isArray(body.statuses)
           ? (body.statuses as unknown[]).map((entry) => firstString(entry))
             .filter(Boolean)
           : [];
         const batchStatuses = [...new Set(rawStatuses)].slice(0, 10);
 
-        // R34: count:"exact" で「limit で切る前の総数」も返す。従来は limit 件しか
-        // 返さないため client 側は上限に達したかしか分からず、承認待ちが 11 件でも
-        // 200 件でも「10件以上」としか出せなかった (backlog の規模が掴めない)。
-        // source は idx_hub_data_source があり EF は service_role なので、count は
-        // x_post_candidate 部分集合への index scan で収まる (agent_memories のような
-        // 無索引全表走査にはならない)。
-        const runQuery = async (status: string) => {
-          let query = admin
-            .from("hub_data")
-            .select("id, metadata, created_at", { count: "exact" })
-            .eq("source", X_POST_CANDIDATE_SOURCE)
-            .order("created_at", { ascending: false })
-            .limit(limit);
-          if (status) {
-            query = query.filter("metadata->>status", "eq", status);
-          }
-          const { data, error, count } = await query;
-          if (error) throw new Error(error.message);
-          return {
-            candidates: data ?? [],
-            // limit で切る前の総数。取得できないときは null (client は従来の
-            // 「N件以上」表示へ degrade する)。
-            total: typeof count === "number" ? count : null,
-          };
-        };
+        return json(
+          await fetchXCandidateList(admin, {
+            limit,
+            batchStatuses,
+            requestedStatus,
+          }),
+        );
+      }
 
-        if (batchStatuses.length > 0) {
-          const results = await Promise.all(
-            batchStatuses.map(async (status) => ({
-              status,
-              ...(await runQuery(status)),
-            })),
-          );
-          const byStatus: Record<string, unknown> = {};
-          for (const result of results) {
-            byStatus[result.status] = {
-              candidates: result.candidates,
-              total: result.total,
-            };
-          }
-          return json({ success: true, byStatus });
-        }
+      case "dashboard.context": {
+        const operator = await isXOperator(admin, userId!);
+        const scopeUserId = operator ? "service_role" : userId!;
+        const startOfDayIso = firstString(
+          body.startOfDayIso,
+          body.start_of_day_iso,
+        );
+        const performanceLimit = body.performanceLimit ??
+          body.performance_limit ?? body.limit ?? 50;
+        const candidateLimit = Math.max(
+          1,
+          Math.min(
+            100,
+            Math.trunc(
+              firstNumber(
+                body.candidateLimit,
+                body.candidate_limit,
+                body.limit,
+              ) ?? 50,
+            ),
+          ),
+        );
+        const achievementLimit = Math.max(
+          1,
+          Math.min(
+            100,
+            Math.trunc(
+              firstNumber(body.achievementLimit, body.achievement_limit) ?? 50,
+            ),
+          ),
+        );
+        const candidateTarget = normalizeCandidateBatchStatuses(
+          body.candidateStatuses ?? body.candidate_statuses ?? body.statuses,
+          body.candidateStatus ?? body.candidate_status ?? body.status,
+        );
 
-        const single = await runQuery(requestedStatus);
-        return json({
-          success: true,
-          candidates: single.candidates,
-          total: single.total,
+        const result = await buildDashboardContext({
+          isXOperator: operator,
+          loaders: {
+            loadXTodayStatus: async () => {
+              const logs = (await listXPostLogs(
+                admin,
+                scopeUserId,
+                20,
+              )) as XPostLogItem[];
+              const rows = logs.map((item) => ({
+                created_at: item.created_at,
+                metadata: asRecord(item.metadata),
+              }));
+              return {
+                success: true,
+                ...computeTodayStatus(rows, startOfDayIso, new Date()),
+              };
+            },
+            loadXPerformanceContext: async () =>
+              await buildXPerformanceContext(
+                admin,
+                scopeUserId,
+                performanceLimit,
+              ),
+            loadXCandidateList: async () =>
+              await fetchXCandidateList(admin, {
+                limit: candidateLimit,
+                batchStatuses: candidateTarget.mode === "batch"
+                  ? candidateTarget.statuses
+                  : [],
+                requestedStatus: candidateTarget.mode === "single"
+                  ? candidateTarget.status
+                  : "",
+              }),
+            loadAchievementList: async () => {
+              const items = await listItems(
+                admin,
+                "growth_achievement",
+                userId!,
+                achievementLimit,
+              );
+              return { success: true, items };
+            },
+          },
+          onSectionError: (section, error) =>
+            console.error(
+              `growth-hub dashboard.context ${section} failed:`,
+              errorMessage(error),
+            ),
         });
+        return json(result, 200);
       }
 
       case "x.candidate.create": {

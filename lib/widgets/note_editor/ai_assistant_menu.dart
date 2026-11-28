@@ -13,6 +13,7 @@ class AiAssistantMenu extends StatefulWidget {
   final String? styleName;
   final String? styleInstruction;
   final MagiSystemSettingsService magiSettingsService;
+  final bool compact;
 
   const AiAssistantMenu({
     super.key,
@@ -23,6 +24,7 @@ class AiAssistantMenu extends StatefulWidget {
     this.styleName,
     this.styleInstruction,
     this.magiSettingsService = const MagiSystemSettingsService(),
+    this.compact = false,
   });
 
   @override
@@ -35,10 +37,19 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
+    final iconSize = widget.compact ? 18.0 : 24.0;
+    final boxPad = widget.compact ? 7.0 : 12.0;
 
     return PopupMenuButton<String>(
+      padding: widget.compact ? EdgeInsets.zero : const EdgeInsets.all(8.0),
+      style: widget.compact
+          ? IconButton.styleFrom(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(34, 34),
+            )
+          : null,
       icon: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(boxPad),
         decoration: BoxDecoration(
           color: themeService.primaryColor,
           shape: BoxShape.circle,
@@ -51,15 +62,15 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
           ],
         ),
         child: _isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
+            ? SizedBox(
+                width: iconSize,
+                height: iconSize,
+                child: const CircularProgressIndicator(
                   color: Colors.white,
                   strokeWidth: 2,
                 ),
               )
-            : const Icon(Icons.auto_awesome, color: Colors.white),
+            : Icon(Icons.auto_awesome, color: Colors.white, size: iconSize),
       ),
       offset: const Offset(0, -60),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

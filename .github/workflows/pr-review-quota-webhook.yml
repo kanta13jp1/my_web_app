@@ -1,0 +1,66 @@
+name: PR Review Quota Webhook Check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/pr-review-quota-webhook.yml"
+      - "scripts/pr_review_quota_guard.py"
+      - "test/scripts/test_pr_review_quota_guard.py"
+      - "supabase/functions/external-ai-webhook/index.ts"
+      - "supabase/functions/external-ai-webhook/pr_review_quota.ts"
+      - "supabase/functions/external-ai-webhook/pr_review_quota_test.ts"
+      - "supabase/migrations/20261124004100_create_pr_review_quota_bucket.sql"
+  workflow_dispatch:
+    inputs:
+      plan_tier:
+        description: "PR review quota tier (consumer or enterprise)"
+        required: false
+        default: "consumer"
+        type: choice
+        options:
+          - "consumer"
+          - "enterprise"
+
+concurrency:
+  group: pr-review-quota-webhook-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  verify_pr_review_quota:
+    name: Verify isolated PR review quota guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run unit tests, self-test, and dry-run PR quota check
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || '1' }}
+          PR_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PLAN_TIER: ${{ inputs.plan_tier || 'consumer' }}
+        run: |
+          set -euo pipefail
+          python3 -B test/scripts/test_pr_review_quota_guard.py -v
+          python3 -B scripts/pr_review_quota_guard.py --self-test
+          python3 -B scripts/pr_review_quota_guard.py \
+            --repository "$PR_REPO" \
+            --pr-number "$PR_NUMBER" \
+            --head-sha "$HEAD_SHA" \
+            --plan-tier "$PLAN_TIER" \
+            --dry-run \
+            --output-md /tmp/pr-review-quota-report.md
+          cat /tmp/pr-review-quota-report.md >> "$GITHUB_STEP_SUMMARY"

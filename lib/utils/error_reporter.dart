@@ -21,6 +21,36 @@ import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+typedef SentryCaptureCallback = FutureOr<void> Function(
+  String message, {
+  Object? error,
+  StackTrace? stackTrace,
+});
+
+typedef SupabaseTelemetryCallback = FutureOr<void> Function(
+  Map<String, Object?> payload,
+);
+
+class ErrorReporterDiagnosticSnapshot {
+  const ErrorReporterDiagnosticSnapshot({
+    required this.sentryEnabled,
+    required this.handlersInstalled,
+    required this.reportedCount,
+    required this.suppressedDuplicateCount,
+    required this.suppressedThrottleCount,
+    required this.uniqueFingerprints,
+    required this.platform,
+  });
+
+  final bool sentryEnabled;
+  final bool handlersInstalled;
+  final int reportedCount;
+  final int suppressedDuplicateCount;
+  final int suppressedThrottleCount;
+  final int uniqueFingerprints;
+  final String platform;
+}
+
 class ErrorReporter {
   ErrorReporter._();
   static final ErrorReporter instance = ErrorReporter._();
@@ -37,9 +67,14 @@ class ErrorReporter {
 
   final Set<String> _seen = {};
   int _count = 0;
+  int _suppressedDuplicateCount = 0;
+  int _suppressedThrottleCount = 0;
   bool _isReporting = false;
   bool _handlersInstalled = false;
   bool _sentryEnabled = false;
+  SentryCaptureCallback? _testSentrySink;
+  SupabaseTelemetryCallback? _testSupabaseSink;
+  bool _testAuthenticatedOverride = false;
 
   // ignore: unused_field
   FlutterExceptionHandler? _previousFlutterHandler;
@@ -48,7 +83,104 @@ class ErrorReporter {
 
   bool get sentryEnabled => _sentryEnabled;
 
-  bool get _hasSentryDsn => _sentryDsn.trim().isNotEmpty;
+  ErrorReporterDiagnosticSnapshot diagnosticSnapshot() {
+    return ErrorReporterDiagnosticSnapshot(
+      sentryEnabled: _sentryEnabled,
+      handlersInstalled: _handlersInstalled,
+      reportedCount: _count,
+      suppressedDuplicateCount: _suppressedDuplicateCount,
+      suppressedThrottleCount: _suppressedThrottleCount,
+      uniqueFingerprints: _seen.length,
+      platform: kIsWeb ? 'web' : 'vm',
+    );
+  }
+
+  @visibleForTesting
+  void setTestSinks({
+    SentryCaptureCallback? sentrySink,
+    SupabaseTelemetryCallback? supabaseSink,
+    bool sentryEnabled = false,
+    bool authenticated = false,
+  }) {
+    _testSentrySink = sentrySink;
+    _testSupabaseSink = supabaseSink;
+    _sentryEnabled = sentryEnabled;
+    _testAuthenticatedOverride = authenticated;
+  }
+
+  @visibleForTesting
+  void resetForTesting() {
+    _seen.clear();
+    _count = 0;
+    _suppressedDuplicateCount = 0;
+    _suppressedThrottleCount = 0;
+    _isReporting = false;
+    _sentryEnabled = false;
+    _testSentrySink = null;
+    _testSupabaseSink = null;
+    _testAuthenticatedOverride = false;
+  }
+
+  static String sanitizeMessage(String raw) {
+    var sanitized = raw;
+    sanitized = sanitized.replaceAll(
+      RegExp(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'),
+      '[REDACTED_EMAIL]',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r'Bearer\s+[A-Za-z0-9._-]+', caseSensitive: false),
+      'Bearer [REDACTED]',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(
+        r'\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9._-]{8,}(?:\.[A-Za-z0-9._-]+)?',
+      ),
+      '[REDACTED_JWT]',
+    );
+    return sanitized;
+  }
+
+  static Map<String, Object?> buildTelemetryPayload({
+    required String message,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    final rawFull = error != null ? '$message: $error' : message;
+    final cleanMessage = sanitizeMessage(rawFull);
+    final stackLines = stackTrace == null
+        ? ''
+        : sanitizeMessage(stackTrace.toString().split('\n').take(6).join('\n'));
+    final content = '[自動エラー報告]\n'
+        '$cleanMessage'
+        '${stackLines.isNotEmpty ? '\n\n$stackLines' : ''}';
+    return <String, Object?>{
+      'action': 'feedback.submit',
+      'category': 'bug',
+      // 自動エラー報告は公開 GitHub Issue 化せず hub_data 記録のみに留める
+      // (core-hub feedback.submit が source を見て Issue 化を抑止)。
+      'source': 'auto_error_report',
+      'message': content.substring(0, min(2000, content.length)),
+    };
+  }
+
+  bool get _hasSentryDsn => isValidSentryDsn(_sentryDsn);
+
+  @visibleForTesting
+  static SentryUser buildSentryUser(String userId) {
+    return SentryUser(id: userId);
+  }
+
+  static bool isValidSentryDsn(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty || trimmed.contains(RegExp(r'\s'))) {
+      return false;
+    }
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return false;
+    if (uri.scheme != 'https' && uri.scheme != 'http') return false;
+    if (uri.host.isEmpty || uri.userInfo.isEmpty) return false;
+    return uri.pathSegments.any((segment) => segment.isNotEmpty);
+  }
 
   SupabaseClient? get _supabaseOrNull {
     try {
@@ -256,7 +388,7 @@ class ErrorReporter {
   /// AppLogger.error から呼ばれる (caught errors)
   void report(
     String message, {
-    dynamic error,
+    Object? error,
     StackTrace? stackTrace,
     bool captureSentry = true,
   }) {
@@ -276,14 +408,18 @@ class ErrorReporter {
 
   void _scheduleReport(
     String message, {
-    dynamic error,
+    Object? error,
     StackTrace? stackTrace,
     bool captureSentry = true,
   }) {
     // エラーフィンガープリント（最初の120文字）
-    final fullMessage = error != null ? '$message: $error' : message;
+    final rawFull = error != null ? '$message: $error' : message;
+    final fullMessage = sanitizeMessage(rawFull);
     final fingerprint = fullMessage.substring(0, min(120, fullMessage.length));
-    if (_seen.contains(fingerprint)) return;
+    if (_seen.contains(fingerprint)) {
+      _suppressedDuplicateCount++;
+      return;
+    }
     _seen.add(fingerprint);
 
     if (captureSentry) {
@@ -294,6 +430,27 @@ class ErrorReporter {
       );
     }
 
+    final payload = buildTelemetryPayload(
+      message: message,
+      error: error,
+      stackTrace: stackTrace,
+    );
+
+    if (_testSupabaseSink != null) {
+      if (!_testAuthenticatedOverride) return;
+      if (_count >= _maxPerSession) {
+        _suppressedThrottleCount++;
+        return;
+      }
+      _count++;
+      try {
+        _testSupabaseSink!(payload);
+      } catch (_) {
+        // 報告失敗は無視（無限ループ防止）
+      }
+      return;
+    }
+
     // ログイン確認
     final supabase = _supabaseOrNull;
     if (supabase == null) return;
@@ -302,30 +459,18 @@ class ErrorReporter {
     if (user == null) return;
 
     // スロットリング
-    if (_count >= _maxPerSession) return;
+    if (_count >= _maxPerSession) {
+      _suppressedThrottleCount++;
+      return;
+    }
     _count++;
-
-    // スタックトレース（最初の6行）
-    final stackLines =
-        stackTrace?.toString().split('\n').take(6).join('\n') ?? '';
-
-    final content = '[自動エラー報告]\n'
-        '$fullMessage'
-        '${stackLines.isNotEmpty ? '\n\n$stackLines' : ''}';
 
     // 非同期で静かに送信
     Future.microtask(() async {
       try {
         await supabase.functions.invoke(
           'core-hub',
-          body: {
-            'action': 'feedback.submit',
-            'category': 'bug',
-            // 自動エラー報告は公開 GitHub Issue 化せず hub_data 記録のみに留める
-            // (core-hub feedback.submit が source を見て Issue 化を抑止)。
-            'source': 'auto_error_report',
-            'message': content.substring(0, min(2000, content.length)),
-          },
+          body: payload,
         );
       } catch (_) {
         // 報告失敗は無視（無限ループ防止）
@@ -335,10 +480,23 @@ class ErrorReporter {
 
   void _captureSentryException(
     String message, {
-    dynamic error,
+    Object? error,
     StackTrace? stackTrace,
   }) {
     if (!_sentryEnabled) return;
+
+    if (_testSentrySink != null) {
+      try {
+        _testSentrySink!(
+          message,
+          error: error,
+          stackTrace: stackTrace,
+        );
+      } catch (_) {
+        // 報告失敗は無視
+      }
+      return;
+    }
 
     _syncSentryUser();
     unawaited(
@@ -378,12 +536,7 @@ class ErrorReporter {
             await scope.setUser(null);
             return;
           }
-          await scope.setUser(
-            SentryUser(
-              id: user.id,
-              email: user.email,
-            ),
-          );
+          await scope.setUser(buildSentryUser(user.id));
         }),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:my_web_app/models/public_memo.dart';
 import 'package:my_web_app/services/public_memo_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -149,6 +150,187 @@ void main() {
       );
       expect(requests[1].url.queryParameters['note_id'], 'eq.321');
       expect(requests[1].url.queryParameters['user_id'], 'eq.user-a');
+    });
+
+    test(
+      'getLatestPreviousGeneratedPublicMemo queries public memos and selects strictly earlier snapshot',
+      () async {
+        final requests = <http.Request>[];
+        final service = _service((request) async {
+          requests.add(request);
+          return _jsonResponse(request, <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 67,
+              'note_id': 2730,
+              'user_id': 'user-a',
+              'title': '国民民主党 地方議員集計 2026/11/24',
+              'content': '現職地方議員名簿',
+              'category': '選挙ダッシュボード',
+              'metadata': const <String, dynamic>{
+                'type': 'local_election_snapshot',
+                'source_key': 'local-election:90000020261124',
+                'snapshotDate': '2026/11/24',
+              },
+              'like_count': 0,
+              'view_count': 0,
+              'is_public': true,
+              'published_at': '2026-11-23T20:28:43Z',
+              'created_at': '2026-11-23T20:28:43Z',
+              'updated_at': '2026-11-24T08:01:46Z',
+            },
+            <String, dynamic>{
+              'id': 65,
+              'note_id': 564,
+              'user_id': 'user-a',
+              'title': '国民民主党 地方議員集計 2026/10/11',
+              'content': '現職地方議員名簿',
+              'category': '選挙ダッシュボード',
+              'metadata': const <String, dynamic>{
+                'type': 'local_election_snapshot',
+                'source_key': 'local-election:90000020261011',
+                'snapshotDate': '2026/10/11',
+              },
+              'like_count': 0,
+              'view_count': 0,
+              'is_public': true,
+              'published_at': '2026-10-10T16:52:51Z',
+              'created_at': '2026-10-10T16:52:51Z',
+              'updated_at': '2026-11-14T06:53:56Z',
+            },
+            <String, dynamic>{
+              'id': 66,
+              'note_id': 567,
+              'user_id': 'user-a',
+              'title': '国民民主党 地方議員集計 2026/11/17',
+              'content': '現職地方議員名簿',
+              'category': '選挙ダッシュボード',
+              'metadata': const <String, dynamic>{
+                'type': 'local_election_snapshot',
+                'source_key': 'local-election:90000020261117',
+                'snapshotDate': '2026/11/17',
+              },
+              'like_count': 0,
+              'view_count': 0,
+              'is_public': true,
+              'published_at': '2026-11-16T20:11:54Z',
+              'created_at': '2026-11-16T20:11:54Z',
+              'updated_at': '2026-11-16T20:11:55Z',
+            },
+          ]);
+        });
+
+        final memo = await service.getLatestPreviousGeneratedPublicMemo(
+          userId: 'user-a',
+          metadataType: 'local_election_snapshot',
+          excludeSourceKey: 'local-election:90000020261124',
+          beforeSnapshotDate: '2026/11/24',
+          category: '選挙ダッシュボード',
+        );
+
+        expect(memo?.id, 66);
+        expect(requests, hasLength(1));
+        expect(requests.first.method, 'GET');
+        expect(requests.first.url.path, endsWith('/rest/v1/public_memos'));
+        expect(requests.first.url.queryParameters['user_id'], 'eq.user-a');
+        expect(requests.first.url.queryParameters['is_public'], 'eq.true');
+        expect(
+          requests.first.url.queryParameters['category'],
+          'eq.選挙ダッシュボード',
+        );
+      },
+    );
+  });
+
+  group('PublicMemoService template cloning', () {
+    test(
+      'clonePublicMemoToNote inserts note with created_by and template_clone',
+      () async {
+        final requests = <http.Request>[];
+        final service = _service((request) async {
+          requests.add(request);
+          return _jsonResponse(request, <String, dynamic>{'id': 901});
+        });
+
+        final memo = PublicMemo(
+          id: 7,
+          noteId: 321,
+          userId: 'author-1',
+          title: '家計管理テンプレート',
+          content: '# テンプレート本文',
+          likeCount: 3,
+          viewCount: 15,
+          isPublic: true,
+          publishedAt: DateTime.utc(2026, 11, 20),
+          createdAt: DateTime.utc(2026, 11, 20),
+          updatedAt: DateTime.utc(2026, 11, 20),
+        );
+
+        final clonedId = await service.clonePublicMemoToNote(
+          memo: memo,
+          userId: 'user-a',
+        );
+
+        expect(clonedId, '901');
+        expect(requests, hasLength(1));
+        expect(requests.first.method, 'POST');
+        expect(requests.first.url.path, endsWith('/rest/v1/notes'));
+        final body = jsonDecode(requests.first.body) as Map<String, dynamic>;
+        expect(body['user_id'], 'user-a');
+        expect(body['created_by'], 'user-a');
+        expect(body['title'], '家計管理テンプレート');
+        expect(body['content'], '# テンプレート本文');
+        expect(body['capture_source'], 'template_clone');
+        expect(body['tags'], <String>['template-clone']);
+      },
+    );
+
+    test('clonePublicMemoToNote supports UUID note identifiers', () async {
+      final service = _service((request) async {
+        return _jsonResponse(
+          request,
+          <String, dynamic>{'id': '550e8400-e29b-41d4-a716-446655440000'},
+        );
+      });
+
+      final memo = PublicMemo(
+        id: 8,
+        noteId: 322,
+        userId: 'author-2',
+        title: 'UUID ノートテンプレート',
+        content: '本文',
+        likeCount: 0,
+        viewCount: 1,
+        isPublic: true,
+        publishedAt: DateTime.utc(2026, 11, 20),
+        createdAt: DateTime.utc(2026, 11, 20),
+        updatedAt: DateTime.utc(2026, 11, 20),
+      );
+
+      final clonedId = await service.clonePublicMemoToNote(
+        memo: memo,
+        userId: 'user-b',
+      );
+
+      expect(clonedId, '550e8400-e29b-41d4-a716-446655440000');
+    });
+
+    test('recordShareSignal accepts publicMemoCloneSignal', () async {
+      final requests = <http.Request>[];
+      final service = _service((request) async {
+        requests.add(request);
+        return _jsonResponse(request, <String, dynamic>{'success': true});
+      });
+
+      await service.recordShareSignal(
+        memoId: 7,
+        signalKey: PublicMemoService.publicMemoCloneSignal,
+        now: DateTime(2026, 11, 27),
+      );
+
+      expect(requests, hasLength(1));
+      final body = jsonDecode(requests.first.body) as Map<String, dynamic>;
+      expect(body['signalKey'], PublicMemoService.publicMemoCloneSignal);
+      expect(body['contextId'], 7);
     });
   });
 }

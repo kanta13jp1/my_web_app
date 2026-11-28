@@ -6,6 +6,8 @@ const jsonOutputFile =
 
 export default defineConfig({
   testDir: './test/e2e',
+  // Synthetic local-storage scenarios have their own loopback-only config.
+  testIgnore: ['**/business_execution.spec.ts'],
   outputDir: process.env.PLAYWRIGHT_TEST_OUTPUT_DIR ?? 'test-results',
   timeout: 30_000,
   expect: {

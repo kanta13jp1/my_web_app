@@ -173,6 +173,7 @@ class _TaskBudgetAssistantPageState extends State<TaskBudgetAssistantPage> {
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: _bg,
+        foregroundColor: Colors.white,
         title: const Text('Task Budget Assistant'),
         actions: [
           IconButton(
