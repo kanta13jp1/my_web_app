@@ -91,4 +91,56 @@ void main() {
       LandingOAuthCallbackFailureCategory.providerConfiguration,
     );
   });
+
+  group('fromError and startup capture', () {
+    tearDown(LandingOAuthCallbackFailure.resetStartupErrorForTest);
+
+    test('classifies PKCE and OAuth exchange stream errors without PII', () {
+      final pkceFailure = LandingOAuthCallbackFailure.fromError(
+        Exception('Code verifier could not be found in storage.'),
+      );
+      expect(
+        pkceFailure.category,
+        LandingOAuthCallbackFailureCategory.callbackExchange,
+      );
+      expect(pkceFailure.userMessage, isNot(contains('verifier')));
+
+      expect(
+        LandingOAuthCallbackFailure.fromError(
+          Exception('bad_oauth_state while validating callback'),
+        ).category,
+        LandingOAuthCallbackFailureCategory.callbackExchange,
+      );
+      expect(
+        LandingOAuthCallbackFailure.fromError(
+          Exception('access_denied for private@example.com'),
+        ).userMessage,
+        isNot(contains('private@example.com')),
+      );
+      expect(
+        LandingOAuthCallbackFailure.fromError(
+          Exception('redirect URI mismatch'),
+        ).category,
+        LandingOAuthCallbackFailureCategory.redirectConfiguration,
+      );
+      expect(
+        LandingOAuthCallbackFailure.fromError(
+          Exception('HTTP 429 rate_limit exceeded'),
+        ).category,
+        LandingOAuthCallbackFailureCategory.rateLimited,
+      );
+    });
+
+    test('captures and consumes startup auth error once', () {
+      LandingOAuthCallbackFailure.captureStartupError(
+        Exception('invalid_grant code_verifier mismatch'),
+      );
+      final first = LandingOAuthCallbackFailure.takePendingStartupError();
+      expect(
+        first?.category,
+        LandingOAuthCallbackFailureCategory.callbackExchange,
+      );
+      expect(LandingOAuthCallbackFailure.takePendingStartupError(), isNull);
+    });
+  });
 }

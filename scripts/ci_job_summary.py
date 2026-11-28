@@ -10,6 +10,8 @@ CHECKS = (
     ("Dart format", "flutter", "dart_format"),
     ("Flutter VM tests", "flutter", "flutter_test"),
     ("Web import smoke tests", "web", "flutter_web_test"),
+    ("Business execution browser locks", "business_execution", "business_execution_locks"),
+    ("Business execution browser E2E", "business_execution", "business_execution_e2e"),
     ("Production web build", "web", "web_build"),
     ("Web build output", "web", "web_build_output"),
     ("Edge Function imports", "edge", "edge_imports"),

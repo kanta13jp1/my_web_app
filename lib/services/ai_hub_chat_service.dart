@@ -145,6 +145,52 @@ class AiHubChatException implements Exception {
   String toString() => message;
 }
 
+class AiComplianceGuardrailException extends AiHubChatException {
+  final String stage;
+  final List<String> categories;
+  final String? traceId;
+  final String userMessage;
+
+  const AiComplianceGuardrailException({
+    required this.stage,
+    required this.categories,
+    required this.userMessage,
+    this.traceId,
+  }) : super(userMessage);
+
+  static const Map<String, String> _categoryDisplayLabels = <String, String>{
+    'pii_credit_card': 'クレジットカード番号',
+    'pii_my_number': 'マイナンバー',
+    'pii_ssn': '社会保障番号',
+    'pii_credential': '認証キー/秘密情報',
+    'pii_contact': '連絡先個人情報',
+    'toxic_self_harm': '自傷/自殺表現',
+    'toxic_violence': '暴力的表現/危険物作成',
+    'toxic_cyber_abuse': 'サイバー攻撃/不正利用',
+    'toxic_hate': '差別/ヘイト表現',
+  };
+
+  List<String> get categoryLabels => categories
+      .map((code) => _categoryDisplayLabels[code] ?? code)
+      .toList(growable: false);
+}
+
+class AiDailyQuotaExceededException extends AiHubChatException {
+  final String plan;
+  final int used;
+  final int dailyLimit;
+  final DateTime? resetAt;
+  final String userMessage;
+
+  const AiDailyQuotaExceededException({
+    required this.plan,
+    required this.used,
+    required this.dailyLimit,
+    required this.userMessage,
+    this.resetAt,
+  }) : super(userMessage);
+}
+
 class AiHubChatService {
   final SupabaseClient? _supabase;
   final AiHubChatInvoker? _invoker;
@@ -245,7 +291,7 @@ class AiHubChatService {
 
   Future<AiHubChatResponse> sendProviderChat({
     required String message,
-    String provider = 'deepinfra',
+    String? provider,
     String? model,
     int? maxTokens,
     String? sessionId,
@@ -253,7 +299,25 @@ class AiHubChatService {
     String? providerChoiceReason,
     String? routingUseCase,
   }) async {
-    if (AiHubChatQuotaGuard.isCoolingDown(provider)) {
+    // プロバイダー・モデルとも未指定なら chat_auto に任せ、残高枯渇などで
+    // 特定社が落ちても稼働中の社へ自動で切り替える。モデル指定時は
+    // モデルがプロバイダー固有のため従来どおり deepinfra に固定する。
+    if ((provider == null || provider.trim().isEmpty) &&
+        (model == null || model.trim().isEmpty)) {
+      return sendAutoChat(
+        message: message,
+        maxTokens: maxTokens,
+        sessionId: sessionId,
+        traceId: traceId,
+        providerChoiceReason: providerChoiceReason,
+        routingUseCase: routingUseCase,
+      );
+    }
+    final requested = provider;
+    final resolved = (requested == null || requested.trim().isEmpty)
+        ? 'deepinfra'
+        : requested.trim();
+    if (AiHubChatQuotaGuard.isCoolingDown(resolved)) {
       throw const AiHubChatException('AI quota cooldown');
     }
 
@@ -261,7 +325,7 @@ class AiHubChatService {
       final data = await _invoke(
         await _withOfflinePolicy({
           'action': 'provider.chat',
-          'provider': provider,
+          'provider': resolved,
           'message': message,
           if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
           if (maxTokens != null && maxTokens > 0) 'max_tokens': maxTokens,
@@ -282,10 +346,10 @@ class AiHubChatService {
       if (data['success'] == true && text != null && text.isNotEmpty) {
         return AiHubChatResponse(
           text: text,
-          source: 'ai-hub provider.chat / $provider',
+          source: 'ai-hub provider.chat / $resolved',
           observability: AiHubChatObservability.fromResponseMap(
             data,
-            fallbackProvider: provider,
+            fallbackProvider: resolved,
           ),
         );
       }
@@ -296,7 +360,7 @@ class AiHubChatService {
         r'429|quota|rate.?limit',
         caseSensitive: false,
       ).hasMatch(message)) {
-        AiHubChatQuotaGuard.markQuotaExceeded(provider);
+        AiHubChatQuotaGuard.markQuotaExceeded(resolved);
       }
       if (error is AiHubChatException) {
         rethrow;
@@ -429,18 +493,29 @@ class AiHubChatService {
       return invoker(body);
     }
     final client = _supabase ?? Supabase.instance.client;
-    final response = await client.functions.invoke('ai-hub', body: body);
-    final data = response.data;
-    if (data is Map<String, dynamic>) {
-      return data;
+    try {
+      final response = await client.functions.invoke('ai-hub', body: body);
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+      return <String, dynamic>{
+        'success': false,
+        'message': data?.toString() ?? 'empty response',
+      };
+    } on FunctionException catch (e) {
+      final details = e.details;
+      if (details is Map<String, dynamic>) {
+        return details;
+      }
+      if (details is Map) {
+        return Map<String, dynamic>.from(details);
+      }
+      rethrow;
     }
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
-    }
-    return <String, dynamic>{
-      'success': false,
-      'message': data?.toString() ?? 'empty response',
-    };
   }
 
   Future<Map<String, dynamic>> _withOfflinePolicy(
@@ -469,6 +544,52 @@ AiHubChatException _buildAiHubFailureException(
   Map<String, dynamic> data, {
   String fallbackMessage = 'AI response was empty',
 }) {
+  if (data['status'] == 'guardrailBlocked' ||
+      data['code'] == 'compliance_guardrail_blocked') {
+    final rawCategories = data['categories'];
+    final categories = rawCategories is List
+        ? rawCategories
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList(growable: false)
+        : const <String>[];
+    final stage = (data['stage'] as String?)?.trim().isNotEmpty == true
+        ? (data['stage'] as String).trim()
+        : 'input';
+    final msg = (data['message'] as String?)?.trim().isNotEmpty == true
+        ? (data['message'] as String).trim()
+        : 'コンプライアンスガードレールによりリクエストがブロックされました。';
+    final traceId = (data['trace_id'] as String?)?.trim();
+    return AiComplianceGuardrailException(
+      stage: stage,
+      categories: categories,
+      userMessage: msg,
+      traceId: traceId?.isEmpty == true ? null : traceId,
+    );
+  }
+
+  if (data['status'] == 'dailyQuotaExceeded' ||
+      data['code'] == 'daily_quota_exceeded') {
+    final plan = (data['plan'] as String?)?.trim().isNotEmpty == true
+        ? (data['plan'] as String).trim()
+        : 'free';
+    final used = _asInt(data['used']) ?? 0;
+    final limit = _asInt(data['daily_limit']) ?? 50;
+    final resetRaw = (data['reset_at'] as String?)?.trim();
+    final msg = (data['message'] as String?)?.trim().isNotEmpty == true
+        ? (data['message'] as String).trim()
+        : '本日のプラン別 AI 利用上限 ($limit 回) に達しました。';
+    return AiDailyQuotaExceededException(
+      plan: plan,
+      used: used,
+      dailyLimit: limit,
+      userMessage: msg,
+      resetAt: resetRaw != null && resetRaw.isNotEmpty
+          ? DateTime.tryParse(resetRaw)?.toUtc()
+          : null,
+    );
+  }
+
   final parts = <String>[];
   void add(Object? value) {
     final text = value?.toString().trim();

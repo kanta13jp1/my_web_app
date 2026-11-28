@@ -3,6 +3,58 @@ import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('checked save reports rejected persistence', () async {
+    const store = AssetSubscriptionAuditStore();
+    await expectLater(
+      store.save(
+        <String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
+        prefs: _RejectedAuditPreferences(),
+      ),
+      throwsStateError,
+    );
+  });
+
+  test('unconfirmed save reports rejected persistence', () async {
+    const store = AssetSubscriptionAuditStore();
+    await expectLater(
+      store.saveUnconfirmed(
+        <String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
+        prefs: _RejectedAuditPreferences(),
+      ),
+      throwsStateError,
+    );
+  });
+
+  test('empty checked save reports rejected removal', () async {
+    const store = AssetSubscriptionAuditStore();
+    await expectLater(
+      store.save(<String, DateTime>{}, prefs: _RejectedAuditPreferences()),
+      throwsStateError,
+    );
+  });
+
+  test('empty unconfirmed save reports rejected removal', () async {
+    const store = AssetSubscriptionAuditStore();
+    await expectLater(
+      store.saveUnconfirmed(
+        <String, DateTime>{},
+        prefs: _RejectedAuditPreferences(),
+      ),
+      throwsStateError,
+    );
+  });
+
+  test('audit write exception is propagated', () async {
+    const store = AssetSubscriptionAuditStore();
+    await expectLater(
+      store.save(
+        <String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
+        prefs: _RejectedAuditPreferences(throwOnWrite: true),
+      ),
+      throwsA(isA<Exception>()),
+    );
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   DateTime utc(int y, int m, int d) => DateTime.utc(y, m, d);
@@ -195,4 +247,21 @@ void main() {
       expect(decoded.unconfirmed, isEmpty);
     });
   });
+}
+
+class _RejectedAuditPreferences extends Fake implements SharedPreferences {
+  _RejectedAuditPreferences({this.throwOnWrite = false});
+
+  final bool throwOnWrite;
+
+  @override
+  Future<bool> setString(String key, String value) async {
+    if (throwOnWrite) {
+      throw Exception('test audit write rejected');
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> remove(String key) async => false;
 }

@@ -1,10 +1,16 @@
+import 'package:my_web_app/pages/agent_tool_policy_preview_page.dart';
+import 'package:my_web_app/pages/typing_game_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
+import 'package:my_web_app/pages/vibe_sim_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/features/vision_benchmark/vision_benchmark_container.dart';
+import 'package:my_web_app/pages/neon_showcase_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
+import 'package:my_web_app/pages/kinetic_forge_page.dart';
 import 'package:my_web_app/pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
@@ -17,6 +23,7 @@ import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
 import 'package:my_web_app/utils/route_document_title.dart';
+import 'package:my_web_app/services/spa_route_title_observer.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -48,6 +55,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/landing_oauth_callback_failure.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
@@ -67,6 +75,13 @@ import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
+import 'package:my_web_app/pages/note_navigation_page.dart';
+import 'package:my_web_app/pages/note_collections_page.dart';
+import 'package:my_web_app/pages/note_tags_page.dart';
+import 'package:my_web_app/pages/space_sharing_page.dart';
+import 'package:my_web_app/utils/note_route_parameters.dart';
+import 'package:my_web_app/utils/layout_safe_focus_traversal_policy.dart';
+import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/legal_document_page.dart';
 import 'package:my_web_app/pages/privacy_policy_page.dart';
@@ -185,6 +200,7 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
+import 'package:my_web_app/pages/diet_debates_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
@@ -267,6 +283,8 @@ import 'package:my_web_app/pages/meal_log_page.dart';
 import 'package:my_web_app/pages/life_goals_kpi_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
+import 'package:my_web_app/pages/sea_shelter_page.dart';
+import 'package:my_web_app/pages/echo_pump_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/ui/features/local_business_map/local_business_map_feature.dart';
@@ -385,6 +403,14 @@ Future<void> main() async {
     httpClient: SupabaseTracingHttpClient(),
   );
 
+  final authClient = Supabase.instance.client.auth;
+  final startupAuthErrorSubscription = authClient.onAuthStateChange.listen(
+    (_) {},
+    onError: (Object error, StackTrace _) {
+      LandingOAuthCallbackFailure.captureStartupError(error);
+    },
+  );
+
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
   AppLogger.setErrorReporter(
     (message, {error, stackTrace}) => ErrorReporter.instance.report(
@@ -407,6 +433,7 @@ Future<void> main() async {
       );
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(startupAuthErrorSubscription.cancel());
         unawaited(_configureStartupNotifications(notificationService));
       });
     },
@@ -520,6 +547,7 @@ Route<dynamic> generateAppRoute(
 }) {
   final uri = Uri.parse(settings.name ?? '/');
   final routePath = normalizeRoutePath(uri.path);
+  final noteParameters = NoteRouteParameters.fromUri(uri);
   // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
   // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
   // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
@@ -540,7 +568,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
+          shopLoginUri: uri,
         ),
+        settings: settings,
       );
     case '/jev-mario-lab':
       return MaterialPageRoute(
@@ -552,6 +582,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const JwenvLabPage(),
         settings: settings,
       );
+    case '/vibe-sim-lab':
+      return MaterialPageRoute(
+        builder: (_) => const VibeSimLabPage(),
+        settings: settings,
+      );
     case '/agi-fireworks':
       return MaterialPageRoute(
         builder: (_) => const AgiFireworksPage(),
@@ -559,7 +594,7 @@ Route<dynamic> generateAppRoute(
       );
     case '/shop':
       return MaterialPageRoute(
-        builder: (_) => const DigitalProductStorePage(),
+        builder: (_) => DigitalProductStorePage(attributionUri: uri),
         settings: settings,
       );
     case '/shop/product':
@@ -568,6 +603,7 @@ Route<dynamic> generateAppRoute(
           productId: uri.queryParameters['product_id'] ?? '',
           purchaseResult: uri.queryParameters['purchase'],
           funnel: ShopFunnelService(),
+          attributionUri: uri,
         ),
         settings: settings,
       );
@@ -584,6 +620,7 @@ Route<dynamic> generateAppRoute(
           // 計測 (2026-07-29 追加)。閲覧・購入ボタン押下・Checkout 到達を数える。
           // ここを渡し忘れると計測だけが黙って止まるので、route に直書きする。
           funnel: ShopFunnelService(),
+          attributionUri: uri,
         ),
         settings: settings,
       );
@@ -775,7 +812,12 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const MorningBriefingPage(),
       );
     case '/note-editor':
-      return MaterialPageRoute(builder: (_) => const NoteEditorPage());
+      return MaterialPageRoute(
+        builder: (_) => NoteEditorPage(
+          noteId: noteParameters.noteId?.toString(),
+        ),
+        settings: settings,
+      );
     case '/blog':
       return MaterialPageRoute(builder: (_) => const BlogPage());
     case '/blog/compose':
@@ -1219,7 +1261,40 @@ Route<dynamic> generateAppRoute(
     case '/notes':
       // Win版#110: feature_releases から「ノート」deep link
       return MaterialPageRoute(
-        builder: (_) => const NoteListPage(),
+        builder: (_) => NoteListPage(
+          initialSearchQuery: noteParameters.query,
+          initialTag: noteParameters.tag,
+          initialTagId: noteParameters.tagId,
+          initialCollectionId: noteParameters.collectionId,
+          includeNestedTags: noteParameters.includeNestedTags,
+        ),
+        settings: settings,
+      );
+    case '/note-collections':
+      return MaterialPageRoute(
+        builder: (_) => const NoteCollectionsPage(),
+        settings: settings,
+      );
+    case '/note-tags':
+      return MaterialPageRoute(
+        builder: (_) => const NoteTagsPage(),
+        settings: settings,
+      );
+    case '/space-sharing':
+      return MaterialPageRoute(
+        builder: (_) => SpaceSharingPage(
+          initialSpaceId: noteParameters.spaceId,
+        ),
+        settings: settings,
+      );
+    case '/note-tasks':
+      return MaterialPageRoute(
+        builder: (_) => const NoteTasksPage(),
+        settings: settings,
+      );
+    case '/note-navigation':
+      return MaterialPageRoute(
+        builder: (_) => const NoteNavigationPage(),
         settings: settings,
       );
     case '/asset-management':
@@ -1276,6 +1351,11 @@ Route<dynamic> generateAppRoute(
     case '/meeting-manager':
       return MaterialPageRoute(
         builder: (_) => const MeetingManagerPage(),
+      );
+    case '/diet-debates':
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const DietDebatesPage(),
       );
     case '/news-rss':
       return MaterialPageRoute(
@@ -1430,6 +1510,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const FlowCityPage(),
         settings: settings,
       );
+    case '/kinetic-forge':
+      return MaterialPageRoute(
+        builder: (_) => const KineticForgePage(),
+        settings: settings,
+      );
     case '/lumen-path':
       return MaterialPageRoute(
         builder: (_) => const LumenPathPage(),
@@ -1443,6 +1528,11 @@ Route<dynamic> generateAppRoute(
     case '/aero-lab':
       return MaterialPageRoute(
         builder: (_) => const AeroLabPage(),
+        settings: settings,
+      );
+    case '/neon-showcase':
+      return MaterialPageRoute(
+        builder: (_) => const NeonShowcasePage(),
         settings: settings,
       );
     case '/video-studio':
@@ -1503,6 +1593,10 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(builder: (_) => const WikiDatabasePage());
     case '/time-tracker':
       return MaterialPageRoute(builder: (_) => const TimeTrackerPage());
+    case '/vision-benchmark':
+      return MaterialPageRoute(
+        builder: (_) => const VisionBenchmarkDashboardPage(),
+      );
     case '/voice-memo':
       return MaterialPageRoute(
         builder: (_) => const VoiceMemoTranscriberPage(),
@@ -1608,6 +1702,20 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const HabitCenterPage(
           initialSection: HabitCenterSection.rewards,
         ),
+      );
+    case '/echo-pump':
+      return MaterialPageRoute(
+        builder: (_) => const EchoPumpGamePage(),
+      );
+    case '/sea-shelter':
+      return MaterialPageRoute(
+        builder: (_) => const SeaShelterPage(),
+        settings: settings,
+      );
+    case '/typing-game':
+      return MaterialPageRoute(
+        builder: (_) => const TypingGamePage(),
+        settings: settings,
       );
     case '/focus-capture':
       return MaterialPageRoute(
@@ -1805,6 +1913,10 @@ Route<dynamic> generateAppRoute(
       );
     case '/app-hub':
       return MaterialPageRoute(builder: (_) => const AppHubPage());
+    case '/agent-tool-policy-preview':
+      return MaterialPageRoute(
+        builder: (_) => const AgentToolPolicyPreviewPage(),
+      );
     case '/agent-hub':
       return MaterialPageRoute(builder: (_) => const AgentHubPage());
     case '/admin-notifications':
@@ -2027,6 +2139,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _versionCheckService = VersionCheckService();
+  final _focusTraversalPolicy = LayoutSafeReadingOrderTraversalPolicy();
   bool _showUpdateBanner = false;
 
   @override
@@ -2060,7 +2173,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return ValueListenableBuilder(
       valueListenable: universalAiShareRouteObserver.currentPage,
       builder: (context, currentPage, _) => MaterialApp(
-        title: documentTitleForRoute(currentPage.routePath),
+        title: SpaRouteTitleResolver.resolve(currentPage.routePath),
         debugShowCheckedModeBanner: false,
         scaffoldMessengerKey: _scaffoldMessengerKey,
         navigatorKey: _navigatorKey,
@@ -2071,25 +2184,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ? ThemeMode.light
             : themeService.getFlutterThemeMode(),
         builder: (context, child) {
-          return GlobalHeaderClockShell(
-            navigatorKey: _navigatorKey,
-            // 時計とビルド番号はログイン後の業務用クロームに限定する。
-            // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
-            // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
-            showClockBar: supabase.auth.currentSession != null,
-            child: UniversalAiShareShell(
+          return FocusTraversalGroup(
+            policy: _focusTraversalPolicy,
+            child: GlobalHeaderClockShell(
               navigatorKey: _navigatorKey,
-              child: MaintenanceShell(
-                routeListenable: universalAiShareRouteObserver.currentPage,
-                child: Column(
-                  children: [
-                    if (_showUpdateBanner)
-                      UpdateBanner(
-                        onDismiss: () =>
-                            setState(() => _showUpdateBanner = false),
-                      ),
-                    Expanded(child: child ?? const SizedBox.shrink()),
-                  ],
+              // 時計とビルド番号はログイン後の業務用クロームに限定する。
+              // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
+              // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
+              showClockBar: supabase.auth.currentSession != null,
+              child: UniversalAiShareShell(
+                navigatorKey: _navigatorKey,
+                child: MaintenanceShell(
+                  routeListenable: universalAiShareRouteObserver.currentPage,
+                  child: Column(
+                    children: [
+                      if (_showUpdateBanner)
+                        UpdateBanner(
+                          onDismiss: () =>
+                              setState(() => _showUpdateBanner = false),
+                        ),
+                      Expanded(child: child ?? const SizedBox.shrink()),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -2105,6 +2221,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         navigatorObservers: <NavigatorObserver>[
           _growthPresenceObserver,
           universalAiShareRouteObserver,
+          spaRouteTitleObserver,
           // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
           // LP View 計測を可視化まで遅延させる (可視化ゲート)。
           deepLinkVisibilityRouteObserver,

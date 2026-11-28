@@ -44,11 +44,13 @@ jobs:
           COVERED=0
           EXEMPT_COUNT=0
           # These endpoints are intentionally called only by trusted backend
-          # workers. Wiring them from lib/ would expose a privileged API surface.
+          # workers or signed external webhooks. Wiring them from lib/ would
+          # expose a privileged or server-only webhook API surface.
           declare -A UI_EXEMPTIONS=(
             [decision-events]="Internal decision log sink authenticated with SUPABASE_SERVICE_ROLE_KEY"
             [video-commerce-hub]="Owner-authorized publication worker called by hourly automation or authenticated Video Studio"
             [video-worker-hub]="Dedicated video worker API authenticated with VIDEO_WORKER_TOKEN"
+            [workos-scim-webhook]="Inbound WorkOS Directory Sync webhook authenticated via WorkOS-Signature HMAC (WORKOS_WEBHOOK_SECRET)"
           )
           : > /tmp/ui_exempt_functions.txt
           # Supabase upsert 用JSON配列

@@ -16,6 +16,8 @@ class LocalElectionRealityService {
       'local_election_member_profile_v1_';
   static const Duration _freshSnapshotWindow = Duration(hours: 2);
   static const Duration _edgeFunctionTimeout = Duration(seconds: 90);
+  static const int maxHistoryPoints = 180;
+  static const Duration _jstOffset = Duration(hours: 9);
   static LocalElectionRealitySnapshot? _memorySnapshot;
   static Future<LocalElectionRealitySnapshot>? _latestSnapshotInFlight;
   static ElectionModeId? _latestSnapshotInFlightMode;
@@ -92,6 +94,61 @@ class LocalElectionRealityService {
     }
   }
 
+  static String _calendarDayKey(DateTime date) {
+    final jstDate = date.toUtc().add(_jstOffset);
+    final year = jstDate.year.toString().padLeft(4, '0');
+    final month = jstDate.month.toString().padLeft(2, '0');
+    final day = jstDate.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  static List<LocalElectionRealityHistoryPoint> mergeSnapshotHistory({
+    required List<LocalElectionRealityHistoryPoint> serverHistory,
+    required List<LocalElectionRealityHistoryPoint> localHistory,
+    LocalElectionRealityHistoryPoint? currentPoint,
+    int maxPoints = maxHistoryPoints,
+  }) {
+    final byDay = <String, LocalElectionRealityHistoryPoint>{};
+
+    void upsert(
+      LocalElectionRealityHistoryPoint point, {
+      required bool preferOnTie,
+    }) {
+      if (point.fetchedAt.millisecondsSinceEpoch <= 0 ||
+          point.officialCurrentLocalMembers <= 0) {
+        return;
+      }
+      final dayKey = _calendarDayKey(point.fetchedAt);
+      final existing = byDay[dayKey];
+      if (existing == null) {
+        byDay[dayKey] = point;
+        return;
+      }
+      final comparison = point.fetchedAt.compareTo(existing.fetchedAt);
+      if (comparison > 0 || (comparison == 0 && preferOnTie)) {
+        byDay[dayKey] = point;
+      }
+    }
+
+    for (final point in localHistory) {
+      upsert(point, preferOnTie: false);
+    }
+    for (final point in serverHistory) {
+      upsert(point, preferOnTie: true);
+    }
+    if (currentPoint != null) {
+      upsert(currentPoint, preferOnTie: true);
+    }
+
+    final merged = byDay.values.toList()
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+    final cap = maxPoints > 0 ? maxPoints : maxHistoryPoints;
+    if (merged.length > cap) {
+      return merged.sublist(merged.length - cap);
+    }
+    return merged;
+  }
+
   Future<List<LocalElectionRealityHistoryPoint>> loadSnapshotHistory({
     SharedPreferences? prefs,
   }) async {
@@ -113,7 +170,11 @@ class LocalElectionRealityService {
               Map<String, dynamic>.from(item),
             ),
           )
-          .where((item) => item.officialCurrentLocalMembers > 0)
+          .where(
+            (item) =>
+                item.fetchedAt.millisecondsSinceEpoch > 0 &&
+                item.officialCurrentLocalMembers > 0,
+          )
           .toList()
         ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
       return points;
@@ -219,7 +280,9 @@ class LocalElectionRealityService {
       await cacheSnapshot(snapshot, prefs: store);
       return snapshot;
     } catch (error) {
-      if (fallbackSnapshot != null && fallbackSnapshot.hasData) {
+      if (!forceRefresh &&
+          fallbackSnapshot != null &&
+          fallbackSnapshot.hasData) {
         debugPrint(
           'Local election fetch failed, using cached snapshot instead: $error',
         );
@@ -309,7 +372,11 @@ class LocalElectionRealityService {
       );
     }
 
-    return LocalElectionRealitySnapshot.fromJson(_toMap(data['snapshot']));
+    final snapshotMap = Map<String, dynamic>.from(_toMap(data['snapshot']));
+    if (!snapshotMap.containsKey('history') && data['history'] is List) {
+      snapshotMap['history'] = data['history'];
+    }
+    return LocalElectionRealitySnapshot.fromJson(snapshotMap);
   }
 
   bool _isSnapshotFresh(LocalElectionRealitySnapshot snapshot) {
@@ -369,6 +436,9 @@ class LocalElectionRealityService {
   LocalElectionRealitySnapshot _rejectSuspiciousSnapshot(
     LocalElectionRealitySnapshot snapshot,
   ) {
+    if (!snapshot.hasData) {
+      throw Exception('Local election snapshot returned empty member data.');
+    }
     if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
       throw Exception(
         'Official prefecture pages parsed as zero members: '
@@ -395,40 +465,29 @@ class LocalElectionRealityService {
     LocalElectionRealitySnapshot snapshot, {
     SharedPreferences? prefs,
   }) async {
-    if (!snapshot.hasData) {
+    if (!snapshot.hasData && snapshot.history.isEmpty) {
       return;
     }
 
     final store = prefs ?? await SharedPreferences.getInstance();
-    final currentPoint = LocalElectionRealityHistoryPoint(
-      fetchedAt: snapshot.fetchedAt,
-      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
-      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+    final LocalElectionRealityHistoryPoint? currentPoint = snapshot.hasData
+        ? LocalElectionRealityHistoryPoint(
+            fetchedAt: snapshot.fetchedAt,
+            officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+            actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+          )
+        : null;
+
+    final localHistory = await loadSnapshotHistory(prefs: store);
+    final merged = mergeSnapshotHistory(
+      serverHistory: snapshot.history,
+      localHistory: localHistory,
+      currentPoint: currentPoint,
     );
-
-    final history = await loadSnapshotHistory(prefs: store);
-    final currentDayKey = _historyDayKey(currentPoint.fetchedAt.toLocal());
-    final updated = history
-        .where(
-          (item) => _historyDayKey(item.fetchedAt.toLocal()) != currentDayKey,
-        )
-        .toList()
-      ..add(currentPoint)
-      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
-
-    const maxPoints = 180;
-    final trimmed = updated.length > maxPoints
-        ? updated.sublist(updated.length - maxPoints)
-        : updated;
 
     await store.setString(
       _historyStorageKey,
-      jsonEncode(trimmed.map((item) => item.toJson()).toList()),
+      jsonEncode(merged.map((item) => item.toJson()).toList()),
     );
-  }
-
-  String _historyDayKey(DateTime date) {
-    final normalized = DateTime(date.year, date.month, date.day);
-    return normalized.toIso8601String();
   }
 }

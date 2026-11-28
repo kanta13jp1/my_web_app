@@ -128,7 +128,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     tier: AiProviderTier.performance,
     envKeyName: 'GEMINI_API_KEY',
     entryPoint: 'ai-assistant (Casper) / ai-hub',
-    note: 'gemini-2.5-flash。3.1-pro-preview は未導入',
+    note: 'gemini-4-hydrogen。gemini-4-neon も利用可能',
   ),
 
   // ===== 実装済みだが課金制限あり =====

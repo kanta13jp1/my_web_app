@@ -259,3 +259,31 @@ enabled = true
 # auth.getUser(); scheduled destructive processing requires service_role.
 verify_jwt = false
 entrypoint = "./functions/account-lifecycle/index.ts"
+
+[functions.rlhf-feedback-webhook]
+enabled = true
+# Database Webhooks use HMAC signature verification; Flutter user callers use
+# in-function auth.getUser() + row ownership / is_admin checks.
+verify_jwt = false
+entrypoint = "./functions/rlhf-feedback-webhook/index.ts"
+
+[functions.did-mcp-proxy]
+enabled = true
+# Browser preflight has no JWT; handler enforces auth.getUser() + is_admin or
+# constant-time service_role authentication before proxying to D-ID MCP/REST.
+verify_jwt = false
+entrypoint = "./functions/did-mcp-proxy/index.ts"
+
+[functions.external-ai-webhook]
+enabled = true
+# External automation callers (n8n/Zapier/analytics) authenticate via
+# X-Webhook-Api-Key (SHA-256 hashed lookup) or user JWT verified in-function.
+verify_jwt = false
+entrypoint = "./functions/external-ai-webhook/index.ts"
+
+[functions.workos-scim-webhook]
+enabled = true
+# WorkOS Directory Sync webhooks authenticate via WorkOS-Signature
+# (HMAC-SHA256 timestamped signature verified with constant-time compare).
+verify_jwt = false
+entrypoint = "./functions/workos-scim-webhook/index.ts"

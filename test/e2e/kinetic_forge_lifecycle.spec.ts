@@ -1,0 +1,35 @@
+import { expect, test } from '@playwright/test';
+
+test('cover, return and pop unload the actual KineticForgeSurface', async ({ page }, info) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('requestfailed', request => errors.push(request.url()));
+  page.on('response', response => { if (response.status() >= 400) errors.push(String(response.status())); });
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204 }));
+  await page.goto('/');
+  await page.getByRole('button', { name: '実験室を開く', exact: true }).click();
+  const iframe = page.locator('iframe[title="KINETIC FORGE 描画コース実験"]');
+  const city = page.frameLocator('iframe[title="KINETIC FORGE 描画コース実験"]');
+  await expect(iframe).toBeVisible();
+  await city.getByRole('button', { name: '球を放つ', exact: true }).click();
+  await expect.poll(async () => Number((await city.locator('#clock').innerText()).split(' ')[0])).toBeGreaterThan(0);
+  const oldFrame = await (await iframe.elementHandle())!.contentFrame();
+  expect(oldFrame).not.toBeNull();
+  await page.getByRole('button', { name: '覆う画面を開く', exact: true }).click();
+  await expect(iframe).toHaveCount(0);
+  await expect.poll(() => oldFrame!.isDetached() || oldFrame!.url() === 'about:blank').toBe(true);
+  await page.getByRole('button', { name: '実験室へ戻る', exact: true }).click();
+  await expect(iframe).toBeVisible();
+  await expect(city.locator('#clock')).toHaveText('0.00 s');
+  await expect(city.getByRole('button', { name: '球を放つ', exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('returned.png'), fullPage: true });
+  await page.getByRole('button', { name: '実験室を閉じる', exact: true }).click();
+  await expect(iframe).toHaveCount(0);
+  await page.getByRole('button', { name: '実験室を開く', exact: true }).click();
+  await expect(iframe).toBeVisible();
+  await expect(city.locator('#clock')).toHaveText('0.00 s');
+  await info.attach('runtime-errors', { body: JSON.stringify(errors), contentType: 'application/json' });
+  expect(errors).toEqual([]);
+});

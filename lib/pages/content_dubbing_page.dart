@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../features/voice_clone_consent/voice_clone_consent_container.dart';
 import '../services/voice_dubbing_service.dart';
 import '../theme/design_tokens.dart';
 
@@ -235,6 +236,27 @@ class _ContentDubbingPageState extends State<ContentDubbingPage> {
         backgroundColor: DesignTokens.background,
         foregroundColor: Colors.white,
         title: const Text('多言語ダビング'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.verified_user_outlined),
+            tooltip: 'AIボイスクローン同意検証',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/content-dubbing?view=voice-clone-consent',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AIボイスクローン同意検証'),
+                    ),
+                    body: const VoiceCloneConsentContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, color: DesignTokens.divider),

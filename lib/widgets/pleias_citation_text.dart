@@ -6,17 +6,19 @@ class PleiasCitationText extends StatelessWidget {
   final String text;
   final List<LocalRagCitation> citations;
   final bool isDark;
+  final PleiasCitationParseResult? parsedAnswer;
 
   const PleiasCitationText({
     super.key,
     required this.text,
     required this.citations,
     required this.isDark,
+    this.parsedAnswer,
   });
 
   @override
   Widget build(BuildContext context) {
-    final parsed = parsePleiasCitationText(text);
+    final parsed = parsedAnswer ?? parsePleiasCitationText(text);
     final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontFamily: 'monospace',
               fontSize: 12,
@@ -30,8 +32,11 @@ class PleiasCitationText extends StatelessWidget {
           color: isDark ? Colors.white : const Color(0xFF0F172A),
         );
 
-    if (!parsed.hasCitationTokens) {
-      return SelectableText(text, style: baseStyle);
+    if (!parsed.hasCitationTokens && !parsed.hasCitations) {
+      return SelectableText(
+        parsed.plainText.isEmpty ? text : parsed.plainText,
+        style: baseStyle,
+      );
     }
 
     return Column(
@@ -193,6 +198,7 @@ class PleiasCitationText extends StatelessWidget {
     final parts = <String>[
       title,
       if (citation.snippet.isNotEmpty) citation.snippet,
+      if (citation.locationLabel.isNotEmpty) citation.locationLabel,
       if (citation.path.isNotEmpty) citation.path,
       if (citation.score > 0) 'score ${citation.score.toStringAsFixed(2)}',
     ];
@@ -214,6 +220,8 @@ class PleiasCitationText extends StatelessWidget {
         content: SelectableText(
           [
             if (citation?.snippet.trim().isNotEmpty == true) citation!.snippet,
+            if (citation?.locationLabel.trim().isNotEmpty == true)
+              citation!.locationLabel,
             if (citation?.path.trim().isNotEmpty == true) citation!.path,
             if (citation == null) 'No source metadata was returned.',
           ].join('\n\n'),

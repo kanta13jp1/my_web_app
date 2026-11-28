@@ -4,6 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/admin_growth_evidence.dart';
 import '../services/growth_mission_service.dart';
+import '../widgets/admin/admin_automation_ops_card.dart';
+import '../widgets/admin/admin_blog_posts_card.dart';
+import '../widgets/admin/admin_comparison_cvr_card.dart';
+import '../widgets/admin/admin_daily_stats_aggregate.dart';
+import '../widgets/admin/admin_feature_requests_card.dart';
+import '../widgets/admin/admin_growth_achievement_summary_card.dart';
+import '../widgets/admin/admin_user_feedback_card.dart';
+import '../widgets/admin/admin_waitlist_card.dart';
+import '../widgets/admin/admin_users_card.dart';
+import '../widgets/admin/admin_weekly_digest_card.dart';
 import '../widgets/admin_billing_overview.dart';
 import '../widgets/admin_growth_evidence_section.dart';
 import '../widgets/admin_registration_funnel_card.dart';
@@ -23,20 +33,6 @@ import 'admin/quota_dashboard_page.dart';
 import 'admin/blog_management_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
-
-class _FunnelMetrics {
-  final int trialRuns;
-  final int saveClicks;
-  final int magicLinkSends;
-  final int inboxOpens;
-
-  const _FunnelMetrics({
-    required this.trialRuns,
-    required this.saveClicks,
-    required this.magicLinkSends,
-    required this.inboxOpens,
-  });
-}
 
 class _GrowthActionPlan {
   final String bottleneckLabel;
@@ -73,13 +69,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _toolExecutionLogs = [];
   Map<String, int> _blockedReasonBreakdown = {};
   int _actualUserCount = 0;
-  int _lpTodayViews = 0;
-  int _lpTotalViews = 0;
+  AdminDailyStatsAggregate _dailyStatsAggregate =
+      AdminDailyStatsAggregate.empty();
   int _allowedToolExecutionCount = 0;
   int _blockedToolExecutionCount = 0;
   AdminPaidConversionMetrics _paidConversionMetrics =
       AdminPaidConversionMetrics.empty;
-  bool _hasLpViewStats = false;
   // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
   // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
   // に戻し、アクションカードは従来文言(「X投稿を作る」)へ degrade する。
@@ -120,9 +115,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   bool _automationPostingX = false;
   Map<String, dynamic>? _automationDigest;
   String? _automationError;
-
-  // admin user search
-  String _userSearchQuery = '';
 
   // growth-achievement-summary
   Map<String, dynamic>? _growthSummary;
@@ -217,26 +209,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  _FunnelMetrics _extractFunnelMetrics(Map<String, int> sources) {
-    return _FunnelMetrics(
-      trialRuns: sources['funnel_trial_run'] ?? 0,
-      saveClicks: sources['funnel_save_cta'] ?? 0,
-      magicLinkSends: sources['funnel_magic_link_send'] ?? 0,
-      inboxOpens: sources['funnel_inbox_open'] ?? 0,
-    );
-  }
-
-  AdminBillingFunnelMetrics _extractBillingFunnelMetrics(
-    Map<String, int> sources,
-  ) {
-    return AdminBillingFunnelMetrics(
-      billingViews: sources['funnel_billing_view'] ?? 0,
-      upgradeClicks: sources['funnel_upgrade_click'] ?? 0,
-      checkoutSuccesses: sources['funnel_checkout_success'] ?? 0,
-      checkoutCancels: sources['funnel_checkout_cancel'] ?? 0,
-    );
-  }
-
   Map<String, int> _extractSourceCounts(dynamic rawSourceDetails) {
     final counts = <String, int>{};
     _mergeSourceCounts(counts, rawSourceDetails);
@@ -301,29 +273,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return remainingRegistrations;
     }
     return (remainingRegistrations / completionRate).ceil();
-  }
-
-  int _countConsecutiveNoRegistrationDays(List<Map<String, dynamic>> stats) {
-    var streak = 0;
-    for (final stat in stats) {
-      if (_toInt(stat['conversions']) > 0) {
-        break;
-      }
-      streak += 1;
-    }
-    return streak;
-  }
-
-  double _averageViews(List<Map<String, dynamic>> stats, {int days = 7}) {
-    final window = stats.take(days).toList();
-    if (window.isEmpty) {
-      return 0;
-    }
-    final total = window.fold<int>(
-      0,
-      (sum, stat) => sum + _toInt(stat['landing_views']),
-    );
-    return total / window.length;
   }
 
   /// R16: growth-hub x.today_status を fail-safe に取得する。今日境界はブラウザ
@@ -692,7 +641,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required bool achieved,
     required int todayViews,
     required int todayRegistrations,
-    required _FunnelMetrics todayFunnel,
+    required AdminFunnelMetrics todayFunnel,
     required String? priorityChannelKey,
     required String? priorityChannelLabel,
   }) {
@@ -1910,13 +1859,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         for (final entry in sortedBlockedReasons) entry.key: entry.value,
       };
 
+      final dailyStatsAggregate = computeAdminDailyStatsAggregate(
+        dailyStats: mergedDailyStats,
+        lpTodayViews: _toInt(lpStats['today']),
+        lpTotalViews: _toInt(lpStats['total']),
+        hasLpViewStats: hasLpViewStats,
+        now: DateTime.now(),
+      );
+
       if (mounted) {
         setState(() {
           _dailyStats = mergedDailyStats;
+          _dailyStatsAggregate = dailyStatsAggregate;
           _actualUserCount = totalUsers;
-          _lpTodayViews = _toInt(lpStats['today']);
-          _lpTotalViews = _toInt(lpStats['total']);
-          _hasLpViewStats = hasLpViewStats;
           _toolExecutionLogs = toolExecutionLogs;
           _blockedReasonBreakdown = normalizedBlockedReasons;
           _allowedToolExecutionCount = allowedExecutionCount;
@@ -1937,87 +1892,26 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // データ集計
-    int analyticsViews = 0;
-    int totalShares = 0;
-    final Map<String, int> sourceBreakdown = {};
-    final Map<String, int> shareChannelBreakdown = {};
-    final Map<String, int> funnelBreakdown = {};
-    final Map<String, int> todaySourceDetails = {};
-    final todayKey = _dateKey(DateTime.now());
-    var todayViews = 0;
-    var todayRegistrations = 0;
-
-    int maxDailyViews = 0;
-
-    for (var stat in _dailyStats) {
-      final views = _toInt(stat['landing_views']);
-      final conv = _toInt(stat['conversions']);
-      final statDateKey = _normalizeDateKey(stat['date']);
-
-      analyticsViews += views;
-      totalShares += _toInt(stat['share_count']);
-
-      if (statDateKey == todayKey) {
-        todayViews = views;
-        todayRegistrations = conv;
-      }
-      if (views > maxDailyViews) maxDailyViews = views;
-
-      final sources = stat['source_details'];
-      if (sources != null && sources is Map) {
-        sources.forEach((key, value) {
-          final count = _toInt(value);
-          if (count > 0) {
-            final sourceKey = key.toString();
-            if (statDateKey == todayKey) {
-              todaySourceDetails[sourceKey] =
-                  (todaySourceDetails[sourceKey] ?? 0) + count;
-            }
-            final target = _isFunnelEventKey(sourceKey)
-                ? funnelBreakdown
-                : _isShareActionKey(sourceKey)
-                    ? shareChannelBreakdown
-                    : sourceBreakdown;
-            target[sourceKey] = (target[sourceKey] ?? 0) + count;
-          }
-        });
-      }
-    }
-
-    final acquisitionEvidence = adminAcquisitionEvidenceFromAggregateSignals(
-      sourceBreakdown,
-    );
-    final chartData = _dailyStats.reversed.toList();
-    final effectiveTodayViews = _hasLpViewStats ? _lpTodayViews : todayViews;
-    final effectiveTotalLpViews =
-        _hasLpViewStats ? _lpTotalViews : analyticsViews;
-    final double todaySummaryCvr = effectiveTodayViews == 0
-        ? 0
-        : (todayRegistrations / effectiveTodayViews * 100);
-    final todayFunnel = _extractFunnelMetrics(todaySourceDetails);
-    final totalFunnel = _extractFunnelMetrics(funnelBreakdown);
-    final totalBillingFunnel = _extractBillingFunnelMetrics(funnelBreakdown);
-    final total30DayRegistrations = _dailyStats.fold<int>(
-      0,
-      (sum, stat) => sum + _toInt(stat['conversions']),
-    );
-    final todayDropBeforeTrial = effectiveTodayViews > todayFunnel.trialRuns
-        ? effectiveTodayViews - todayFunnel.trialRuns
-        : 0;
-    final totalDropBeforeTrial = effectiveTotalLpViews > totalFunnel.trialRuns
-        ? effectiveTotalLpViews - totalFunnel.trialRuns
-        : 0;
-    final zeroRegistrationStreakDays = _countConsecutiveNoRegistrationDays(
-      _dailyStats,
-    );
-    // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
-    // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
-    final zeroStreakAtCap = streakAtWindowCap(
-      zeroRegistrationStreakDays,
-      _dailyStats.length,
-    );
-    final averageViewsLast7Days = _averageViews(_dailyStats);
+    final agg = _dailyStatsAggregate;
+    final totalShares = agg.totalShares;
+    final sourceBreakdown = agg.sourceBreakdown;
+    final shareChannelBreakdown = agg.shareChannelBreakdown;
+    final acquisitionEvidence = agg.acquisitionEvidence;
+    final chartData = agg.chartData;
+    final maxDailyViews = agg.maxDailyViews;
+    final todayRegistrations = agg.todayRegistrations;
+    final effectiveTodayViews = agg.effectiveTodayViews;
+    final effectiveTotalLpViews = agg.effectiveTotalLpViews;
+    final todaySummaryCvr = agg.todaySummaryCvr;
+    final todayFunnel = agg.todayFunnel;
+    final totalFunnel = agg.totalFunnel;
+    final totalBillingFunnel = agg.totalBillingFunnel;
+    final total30DayRegistrations = agg.total30DayRegistrations;
+    final todayDropBeforeTrial = agg.todayDropBeforeTrial;
+    final totalDropBeforeTrial = agg.totalDropBeforeTrial;
+    final zeroRegistrationStreakDays = agg.zeroRegistrationStreakDays;
+    final zeroStreakAtCap = agg.zeroStreakAtCap;
+    final averageViewsLast7Days = agg.averageViewsLast7Days;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -2242,7 +2136,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           ),
                         ],
                       ),
-                      child: _buildTrendChart(chartData, maxDailyViews),
+                      child: RepaintBoundary(
+                        key: const Key('admin_trend_chart_repaint_boundary'),
+                        child: _buildTrendChart(chartData, maxDailyViews),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -2254,7 +2151,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildSourceDistribution(sourceBreakdown),
+                    RepaintBoundary(
+                      key: const Key(
+                        'admin_source_distribution_repaint_boundary',
+                      ),
+                      child: _buildSourceDistribution(sourceBreakdown),
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       'シェアチャネル (Share Actions)',
@@ -2265,7 +2167,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildSourceDistribution(shareChannelBreakdown),
+                    RepaintBoundary(
+                      key: const Key(
+                        'admin_share_distribution_repaint_boundary',
+                      ),
+                      child: _buildSourceDistribution(shareChannelBreakdown),
+                    ),
                     const SizedBox(height: 24),
                     _buildFunnelOverviewCard(
                       title: '過去30日の登録ファネル',
@@ -2300,7 +2207,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildWeeklyDigestCard(context),
+                    AdminWeeklyDigestCard(
+                      digest: _weeklyDigest,
+                      loaded: _weeklyDigestLoaded,
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       '登録ユーザー管理',
@@ -2311,7 +2221,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildAdminUsersCard(),
+                    AdminUsersCard(
+                      users: _adminUsers,
+                      totalUsers: _adminUsersTotal,
+                      loading: _adminUsersLoading,
+                      onRefresh: _loadAdminUsers,
+                      onUpdateUserProfile: _adminUpdateUserProfile,
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       '機能リクエスト・自動化・ウェイトリスト',
@@ -2322,9 +2238,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildFeatureRequestsAdminCard(),
+                    AdminFeatureRequestsCard(
+                      requests: _featureRequests,
+                      loading: _featureRequestsLoading,
+                      onRefresh: _loadFeatureRequests,
+                      onReply: _showSupportReplyDialog,
+                      onEditFields: _showFeatureFieldsDialog,
+                      onUpdateStatus: _updateFeatureRequestStatus,
+                    ),
                     const SizedBox(height: 16),
-                    _buildAutomationOpsCard(),
+                    AdminAutomationOpsCard(
+                      digest: _automationDigest,
+                      supportTickets: _automationSupportTickets,
+                      loading: _automationLoading,
+                      postingX: _automationPostingX,
+                      error: _automationError,
+                      onRefresh: _loadAutomationOps,
+                      onPostX: _showXPostDialog,
+                      onReplyTicket: _showSupportReplyDialog,
+                    ),
                     const SizedBox(height: 16),
                     _buildAutoErrorReportsCard(),
                     const SizedBox(height: 16),
@@ -2334,15 +2266,50 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 16),
                     const CompetitorMonitoringCard(),
                     const SizedBox(height: 16),
-                    _buildBlogPostsCard(),
+                    AdminBlogPostsCard(
+                      posts: _blogPosts,
+                      loading: _blogPostsLoading,
+                      onRefresh: _loadBlogPosts,
+                      onUpdateStatus: _updateBlogPostStatus,
+                    ),
                     const SizedBox(height: 16),
-                    _buildComparisonCvrCard(),
+                    AdminComparisonCvrCard(
+                      comparisonTouches: _comparisonTouches,
+                      comparisonSignups: _comparisonSignups,
+                      loading: _comparisonCvrLoading,
+                      onRefresh: _loadComparisonCvr,
+                    ),
                     const SizedBox(height: 16),
-                    _buildGrowthAchievementSummaryCard(),
+                    AdminGrowthAchievementSummaryCard(
+                      summary: _growthSummary,
+                      loading: _growthSummaryLoading,
+                      onRefresh: _loadGrowthSummary,
+                      onSelectPeriod: (since, label) =>
+                          _loadGrowthSummary(since: since, label: label),
+                    ),
                     const SizedBox(height: 16),
-                    _buildWaitlistCard(),
+                    AdminWaitlistCard(
+                      waitlistEmails: _waitlistEmails,
+                      loading: _waitlistLoading,
+                      sendingNotification: _sendingNotification,
+                      onSendNotification: _showNotificationComposeDialog,
+                      onRefresh: _loadWaitlist,
+                    ),
                     const SizedBox(height: 16),
-                    _buildUserFeedbackCard(),
+                    AdminUserFeedbackCard(
+                      feedbacks: _appFeedbacks,
+                      loading: _appFeedbacksLoading,
+                      onRefresh: _loadAppFeedbacks,
+                      onUpdateStatus: _updateFeedbackStatus,
+                      onOpenManageAll: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          settings:
+                              const RouteSettings(name: '/admin-feedback'),
+                          builder: (_) => const FeedbackListPage(),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -2366,7 +2333,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required int todayViews,
     required int todayRegistrations,
     required Map<String, int> sourceBreakdown,
-    required _FunnelMetrics todayFunnel,
+    required AdminFunnelMetrics todayFunnel,
   }) {
     const dailyTarget = 1;
     final achieved = todayRegistrations >= dailyTarget;
@@ -2458,7 +2425,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required String title,
     required int lpViews,
     required int registrations,
-    required _FunnelMetrics funnel,
+    required AdminFunnelMetrics funnel,
     required int remainingRegistrations,
   }) {
     final neededMagicLinks = _estimateNeededMagicLinks(
@@ -2496,7 +2463,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalRegistrations,
     int shares,
     int totalLpViews,
-    _FunnelMetrics todayFunnel,
+    AdminFunnelMetrics todayFunnel,
   ) {
     return Card(
       elevation: 4,
@@ -2838,27 +2805,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  bool _isFunnelEventKey(String key) {
-    return key.startsWith('funnel_') ||
-        key.startsWith('lp_exp_') ||
-        key.startsWith('activation_exp_');
-  }
-
-  bool _isShareActionKey(String key) {
-    switch (key) {
-      case 'share_x':
-      case 'share_line':
-      case 'share_facebook':
-      case 'share_copy':
-      case 'share_note':
-      case 'public_memo_share':
-      case 'public_memo_copy':
-        return true;
-      default:
-        return false;
-    }
-  }
-
   String _formatSourceName(String key) {
     switch (key) {
       case 'direct':
@@ -2993,183 +2939,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildWeeklyDigestCard(BuildContext context) {
-    final d = _weeklyDigest;
-    final hasData = d.currentWeekStart.isNotEmpty;
-    // R18: loading / loaded-empty / loaded-data の3状態に分けてヘッダ文言を決める。
-    final cardState = weeklyDigestCardState(
-      loaded: _weeklyDigestLoaded,
-      hasData: hasData,
-    );
-    final headerText = switch (cardState) {
-      WeeklyDigestCardState.loading => '読み込み中...',
-      WeeklyDigestCardState.empty => '今週はまだ計測データがありません（計測待ち）',
-      WeeklyDigestCardState.data =>
-        '${d.currentWeekStart} 〜 ${d.currentWeekEnd}',
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.summarize, size: 18, color: Color(0xFF3949AB)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  headerText,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (hasData) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _weeklyKpiChip('登録', d.signupSubmitTotal, d.signupSubmitDelta),
-                _weeklyKpiChip('紹介', d.referralsCompleted, d.referralsDelta),
-                _weeklyKpiChip('インポートCTA', d.importCtaClicks, 0),
-                _weeklyKpiChip('公開メモCTA', d.publicMemoCtaClicks, 0),
-              ],
-            ),
-            if (d.channels.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              const Text(
-                'チャネル別',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...d.channels.map(
-                (ch) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          ch.label,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF374151),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'タッチ ${ch.touches}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '登録 ${ch.signupSubmits}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF3949AB),
-                          fontWeight: FontWeight.w600,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            if (d.brief.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                d.brief,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _weeklyKpiChip(String label, int value, int delta) {
-    final isPositive = delta > 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF94A3B8),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$value',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
-                  height: 1.5,
-                ),
-              ),
-              if (delta != 0) ...[
-                const SizedBox(width: 4),
-                Text(
-                  '${isPositive ? '+' : ''}$delta',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isPositive
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDailyList() {
     return ListView.builder(
       shrinkWrap: true,
@@ -3185,7 +2954,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         final cvrBadgeColor =
             views == 0 ? const Color(0xFF9CA3AF) : _getCvrColor(cvr);
         final cvrBadgeText = formatRatePercent(conv, views);
-        final dayFunnel = _extractFunnelMetrics(
+        final dayFunnel = extractAdminFunnelMetrics(
           _extractSourceCounts(stat['source_details']),
         );
 
@@ -3290,387 +3059,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  Widget _buildProfileCompletionSummary() {
-    // R19: 旧サマリは未fetch の completionPct(全員0)で「0完成/0途中/44未設定」を
-    // 捏造していた。email 空=匿名 auth を信頼プロキシに「実ユーザー/匿名テスト」へ
-    // 誠実に分割する(合計44 vs 実CVR4 の乖離=匿名を実登録と誤認する虚栄を防ぐ)。
-    final split = summarizeAdminUsers(_adminUsers);
-    return Row(
-      children: [
-        _profileStatChip(
-          Icons.verified_user_outlined,
-          '実ユーザー ${split.real}人',
-          const Color(0xFF0D9488),
-        ),
-        const SizedBox(width: 8),
-        _profileStatChip(
-          Icons.help_outline,
-          '匿名テスト ${split.anon}人',
-          const Color(0xFF9CA3AF),
-        ),
-      ],
-    );
-  }
-
-  Widget _profileStatChip(IconData icon, String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 13, color: color),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w600,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdminUsersCard() {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.people_alt_outlined, color: Color(0xFF3949AB)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _adminUsers.isEmpty
-                        ? '登録ユーザー管理 (合計 $_adminUsersTotal 人)'
-                        : '登録ユーザー管理 (合計 $_adminUsersTotal 人 / '
-                            '実 ${summarizeAdminUsers(_adminUsers).real}・'
-                            '匿名 ${summarizeAdminUsers(_adminUsers).anon})',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadAdminUsers,
-                  tooltip: '更新',
-                ),
-              ],
-            ),
-            if (_adminUsers.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _buildProfileCompletionSummary(),
-            ],
-            const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'メール・表示名で検索...',
-                prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: _userSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16),
-                        onPressed: () => setState(() => _userSearchQuery = ''),
-                      )
-                    : null,
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-              ),
-              style: const TextStyle(fontSize: 13, height: 1.6),
-              onChanged: (v) => setState(() => _userSearchQuery = v),
-            ),
-            const SizedBox(height: 8),
-            if (_adminUsersLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_adminUsers.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'ユーザーが取得できませんでした',
-                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                ),
-              )
-            else
-              Builder(
-                builder: (context) {
-                  final filteredUsers = _userSearchQuery.isEmpty
-                      ? _adminUsers
-                      : _adminUsers.where((u) {
-                          final q = _userSearchQuery.toLowerCase();
-                          final email =
-                              u['email']?.toString().toLowerCase() ?? '';
-                          final name =
-                              u['displayName']?.toString().toLowerCase() ?? '';
-                          return email.contains(q) || name.contains(q);
-                        }).toList();
-                  if (filteredUsers.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        '該当するユーザーが見つかりません',
-                        style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredUsers.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final user = filteredUsers[index];
-                      final email = user['email']?.toString() ?? '';
-                      final displayName = user['displayName']?.toString();
-                      final bio = user['bio']?.toString();
-                      final location = user['location']?.toString();
-                      final provider = user['provider']?.toString() ?? 'email';
-                      // R19: edge は created_at(snake)を返すのに旧UIは createdAt
-                      // (camel)を読み全行の登録日が空だった。snake 優先で吸収する。
-                      final createdAt = adminUserCreatedRaw(user);
-                      final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-                      // R19: email 空 = Supabase 匿名 auth(headless 検証)の信頼プロキシ。
-                      final isAnonymous = adminUserIsAnonymous(user);
-
-                      // R19: 登録日=parse 不可なら「日付なし」、最終ログインは edge が
-                      // 未送出のため「ログイン記録なし」と正直に出す(空欄で誤魔化さない)。
-                      String createdStr = '日付なし';
-                      String lastSignInStr = 'ログイン記録なし';
-                      try {
-                        createdStr = DateFormat(
-                          'yyyy/MM/dd',
-                        ).format(DateTime.parse(createdAt).toLocal());
-                      } catch (_) {}
-                      try {
-                        lastSignInStr = DateFormat(
-                          'MM/dd HH:mm',
-                        ).format(DateTime.parse(lastSignIn).toLocal());
-                      } catch (_) {}
-
-                      final isGoogle = provider.contains('google');
-                      final isDark =
-                          Theme.of(context).brightness == Brightness.dark;
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: isGoogle
-                                  ? (isDark
-                                      ? const Color(0xFF0D2E1A)
-                                      : const Color(0xFFE8F5E9))
-                                  : (isDark
-                                      ? const Color(0xFF1A1E3A)
-                                      : const Color(0xFFE8EAF6)),
-                              child: Text(
-                                email.isNotEmpty
-                                    ? email[0].toUpperCase()
-                                    : (isAnonymous ? '匿' : '?'),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isGoogle
-                                      ? const Color(0xFF388E3C)
-                                      : const Color(0xFF3949AB),
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          displayName != null &&
-                                                  displayName.isNotEmpty
-                                              ? displayName
-                                              : (email.isNotEmpty
-                                                  ? email
-                                                  : '匿名ユーザー'),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isGoogle
-                                              ? (isDark
-                                                  ? const Color(0xFF0D2E1A)
-                                                  : const Color(0xFFE8F5E9))
-                                              : (isDark
-                                                  ? const Color(0xFF1A1E3A)
-                                                  : const Color(0xFFE8EAF6)),
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          // R30: edge users.list は provider を
-                                          // 返さない → isGoogle は常に false で
-                                          // 全員 'Email' と誤表示していた。
-                                          // 判別不能なので中立の '登録済' にする。
-                                          isAnonymous ? '匿名' : '登録済',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: isGoogle
-                                                ? const Color(0xFF388E3C)
-                                                : const Color(0xFF3949AB),
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (displayName != null &&
-                                      displayName.isNotEmpty)
-                                    Text(
-                                      email,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF9CA3AF),
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  if (bio != null && bio.isNotEmpty)
-                                    Text(
-                                      bio,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                        height: 1.5,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  if (location != null && location.isNotEmpty)
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 11,
-                                          color: Color(0xFF9CA3AF),
-                                        ),
-                                        Text(
-                                          location,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Color(0xFF9CA3AF),
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  const SizedBox(height: 4),
-                                  // R19: completionPct は users.list が未送出で常に0。
-                                  // 「プロフィール 0%」バーは捏造なので出さず、未取得を
-                                  // 正直に表示する(R17 の display-truthfulness 規律)。
-                                  const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline,
-                                        size: 11,
-                                        color: Color(0xFF9CA3AF),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'プロフィール情報 未取得',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Color(0xFF9CA3AF),
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    '登録: $createdStr　最終ログイン: $lastSignInStr',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Color(0xFF9CA3AF),
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: () =>
-                                          _showUserProfileDialog(user),
-                                      icon: const Icon(
-                                        Icons.person_outline,
-                                        size: 13,
-                                      ),
-                                      label: const Text(
-                                        'プロフィール詳細',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF3949AB,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _adminUpdateUserProfile(
     String userId,
     Map<String, dynamic> updates,
@@ -3680,990 +3068,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     await _supabase.functions.invoke(
       'core-hub',
       body: <String, dynamic>{'action': 'user.update', ...body},
-    );
-  }
-
-  void _showUserProfileDialog(Map<String, dynamic> user) {
-    final email = user['email']?.toString() ?? '';
-    final displayName = user['displayName']?.toString() ?? '';
-    final bio = user['bio']?.toString() ?? '';
-    final location = user['location']?.toString() ?? '';
-    final twitterHandle = user['twitterHandle']?.toString() ?? '';
-    final githubHandle = user['githubHandle']?.toString() ?? '';
-    final websiteUrl = user['websiteUrl']?.toString() ?? '';
-    final avatarUrl = user['avatarUrl']?.toString() ?? '';
-    final isPublic = user['isPublic'] as bool? ?? true;
-    final completionPct = _toInt(user['completionPct']);
-    final hasProfile = user['hasProfile'] as bool? ?? false;
-    final provider = user['provider']?.toString() ?? 'email';
-    final isGoogle = provider.contains('google');
-    // R19: 行と同じ契約バグ。edge の created_at(snake)を優先で拾う。
-    final createdAt = adminUserCreatedRaw(user);
-    final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-
-    String createdStr = '';
-    String lastSignInStr = '';
-    try {
-      createdStr = DateFormat(
-        'yyyy/MM/dd HH:mm',
-      ).format(DateTime.parse(createdAt).toLocal());
-    } catch (_) {}
-    try {
-      lastSignInStr = DateFormat(
-        'yyyy/MM/dd HH:mm',
-      ).format(DateTime.parse(lastSignIn).toLocal());
-    } catch (_) {}
-
-    Color profileColor;
-    if (!hasProfile || completionPct < 34) {
-      profileColor = const Color(0xFFB91C1C);
-    } else if (completionPct < 67) {
-      profileColor = const Color(0xFFFF6B35);
-    } else {
-      profileColor = const Color(0xFF0D9488);
-    }
-
-    // Build list of missing fields for the warning
-    final missingFields = <String>[];
-    if (displayName.isEmpty) missingFields.add('表示名');
-    if (bio.isEmpty) missingFields.add('自己紹介');
-    if (avatarUrl.isEmpty) missingFields.add('アバター');
-    if (location.isEmpty) missingFields.add('場所');
-    if (twitterHandle.isEmpty) missingFields.add('Twitter/X');
-    if (githubHandle.isEmpty) missingFields.add('GitHub');
-    if (websiteUrl.isEmpty) missingFields.add('ウェブサイト');
-
-    final userId = user['id']?.toString() ?? '';
-    final nameCtrl = TextEditingController(text: displayName);
-    final bioCtrl = TextEditingController(text: bio);
-    final locationCtrl = TextEditingController(text: location);
-    final twitterCtrl = TextEditingController(text: twitterHandle);
-    final githubCtrl = TextEditingController(text: githubHandle);
-    final websiteCtrl = TextEditingController(text: websiteUrl);
-
-    bool editMode = false;
-    bool saving = false;
-    bool editIsPublic = isPublic;
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx2, setInner) {
-          final isDark = Theme.of(ctx2).brightness == Brightness.dark;
-          Future<void> saveProfile() async {
-            setInner(() => saving = true);
-            try {
-              await _adminUpdateUserProfile(userId, {
-                'display_name': nameCtrl.text.trim(),
-                'bio': bioCtrl.text.trim(),
-                'location': locationCtrl.text.trim(),
-                'twitter_handle': twitterCtrl.text.trim(),
-                'github_handle': githubCtrl.text.trim(),
-                'website_url': websiteCtrl.text.trim(),
-                'is_public': editIsPublic,
-              });
-              if (ctx2.mounted) {
-                setInner(() {
-                  editMode = false;
-                  saving = false;
-                });
-                _loadAdminUsers();
-                ScaffoldMessenger.of(
-                  ctx2,
-                ).showSnackBar(const SnackBar(content: Text('プロフィールを更新しました')));
-              }
-            } catch (e) {
-              if (ctx2.mounted) {
-                setInner(() => saving = false);
-                ScaffoldMessenger.of(
-                  ctx2,
-                ).showSnackBar(SnackBar(content: Text('更新失敗: $e')));
-              }
-            }
-          }
-
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                if (avatarUrl.isNotEmpty)
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: NetworkImage(avatarUrl),
-                    onBackgroundImageError: (_, __) {},
-                  )
-                else
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: isGoogle
-                        ? (isDark
-                            ? const Color(0xFF0D2E1A)
-                            : const Color(0xFFE8F5E9))
-                        : (isDark
-                            ? const Color(0xFF1A1E3A)
-                            : const Color(0xFFE8EAF6)),
-                    child: Text(
-                      email.isNotEmpty ? email[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isGoogle
-                            ? const Color(0xFF388E3C)
-                            : const Color(0xFF3949AB),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName.isNotEmpty ? displayName : email,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
-                        ),
-                      ),
-                      if (displayName.isNotEmpty)
-                        Text(
-                          email,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF9CA3AF),
-                            height: 1.5,
-                          ),
-                        ),
-                      Row(
-                        children: [
-                          Icon(
-                            isPublic ? Icons.public : Icons.lock_outlined,
-                            size: 12,
-                            color: const Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            isPublic ? '公開プロフィール' : '非公開プロフィール',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF9CA3AF),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (editMode)
-                  Chip(
-                    label: const Text(
-                      '編集中',
-                      style: TextStyle(fontSize: 10, height: 1.5),
-                    ),
-                    backgroundColor: isDark
-                        ? const Color(0xFF0A1A2E)
-                        : const Color(0xFFE3F2FD),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
-            content: SizedBox(
-              width: 400,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: completionPct / 100,
-                              minHeight: 6,
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                profileColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'プロフィール $completionPct%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: profileColor,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 12),
-                    if (!editMode) ...[
-                      _profileDetailRow(
-                        Icons.person_outlined,
-                        '表示名',
-                        displayName,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(Icons.notes_outlined, '自己紹介', bio),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.image_outlined,
-                        'アバター画像',
-                        avatarUrl,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.location_on_outlined,
-                        '場所',
-                        location,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.alternate_email,
-                        'Twitter/X',
-                        twitterHandle.isNotEmpty ? '@$twitterHandle' : '',
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.code,
-                        'GitHub',
-                        githubHandle.isNotEmpty ? '@$githubHandle' : '',
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.link_outlined,
-                        'ウェブサイト',
-                        websiteUrl,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        isPublic ? Icons.public : Icons.lock_outlined,
-                        '公開設定',
-                        isPublic ? '公開' : '非公開',
-                      ),
-                      if (!hasProfile || missingFields.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF64748B),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFFDE68A)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_outlined,
-                                size: 16,
-                                color: Color(0xFFB45309),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  !hasProfile
-                                      ? 'プロフィールが未作成です。'
-                                      : '未設定の項目: ${missingFields.join('、')}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF92400E),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ] else ...[
-                      TextField(
-                        controller: nameCtrl,
-                        decoration: const InputDecoration(
-                          labelText: '表示名',
-                          prefixIcon: Icon(Icons.person_outlined, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: bioCtrl,
-                        decoration: const InputDecoration(
-                          labelText: '自己紹介',
-                          prefixIcon: Icon(Icons.notes_outlined, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 2,
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: locationCtrl,
-                        decoration: const InputDecoration(
-                          labelText: '場所',
-                          prefixIcon: Icon(
-                            Icons.location_on_outlined,
-                            size: 18,
-                          ),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: twitterCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Twitter/X (@なし)',
-                          prefixIcon: Icon(Icons.alternate_email, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: githubCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'GitHub (@なし)',
-                          prefixIcon: Icon(Icons.code, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: websiteCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'ウェブサイト URL',
-                          prefixIcon: Icon(Icons.link_outlined, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.public,
-                            size: 16,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            '公開プロフィール',
-                            style: TextStyle(fontSize: 13, height: 1.6),
-                          ),
-                          const Spacer(),
-                          Switch(
-                            value: editIsPublic,
-                            onChanged: (v) => setInner(() => editIsPublic = v),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 8),
-                    _profileFieldRow(
-                      Icons.calendar_today_outlined,
-                      '登録日',
-                      createdStr,
-                    ),
-                    const SizedBox(height: 4),
-                    _profileFieldRow(
-                      Icons.login_outlined,
-                      '最終ログイン',
-                      lastSignInStr,
-                    ),
-                    const SizedBox(height: 4),
-                    _profileFieldRow(
-                      isGoogle ? Icons.g_mobiledata : Icons.email_outlined,
-                      '認証方法',
-                      isGoogle ? 'Google OAuth' : 'メール/パスワード',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  if (editMode) {
-                    setInner(() => editMode = false);
-                  } else {
-                    Navigator.pop(ctx2);
-                  }
-                },
-                child: Text(editMode ? 'キャンセル' : '閉じる'),
-              ),
-              if (!editMode)
-                TextButton.icon(
-                  onPressed: () => setInner(() => editMode = true),
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('編集'),
-                )
-              else
-                FilledButton.icon(
-                  onPressed: saving ? null : saveProfile,
-                  icon: saving
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFE5E7EB),
-                          ),
-                        )
-                      : const Icon(Icons.save_outlined, size: 16),
-                  label: Text(saving ? '保存中...' : '保存'),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _profileFieldRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14, color: const Color(0xFF9CA3AF)),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 12, height: 1.5),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Profile detail row that shows "未設定" with a muted style for empty values.
-  Widget _profileDetailRow(IconData icon, String label, String value) {
-    final isEmpty = value.isEmpty;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 14,
-          color: isEmpty ? const Color(0xFFF87171) : const Color(0xFF9CA3AF),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            isEmpty ? '未設定' : value,
-            style: TextStyle(
-              fontSize: 12,
-              color: isEmpty ? const Color(0xFFF87171) : null,
-              fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
-              height: 1.5,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatureRequestsAdminCard() {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.lightbulb_outline, color: Color(0xFFFFC107)),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    '機能リクエスト管理',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${_featureRequests.length}件',
-                  style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadFeatureRequests,
-                  tooltip: '更新',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_featureRequestsLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_featureRequests.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'リクエストはまだありません',
-                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _featureRequests.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final isDarkFR =
-                      Theme.of(context).brightness == Brightness.dark;
-                  final req = _featureRequests[index];
-                  final id = req['id']?.toString() ?? '';
-                  final title = req['title']?.toString() ?? '';
-                  final email = req['email']?.toString();
-                  final votes = _toInt(req['votes']);
-                  final status = req['status']?.toString() ?? 'open';
-                  final createdAt = req['created_at']?.toString() ?? '';
-                  final adminReply = req['admin_reply']?.toString();
-                  final adminRepliedAt = req['admin_replied_at']?.toString();
-                  // R20: 年なし MM/dd は3か月前(04月)の要望を「今月」に見せる。
-                  // 1か月超/別年は yyyy/ を前置して年齢を明示する。
-                  final dateStr = formatAgeAwareDate(createdAt, DateTime.now());
-                  String? repliedAtStr;
-                  if (adminRepliedAt != null) {
-                    try {
-                      repliedAtStr = DateFormat(
-                        'MM/dd HH:mm',
-                      ).format(DateTime.parse(adminRepliedAt).toLocal());
-                    } catch (_) {}
-                  }
-
-                  Color statusColor;
-                  switch (status) {
-                    case 'in_progress':
-                      statusColor = const Color(0xFF6366F1);
-                    case 'done':
-                      statusColor = const Color(0xFF0D9488);
-                    default:
-                      statusColor = const Color(0xFFFF6B35);
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        dense: true,
-                        leading: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: index < 3
-                              ? (isDarkFR
-                                  ? const Color(0xFF2A1C06)
-                                  : const Color(0xFFFEF3C7))
-                              : Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest,
-                          child: Text(
-                            '$votes',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: index < 3
-                                  ? (isDarkFR
-                                      ? const Color(0xFFFDE68A)
-                                      : const Color(0xFF92400E))
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                        title: Text(
-                          title,
-                          style: const TextStyle(fontSize: 13, height: 1.6),
-                        ),
-                        subtitle: Row(
-                          children: [
-                            Text(
-                              dateStr,
-                              style: const TextStyle(fontSize: 11, height: 1.5),
-                            ),
-                            if (adminReply != null) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF6366F1,
-                                  ).withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: const Color(
-                                      0xFF6366F1,
-                                    ).withValues(alpha: 0.24),
-                                  ),
-                                ),
-                                child: Text(
-                                  'AI返信済 $repliedAtStr',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: Color(0xFF6366F1),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: adminReply == null ? '返信する' : '返信を編集',
-                              onPressed: () => _showSupportReplyDialog(req),
-                              icon: Icon(
-                                adminReply == null
-                                    ? Icons.reply_outlined
-                                    : Icons.edit_note_outlined,
-                                size: 18,
-                                color: const Color(0xFF4338CA),
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: '優先度・工数・期日を設定',
-                              onPressed: () => _showFeatureFieldsDialog(req),
-                              icon: const Icon(
-                                Icons.tune,
-                                size: 18,
-                                color: Color(0xFF3D5AFE),
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              initialValue: status,
-                              onSelected: (newStatus) =>
-                                  _updateFeatureRequestStatus(
-                                id,
-                                newStatus,
-                                title,
-                                email,
-                              ),
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(
-                                  value: 'open',
-                                  child: Text('open'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'in_progress',
-                                  child: Text('in_progress'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'done',
-                                  child: Text('done'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'rejected',
-                                  child: Text('rejected'),
-                                ),
-                              ],
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: statusColor.withValues(alpha: 0.31),
-                                  ),
-                                ),
-                                child: Text(
-                                  status,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: statusColor,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (adminReply != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF6366F1,
-                              ).withValues(alpha: 0.04),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: const Color(
-                                  0xFF6366F1,
-                                ).withValues(alpha: 0.16),
-                              ),
-                            ),
-                            child: Text(
-                              'AI: $adminReply',
-                              // R20: 数百字の返信が50件リストを支配する wall-of-text
-                              // を抑制。全文は返信編集ダイアログで到達可能=無損失。
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF4338CA),
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAutomationOpsCard() {
-    final digest = _automationDigest ?? <String, dynamic>{};
-    final users = digest['users'] is Map
-        ? Map<String, dynamic>.from(digest['users'] as Map)
-        : <String, dynamic>{};
-    final featureRequests = digest['featureRequests'] is Map
-        ? Map<String, dynamic>.from(digest['featureRequests'] as Map)
-        : <String, dynamic>{};
-    final recentAchievements =
-        digest['recentAchievements'] as List? ?? const [];
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Color(0xFF4338CA)),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    '自動化オペレーション',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                if (_automationLoading)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  TextButton.icon(
-                    onPressed: _automationPostingX ? null : _showXPostDialog,
-                    icon: const Icon(Icons.send, size: 16),
-                    label: Text(_automationPostingX ? '投稿中...' : 'X投稿テスト'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF4338CA),
-                    ),
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadAutomationOps,
-                  tooltip: '更新',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Claude Schedule の定期実行に合わせた CS キューと日次ダイジェストをここで手動確認できます。',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_automationError != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB91C1C).withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFFB91C1C).withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Text(
-                  _automationError!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB91C1C),
-                    height: 1.5,
-                  ),
-                ),
-              )
-            else ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildAutomationMetricChip(
-                    label: '総ユーザー',
-                    value: '${_toInt(users['total'])}人',
-                    color: const Color(0xFF6366F1),
-                  ),
-                  _buildAutomationMetricChip(
-                    label: '新規要望',
-                    value: '${_toInt(featureRequests['newToday'])}件',
-                    color: const Color(0xFFFF6B35),
-                  ),
-                  _buildAutomationMetricChip(
-                    label: '未対応要望',
-                    value: '${_toInt(featureRequests['openCount'])}件',
-                    color: const Color(0xFF6366F1),
-                  ),
-                  _buildAutomationMetricChip(
-                    label: '直近実績',
-                    value: '${recentAchievements.length}件',
-                    color: const Color(0xFF0D9488),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'CSキュー (${_automationSupportTickets.length}件)',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (_automationSupportTickets.isEmpty)
-                const Text(
-                  '未返信チケットはありません',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9CA3AF),
-                    height: 1.5,
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _automationSupportTickets.length > 5
-                      ? 5
-                      : _automationSupportTickets.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final ticket = _automationSupportTickets[index];
-                    final title = ticket['title']?.toString() ?? '(無題)';
-                    final votes = _toInt(ticket['votes']);
-                    final email = ticket['email']?.toString();
-                    return ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
-                        radius: 14,
-                        backgroundColor: const Color(
-                          0xFF6366F1,
-                        ).withValues(alpha: 0.07),
-                        child: Text(
-                          '$votes',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4338CA),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        title,
-                        style: const TextStyle(fontSize: 12, height: 1.5),
-                      ),
-                      subtitle: Text(
-                        email == null || email.isEmpty ? 'メール未登録' : email,
-                        style: const TextStyle(fontSize: 11, height: 1.5),
-                      ),
-                      trailing: TextButton(
-                        onPressed: () => _showSupportReplyDialog(ticket),
-                        child: const Text('返信'),
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 
@@ -4788,145 +3192,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  Widget _buildAutomationMetricChip({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 11, color: color, height: 1.5),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWaitlistCard() {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.mail_outline, color: Color(0xFF6366F1)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'メールウェイトリスト (${_waitlistEmails.length}件)',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                if (_sendingNotification)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  TextButton.icon(
-                    onPressed: _waitlistEmails.isEmpty
-                        ? null
-                        : _showNotificationComposeDialog,
-                    icon: const Icon(Icons.send, size: 16),
-                    label: const Text('通知送信'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF6366F1),
-                    ),
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadWaitlist,
-                  tooltip: '更新',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_waitlistLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_waitlistEmails.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  '登録者はまだいません',
-                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _waitlistEmails.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final entry = _waitlistEmails[index];
-                  final email = entry['email']?.toString() ?? '';
-                  final source = entry['source']?.toString() ?? '';
-                  final createdAt = entry['created_at']?.toString() ?? '';
-                  String dateStr = createdAt;
-                  try {
-                    dateStr = DateFormat(
-                      'MM/dd HH:mm',
-                    ).format(DateTime.parse(createdAt).toLocal());
-                  } catch (_) {}
-
-                  return ListTile(
-                    dense: true,
-                    leading: const Icon(
-                      Icons.person_outline,
-                      size: 20,
-                      color: Color(0xFF6366F1),
-                    ),
-                    title: Text(
-                      email,
-                      style: const TextStyle(fontSize: 13, height: 1.6),
-                    ),
-                    subtitle: Text(
-                      '$source  $dateStr',
-                      style: const TextStyle(fontSize: 11, height: 1.5),
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // -----------------------------------------------------------------------
   // ブログ投稿管理カード
   // -----------------------------------------------------------------------
@@ -5006,227 +3271,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (_) {}
   }
 
-  Widget _buildBlogPostsCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Color statusColor(String status) {
-      switch (status) {
-        case 'posted':
-          return const Color(0xFF0D9488);
-        case 'skipped':
-          return const Color(0xFF9CA3AF);
-        default:
-          return const Color(0xFFFF6B35);
-      }
-    }
-
-    String statusLabel(String status) {
-      switch (status) {
-        case 'posted':
-          return '投稿済';
-        case 'skipped':
-          return 'スキップ';
-        default:
-          return '下書き';
-      }
-    }
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.article, color: Color(0xFF6366F1)),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'ブログ投稿管理',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadBlogPosts,
-                  tooltip: '更新',
-                ),
-              ],
-            ),
-            Text(
-              'Claude Schedule が生成した下書き・投稿状況を管理',
-              style: TextStyle(
-                fontSize: 12,
-                color:
-                    isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_blogPostsLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_blogPosts.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'まだブログ下書きがありません。\nblog-draft Schedule タスクが実行されると自動追加されます。',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF475569),
-                    height: 1.5,
-                  ),
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _blogPosts.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final post = _blogPosts[index];
-                  final status = post['status']?.toString() ?? 'draft';
-                  final title = post['title']?.toString() ?? '(無題)';
-                  final platforms = (post['target_platforms'] as List?)
-                          ?.map((e) => e.toString())
-                          .join(', ') ??
-                      '';
-                  final postUrl = post['url']?.toString() ?? '';
-                  final createdAt = post['created_at'] != null
-                      ? DateTime.tryParse(post['created_at'].toString())
-                      : null;
-                  final dateStr = createdAt != null
-                      ? '${createdAt.month}/${createdAt.day}'
-                      : '';
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.5,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (platforms.isNotEmpty)
-                                Text(
-                                  '$platforms  $dateStr',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF475569),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              if (postUrl.isNotEmpty)
-                                GestureDetector(
-                                  onTap: () => launchUrl(
-                                    Uri.parse(postUrl),
-                                    mode: LaunchMode.externalApplication,
-                                  ),
-                                  child: Text(
-                                    postUrl,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF4338CA),
-                                      decoration: TextDecoration.underline,
-                                      height: 1.5,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        PopupMenuButton<String>(
-                          initialValue: status,
-                          onSelected: (val) =>
-                              _updateBlogPostStatus(post['id'].toString(), val),
-                          itemBuilder: (_) => [
-                            const PopupMenuItem(
-                              value: 'draft',
-                              child: Text('下書き'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'posted',
-                              child: Text('投稿済にする'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'skipped',
-                              child: Text('スキップ'),
-                            ),
-                          ],
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor(
-                                status,
-                              ).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  statusLabel(status),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: statusColor(status),
-                                    height: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(width: 2),
-                                Icon(
-                                  Icons.arrow_drop_down,
-                                  size: 14,
-                                  color: statusColor(status),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // -----------------------------------------------------------------------
   // growth-achievement-summary
   // -----------------------------------------------------------------------
@@ -5265,162 +3309,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildComparisonCvrCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor =
-        isDark ? const Color(0xFF1A2233) : const Color(0xFFE5E7EB);
-    final borderColor =
-        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
-
-    final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
-    // R30: 母数0で「0.0%」は計測した0%に見える捏造 → ダッシュボード共通の
-    // formatRatePercent(母数0=「—」)に揃える。到達0で登録>0の自己矛盾表示も回避。
-    final cvrLabel = formatRatePercent(_comparisonSignups, totalTouches);
-
-    final sorted = _comparisonTouches.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.compare_arrows, color: Color(0xFF6366F1)),
-              const SizedBox(width: 8),
-              const Text(
-                '比較ページ別 CVR',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  height: 1.4,
-                ),
-              ),
-              const Spacer(),
-              if (_comparisonCvrLoading)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  onPressed: _loadComparisonCvr,
-                  tooltip: '更新',
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _cvrStat(
-                '総到達数',
-                totalTouches.toString(),
-                const Color(0xFFA78BFA),
-              ),
-              const SizedBox(width: 16),
-              _cvrStat(
-                '比較経由登録',
-                _comparisonSignups.toString(),
-                const Color(0xFF059669),
-              ),
-              const SizedBox(width: 16),
-              _cvrStat('CVR', cvrLabel, const Color(0xFFFF6B35)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (sorted.isEmpty && !_comparisonCvrLoading)
-            const Text(
-              '比較ページへの到達データがまだありません',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 13,
-                height: 1.6,
-              ),
-            )
-          else
-            ...sorted.take(14).map((e) {
-              final pct = totalTouches > 0 ? e.value / totalTouches : 0.0;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 90,
-                      child: Text(
-                        e.key,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          height: 1.5,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: pct.clamp(0.0, 1.0),
-                          backgroundColor: isDark
-                              ? const Color(0x1FE5E7EB)
-                              : const Color(0xFF6366F1),
-                          color: const Color(0xFF6366F1),
-                          minHeight: 8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      e.value.toString(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-        ],
-      ),
-    );
-  }
-
-  Widget _cvrStat(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _loadGrowthSummary({String? since, String? label}) async {
     if (!mounted) return;
     if (_supabase.auth.currentUser == null) {
@@ -5432,7 +3320,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final resp = await _supabase.functions.invoke(
         'growth-hub',
         body: {
-          'action': 'achievement.list',
+          'action': 'achievement.summary',
           'since': since ?? '2020-01-01T00:00:00Z',
           'label': label ?? 'すべて',
         },
@@ -5882,470 +3770,5 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final text = (first['text'] ?? '').toString().trim();
     if (text.isEmpty) return null;
     return text.length <= 60 ? text : '${text.substring(0, 58)}…';
-  }
-
-  Widget _buildGrowthAchievementSummaryCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor =
-        isDark ? const Color(0xFF1A2233) : const Color(0xFFE5E7EB);
-    final borderColor =
-        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
-
-    final periods = [
-      (
-        '今日',
-        DateTime.now()
-            .copyWith(hour: 0, minute: 0, second: 0)
-            .toIso8601String(),
-      ),
-      (
-        '今週',
-        DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
-      ),
-      (
-        '今月',
-        DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      ),
-      ('すべて', '2020-01-01T00:00:00Z'),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.trending_up, color: Color(0xFF10B981), size: 20),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'グロース実績サマリー',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              if (_growthSummaryLoading)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  onPressed: _loadGrowthSummary,
-                  tooltip: '再読み込み',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Period selector
-          Wrap(
-            spacing: 8,
-            children: periods.map((p) {
-              final (lbl, since) = p;
-              return ActionChip(
-                label: Text(
-                  lbl,
-                  style: const TextStyle(fontSize: 12, height: 1.5),
-                ),
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                onPressed: () => _loadGrowthSummary(since: since, label: lbl),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          if (_growthSummary == null && !_growthSummaryLoading)
-            const Text(
-              'データなし',
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF94A3B8),
-                height: 1.6,
-              ),
-            )
-          // R30: 期待するメトリクスキーが無いレスポンス(achievement.list は
-          // items のみ返す)では捏造ゼロを出さず、集計未接続を正直に示す。
-          else if (!growthSummaryHasMetrics(_growthSummary) &&
-              !_growthSummaryLoading)
-            const Text(
-              '成長サマリーの集計はまだ接続されていません。'
-              '各カード(登録目標・累計登録・比較CVR等)で実数をご確認ください。',
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF94A3B8),
-                height: 1.6,
-              ),
-            )
-          else if (growthSummaryHasMetrics(_growthSummary)) ...[
-            Text(
-              '期間: ${_growthSummary!['label'] ?? 'すべて'}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _growthStatRow(
-              '新規ユーザー',
-              '${_growthSummary!['newUsers'] ?? 0}人',
-              const Color(0xFF6366F1),
-            ),
-            _growthStatRow(
-              '累計ユーザー',
-              '${_growthSummary!['totalUsersEver'] ?? 0}人',
-              const Color(0xFF10B981),
-            ),
-            _growthStatRow(
-              '成長シグナル',
-              '${_growthSummary!['acquisitionSignals'] ?? 0}件',
-              const Color(0xFFF59E0B),
-            ),
-            _growthStatRow(
-              '紹介成立',
-              '${_growthSummary!['referralsCompleted'] ?? 0}件',
-              const Color(0xFFEC4899),
-            ),
-            _growthStatRow(
-              'インポート試行',
-              '${_growthSummary!['importPreviews'] ?? 0}件',
-              const Color(0xFF0EA5E9),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _growthStatRow(String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 13, height: 1.6),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserFeedbackCard() {
-    final newCount = _appFeedbacks.where((f) => f['status'] == 'new').length;
-    final cs = Theme.of(context).colorScheme;
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ヘッダー行
-            Row(
-              children: [
-                const Icon(
-                  Icons.feedback_outlined,
-                  color: Color(0xFF6366F1),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'ユーザーフィードバック',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                if (newCount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFB91C1C),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '未対応 $newCount',
-                      style: const TextStyle(
-                        color: Color(0xFFE5E7EB),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: _loadAppFeedbacks,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // 件数サマリー
-            if (!_appFeedbacksLoading) ...[
-              Row(
-                children: [
-                  _feedbackCountChip('未対応', newCount, const Color(0xFFB91C1C)),
-                  const SizedBox(width: 8),
-                  _feedbackCountChip(
-                    '確認済',
-                    _appFeedbacks
-                        .where((f) => f['status'] == 'reviewed')
-                        .length,
-                    const Color(0xFFFF6B35),
-                  ),
-                  const SizedBox(width: 8),
-                  _feedbackCountChip(
-                    '対応完',
-                    _appFeedbacks
-                        .where((f) => f['status'] == 'implemented')
-                        .length,
-                    const Color(0xFF0D9488),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // 最新フィードバックインライン表示
-            if (_appFeedbacksLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_appFeedbacks.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  'フィードバックはまだありません',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: cs.onSurfaceVariant,
-                    height: 1.6,
-                  ),
-                ),
-              )
-            else
-              ...(_appFeedbacks
-                  .take(5)
-                  .map((fb) => _buildFeedbackInlineRow(fb))),
-
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.open_in_new, size: 16),
-                label: Text('全${_appFeedbacks.length}件を管理する'),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    settings: const RouteSettings(name: '/admin-feedback'),
-                    builder: (_) => const FeedbackListPage(),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _feedbackCountChip(String label, int count, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        '$label $count',
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w600,
-          height: 1.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeedbackInlineRow(Map<String, dynamic> fb) {
-    final status = fb['status'] as String? ?? 'new';
-    final category = fb['category'] as String? ?? 'other';
-    final content = fb['content'] as String? ?? '';
-    final issueUrl = fb['github_issue_url'] as String?;
-    final id = fb['id'] as int;
-
-    final statusColor = status == 'new'
-        ? const Color(0xFFB91C1C)
-        : status == 'reviewed'
-            ? const Color(0xFFFF6B35)
-            : const Color(0xFF0D9488);
-    final categoryIcon = category == 'feature'
-        ? Icons.lightbulb_outline
-        : category == 'bug'
-            ? Icons.bug_report_outlined
-            : Icons.chat_bubble_outline;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: statusColor.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  categoryIcon,
-                  size: 14,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    content,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, height: 1.6),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    status == 'new'
-                        ? '未対応'
-                        : status == 'reviewed'
-                            ? '確認済'
-                            : '対応完',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (issueUrl != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Issue: $issueUrl',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(context).colorScheme.primary,
-                  height: 1.5,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            if (status == 'new') ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => _updateFeedbackStatus(id, 'reviewed'),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text(
-                      '確認済にする',
-                      style: TextStyle(fontSize: 11, height: 1.5),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  TextButton(
-                    onPressed: () => _updateFeedbackStatus(id, 'implemented'),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      foregroundColor: const Color(0xFF0D9488),
-                    ),
-                    child: const Text(
-                      '対応完了',
-                      style: TextStyle(fontSize: 11, height: 1.5),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }

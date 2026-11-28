@@ -4,7 +4,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/structured_llm_routing/structured_llm_routing_container.dart';
 import '../services/ai_router_cost_dashboard_service.dart';
+import '../widgets/jev_input_cost_card.dart';
 
 class AiRouterCostDashboardPage extends StatefulWidget {
   const AiRouterCostDashboardPage({
@@ -139,8 +141,23 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: _bg,
+        foregroundColor: Colors.white,
         title: const Text('AI Router Cost'),
         actions: [
+          IconButton(
+            tooltip: 'Structured Routing',
+            icon: const Icon(Icons.schema_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/ai-router-cost-dashboard?view=structured-routing',
+                  ),
+                  builder: (_) => const StructuredLlmRoutingContainer(),
+                ),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
@@ -148,44 +165,45 @@ class _AiRouterCostDashboardPageState extends State<AiRouterCostDashboardPage> {
           ),
         ],
       ),
-      body: _loading && dashboard == null
-          ? const Center(child: CircularProgressIndicator(color: _orange))
-          : RefreshIndicator(
-              color: _orange,
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (_error != null) _errorBanner(_error!),
-                  if (dashboard == null)
-                    _emptyState()
-                  else ...[
-                    _summaryRow(dashboard),
-                    const SizedBox(height: 16),
-                    _roiSection(dashboard.roi),
-                    const SizedBox(height: 16),
-                    if (dashboard.tasks.isEmpty)
-                      _emptyState()
-                    else ...[
-                      _taskSelector(dashboard),
-                      const SizedBox(height: 16),
-                      if (selected != null) ...[
-                        _recommendation(selected),
-                        const SizedBox(height: 16),
-                        _chart(selected),
-                        const SizedBox(height: 16),
-                        ...selected.candidates.map(
-                          (candidate) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _candidateTile(selected!, candidate),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ],
+      body: RefreshIndicator(
+        color: _orange,
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const JevInputCostCard(),
+            const SizedBox(height: 16),
+            if (_loading) const LinearProgressIndicator(),
+            if (_error != null) _errorBanner(_error!),
+            if (dashboard == null)
+              _emptyState()
+            else ...[
+              _summaryRow(dashboard),
+              const SizedBox(height: 16),
+              _roiSection(dashboard.roi),
+              const SizedBox(height: 16),
+              if (dashboard.tasks.isEmpty)
+                _emptyState()
+              else ...[
+                _taskSelector(dashboard),
+                const SizedBox(height: 16),
+                if (selected != null) ...[
+                  _recommendation(selected),
+                  const SizedBox(height: 16),
+                  _chart(selected),
+                  const SizedBox(height: 16),
+                  ...selected.candidates.map(
+                    (candidate) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _candidateTile(selected!, candidate),
+                    ),
+                  ),
                 ],
-              ),
-            ),
+              ],
+            ],
+          ],
+        ),
+      ),
     );
   }
 

@@ -132,6 +132,7 @@ ${_compatibilityMatch.description}''';
       appBar: AppBar(
         title: const Text('相性診断結果'),
         backgroundColor: const Color(0xFFFFE0B2),
+        foregroundColor: Colors.black87,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),

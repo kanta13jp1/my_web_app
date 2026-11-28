@@ -57,6 +57,23 @@ void main() {
     );
   });
 
+  test('デスクトップの資産管理画面では右下の資産AI FABの上に退避する', () {
+    expect(
+      resolveAiShareFabBottomOffset(
+        routePath: '/asset-management',
+        screenWidth: 1280,
+      ),
+      kAiShareFabMusubiBottomOffset,
+    );
+    expect(
+      resolveAiShareFabBottomOffset(
+        routePath: '/asset-management',
+        screenWidth: 390,
+      ),
+      kAiShareFabDefaultBottomOffset,
+    );
+  });
+
   test('anonymous landing hides only the universal share FAB', () {
     expect(
       shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: false),
@@ -89,5 +106,38 @@ void main() {
       ),
       isTrue,
     );
+  });
+
+  test('NavigationBar を持つセンター画面では下部タブの上に退避する', () {
+    expect(
+      kAiShareFabBottomNavigationBarOffset,
+      greaterThanOrEqualTo(88.0),
+    );
+    expect(
+      kAiShareFabBottomNavigationBarOffset,
+      greaterThan(kAiShareFabDefaultBottomOffset),
+    );
+
+    const navBarRoutes = <String>[
+      '/daily-habits',
+      '/habit-gamification',
+      '/life-goals',
+      '/goal-tracker',
+      '/ai-writing-assistant',
+      '/ai-summarizer',
+      '/daily-habits/',
+    ];
+    for (final routePath in navBarRoutes) {
+      for (final width in <double>[390.0, 1280.0]) {
+        expect(
+          resolveAiShareFabBottomOffset(
+            routePath: routePath,
+            screenWidth: width,
+          ),
+          kAiShareFabBottomNavigationBarOffset,
+          reason: '$routePath ($width px) must clear the 80px NavigationBar',
+        );
+      }
+    }
   });
 }

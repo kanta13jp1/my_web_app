@@ -1,0 +1,13 @@
+---
+description: Cross-stack synchronization rules for Flutter Web (lib/, test/) and Supabase (supabase/migrations/, supabase/functions/).
+globs: lib/**/*.dart, test/**/*.dart, supabase/migrations/*.sql, supabase/functions/**/*.ts
+alwaysApply: false
+---
+
+# Flutter Web + Supabase Cross-Stack Rules (#2695)
+
+- When modifying a Supabase table or RPC signature in `supabase/migrations/*.sql`, update any affected Edge Function (`supabase/functions/**/*.ts`) and Flutter domain/repository/view/test files in the same change set.
+- Every SQL migration must enforce strict RLS, avoid `auth.role()`, keep `pg_temp` last in `search_path`, wrap `request.jwt.claims::jsonb` against `22P02`, and issue `revoke all on function ... from public, anon, authenticated;` for trigger functions.
+- Every Supabase Edge Function CORS header map containing `Access-Control-Allow-Headers` must include literal `traceparent, tracestate, baggage, sentry-trace`, await every `async` path (`require-await`), and pass `deno lint --config supabase/functions/deno.json`.
+- Every Flutter UI / repository change must adhere to `analysis_options.yaml` (`require_trailing_commas`, `prefer_final_parameters`, `prefer_const_literals_to_create_immutables`), copy `const` seed collections defensively in test fakes, call `ensureVisible` before interacting in `2.0x textScale` tests, and preserve `dart format --language-version=3.6` compliance.
+- Never write credentials, API keys, `.env` secrets, or `.dart_tool/` artifacts into tracked workspace or rule files.

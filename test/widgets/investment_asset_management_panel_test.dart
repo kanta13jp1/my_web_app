@@ -4,12 +4,58 @@ import 'dart:typed_data';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:my_web_app/models/investment_asset.dart';
 import 'package:my_web_app/models/investment_portfolio_history.dart';
 import 'package:my_web_app/services/investment_asset_repository.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 
 void main() {
+  for (final price in <double?>[1200, 0, null]) {
+    testWidgets('investment price timestamp distinguishes value $price',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final pricedAt = price == 1200 ? DateTime.utc(2026, 7, 20, 3, 45) : null;
+      final repository = _FakeInvestmentAssetRepository([
+        _fromDraft(
+          id: 'timestamp-fixture',
+          userId: 'user-1',
+          draft: InvestmentAssetDraft(
+            assetType: InvestmentAssetType.stock,
+            ticker: 'TEST',
+            quantity: 2,
+            buyPriceJpy: 1000,
+            currentPriceJpy: price,
+            lastPricedAt: pricedAt,
+          ),
+        ),
+      ]);
+      await _pumpPanel(tester, repository: repository, userId: 'user-1');
+      final label = tester.widget<Text>(
+        find.byKey(
+          const ValueKey<String>(
+            'investment_asset_price_timestamp_timestamp-fixture',
+          ),
+        ),
+      );
+      if (price == null) {
+        expect(label.data, '価格取得時点: 価格未取得');
+      } else if (pricedAt == null) {
+        expect(label.data, '価格取得時点: 未確認');
+      } else {
+        final localTime =
+            DateFormat('yyyy/MM/dd HH:mm').format(pricedAt.toLocal());
+        expect(label.data, '価格取得時点: $localTime（端末時刻）');
+      }
+      expect(repository.fetchCalls, 1);
+      expect(repository.createCalls, 0);
+      expect(repository.updateCalls, 0);
+      expect(repository.deleteCalls, 0);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('logged-out state does not query the repository', (tester) async {
     final repository = _FakeInvestmentAssetRepository(const []);
 
@@ -59,6 +105,57 @@ void main() {
     expect(find.text('価格未取得'), findsOne);
     expect(find.text('1件'), findsOne);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('edits a name and keeps code, quantity and cached price', (
+    tester,
+  ) async {
+    final repository = _FakeInvestmentAssetRepository([
+      _asset(
+        id: 'asset-1',
+        ticker: '8766',
+        quantity: 2,
+        buyPriceJpy: 1000,
+        currentPriceJpy: 1200,
+      ),
+    ]);
+    await _pumpPanel(tester, repository: repository, userId: 'user-1');
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_name_field')),
+      '東京海上',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+    expect(repository.lastUpdatedDraft?.displayName, '東京海上');
+    expect(repository.lastUpdatedDraft?.normalizedTicker, '8766');
+    expect(repository.lastUpdatedDraft?.quantity, 2);
+    expect(repository.lastUpdatedDraft?.currentPriceJpy, 1200);
+    expect(find.text('東京海上 (8766)'), findsOne);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('investment_asset_edit_asset-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const Key('investment_asset_name_field')),
+          )
+          .controller
+          ?.text,
+      '東京海上',
+    );
+    await tester.enterText(
+      find.byKey(const Key('investment_asset_name_field')),
+      '',
+    );
+    await tester.tap(find.byKey(const Key('investment_asset_save')));
+    await tester.pumpAndSettle();
+    expect(find.text('8766'), findsOne);
   });
 
   testWidgets('retries after a repository load error', (tester) async {
@@ -555,6 +652,7 @@ InvestmentAsset _fromDraft({
     userId: userId,
     assetType: draft.assetType,
     ticker: draft.normalizedTicker,
+    displayName: draft.displayName,
     quantity: draft.quantity,
     buyPriceJpy: draft.buyPriceJpy,
     buyDate: draft.buyDate,

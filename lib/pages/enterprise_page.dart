@@ -1,4 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/features/agri_policy_timeline/agri_policy_timeline_container.dart';
+import 'package:my_web_app/features/ai_compliance/ai_compliance_container.dart';
+import 'package:my_web_app/features/ai_cost_monitor/ai_cost_monitor_container.dart';
+import 'package:my_web_app/features/ai_emotion_dashboard/ai_emotion_dashboard_container.dart';
+import 'package:my_web_app/features/ai_emotion_feedback/ai_emotion_feedback_container.dart';
+import 'package:my_web_app/features/ai_investment_batch/ai_investment_batch_container.dart';
+import 'package:my_web_app/features/alt_supply_risk/alt_supply_risk_container.dart';
+import 'package:my_web_app/features/dev_review/dev_review_tracking_container.dart';
+import 'package:my_web_app/features/format_importer/format_importer_container.dart';
+import 'package:my_web_app/features/income_insurance_sim/income_insurance_sim_container.dart';
+import 'package:my_web_app/features/llm_healthcheck/llm_healthcheck_container.dart';
+import 'package:my_web_app/features/org_idp_rbac/org_idp_rbac_container.dart';
+import 'package:my_web_app/features/rag_query_routing/rag_query_routing_container.dart';
+import 'package:my_web_app/features/realtime_lock/realtime_lock_container.dart';
+import 'package:my_web_app/features/vision_benchmark/vision_benchmark_container.dart';
+import 'package:my_web_app/features/workos_scim/workos_scim_container.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// B2B エンタープライズ向けランディングページ
@@ -70,6 +86,317 @@ class _EnterprisePageState extends State<EnterprisePage> {
         foregroundColor: Colors.white,
         title: const Text('自分株式会社 for Teams'),
         actions: [
+          IconButton(
+            key: const Key('open_dev_review_tracking_btn'),
+            icon: const Icon(Icons.fact_check_outlined),
+            tooltip: '開発レビュー承認トラッキング',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=dev-review-tracking',
+                  ),
+                  builder: (_) => const DevReviewTrackingContainer(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            tooltip: 'テナント SSO / SCIM 管理 (WorkOS)',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=workos-scim',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('テナント SSO / SCIM 管理 (WorkOS)'),
+                    ),
+                    body: const WorkosScimContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.verified_user_outlined),
+            tooltip: 'IdP グループ RBAC / SSO 権限管理',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=idp-rbac',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('IdP グループ RBAC / SSO 権限管理'),
+                    ),
+                    body: const OrgIdpRbacContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.import_export_outlined),
+            tooltip: '汎用フォーマット取込 / JSONB属性管理',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=format-importer',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('汎用フォーマット取込 / JSONB属性管理'),
+                    ),
+                    body: const FormatImporterContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.lock_clock_outlined),
+            tooltip: 'Realtime 同時編集ロック / 競合検知',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=realtime-lock',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Realtime 同時編集ロック / 競合検知'),
+                    ),
+                    body: const RealtimeLockContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.alt_route),
+            tooltip: 'クエリレポート再定式化・ルーティング制御',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=query-routing',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('クエリレポート再定式化・ルーティング制御'),
+                    ),
+                    body: const RagQueryRoutingContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_alt_supply_risk_action'),
+            icon: const Icon(Icons.warehouse_outlined),
+            tooltip: '代替供給・輸入シナリオ監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=alt-supply-risk',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('代替供給・輸入シナリオ監視'),
+                    ),
+                    body: const AltSupplyRiskContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_vision_benchmark_action'),
+            icon: const Icon(Icons.monitor_heart_outlined),
+            tooltip: 'AI監視ダッシュボード (Visionベンチマーク)',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=vision-benchmark',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AI監視ダッシュボード（Visionベンチマーク）'),
+                    ),
+                    body: const VisionBenchmarkContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_cost_monitor_action'),
+            icon: const Icon(Icons.payments_outlined),
+            tooltip: 'サードパーティ AI API コスト監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-cost-monitor',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('サードパーティ AI API コスト監視'),
+                    ),
+                    body: const AiCostMonitorContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: '農政改革タイムライン・ナレッジグラフ',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=agri-policy-timeline',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('農政改革タイムライン・ナレッジグラフ'),
+                    ),
+                    body: const AgriPolicyTimelineContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('open_ai_investment_batch_btn'),
+            icon: const Icon(Icons.trending_up),
+            tooltip: '2026Q2 AI企業投資動向管理',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-investment-batch',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('2026Q2 AI企業投資動向管理'),
+                    ),
+                    body: const AiInvestmentBatchContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.calculate_outlined),
+            tooltip: '収入保険・代替モデル比較シミュレーター',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=income-insurance-sim',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('収入保険・代替モデル比較シミュレーター'),
+                    ),
+                    body: const IncomeInsuranceSimContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_llm_healthcheck_action'),
+            icon: const Icon(Icons.health_and_safety_outlined),
+            tooltip: '新規LLM APIヘルスチェック監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=llm-healthcheck',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('新規LLM APIヘルスチェック監視'),
+                    ),
+                    body: const LlmHealthcheckContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_emotion_feedback_action'),
+            icon: const Icon(Icons.psychology_alt_outlined),
+            tooltip: 'AI 感情フィードバック収集',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-emotion-feedback',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AI 感情フィードバック収集'),
+                    ),
+                    body: const AiEmotionFeedbackContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('open_ai_compliance_btn'),
+            icon: const Icon(Icons.gpp_good_outlined),
+            tooltip: 'AIモデル コンプライアンス検証',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=ai-compliance',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AIモデル コンプライアンス・セキュリティ検証'),
+                    ),
+                    body: const AiComplianceContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('enterprise_ai_emotion_action'),
+            icon: const Icon(Icons.psychology_alt_outlined),
+            tooltip: 'AI機能的感情ステータス監視',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(
+                    name: '/enterprise?view=functional-emotion',
+                  ),
+                  builder: (final BuildContext _) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('AI機能的感情ステータス監視'),
+                    ),
+                    body: const AiEmotionDashboardContainer(),
+                  ),
+                ),
+              );
+            },
+          ),
           TextButton(
             onPressed: () => Navigator.pushNamed(context, '/'),
             child: const Text(

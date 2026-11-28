@@ -11,6 +11,8 @@
     },
     {
       "path": "/competitors",
+      "image": "/ogp-competitors-20261123.png",
+      "image_alt": "自分株式会社 競合比較 - 174社以上のSaaSと統合ライフOSを比較",
       "title": "競合比較 174社一覧 | 自分株式会社",
       "description": "Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のAI統合ライフOS。",
       "h1": "競合174社との比較",
@@ -18,8 +20,8 @@
     },
     {
       "path": "/ai-university",
-      "image": "/ogp-image-gen2-20260428.png",
-      "image_alt": "AI大学 - 主要AI企業と実務活用を体系的に学ぶ",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学 - 主要AIツールと実務活用を無料で体系的に学ぶ",
       "title": "AI大学 | 無料でAIツール・AIプロバイダーを学ぶ",
       "description": "AIツール・AIプロバイダー・実務ユースケースを学べる無料のAI大学。クイズ・ランキング・バッジで継続学習でき、200社以上のAIを体系的に習得できます。",
       "h1": "AI大学 — 無料でAIを体系的に学ぶ",
@@ -27,6 +29,8 @@
     },
     {
       "path": "/gemini-university",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学 - 主要AIツールと実務活用を無料で体系的に学ぶ",
       "title": "AI大学 {provider_count}社 | Google・OpenAI・Anthropicを学ぶ",
       "description": "Google / OpenAI / Anthropic など{provider_count}社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
       "h1": "AI大学 — {provider_count}社のAIを学ぶ",
@@ -64,7 +68,17 @@
       "points": ["ユーザーが公開したメモをAI要約付きで一覧", "学び・気づき・実装ログを発見できる", "各メモは検索・関連参照に対応", "誰でも閲覧可能"]
     },
     {
+      "path": "/blog",
+      "title": "公式ブログ | 自分株式会社",
+      "description": "人生を経営するAIライフマネジメントアプリ「自分株式会社」の公式ブログ。家計・習慣・タスク整理・AI活用の実践記録と開発ログを毎日更新で公開しています。",
+      "h1": "自分株式会社 公式ブログ",
+      "points": ["家計・タスク・習慣・AI活用の実践記録を公開", "自分株式会社の開発ログと機能改善の背景が読める", "記事から1件無料でAI体験を試せる", "誰でも登録不要で閲覧可能"],
+      "links": [{"href": "/", "label": "無料で1件AI体験を試す"}]
+    },
+    {
       "path": "/referral",
+      "image": "/ogp-referral-20261123.png",
+      "image_alt": "自分株式会社 紹介プログラム - 招待リンクと紹介コードで無料で始める",
       "title": "友達紹介プログラム | 自分株式会社",
       "description": "自分株式会社の紹介プログラム。招待リンクから友達が登録してPro課金すると、招待した人と招待された人のStripe請求残高へPro月額1か月分のクレジットを付与します。登録だけでは付与されません。",
       "h1": "友達を招待",
@@ -82,6 +96,8 @@
     },
     {
       "path": "/subscription-billing",
+      "image": "/ogp-pricing-20261123.png",
+      "image_alt": "自分株式会社 プランと応援 - 無料コアから始められる料金プラン",
       "title": "プランと応援 | 自分株式会社",
       "description": "自分株式会社のFree、Pro、Teamプランと1回100円の応援を確認できます。Proは月額980円、Teamは1席あたり月額2,980円です。",
       "h1": "プランと応援",
@@ -160,6 +176,8 @@
     },
     {
       "path": "/philosophy",
+      "image": "/ogp-philosophy-20261123.png",
+      "image_alt": "自分株式会社とは - 人生を経営する9原則と個人P/L・B/Sガイド",
       "title": "自分株式会社とは？人生を経営する9原則と実践方法",
       "description": "自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。",
       "h1": "自分株式会社とは — 人生を会社として経営する方法",
@@ -290,6 +308,131 @@
         {"href": "https://github.com/kanta13jp1", "label": "GitHub @kanta13jp1"},
         {"href": "/project-gantt", "label": "公開WBSと進捗を見る"},
         {"href": "/privacy", "label": "データの取り扱いを確認する"}
+      ]
+    },
+    {
+      "path": "/ai-university-content",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学 コンテンツ一覧 - 自分株式会社",
+      "title": "AI大学 コンテンツ一覧 | 自分株式会社",
+      "description": "AI大学の学習コンテンツ、プロバイダー解説、クイズ教材を一覧できる公開ページです。",
+      "h1": "AI大学 コンテンツ一覧",
+      "points": [
+        "AIプロバイダー別の解説記事と学習教材を一覧で確認",
+        "実務ユースケースとクイズ教材へ直接アクセス",
+        "AI大学ホームやランキングと連携した体系的学習",
+        "誰でも登録不要で閲覧可能"
+      ],
+      "links": [
+        {"href": "/ai-university", "label": "AI大学トップを見る"},
+        {"href": "/gemini-university", "label": "368社のAI解説を読む"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
+      ]
+    },
+    {
+      "path": "/ai-university-ranking",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学ランキング - 自分株式会社",
+      "title": "AI大学ランキング | 自分株式会社",
+      "description": "AI大学の学習進捗、ストリーク、バッジ獲得状況をランキング形式で確認できます。",
+      "h1": "AI大学ランキング",
+      "points": [
+        "学習進捗と継続ストリークをランキング形式で可視化",
+        "クイズ達成やバッジ獲得状況の推移を確認",
+        "AI学習のモチベーション維持と振り返りを支援",
+        "誰でも登録不要で閲覧可能"
+      ],
+      "links": [
+        {"href": "/ai-university", "label": "AI大学トップを見る"},
+        {"href": "/ai-university-content", "label": "学習コンテンツ一覧を見る"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
+      ]
+    },
+    {
+      "path": "/ai-university-voice",
+      "image": "/ogp-ai-university-20261123.png",
+      "image_alt": "AI大学 音声学習 - 自分株式会社",
+      "title": "AI大学 音声学習 | 自分株式会社",
+      "description": "AI大学の内容を音声で学習するためのページ。移動中や作業中でもAIリテラシーを積み上げられます。",
+      "h1": "AI大学 音声学習",
+      "points": [
+        "移動中や作業中でも音声でAIプロバイダー解説を学習",
+        "テキスト教材と併用して反復理解を支援",
+        "スキマ時間での継続学習に最適化",
+        "誰でも登録不要で閲覧可能"
+      ],
+      "links": [
+        {"href": "/ai-university", "label": "AI大学トップを見る"},
+        {"href": "/ai-university-content", "label": "学習コンテンツ一覧を見る"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
+      ]
+    },
+    {
+      "path": "/tech-blog-tracker",
+      "title": "テックブログトラッカー | 自分株式会社",
+      "description": "最新のAI・テック記事、エンジニアブログ、リリースノートを自動収集するテックブログトラッカー。",
+      "h1": "テックブログトラッカー",
+      "points": [
+        "主要なAI・エンジニアリング記事とリリースノートを集約",
+        "最新技術トレンドのキャッチアップとメモ連携を支援",
+        "日々のR&D部署の学習ログとして活用可能",
+        "誰でも登録不要で閲覧可能"
+      ],
+      "links": [
+        {"href": "/blog", "label": "公式ブログを読む"},
+        {"href": "/development-achievements", "label": "開発実績を見る"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
+      ]
+    },
+    {
+      "path": "/ai-image-generator",
+      "title": "AI画像生成 | 自分株式会社",
+      "description": "画像生成とメディア管理を統合したAI画像生成ツール。サイズ、スタイル、生成履歴をまとめて扱えます。",
+      "h1": "AI画像生成",
+      "points": [
+        "サイズやスタイルを指定したAI画像生成に対応",
+        "生成履歴やメディア資産を一元管理",
+        "ノートや発信ワークフローとシームレスに連携",
+        "無料コア機能から試用可能"
+      ],
+      "links": [
+        {"href": "/shop", "label": "デジタル作品ストアを見る"},
+        {"href": "/ai-university", "label": "AI大学を見る"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
+      ]
+    },
+    {
+      "path": "/public-guitar-gallery",
+      "title": "公開ギターギャラリー | 自分株式会社",
+      "description": "ユーザーが公開したギター録音を一覧できるギャラリー。再生、いいね、人気順の発見に対応しています。",
+      "h1": "公開ギターギャラリー",
+      "points": [
+        "公開されたギター練習録音や演奏ログを一覧表示",
+        "再生・いいね・人気順での発見に対応",
+        "日々の練習継続と記録の振り返りを支援",
+        "誰でも登録不要で閲覧可能"
+      ],
+      "links": [
+        {"href": "/public-memos", "label": "公開メモ一覧を見る"},
+        {"href": "/blog", "label": "公式ブログを読む"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
+      ]
+    },
+    {
+      "path": "/ai-dev-principles",
+      "title": "AI開発7原則 | 自分株式会社",
+      "description": "自分株式会社におけるAI機能の設計・実装方針を定めるAI開発7原則と開発教訓を公開しています。",
+      "h1": "AI開発7原則",
+      "points": [
+        "AI機能の設計と実装品質を規定する7原則を公開",
+        "開発教訓とチェックリストを体系的に整理",
+        "経営哲学と対になる実装ガイドラインを閲覧可能",
+        "誰でも登録不要で閲覧可能"
+      ],
+      "links": [
+        {"href": "/philosophy", "label": "自分株式会社の考え方を読む"},
+        {"href": "/development-achievements", "label": "開発実績を見る"},
+        {"href": "/", "label": "無料で1件AI体験を試す"}
       ]
     }
   ]

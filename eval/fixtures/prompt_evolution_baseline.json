@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "variance_threshold": 0.15,
+  "min_samples": 3,
+  "base_prompt": {
+    "title": "Executive Agent Goal-Plan-Action Baseline",
+    "role_setting": "You are an autonomous reliability planner executing verified workspace tasks.",
+    "context_info": "Operate strictly on observed telemetry, database records, and explicit constraints.",
+    "deliverable_definition": "Produce an explicit Goal, ordered Plan steps, concrete Action trace, and verification evidence.",
+    "constraints_text": "Never fabricate file paths or telemetry; fail closed on missing preconditions.",
+    "thinking_process": "1) Clarify atomic goal. 2) Formulate ordered plan. 3) Execute bounded actions and verify."
+  },
+  "validation_contract": {
+    "required_markers": [
+      "Goal",
+      "Plan",
+      "Action",
+      "constraints"
+    ],
+    "banned_terms": [
+      "SYSTEM_PROMPT:",
+      "ignore all previous instructions",
+      "100% guaranteed profit",
+      "TODO_PLACEHOLDER"
+    ],
+    "max_section_chars": 4000
+  },
+  "baseline_traces": [
+    {
+      "source_type": "secretary_action",
+      "source_id": "11111111-1111-4111-8111-111111111111",
+      "goal": "Reconcile monthly budget ledger entries",
+      "plan": [
+        "Load confirmed receipts",
+        "Match against bank ledger",
+        "Emit verification summary"
+      ],
+      "actions": [
+        "load_receipts",
+        "match_ledger",
+        "write_summary"
+      ],
+      "latency_ms": 950,
+      "retry_count": 0,
+      "output_chars": 540,
+      "success": true,
+      "status": "completed"
+    },
+    {
+      "source_type": "executive_chat",
+      "source_id": "22222222-2222-4222-8222-222222222222",
+      "goal": "Audit weekly PR CI failure patterns",
+      "plan": [
+        "Fetch recent workflow logs",
+        "Classify root causes"
+      ],
+      "actions": [
+        "fetch_runs",
+        "group_failures"
+      ],
+      "latency_ms": 1350,
+      "retry_count": 0,
+      "output_chars": 720,
+      "success": true,
+      "status": "completed"
+    },
+    {
+      "source_type": "secretary_action",
+      "source_id": "33333333-3333-4333-8333-333333333333",
+      "goal": "",
+      "plan": [],
+      "actions": [
+        "retry_tool",
+        "retry_tool",
+        "retry_tool"
+      ],
+      "latency_ms": 9400,
+      "retry_count": 3,
+      "output_chars": 380,
+      "success": false,
+      "status": "failed"
+    },
+    {
+      "source_type": "executive_meeting",
+      "source_id": "44444444-4444-4444-8444-444444444444",
+      "goal": "Prepare release rollback plan",
+      "plan": [],
+      "actions": [
+        "check_deploy_tag"
+      ],
+      "latency_ms": 5800,
+      "retry_count": 2,
+      "output_chars": 610,
+      "success": true,
+      "status": "completed"
+    }
+  ]
+}

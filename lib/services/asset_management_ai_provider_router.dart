@@ -240,16 +240,18 @@ class AssetManagementAiProviderRouter {
     if (jevResult.bestChoiceId == 'lightweight') {
       reorderedCandidates = <AssetManagementAiProviderCandidate>[
         _defaultFallbackChain[3], // google_flash_lite
-        _defaultFallbackChain[2], // google (gemini-3.1-pro)
+        _defaultFallbackChain[2], // google (gemini-4-neon)
         _defaultFallbackChain[1], // openai (gpt-5)
         _defaultFallbackChain[0], // anthropic (claude-opus-4-7)
+        _defaultFallbackChain[4], // nebius
       ];
     } else if (jevResult.bestChoiceId == 'performance') {
       reorderedCandidates = <AssetManagementAiProviderCandidate>[
-        _defaultFallbackChain[2], // google (gemini-3.1-pro)
+        _defaultFallbackChain[2], // google (gemini-4-neon)
         _defaultFallbackChain[1], // openai (gpt-5)
         _defaultFallbackChain[0], // anthropic (claude-opus-4-7)
         _defaultFallbackChain[3], // google_flash_lite
+        _defaultFallbackChain[4], // nebius
       ];
     } else {
       reorderedCandidates = _defaultFallbackChain;
@@ -283,16 +285,24 @@ class AssetManagementAiProviderRouter {
     ),
     AssetManagementAiProviderCandidate(
       providerId: 'google',
-      modelId: 'gemini-3.1-pro',
-      displayName: 'Gemini 3.1 Pro',
+      modelId: 'gemini-4-neon',
+      displayName: 'Gemini 4 Neon',
       tier: 'performance',
     ),
     // 高レート上限・低コストの最終フォールバック。上位 google(flash) が
     // レート制限でクールダウン中でも、別プロバイダ扱い=独立クールダウンで応答できる。
     AssetManagementAiProviderCandidate(
       providerId: 'google_flash_lite',
-      modelId: 'gemini-2.5-flash-lite',
-      displayName: 'Gemini 2.5 Flash-Lite',
+      modelId: 'gemini-4-hydrogen',
+      displayName: 'Gemini 4 Hydrogen',
+      tier: 'fallback',
+    ),
+    // 上記4社が残高枯渇などで全滅しても稼働できる最終フォールバック。
+    // ai-hub の PROVIDER_CONFIGS キー (`nebius`) と表記を一致させること。
+    AssetManagementAiProviderCandidate(
+      providerId: 'nebius',
+      modelId: 'meta-llama/Llama-3.3-70B-Instruct',
+      displayName: 'Nebius Llama 3.3 70B',
       tier: 'fallback',
     ),
   ];
