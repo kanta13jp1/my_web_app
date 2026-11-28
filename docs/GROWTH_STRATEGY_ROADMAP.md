@@ -67483,3 +67483,20 @@ Persist capped device-local failure clusters and extend search/collision foresig
 - 同一原本の古いキャッシュで確認済み集計を上書きしないよう、原本URL・日付・SHA-256を照合する。異なる原本を日付だけで固定しない。更新処理の変更は通常PR経由とし、バッチ反映には具体的な本人確認を残す。
 - 独立レビュー、合成データ試験と旧head998b41dのfull・formatを実施。旧formatが出力した整形3ファイルを独立レビュー後に1725c4eへ反映。1725c4eの整形は追加差分なしで成功したが、解析で2件の末尾カンマ不足を検出。試験コードの該当2呼出しだけを修正した1742490で、full43127004033の全8ジョブとformat43127009777が成功。前runのmobileメモ入力タイムアウトは今回再現せず、原因解消の断定はしない。
 - 旧headの390px・desktop合成画面で数値・出典・確認日・折返しを確認。これは本番確認ではない。最終headの必須PR検査・レビュー、本番反映・実画面確認、具体的バッチ本人確認は未完了。有料Claudeレビューは利用者判断で省略し、独立レビューとCIは維持。
+### 2026-10-07 AI エージェント カンバン盤 + OMOCHA WORKS 自律運用コンソール (WEB版 cloud / #4304 #4324 #4396)
+
+- 発端は @henteko07 の "OMOCHA WORKS — Autonomous Ops Console" で、価値は「AI が自動でタスクをこなす様子を、みてるだけで楽しい」こと。これを 2 段構えで実装した。
+- **#4304** `/autonomous-ops-console` — 5 キャラ (HAYATE/KANNA/MIYA/BOLT/SHIORI) × 4 列カンバン + KPI カード + 活動フィード + 稼働ゲージのアンビエント盤面。
+- **#4324** 同画面の実データ化 — read-only Edge Function `autonomous-ops` が GitHub Actions の run 一覧を取得し、純粋関数 `transform.ts` で盤面 payload に変換。EF 側で ~30 秒キャッシュ、画面は ~20 秒ポーリングし、その間の動きはアニメで繋ぐ。**ログイン済みオーナー限定**で実データ、未ログイン公開訪問者と token 未設定時はシミュレーション表示を保ち、バッジ (`実データ · GitHub Actions` / `シミュレーション · トークン未設定`) で取り違えを防ぐ。トークンはサーバー側のみで使用し応答に含めない。あわせて `/grill-me` skill (実装前に 1 問 1 答で設計を固める) を導入。
+- **#4396** `/agent-board` — 「WBS 上のタスクを AI エージェントがこなしていく様子」を**実データのみ**で眺める新規ページ。`wbs_tasks` を RLS 準拠で読み、実 status をそのまま 4 列 (未着手 / 進行中 / ブロック / 完了) に写像。動いているものを主役にするため、未着手/進行中/ブロックは全件・完了は直近 24 時間ぶんのみ・未着手は 20 件上限 + 超過数を別表示。Supabase Realtime で変更を購読し届いた瞬間にカードを動かし、60 秒ごとの再取得をフォールバックに持つ。カードは「タイトル + エージェントのバッジ + 進捗バー + 最終更新からの経過」の 4 点。エージェント一覧は実データに現れたものだけを動的に並べ、稼働中 (進行中タスクを持つ) を上にする。未知の agent ID はそのまま通すため、Antigravity のような新規 fleet が DB に現れた時点でコード変更なしに表示される。ログイン必須 (未ログインはログイン導線のみ・盤面は出さない)。
+- 変換ロジックは `(rows, now)` を取る純粋関数 (`lib/models/agent_board_models.dart` / `supabase/functions/autonomous-ops/transform.ts`) に切り出して単体テストで固め、Realtime と認証を含む画面全体の E2E は例外宣言とした。
+- 検証はすべて GitHub Actions 上 (このクラウドコンテナに Flutter/Dart SDK は無い)。副産物として、日付依存で落ちていた既存の `asset_management_page_smoke_test` も修正した (`AssetManagementPage` の `_now` は `debugCalendarNow` で上書きされず、固定日では給与サイクル境界を跨ぐ)。
+- **未完了 / ユーザー操作待ち**: fine-grained PAT (対象 `my_web_app` / Actions: read + Metadata: read) を発行し Supabase Function Secret `GH_ACTIONS_READ_TOKEN` に設定するまで、OMOCHA WORKS は実データに切り替わらない。`/agent-board` はホーム導線への露出が未了。本番配信後の実機確認も別途。
+
+#### Philosophy Alignment (WEB版 cloud #1)
+
+- 主要な実装/改修: `/agent-board` (WBS × AI エージェントの実データ カンバン盤) + `/autonomous-ops-console` 実データ化 + `/grill-me` skill
+- 該当する原則: 1 (CEO 感) / 2 (ミッション駆動) / 4 (6 部署バランス) / 5 (商品=ユーザー価値) / 6 (資本=時間) / 8 (KPI=昨日の自分)
+- 整合性スコア: 7/9 ✅
+- 理念的貢献: 「自分株式会社の社員 (AI fleet) が今どこで何をしているか」を社長席から一望できる盤面を作った = 原則 1 の CEO 感を**可視化**する機能。実データ (`wbs_tasks`) のみを出し、完了を直近 24h に絞ることで「昨日の自分との差分」(原則 8) がそのまま見える。自動化された作業量が目に見えることは原則 6 (資本=時間) の実感に直結する。
+- 懸念事項: `/autonomous-ops-console` 側に残る演出値 (売上インパクトの ¥ 表示・稼働ゲージ) は原則 5 の「価値=実質」と緊張する。今回は**削除せずバッジで演出と明示する**方針を採った (元ネタの鑑賞価値を壊さないため)。トークン設定後に実データ比率が上がる前提で、次回再評価する。原則 3 (優しい mentor) / 9 (IPO・ウェルビーイング) への直接貢献は薄い。
