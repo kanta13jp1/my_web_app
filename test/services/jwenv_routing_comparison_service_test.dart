@@ -180,8 +180,8 @@ void main() {
         stepBudgetMinutes: 45,
         perRequestBudgetMinutes: 15,
       );
-      expect(
-          service.validateInitialDiagnosticPlan(okPlan, cases).isValid, isTrue);
+      final okValidation = service.validateInitialDiagnosticPlan(okPlan, cases);
+      expect(okValidation.isValid, isTrue);
 
       const badPlan = JwenvDiagnosticPlan(
         requestCaseIds: <String>['dev-clear', 'eval-1'],
