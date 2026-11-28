@@ -35,20 +35,23 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
   final _amount = TextEditingController();
   final _note = TextEditingController();
 
+  List<DateTime> get _availableMonths => List.generate(
+        12,
+        (i) => DateTime(
+          widget.currentStateMonth.year,
+          widget.currentStateMonth.month + i + 1,
+        ),
+      );
+
   @override
   void didUpdateWidget(covariant AssetFutureCardBillCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentStateMonth != widget.currentStateMonth) {
-      final minMonth = DateTime(
-        widget.currentStateMonth.year,
-        widget.currentStateMonth.month + 1,
-      );
-      if (_month.isBefore(minMonth)) {
-        _month = minMonth;
-        _state = null;
-        _message = null;
-      }
-    }
+    final months = _availableMonths;
+    if (months.contains(_month)) return;
+    _month = months.first;
+    _state = null;
+    _message = null;
+    _select(null);
   }
 
   @override
@@ -59,24 +62,25 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
   }
 
   Future<void> _load() async {
+    final month = _month;
     setState(() {
       _busy = true;
       _state = null;
       _message = null;
     });
     try {
-      final state = await widget.repository.loadMonth(_month);
-      if (!widget.repository.isMonthVerifiedForAi(_month)) {
+      final state = await widget.repository.loadMonth(month);
+      if (!widget.repository.isMonthVerifiedForAi(month)) {
         throw StateError('サーバから対象月を確認できませんでした');
       }
-      if (mounted) {
+      if (mounted && _month == month) {
         setState(() {
           _state = state;
           _select(_accountId);
         });
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && _month == month) {
         setState(() {
           _message = '対象月の読込に失敗しました。再読込してください。';
         });
@@ -111,50 +115,59 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
       });
       return;
     }
+    final month = _month;
+    final repository = widget.repository;
+    final ownsRead = repository.captureMonthAiOwnership(month);
+    final cardId = _cardId!;
+    final note = _note.text;
     final account = widget.accounts.singleWhere((a) => a.id == _accountId);
     setState(() {
       _busy = true;
       _message = null;
     });
     try {
-      final base = await widget.repository.loadMonth(_month);
-      if (!widget.repository.isMonthVerifiedForAi(_month) ||
-          !widget.repository.supabaseWritesEnabled) {
+      final base = await repository.loadMonth(month);
+      if (!mounted ||
+          _month != month ||
+          !identical(widget.repository, repository)) {
+        return;
+      }
+      if (!repository.isMonthVerifiedForAi(month) ||
+          !repository.supabaseWritesEnabled) {
         throw StateError('サーバ保存が有効ではありません');
       }
-      final ownsRead = widget.repository.captureMonthAiOwnership(_month);
       final edited = AssetFutureCardBill.apply(
         state: base,
         accountId: account.id,
         accountName: account.name,
-        cardId: _cardId!,
+        cardId: cardId,
         amount: amount.toDouble(),
-        note: _note.text,
+        note: note,
         editedAt: DateTime.now(),
       );
       if (!ownsRead()) {
         throw StateError('保存対象のユーザーが変わりました');
       }
-      await widget.repository.saveMonth(month: _month, state: edited);
-      final restored = await widget.repository.loadMonth(_month);
+      await repository.saveMonth(month: month, state: edited);
+      final restored = await repository.loadMonth(month);
       if (!ownsRead() ||
-          await widget.repository.hasPendingMonthEdits(_month) ||
+          await repository.hasPendingMonthEdits(month) ||
           restored.paymentOverrides[account.id] != amount.toDouble() ||
-          restored.cardBillingAccountIds[account.id] != _cardId ||
+          restored.cardBillingAccountIds[account.id] != cardId ||
           restored.paidAccountNames.contains(account.id) ||
           restored.paidAccountNames.contains(account.name) ||
           restored.actualPaymentAmounts.containsKey(account.id) ||
           restored.billingConfirmedAccountIds.contains(account.id)) {
         throw StateError('サーバ再読込の照合が未完了です');
       }
-      if (mounted) {
+      if (mounted && _month == month) {
         setState(() {
           _state = restored;
           _message = '対象月へ保存・サーバ再読込確認済み（未確定・未払い）';
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _month == month) {
         setState(() {
           _message = '保存の確認ができませんでした：$e';
         });
@@ -180,13 +193,7 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
               a.kind == AssetLiabilityAccountKind.shoppingDebt,
         )
         .toList();
-    final months = List.generate(
-      12,
-      (i) => DateTime(
-        widget.currentStateMonth.year,
-        widget.currentStateMonth.month + i + 1,
-      ),
-    );
+    final months = _availableMonths;
     final selectedMonth = months.contains(_month) ? _month : months.first;
     return Card(
       child: Padding(
