@@ -7,15 +7,25 @@ import 'package:my_web_app/pages/compatibility_result_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await Supabase.initialize(
+      url: 'http://127.0.0.1:9999',
+      publishableKey: 'test-publishable-key',
+      authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+    );
+  });
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('CompatibilityCheckPage AppBar sets black87 foreground on dark theme', (
+  testWidgets(
+      'CompatibilityCheckPage AppBar sets black87 foreground on dark theme', (
     final WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -32,7 +42,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('CompatibilityResultPage AppBar sets black87 foreground on dark theme', (
+  testWidgets(
+      'CompatibilityResultPage AppBar sets black87 foreground on dark theme', (
     final WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -52,7 +63,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('CompetitorBrowsePage AppBar sets white foreground on light theme', (
+  testWidgets(
+      'CompetitorBrowsePage AppBar sets white foreground on light theme', (
     final WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -71,7 +83,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('all 13 fixed pages declare explicit AppBar foregroundColor contract', () {
+  test('all 13 fixed pages declare explicit AppBar foregroundColor contract',
+      () {
     const List<String> darkAppBarPages = <String>[
       'lib/pages/agent_board_page.dart',
       'lib/pages/agent_gpa_dashboard_page.dart',
