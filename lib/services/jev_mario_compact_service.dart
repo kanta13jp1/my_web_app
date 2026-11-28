@@ -128,7 +128,8 @@ class JevMarioCompactService {
 
   static final RegExp _sha40Pattern = RegExp(r'^[0-9a-f]{40}$');
   static final RegExp _terrainCellPattern = RegExp(r'^[A-Za-z0-9_.?#\-]+$');
-  static final RegExp _rleRunPattern = RegExp(r'(\d*)([A-Za-z0-9_.?#\-])');
+  static final RegExp _rleRunPattern =
+      RegExp(r'(\d*)(?::([0-9])|([A-Za-z_.?#\-]))');
 
   /// 地形行（ASCIIグリッド）を短い可逆 RLE 形式（行区切り `;`）へエンコードする。
   /// 数字を含まない一般地形トークンに加え、明示長を保持するため完全可逆。
@@ -156,11 +157,13 @@ class JevMarioCompactService {
         while (i + count < row.length && row[i + count] == ch) {
           count++;
         }
-        // 数字文字そのものが地形トークンに来ない前提でなく、
-        // 数字の場合は必ず `1<digit>` と明示して曖昧さを排除する。
+        // 数字文字は `:<digit>` としてエスケープし、後続の RLE 長と曖昧にならないようにする。
         final isDigit = ch.codeUnitAt(0) >= 48 && ch.codeUnitAt(0) <= 57;
-        if (count > 1 || isDigit) {
+        if (count > 1) {
           buffer.write(count);
+        }
+        if (isDigit) {
+          buffer.write(':');
         }
         buffer.write(ch);
         i += count;
@@ -191,7 +194,7 @@ class JevMarioCompactService {
         }
         cursor = match.end;
         final countRaw = match.group(1) ?? '';
-        final ch = match.group(2) ?? '';
+        final ch = match.group(2) ?? match.group(3) ?? '';
         final count = countRaw.isEmpty ? 1 : int.parse(countRaw);
         if (count < 1 || count > 10000) {
           throw const FormatException('encoded_run_count_out_of_range');
