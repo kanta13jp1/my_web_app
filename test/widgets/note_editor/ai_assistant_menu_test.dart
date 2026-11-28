@@ -94,7 +94,7 @@ void main() {
             'useMagi': true,
             'melchiorModel': 'gpt-4o-mini',
             'balthasarModel': 'claude-sonnet-4-6',
-            'casperModel': 'gemini-2.5-flash',
+            'casperModel': 'gemini-4-hydrogen',
             'synthesisModel': 'claude-sonnet-4-6',
           },
         ),

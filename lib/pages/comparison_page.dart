@@ -7,7 +7,10 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_feature_table_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_outcome_cards_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/migration_parity_section.dart';
 
@@ -67692,7 +67695,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               children: [
                 _buildBreadcrumb(context),
                 _buildHero(context),
-                _buildOutcomeCards(),
+                ComparisonOutcomeCardsSection(accentColor: _info.accentColor),
                 ComparisonPainPointsSection(
                   competitorName: _info.name,
                   painPoints: _info.painPoints,
@@ -67700,7 +67703,22 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   evidenceStatus: widget.evidenceStatus,
                   otherEvidence: _otherEvidence,
                 ),
-                _buildFeatureTable(),
+                ComparisonFeatureTableSection(
+                  competitorName: _info.name,
+                  accentColor: _info.accentColor,
+                  features: _info.features
+                      .map(
+                        (item) => ComparisonFeatureRowItem(
+                          feature: item.feature,
+                          competitorHas: item.competitorHas,
+                          weHave: item.weHave,
+                        ),
+                      )
+                      .toList(growable: false),
+                  showLegacyClaims: _showLegacyClaims,
+                  evidenceStatus: widget.evidenceStatus,
+                  featureEvidence: _featureEvidence,
+                ),
                 if (_hasImportSupport)
                   MigrationParitySection(
                     competitorKey: widget.competitorKey,
@@ -67970,291 +67988,18 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildOutcomeCards() {
-    final cards = [
-      _buildOutcomeCard(
-        icon: Icons.hub_rounded,
-        title: '日常の作業をひとつに集約',
-        body: 'ノート・タスク・財務・習慣・AI大学まで、別アプリで分かれていた流れをまとめます。',
-        accent: _info.accentColor,
-      ),
-      _buildOutcomeCard(
-        icon: Icons.currency_yen_rounded,
-        title: 'まず無料で始めて、必要になってから広げる',
-        body: '比較検討の段階でも登録しやすく、月額の積み上がりを気にせず試せます。',
-        accent: _orange,
-      ),
-      _buildOutcomeCard(
-        icon: Icons.auto_graph_rounded,
-        title: 'AI が「今日やること」を1件に絞る',
-        body: '判断・実行・振り返りまでを、ひとつの流れとして支援します。',
-        accent: _indigo,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 760) {
-                return Column(
-                  children: cards
-                      .map(
-                        (card) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: card,
-                        ),
-                      )
-                      .toList(),
-                );
-              }
-
-              return Row(
-                children: [
-                  for (var i = 0; i < cards.length; i++) ...[
-                    Expanded(child: cards[i]),
-                    if (i != cards.length - 1) const SizedBox(width: 12),
-                  ],
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureTable() {
-    if (!_showLegacyClaims) {
-      return ComparisonEvidenceSection(
-        title: '根拠確認済みの機能比較',
-        status: widget.evidenceStatus,
-        claims: _featureEvidence,
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '機能比較',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${_info.name} と共通で持っている核は残しつつ、自分株式会社側の追加メリットを見える化しています。',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                decoration: BoxDecoration(
-                  color: _surfacePrimary,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _borderColor),
-                ),
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _surfaceSecondary,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            flex: 5,
-                            child: Text(
-                              '比較項目',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _textPrimary,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              _info.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _textSecondary,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              '自分株式会社',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _indigo,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    for (final feature in _info.features)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _FeatureRowCard(
-                          feature: feature,
-                          competitorName: _info.name,
-                          accentColor: _info.accentColor,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildRelatedComparisons(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '他の比較ページも見る',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.72,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '比較検討の途中なら、近いカテゴリの競合ページもすぐ見比べられます。',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _textSecondary,
-                  height: 1.7,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _relatedCompetitors.map((entry) {
-                  final key = entry.key;
-                  final info = entry.value;
-                  return InkWell(
-                    onTap: () => Navigator.of(context).pushNamed('/vs-$key'),
-                    borderRadius: BorderRadius.circular(18),
-                    child: Ink(
-                      width: 190,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _surfacePrimary,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: _borderColor),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${info.emoji} ${info.name}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _textPrimary,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            info.searchKeyword,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: _textSecondary,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              InkWell(
-                onTap: () => Navigator.of(context).pushNamed('/competitors'),
-                borderRadius: BorderRadius.circular(12),
-                child: Ink(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _surfaceMuted,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.grid_view_rounded,
-                        size: 16,
-                        color: _textSecondary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '全294社の競合ランドスケープを見る →',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: _textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ComparisonRelatedComparisonsSection(
+      items: _relatedCompetitors
+          .map(
+            (entry) => RelatedComparisonItem(
+              competitorKey: entry.key,
+              emoji: entry.value.emoji,
+              name: entry.value.name,
+              searchKeyword: entry.value.searchKeyword,
+            ),
+          )
+          .toList(growable: false),
     );
   }
 
@@ -68344,55 +68089,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildOutcomeCard({
-    required IconData icon,
-    required String title,
-    required String body,
-    required Color accent,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surfacePrimary,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _textPrimary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(
-              fontSize: 13,
-              color: _textSecondary,
-              height: 1.7,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPrimaryHeroButton(BuildContext context) {
     return FilledButton.icon(
       onPressed: () =>
@@ -68460,147 +68156,6 @@ class _BenefitPill extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FeatureRowCard extends StatelessWidget {
-  final _FeatureComparison feature;
-  final String competitorName;
-  final Color accentColor;
-
-  const _FeatureRowCard({
-    required this.feature,
-    required this.competitorName,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Widget buildStatus(String label, bool value, Color highlight) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: highlight.withValues(alpha: value ? 0.16 : 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: highlight.withValues(alpha: value ? 0.3 : 0.18),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              value ? Icons.check_circle_rounded : Icons.cancel_rounded,
-              size: 18,
-              color: value ? highlight : _ComparisonShellState._textMuted,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: value
-                    ? _ComparisonShellState._textPrimary
-                    : _ComparisonShellState._textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 640;
-
-        if (compact) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _ComparisonShellState._surfaceSecondary,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  feature.feature,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _ComparisonShellState._textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    buildStatus(
-                      competitorName,
-                      feature.competitorHas,
-                      accentColor,
-                    ),
-                    buildStatus(
-                      '自分株式会社',
-                      feature.weHave,
-                      _ComparisonShellState._indigo,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _ComparisonShellState._surfaceSecondary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Text(
-                  feature.feature,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: _ComparisonShellState._textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: buildStatus(
-                    competitorName,
-                    feature.competitorHas,
-                    accentColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: buildStatus(
-                    '自分株式会社',
-                    feature.weHave,
-                    _ComparisonShellState._indigo,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

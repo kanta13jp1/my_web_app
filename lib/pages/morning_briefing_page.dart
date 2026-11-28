@@ -67,12 +67,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
-  static const String _defaultGeminiModel = 'gemini-2.5-flash';
+  static const String _defaultGeminiModel = 'gemini-4-hydrogen';
   static const Set<String> _legacyGeminiModels = {
     'gemini-pro',
     'gemini-1.5-flash',
     'gemini-1.5-pro',
     'gemini-2.0-flash',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
   };
 
   String _selectedModel = _defaultGeminiModel; // 日報生成用モデル
@@ -85,11 +87,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   List<Map<String, dynamic>> _selectableModels = [
     {
-      'name': 'gemini-2.5-flash',
+      'name': 'gemini-4-hydrogen',
       'methods': ['generateContent'],
     },
     {
-      'name': 'gemini-2.5-pro',
+      'name': 'gemini-4-neon',
       'methods': ['generateContent'],
     },
   ];
