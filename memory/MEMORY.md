@@ -3,6 +3,11 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-11-28 (WEB版 cloud — 締め切りの重さ /deadline-weight)
+
+- `feedback_success_20261128_web_deadline_weight.md` — `/grill-me` 1 問目を「元ネタのどの核か」にする / 既存テーブルが**使えないと確信するため**の調査 / CI ゲートは PR 作成前に `--body-file` でローカル検証 / `dart format` 失敗は文字数 (バイト数ではない) で 80 超のコード行を探す / main の churn が激しいなら auto-merge に委ねる。
+- `project_20261128_web_deadline_weight.md` — PR ゲート 3 種の blocking 可否と通し方 (2026-11 実測) / `AI Review Gate` の base SHA 一致要求と CCR `ccr/auto_merge` (GraphQL は 403) / Postgres CHECK に副問い合わせ不可 / `Slider.value > max` の assert / `clamp` の戻り型の特別規則 / `avoid_dynamic_calls` 下の行パース / `errors:` は linter 有効規則にしか効かない / クラウドから user マシンへは繋げなかった。
+
 ## 2026-10-07 (WEB版 cloud — OMOCHA WORKS + AI エージェント カンバン盤)
 
 - `feedback_success_20261007_web_omocha_kanban.md` — `/grill-me` 1 問 1 答で列/件数/鮮度/更新方式/テスト範囲を先に確定 / 変換ロジックを `(rows, now)` 純粋関数へ / `wbs_tasks.instance` が既に実エージェントデータ / 未知 agent ID はそのまま通して新 fleet に追従。
@@ -46,6 +51,8 @@ memory from true orphan files.
 - [[feedback_success_20260711_web_seo_h7]]
 - [[feedback_correction_20260711_web_seo_h7]]
 - [[project_20260711_web_seo_h7]]
+- [[feedback_success_20261128_web_deadline_weight]]
+- [[project_20261128_web_deadline_weight]]
 - [[feedback_success_20261007_web_omocha_kanban]]
 - [[feedback_correction_20261007_web_omocha_kanban]]
 - [[project_20261007_web_omocha_kanban]]
@@ -154,4 +161,24 @@ memory from true orphan files.
 - 🟡 /agent-board の「ブロック」列に理由 (recovery_plan) を出し、眺めるだけで詰まりが分かるようにする
 - 🟢 /wrap-up skill のクラウド (Linux) 対応: memory/ パスをリポジトリ内に、NotebookLM/WBS-SYNC を環境検出で条件分岐
 - 🟢 /meal-log の AI 栄養推定 (food_analysis EF 未実装 / UI に内部メモ露出) の解消
+-->
+
+<!-- wrap-up 20261128
+未完了: 0 件 (PR #6496 は main へマージ済 / merge commit 8a729c362)
+
+引き継ぎ済み (docs/cross-instance-prs/20261128_antigravity_deadline_weight_followups.md):
+- Supabase 本番への migration 適用 (20261128093000_create_deadline_weight_tables.sql) — 必須・未了
+- デザイン/アクセシビリティ監査 — Design plugin も実機ブラウザも無く not-run のまま (advisory ゲート)
+- life_goals / wbs_tasks からの取り込み — スコープ外として後回し
+
+このセッションから実行できなかったこと:
+- Antigravity の直接操作 (Computer Use ツールがクラウドセッションに未提供)
+- Remote Control 経由のフォルダ接続 (kanta の 3 フォルダがすべて not_available)
+
+次回優先候補 (Step 6 参照):
+- 🔴 migration 本番適用 + /deadline-weight の実機疎通確認
+- 🟡 /deadline-weight のデザイン/a11y 監査 (PR 本文の Design-Plugin-Status を実測値へ)
+- 🟡 OMOCHA WORKS の GH_ACTIONS_READ_TOKEN 設定 (2026-10-07 から継続・未了)
+- 🟢 life_goals / wbs_tasks からの締め切り取り込み
+- 🟢 /wrap-up skill のクラウド (Linux) 対応 (memory パス・NotebookLM・WBS-SYNC の条件分岐)
 -->
