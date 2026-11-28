@@ -6,8 +6,8 @@ import 'package:my_web_app/services/competitor_claim_evidence_repository.dart';
 import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
-import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_feature_table_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_hero_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_outcome_cards_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
@@ -67694,7 +67694,18 @@ class _ComparisonShellState extends State<_ComparisonShell> {
             child: Column(
               children: [
                 _buildBreadcrumb(context),
-                _buildHero(context),
+                ComparisonHeroSection(
+                  competitorName: _info.name,
+                  emoji: _info.emoji,
+                  searchKeyword: _info.searchKeyword,
+                  accentColor: _info.accentColor,
+                  hasImportSupport: _hasImportSupport,
+                  evidenceStatus: widget.evidenceStatus,
+                  verifiedEvidenceCount: widget.evidenceClaims.length,
+                  withheldLegacyClaimCount: _withheldLegacyClaimCount,
+                  primaryButton: _buildPrimaryHeroButton(context),
+                  secondaryButton: _buildSecondaryHeroButton(context),
+                ),
                 ComparisonOutcomeCardsSection(accentColor: _info.accentColor),
                 ComparisonPainPointsSection(
                   competitorName: _info.name,
@@ -67822,172 +67833,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildHero(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Container(
-            decoration: BoxDecoration(
-              color: _surfacePrimary,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(
-                color: _info.accentColor.withValues(alpha: 0.26),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _info.accentColor.withValues(alpha: 0.15),
-                  blurRadius: 36,
-                  offset: const Offset(0, 18),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(28),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 760;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildTag(
-                          icon: Icons.compare_arrows_rounded,
-                          label: '294社比較',
-                          backgroundColor:
-                              _info.accentColor.withValues(alpha: 0.18),
-                          foregroundColor: _textPrimary,
-                        ),
-                        _buildTag(
-                          icon: Icons.search_rounded,
-                          label: _info.searchKeyword,
-                          backgroundColor: _surfaceMuted,
-                          foregroundColor: _textSecondary,
-                        ),
-                        if (_hasImportSupport)
-                          _buildTag(
-                            icon: Icons.publish_rounded,
-                            label: 'インポート対応',
-                            backgroundColor: _orange.withValues(alpha: 0.18),
-                            foregroundColor: _textPrimary,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-                    Text(
-                      '${_info.emoji} ${_info.name} の代わりに\n自分株式会社を使う',
-                      style: const TextStyle(
-                        fontFamily: 'NotoSansJP',
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.96,
-                        color: _textPrimary,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      '公開する比較情報は、根拠URLと確認日を持つ項目だけに限定しています。',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _textSecondary,
-                        height: 1.75,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ComparisonEvidenceStatusBanner(
-                      status: widget.evidenceStatus,
-                      verifiedCount: widget.evidenceClaims.length,
-                      withheldLegacyClaimCount: _withheldLegacyClaimCount,
-                    ),
-                    const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 14,
-                      children: [
-                        _buildMetricCard(
-                          icon: Icons.verified_rounded,
-                          label: '根拠確認済み',
-                          value: '${widget.evidenceClaims.length}件',
-                          accent: _info.accentColor,
-                        ),
-                        _buildMetricCard(
-                          icon: Icons.visibility_off_rounded,
-                          label: '旧比較文の公開保留',
-                          value: '$_withheldLegacyClaimCount件',
-                          accent: _indigo,
-                        ),
-                        _buildMetricCard(
-                          icon: _hasImportSupport
-                              ? Icons.move_down_rounded
-                              : Icons.timer_rounded,
-                          label: _hasImportSupport ? '移行方法' : '開始時間',
-                          value: _hasImportSupport ? 'データ引継ぎ可' : '30秒で開始',
-                          accent: _orange,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 26),
-                    if (compact)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildPrimaryHeroButton(context),
-                          const SizedBox(height: 12),
-                          _buildSecondaryHeroButton(context),
-                        ],
-                      )
-                    else
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _buildPrimaryHeroButton(context),
-                          _buildSecondaryHeroButton(context),
-                        ],
-                      ),
-                    const SizedBox(height: 20),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: _surfaceSecondary,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _borderColor),
-                      ),
-                      child: const Wrap(
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          _BenefitPill(
-                            icon: Icons.check_circle_outline_rounded,
-                            label: 'タスク・ノート・習慣を横断',
-                          ),
-                          _BenefitPill(
-                            icon: Icons.savings_outlined,
-                            label: '無料で比較しながら移行',
-                          ),
-                          _BenefitPill(
-                            icon: Icons.psychology_alt_outlined,
-                            label: 'AIが今日の最優先を整理',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildRelatedComparisons(BuildContext context) {
     return ComparisonRelatedComparisonsSection(
       items: _relatedCompetitors
@@ -68000,92 +67845,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
             ),
           )
           .toList(growable: false),
-    );
-  }
-
-  Widget _buildTag({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: foregroundColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: foregroundColor,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color accent,
-  }) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 170),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _surfaceSecondary,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withValues(alpha: 0.34)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 20, color: accent),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: _textMuted,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: _textPrimary,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -68118,43 +67877,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
         foregroundColor: _textPrimary,
         side: const BorderSide(color: _borderColor),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      ),
-    );
-  }
-}
-
-class _BenefitPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _BenefitPill({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _ComparisonShellState._pageBackground,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _ComparisonShellState._borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: _ComparisonShellState._textSecondary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: _ComparisonShellState._textSecondary,
-              height: 1.4,
-            ),
-          ),
-        ],
       ),
     );
   }
