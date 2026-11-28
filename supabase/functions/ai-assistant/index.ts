@@ -28,7 +28,7 @@ const KEYS = {
 };
 
 const FALLBACK_MODELS = [
-  { provider: "gemini", model: "gemini-2.5-flash" },
+  { provider: "gemini", model: "gemini-4-hydrogen" },
   { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
   { provider: "openai", model: "gpt-4o-mini" },
   { provider: "deepseek", model: "deepseek-v4-flash" },
@@ -60,7 +60,7 @@ const MODEL_CATALOG = [
     score: 900,
   },
   {
-    name: "gemini-2.5-flash",
+    name: "gemini-4-hydrogen",
     provider: "Google",
     description: "Gemini 系の推奨モデル",
     score: 860,
@@ -160,7 +160,7 @@ interface MagiOpinion {
 const MAGI_OPINION_MAX_LENGTH = 900;
 const DEFAULT_MELCHIOR_MODEL = "gpt-4o-mini";
 const DEFAULT_BALTHASAR_MODEL = "claude-sonnet-4-6";
-const DEFAULT_CASPER_MODEL = "gemini-2.5-flash";
+const DEFAULT_CASPER_MODEL = "gemini-4-hydrogen";
 const DEFAULT_SYNTHESIS_MODEL = "claude-sonnet-4-6";
 // Extended Thinking / 複雑な推論タスク向け (2026-04-17: claude-opus-4-7 に更新) — 将来の extended_thinking action で使用予定
 // deno-lint-ignore no-unused-vars
@@ -1857,12 +1857,16 @@ async function callGemini(
       },
     });
   }
+  const body: Record<string, unknown> = { contents: [{ parts }] };
+  if (/^gemini-4(?:$|-)/i.test(model.trim())) {
+    body.generationConfig = { thinkingConfig: { thinkingLevel: "LOW" } };
+  }
   const resp = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }] }),
+      body: JSON.stringify(body),
     },
   );
   const json = await resp.json();
@@ -1875,5 +1879,13 @@ async function callGemini(
     payload: json,
     usageContext,
   });
+  const candidateParts = json.candidates?.[0]?.content?.parts;
+  if (Array.isArray(candidateParts)) {
+    const text = candidateParts
+      .filter((part: { thought?: unknown }) => part?.thought !== true)
+      .map((part: { text?: unknown }) => String(part?.text ?? ""))
+      .join("");
+    if (text) return text;
+  }
   return json.candidates[0].content.parts[0].text;
 }

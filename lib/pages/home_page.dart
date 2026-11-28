@@ -6,7 +6,6 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +23,6 @@ import '../services/feature_strategy_ai_review_service.dart';
 import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
 import '../services/feature_strategy_report_snapshot_service.dart';
-import '../services/grow_together_share.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/life_waste_elimination_service.dart';
 import '../services/personality_test_service.dart';
@@ -54,10 +52,11 @@ import '../widgets/ga_readiness_gate_panel.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
-import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_curated_calendar_section.dart';
-import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_emergency_meeting_card.dart';
+import '../widgets/home_morning_briefing_card.dart';
+import '../widgets/home_today_action_section.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
@@ -84,8 +83,12 @@ import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
+import '../widgets/home_feature_request_failure_snackbar.dart';
+import '../widgets/home_feature_request_form_card.dart';
+import '../widgets/home_monthly_cashflow_priority_card.dart';
 import '../utils/home_calendar_visible_range.dart';
 import '../utils/home_cashflow_bundle_loader.dart';
+import '../utils/home_calendar_day_composition.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -371,13 +374,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
   ) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(failure.userMessage),
-        action: SnackBarAction(
-          label: failure.retryLabel,
-          onPressed: () => unawaited(retry()),
-        ),
+      buildHomeFeatureRequestFailureSnackBar(
+        failure: failure,
         backgroundColor: Theme.of(context).colorScheme.error,
+        onRetry: () => unawaited(retry()),
       ),
     );
   }
@@ -1404,6 +1404,26 @@ class _HomePageState extends State<HomePage> with RouteAware {
     };
   }
 
+  HomeCalendarAbstinenceInput _toCalendarAbstinenceInput(
+    AbstinenceGuardSnapshot snapshot,
+  ) {
+    return HomeCalendarAbstinenceInput(
+      enabledCount: snapshot.enabledCount,
+      totalSlipCount: snapshot.totalSlipCount,
+      disciplineRepCount: snapshot.disciplineSnapshot.totalRepCount,
+      enabledLabels: snapshot.enabledLabels,
+      slipDetails: snapshot.slipDetails,
+      slippedCandidates: [
+        for (final state in snapshot.slippedStates)
+          HomeCalendarSlipCandidate(
+            label: state.item.label,
+            replacementAction: state.item.replacementAction,
+            slipCount: state.slipCount,
+          ),
+      ],
+    );
+  }
+
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     HomeCalendarVisibleRange? calendarRange,
     required Map<String, _HomeDailyStatusRecord> homeDailyMap,
@@ -1413,118 +1433,60 @@ class _HomePageState extends State<HomePage> with RouteAware {
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
     Set<String> additionalDebtViolationDates = const <String>{},
   }) async {
-    final now = _now();
-    final range = calendarRange ?? _calendarVisibleRange();
-    final monthAnchor = range.monthAnchor;
-    final startDay = range.startDay;
-    final endDay = range.endDay;
-    final abstinenceByDate = abstinenceSnapshotsByDate ??
-        await AbstinenceGuardStore.loadSnapshotsByDate(
-          startDate: startDay,
-          endDate: endDay,
+    final composedDays = await loadHomeCalendarDays<_HomeCalendarTask>(
+      range: calendarRange ?? _calendarVisibleRange(),
+      now: _now(),
+      dateKeyFor: _statusDateKey,
+      dailyStatusByDate: {
+        for (final entry in homeDailyMap.entries)
+          entry.key: HomeCalendarDailyStatusInput(
+            morningBriefingDone: entry.value.morningBriefingDone,
+            balanceCheckDone: entry.value.balanceCheckDone,
+          ),
+      },
+      pendingCriticalTaskMap: pendingCriticalTaskMap,
+      cashflowByDate: cashflowByDate,
+      tasksByDate: tasksByDate,
+      abstinenceByDate: abstinenceSnapshotsByDate == null
+          ? null
+          : {
+              for (final entry in abstinenceSnapshotsByDate.entries)
+                entry.key: _toCalendarAbstinenceInput(entry.value),
+            },
+      fetchAbstinenceByDate: (startDate, endDate) async {
+        final loaded = await AbstinenceGuardStore.loadSnapshotsByDate(
+          startDate: startDate,
+          endDate: endDate,
         );
-
-    final days = <_HomeCalendarDay>[];
-    for (DateTime day = startDay;
-        !day.isAfter(endDay);
-        day = day.add(const Duration(days: 1))) {
-      final dateKey = _statusDateKey(day);
-      final abstinence =
-          abstinenceByDate[dateKey] ?? _emptyAbstinenceSnapshot();
-      final isCurrentMonth =
-          day.year == monthAnchor.year && day.month == monthAnchor.month;
-      final isToday =
-          day.year == now.year && day.month == now.month && day.day == now.day;
-      final dayStatus = homeDailyMap[dateKey] ?? const _HomeDailyStatusRecord();
-      final morningDone = dayStatus.morningBriefingDone;
-      final balanceDone = dayStatus.balanceCheckDone;
-      final pendingCriticalTaskCountForDay =
-          pendingCriticalTaskMap[dateKey] ?? 0;
-      final tasks = List<_HomeCalendarTask>.from(
-        tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
-      );
-      final cashflow =
-          cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
-      final hasProtection = abstinence.enabledCount > 0;
-      final hasSlip = abstinence.totalSlipCount > 0;
-      final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
-      final missingItems = <String>[
-        if (!isFuture && !morningDone) 'モーニング・ブリーフィング',
-        if (!isFuture && !balanceDone) '口座残高確認',
-        if (!isFuture && pendingCriticalTaskCountForDay > 0)
-          '必須タスク $pendingCriticalTaskCountForDay件',
-        if (!isFuture && !hasProtection) '禁欲ガード設定',
-      ];
-      final relapsePreventionAction = _buildRelapsePreventionAction(
-        abstinence: abstinence,
-        isFuture: isFuture,
-        morningDone: morningDone,
-        balanceDone: balanceDone,
-        hasProtection: hasProtection,
-        hasSlip: hasSlip,
-      );
-
-      days.add(
+        return {
+          for (final entry in loaded.entries)
+            entry.key: _toCalendarAbstinenceInput(entry.value),
+        };
+      },
+      additionalDebtViolationDates: additionalDebtViolationDates,
+    );
+    return [
+      for (final day in composedDays)
         _HomeCalendarDay(
-          date: day,
-          isCurrentMonth: isCurrentMonth,
-          isToday: isToday,
-          isFuture: isFuture,
-          morningDone: morningDone,
-          balanceDone: balanceDone,
-          pendingCriticalTaskCount: pendingCriticalTaskCountForDay,
-          hasAbstinenceProtection: hasProtection,
-          hasAbstinenceSlip: hasSlip,
-          hasAdditionalDebtViolation:
-              additionalDebtViolationDates.contains(dateKey),
-          isSaturday: day.weekday == DateTime.saturday,
-          enabledLabels: abstinence.enabledLabels,
-          slipDetails: abstinence.slipDetails,
-          missingItems: missingItems,
-          relapsePreventionAction: relapsePreventionAction,
-          cashflow: cashflow,
-          tasks: tasks,
+          date: day.date,
+          isCurrentMonth: day.isCurrentMonth,
+          isToday: day.isToday,
+          isFuture: day.isFuture,
+          morningDone: day.morningDone,
+          balanceDone: day.balanceDone,
+          pendingCriticalTaskCount: day.pendingCriticalTaskCount,
+          hasAbstinenceProtection: day.hasAbstinenceProtection,
+          hasAbstinenceSlip: day.hasAbstinenceSlip,
+          hasAdditionalDebtViolation: day.hasAdditionalDebtViolation,
+          isSaturday: day.isSaturday,
+          enabledLabels: day.enabledLabels,
+          slipDetails: day.slipDetails,
+          missingItems: day.missingItems,
+          relapsePreventionAction: day.relapsePreventionAction,
+          cashflow: day.cashflow,
+          tasks: day.tasks,
         ),
-      );
-    }
-    return days;
-  }
-
-  String _buildRelapsePreventionAction({
-    required AbstinenceGuardSnapshot abstinence,
-    required bool isFuture,
-    required bool morningDone,
-    required bool balanceDone,
-    required bool hasProtection,
-    required bool hasSlip,
-  }) {
-    if (isFuture) {
-      return '前日までの逸脱傾向を見て、禁止対象を1件だけ先に固定する。';
-    }
-
-    if (hasSlip) {
-      final sortedSlips = abstinence.slippedStates.toList()
-        ..sort((a, b) => b.slipCount.compareTo(a.slipCount));
-      if (sortedSlips.isNotEmpty) {
-        final top = sortedSlips.first;
-        return '${top.item.label}が崩れやすい日。${top.item.replacementAction}';
-      }
-    }
-
-    if (!hasProtection) {
-      return '朝いちで禁止対象を1件だけ固定して、先に逃げ道を塞ぐ。';
-    }
-    if (abstinence.disciplineSnapshot.totalRepCount == 0) {
-      return '今日はまだ我慢の実績がありません。買わない・開かないを1回記録する。';
-    }
-    if (!morningDone) {
-      return '朝の最初にブリーフィングを実施し、優先順位を固定する。';
-    }
-    if (!balanceDone) {
-      return '口座残高確認を先に終えて、意思決定を数字に戻す。';
-    }
-
-    return '同じ禁止対象を維持し、夜に逸脱ゼロを確認して日次を閉じる。';
+    ];
   }
 
   Future<_HomeDailyStatusRecord?> _fetchHomeDailyStatusFromSupabase(
@@ -2073,8 +2035,8 @@ abstinence_slip_details: $slipDetailsText
       };
     }
 
-    return HomePrimaryActionCard(
-      key: Key('home_next_action_${command.type.name}'),
+    return HomeTodayActionSection(
+      actionTypeName: command.type.name,
       accentColor: command.color,
       icon: command.icon,
       title: command.title,
@@ -2097,231 +2059,21 @@ abstinence_slip_details: $slipDetailsText
     required bool isHighlighted,
   }) {
     final summary = snapshot.monthlyCashflowSummary;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = summary.netTotal >= 0
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFEF9A9A);
-    final cardColor =
-        isDark ? const Color(0xFF1E1E1E) : Colors.white.withValues(alpha: 0.92);
-    final borderColor = isHighlighted
-        ? accentColor.withValues(alpha: 0.7)
-        : accentColor.withValues(alpha: 0.22);
-    final monthLabel = summary.monthLabel;
-    final recordLabel =
-        summary.recordCount == 0 ? '未記録' : '${summary.recordCount}件記録';
-
-    return Container(
-      key: const Key('home_monthly_cashflow_card'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: isHighlighted ? 1.6 : 1),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: isHighlighted ? 0.18 : 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.receipt_long, color: accentColor),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$monthLabelの収支を最優先',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xDE000000),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      summary.summaryLine,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.6,
-                        color: (isDark ? Colors.white : const Color(0xDE000000))
-                            .withValues(alpha: 0.78),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isHighlighted)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'NOW',
-                    style: TextStyle(
-                      color: accentColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildMonthlyCashflowMetric(
-                label: '収入',
-                value: _formatYen(summary.incomeTotal.toDouble()),
-                color: const Color(0xFF388E3C),
-              ),
-              _buildMonthlyCashflowMetric(
-                label: '支出',
-                value: _formatYen(summary.expenseTotal.toDouble()),
-                color: const Color(0xFFE53935),
-              ),
-              _buildMonthlyCashflowMetric(
-                label: '差額',
-                value: _formatSignedYen(summary.netTotal.toDouble()),
-                color: accentColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildMonthlyCashflowChip(
-                icon:
-                    summary.reviewDone ? Icons.visibility : Icons.priority_high,
-                label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
-                color:
-                    summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
-              ),
-              _buildMonthlyCashflowChip(
-                icon: Icons.edit_note,
-                label: recordLabel,
-                color: summary.recordCount > 0
-                    ? const Color(0xFF6366F1)
-                    : const Color(0xFFFF6B35),
-              ),
-              if (summary.lastRecordedAt != null)
-                _buildMonthlyCashflowChip(
-                  icon: Icons.schedule,
-                  label:
-                      '最終記録 ${DateFormat('M/d HH:mm').format(summary.lastRecordedAt!)}',
-                  color: const Color(0xFF3D5AFE),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            key: const Key('home_monthly_cashflow_cta'),
-            onPressed: () => _openMonthlyCashflowReview(context),
-            icon: const Icon(Icons.arrow_forward),
-            label: Text(summary.recordCount == 0 ? '今月の収支を記録する' : '今月の収支を確認する'),
-            style: FilledButton.styleFrom(
-              backgroundColor: accentColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthlyCashflowMetric({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 104),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthlyCashflowChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
+    final lastRecorded = summary.lastRecordedAt;
+    return HomeMonthlyCashflowPriorityCard(
+      monthLabel: summary.monthLabel,
+      summaryLine: summary.summaryLine,
+      incomeLabel: _formatYen(summary.incomeTotal.toDouble()),
+      expenseLabel: _formatYen(summary.expenseTotal.toDouble()),
+      netLabel: _formatSignedYen(summary.netTotal.toDouble()),
+      netTotal: summary.netTotal.toDouble(),
+      reviewDone: summary.reviewDone,
+      recordCount: summary.recordCount,
+      lastRecordedLabel: lastRecorded == null
+          ? null
+          : DateFormat('M/d HH:mm').format(lastRecorded),
+      isHighlighted: isHighlighted,
+      onOpenReview: () => _openMonthlyCashflowReview(context),
     );
   }
 
@@ -5206,12 +4958,6 @@ abstinence_slip_details: $slipDetailsText
                           children: [
                             const HomeTodayPriorityGoal(),
                             if (!showInternalOperations) ...[
-                              _buildSectionHeader(
-                                '今日の1件',
-                                Icons.ads_click_outlined,
-                                const Color(0xFF4F46E5),
-                                key: const Key('home_section_today_action'),
-                              ),
                               _buildNextActionBubble(
                                 context,
                                 nextAction,
@@ -5414,7 +5160,11 @@ abstinence_slip_details: $slipDetailsText
                                 const Color(0xFFE53935),
                                 key: const Key('home_section_ceo_office'),
                               ),
-                              _buildCeoCard(context),
+                              HomeEmergencyMeetingCard(
+                                onTap: () => Navigator.of(
+                                  context,
+                                ).pushNamed('/emergency-meeting'),
+                              ),
                               const SizedBox(height: 12),
                               _buildEvalApprovalCard(context),
                               const SizedBox(height: 12),
@@ -5507,9 +5257,12 @@ abstinence_slip_details: $slipDetailsText
                                 opsSnapshot,
                               ),
                               const SizedBox(height: 12),
-                              _buildMorningBriefingCard(
-                                context,
+                              HomeMorningBriefingCard(
                                 isHighlighted: highlightMorning,
+                                onTap: () => _runTrackedAction(
+                                  'morning-briefing',
+                                  () => _openMorningBriefing(context),
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Card(
@@ -6116,60 +5869,6 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
-  Widget _buildCeoCard(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            baseColor,
-            Color.alphaBlend(
-              const Color(0xFFE53935).withValues(alpha: isDark ? 0.16 : 0.07),
-              baseColor,
-            ),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x4CE53935)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(
-              0xFFE53935,
-            ).withValues(alpha: isDark ? 0.16 : 0.12),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 14,
-        ),
-        leading: const CircleAvatar(
-          backgroundColor: Color(0xFFE53935),
-          radius: 26,
-          child: Icon(Icons.emergency, color: Colors.white, size: 28),
-        ),
-        title: const Text(
-          '緊急役員会議',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            height: 1.5,
-          ),
-        ),
-        subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => Navigator.of(context).pushNamed('/emergency-meeting'),
-      ),
-    );
-  }
-
   Widget _buildEvalApprovalCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -6202,70 +5901,6 @@ abstinence_slip_details: $slipDetailsText
         onTap: () => _runTrackedAction(
           'eval-approval',
           () => Navigator.of(context).pushNamed('/eval-approval'),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMorningBriefingCard(
-    BuildContext context, {
-    bool isHighlighted = false,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
-    final accent =
-        isHighlighted ? const Color(0xFFFFA000) : const Color(0xFFFFC107);
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            baseColor,
-            Color.alphaBlend(
-              const Color(
-                0xFFFFC107,
-              ).withValues(alpha: isHighlighted ? 0.2 : 0.09),
-              baseColor,
-            ),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.32)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: isHighlighted ? 0.18 : 0.1),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 14,
-        ),
-        leading: CircleAvatar(
-          backgroundColor: accent,
-          radius: 26,
-          child: const Icon(Icons.wb_sunny, color: Colors.white, size: 28),
-        ),
-        title: Text(
-          isHighlighted ? 'モーニング・ブリーフィング（最優先）' : 'モーニング・ブリーフィング',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            height: 1.5,
-          ),
-        ),
-        subtitle: Text(
-          isHighlighted ? 'まず朝の優先順位を固定してください。' : '今日のタスクと優先順位を確認します。',
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => _runTrackedAction(
-          'morning-briefing',
-          () => _openMorningBriefing(context),
         ),
       ),
     );
@@ -6409,458 +6044,49 @@ abstinence_slip_details: $slipDetailsText
   }
 
   Widget _buildHomeFeatureRequestForm(bool isDark, bool isCompact) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final submission = _lastFeatureRequestSubmission;
     final githubIssue = _dynamicMap(submission?['githubIssue']);
     final wbsTask = _dynamicMap(submission?['wbsTask']);
     final issueUrl = (githubIssue['html_url'] ?? '').toString();
-    final issueNumber = githubIssue['number'];
+    final rawIssueNumber = githubIssue['number'];
+    final issueNumber = rawIssueNumber is int ? rawIssueNumber : null;
     final wbsTaskTitle = (wbsTask['title'] ?? '').toString();
     final hasWbsTask = wbsTaskTitle.isNotEmpty && wbsTask['error'] == null;
-    const categories = ['機能追加', 'UX改善', '不具合', 'AI連携', 'データ連携', 'その他'];
-    const priorityLabels = {'high': '高', 'medium': '中', 'low': '低'};
-    final fieldBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: colorScheme.outlineVariant),
-    );
+    final file = _featureRequestAttachment;
+    final analysis = _featureRequestAttachmentAnalysis;
 
-    Widget dropdowns() {
-      final categoryField = DropdownButtonFormField<String>(
-        key: ValueKey('feature-request-category-$_featureRequestCategory'),
-        initialValue: _featureRequestCategory,
-        decoration: InputDecoration(
-          labelText: '分類',
-          prefixIcon: const Icon(Icons.category_outlined),
-          border: fieldBorder,
-          enabledBorder: fieldBorder,
-          isDense: true,
-        ),
-        items: [
-          for (final category in categories)
-            DropdownMenuItem(value: category, child: Text(category)),
-        ],
-        onChanged: _isSubmittingFeatureRequest
-            ? null
-            : (value) {
-                if (value != null) {
-                  setState(() => _featureRequestCategory = value);
-                }
-              },
-      );
-      final priorityField = DropdownButtonFormField<String>(
-        key: ValueKey('feature-request-priority-$_featureRequestPriority'),
-        initialValue: _featureRequestPriority,
-        decoration: InputDecoration(
-          labelText: '優先度',
-          prefixIcon: const Icon(Icons.priority_high_outlined),
-          border: fieldBorder,
-          enabledBorder: fieldBorder,
-          isDense: true,
-        ),
-        items: [
-          for (final entry in priorityLabels.entries)
-            DropdownMenuItem(value: entry.key, child: Text(entry.value)),
-        ],
-        onChanged: _isSubmittingFeatureRequest
-            ? null
-            : (value) {
-                if (value != null) {
-                  setState(() => _featureRequestPriority = value);
-                }
-              },
-      );
-
-      if (isCompact) {
-        return Column(
-          children: [categoryField, const SizedBox(height: 10), priorityField],
-        );
-      }
-      return Row(
-        children: [
-          Expanded(child: categoryField),
-          const SizedBox(width: 10),
-          Expanded(child: priorityField),
-        ],
-      );
-    }
-
-    Widget attachmentAnalyzer() {
-      final file = _featureRequestAttachment;
-      final analysis = _featureRequestAttachmentAnalysis;
-      final observation =
-          analysis == null ? '' : _analysisText(analysis, 'observation');
-      final proposal =
-          analysis == null ? '' : _analysisText(analysis, 'proposal');
-
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.image_search_outlined,
-                  color: colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'スクリーンショット・写真からAIが追加要望を下書きします',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (file != null) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${file.name} / ${_formatFeatureRequestAttachmentSize(file.size)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _isSubmittingFeatureRequest ||
-                          _isAnalyzingFeatureRequestAttachment
-                      ? null
-                      : _pickFeatureRequestAttachment,
-                  icon: const Icon(Icons.attach_file_outlined),
-                  label: Text(file == null ? '画像を選択' : '画像を変更'),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: file == null ||
-                          _isSubmittingFeatureRequest ||
-                          _isAnalyzingFeatureRequestAttachment
-                      ? null
-                      : _analyzeFeatureRequestAttachment,
-                  icon: _isAnalyzingFeatureRequestAttachment
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.auto_awesome_outlined),
-                  label: Text(
-                    _isAnalyzingFeatureRequestAttachment ? 'AI診断中' : 'AI診断',
-                  ),
-                ),
-                if (file != null)
-                  TextButton.icon(
-                    onPressed: _isSubmittingFeatureRequest ||
-                            _isAnalyzingFeatureRequestAttachment
-                        ? null
-                        : _clearFeatureRequestAttachment,
-                    icon: const Icon(Icons.close_outlined),
-                    label: const Text('クリア'),
-                  ),
-              ],
-            ),
-            if (analysis != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                [
-                  if (observation.isNotEmpty) '観察: $observation',
-                  if (proposal.isNotEmpty) '改善案: $proposal',
-                ].join('\n'),
-                style: theme.textTheme.bodySmall?.copyWith(height: 1.55),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    final formCard = Card(
-      elevation: 0,
-      color: isDark ? const Color(0xFF111827) : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : const Color(0xFFDDE8E4),
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(isCompact ? 14 : 18),
-        child: Form(
-          key: _featureRequestFormKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F766E).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.add_comment_outlined,
-                      color: Color(0xFF0F766E),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '改善内容を送る',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          '送信内容はサービス改善の検討に利用し、受付番号を発行します。',
-                          style: TextStyle(fontSize: 12, height: 1.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _featureRequestTitleController,
-                enabled: !_isSubmittingFeatureRequest,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: '要望タイトル',
-                  hintText: '例: カレンダーから習慣の優先度を調整したい',
-                  prefixIcon: const Icon(Icons.title_outlined),
-                  border: fieldBorder,
-                  enabledBorder: fieldBorder,
-                ),
-                validator: (value) {
-                  final text = value?.trim() ?? '';
-                  if (text.length < 3) return '3文字以上で入力してください';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              dropdowns(),
-              const SizedBox(height: 10),
-              attachmentAnalyzer(),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _featureRequestDescriptionController,
-                enabled: !_isSubmittingFeatureRequest,
-                minLines: 3,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  labelText: '内容',
-                  hintText: '困っていること、使いたい場面、現在の回避策など',
-                  alignLabelWithHint: true,
-                  prefixIcon: const Icon(Icons.notes_outlined),
-                  border: fieldBorder,
-                  enabledBorder: fieldBorder,
-                ),
-                validator: (value) {
-                  final text = value?.trim() ?? '';
-                  if (text.length < 10) return '10文字以上で入力してください';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _featureRequestOutcomeController,
-                enabled: !_isSubmittingFeatureRequest,
-                minLines: 2,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: '期待する成果',
-                  hintText: 'この機能で何が速く、楽に、確実になるか',
-                  alignLabelWithHint: true,
-                  prefixIcon: const Icon(Icons.check_circle_outline),
-                  border: fieldBorder,
-                  enabledBorder: fieldBorder,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  onPressed: _isSubmittingFeatureRequest
-                      ? null
-                      : _submitHomeFeatureRequest,
-                  icon: _isSubmittingFeatureRequest
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send_outlined),
-                  label: Text(_isSubmittingFeatureRequest ? '登録中' : '登録する'),
-                ),
-              ),
-              if (submission != null) ...[
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF0A2A1A)
-                        : const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF1A5A3A)
-                          : const Color(0xFFA7F3D0),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.task_alt,
-                            color: Color(0xFF047857),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            submission['success'] == true ? '登録完了' : '一部登録完了',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF065F46),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        issueNumber == null
-                            ? '受付番号を発行しています'
-                            : '受付番号: #$issueNumber',
-                        style: const TextStyle(
-                          color: Color(0xFF065F46),
-                          height: 1.5,
-                        ),
-                      ),
-                      Text(
-                        hasWbsTask ? '改善タスクに登録済み' : '改善タスクへの登録を確認中',
-                        style: const TextStyle(
-                          color: Color(0xFF065F46),
-                          height: 1.5,
-                        ),
-                      ),
-                      if (issueUrl.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: issueUrl),
-                            );
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('受付URLをコピーしました')),
-                            );
-                          },
-                          icon: const Icon(Icons.copy, size: 16),
-                          label: const Text('受付URLをコピー'),
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      const Divider(height: 1, color: Color(0x33047857)),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '要望をありがとうございます。あなたの一言がそのまま開発タスクになります。'
-                        'この仕組みをXで広めて、一緒にアプリを育てる仲間を増やしませんか？',
-                        style: TextStyle(
-                          color: Color(0xFF065F46),
-                          fontSize: 12,
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton.icon(
-                          key: const Key('feature_request_share_x_button'),
-                          onPressed: () async {
-                            final messenger = ScaffoldMessenger.of(context);
-                            final opened =
-                                await GrowTogetherShare.launchXShare();
-                            if (!mounted || opened) return;
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Xの投稿画面を開けませんでした。本文をコピーして共有してください。',
-                                ),
-                              ),
-                            );
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF000000),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Text(
-                            '𝕏',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          label: const Text('Xでシェアして仲間を増やす'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        formCard,
-        const SizedBox(height: 16),
-        GrowTogetherShareCard(isDark: isDark, isCompact: isCompact),
-      ],
+    return HomeFeatureRequestFormCard(
+      isDark: isDark,
+      isCompact: isCompact,
+      formKey: _featureRequestFormKey,
+      titleController: _featureRequestTitleController,
+      descriptionController: _featureRequestDescriptionController,
+      outcomeController: _featureRequestOutcomeController,
+      category: _featureRequestCategory,
+      priority: _featureRequestPriority,
+      isSubmitting: _isSubmittingFeatureRequest,
+      isAnalyzingAttachment: _isAnalyzingFeatureRequestAttachment,
+      hasAttachment: file != null,
+      attachmentFileName: file?.name,
+      attachmentSizeLabel:
+          file == null ? null : _formatFeatureRequestAttachmentSize(file.size),
+      analysisObservation:
+          analysis == null ? '' : _analysisText(analysis, 'observation'),
+      analysisProposal:
+          analysis == null ? '' : _analysisText(analysis, 'proposal'),
+      hasSubmission: submission != null,
+      submissionSuccess: submission?['success'] == true,
+      issueNumber: issueNumber,
+      issueUrl: issueUrl,
+      hasWbsTask: hasWbsTask,
+      onCategoryChanged: (value) =>
+          setState(() => _featureRequestCategory = value),
+      onPriorityChanged: (value) =>
+          setState(() => _featureRequestPriority = value),
+      onPickAttachment: _pickFeatureRequestAttachment,
+      onAnalyzeAttachment: _analyzeFeatureRequestAttachment,
+      onClearAttachment: _clearFeatureRequestAttachment,
+      onSubmit: _submitHomeFeatureRequest,
     );
   }
 

@@ -319,6 +319,14 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                         message:
                             '決済はStripe上で安全に行われます。100円応援は1回限り、Pro・Teamは契約管理画面からいつでも解約できます。',
                       ),
+                      const SizedBox(height: 16),
+                      const _InfoCard(
+                        key: Key('billing_digital_product_notice'),
+                        icon: Icons.computer_outlined,
+                        title: '提供形態とご契約条件（デジタルサービス）',
+                        message:
+                            '自分株式会社はソフトウェアとAIによる自動化処理を主体としたデジタルサービスです（人的コンサルティングや運用代行ではありません）。お問い合わせ等の人的サポートはソフトウェアの出力・利用を補完する範囲で提供されます。Pro（月額980円）・Team（1席あたり月額2,980円）は月次で自動更新され、契約管理画面（Stripeポータル）からいつでも解約できます（100円応援は1回限り・自動更新なし）。',
+                      ),
                     ],
                   ),
                 ),
@@ -882,6 +890,7 @@ class _UsageChip extends StatelessWidget {
 
 class _InfoCard extends StatelessWidget {
   const _InfoCard({
+    super.key,
     required this.icon,
     required this.title,
     required this.message,

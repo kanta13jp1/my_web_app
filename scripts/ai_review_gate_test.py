@@ -651,6 +651,138 @@ class PublicPngTests(unittest.TestCase):
         inline = [p['inlineData'] for p in calls[1][1]['contents'][0]['parts'] if 'inlineData' in p]
         self.assertEqual([base64.b64decode(i['data']) for i in inline], [data1, data2])
 
+    def test_receipt_6489_selection_count_bounds_and_guidance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original, specific_5893, specific_6244, specific_6273, specific_6489 = (
+                root / 'original.json',
+                root / '5893.json',
+                root / '6244.json',
+                root / '6273.json',
+                root / '6489.json',
+            )
+            base = {
+                'schema_version': 1,
+                'provider': 'google-gemini',
+                'endpoint': self.png.ENDPOINT,
+                'method': 'generateContent',
+            }
+            original.write_text(json.dumps(dict(base, pull_request=5938, assets=[{}])), encoding='utf-8')
+            specific_5893.write_text(json.dumps(dict(base, pull_request=5893, assets=[{}])), encoding='utf-8')
+            specific_6244.write_text(json.dumps(dict(base, pull_request=6244, assets=[{}, {}])), encoding='utf-8')
+            specific_6273.write_text(json.dumps(dict(base, pull_request=6273, assets=[{}, {}])), encoding='utf-8')
+            specific_6489.write_text(json.dumps(dict(base, pull_request=6489, assets=[{}, {}, {}, {}, {}])), encoding='utf-8')
+            with (
+                patch.object(self.png, 'RECEIPT', original),
+                patch.object(self.png, 'RECEIPT_5893', specific_5893),
+                patch.object(self.png, 'RECEIPT_6244', specific_6244),
+                patch.object(self.png, 'RECEIPT_6273', specific_6273),
+                patch.object(self.png, 'RECEIPT_6489', specific_6489),
+            ):
+                self.assertEqual(self.png.load_receipt(6489)['pull_request'], 6489)
+                for bad_assets in ([{}, {}, {}, {}], [{}, {}, {}, {}, {}, {}]):
+                    specific_6489.write_text(json.dumps(dict(base, pull_request=6489, assets=bad_assets)), encoding='utf-8')
+                    with self.subTest(count=len(bad_assets)), self.assertRaises(ValueError):
+                        self.png.load_receipt(6489)
+
+        checked = self.png.load_receipt(6489)
+        self.assertEqual(checked['repository'], 'kanta13jp1/my_web_app')
+        self.assertEqual(checked['pull_request'], 6489)
+        self.assertEqual(len(checked['assets']), 5)
+        seen = set()
+        total_bytes = 0
+        total_decoded = 0
+        for asset in checked['assets']:
+            path = asset['path']
+            self.assertTrue(self.png.is_replaceable_public_png(path))
+            self.assertIn(path, self.png.PUBLIC_WEB_ICON_PATHS)
+            self.assertNotIn(path, seen)
+            seen.add(path)
+            self.assertRegex(asset['base_blob'], self.png.BLOB_RE)
+            self.assertRegex(asset['head_blob'], self.png.BLOB_RE)
+            self.assertNotEqual(asset['base_blob'], asset['head_blob'])
+            total_bytes += asset['bytes']
+            total_decoded += self.png.decoded_size(asset['width'], asset['height'], asset['color_type'])
+        self.assertLessEqual(total_bytes, self.png.MAX_BYTES)
+        self.assertLessEqual(total_decoded, self.png.MAX_DECODED)
+        self.assertEqual(
+            sorted(checked['related_paths']),
+            sorted([
+                'web/favicon.png',
+                'web/icons/Icon-192.png',
+                'web/icons/Icon-512.png',
+                'web/icons/Icon-maskable-192.png',
+                'web/icons/Icon-maskable-512.png',
+                'web/index.html',
+            ]),
+        )
+
+        # Verify PR #6489 visual guidance prompt is attached cleanly in gate.review()
+        import base64
+        import hashlib
+        import struct
+        import zlib
+        signature = b'\x89PNG\r\n\x1a\n'
+        header = self.chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+        end = self.chunk(b'IEND', b'')
+        samples = [
+            signature + header + self.chunk(b'IDAT', zlib.compress(bytes([0, 10 + i, 20 + i, 30 + i]))) + end
+            for i in range(5)
+        ]
+        paths_sorted = sorted(seen)
+        def make_asset(path, raw, idx):
+            return {
+                'path': path,
+                'base_blob': str(idx + 1) * 40,
+                'head_blob': hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest(),
+                'sha256': hashlib.sha256(raw).hexdigest(),
+                'bytes': len(raw), 'width': 1, 'height': 1, 'bit_depth': 8,
+                'color_type': 2, 'mime_type': 'image/png', 'source_commit': '9'*40,
+            }
+        assets_list = [make_asset(p, raw, idx) for idx, (p, raw) in enumerate(zip(paths_sorted, samples))]
+        mock_receipt = {
+            'schema_version': 1, 'repository': 'owner/repo', 'pull_request': 6489,
+            'provider': 'google-gemini', 'endpoint': self.png.ENDPOINT, 'method': 'generateContent',
+            'related_paths': sorted(checked['related_paths']),
+            'assets': assets_list,
+        }
+        state = {'repository': 'owner/repo', 'pr': 6489, 'head': 'a'*40, 'base': 'b'*40,
+                 'files': mock_receipt['related_paths']}
+        blobs = {a['head_blob']: raw for a, raw in zip(assets_list, samples)}
+        head_entries = {a['path']: f"100644 blob {a['head_blob']}\t{a['path']}\0" for a in assets_list}
+        base_entries = {a['path']: f"100644 blob {a['base_blob']}\t{a['path']}\0" for a in assets_list}
+        def git_fn(*args):
+            if args[0] == 'ls-tree':
+                table = head_entries if args[2] == state['head'] else base_entries
+                return table.get(args[4], '').encode()
+            if args[1] == '-s':
+                return str(len(blobs[args[2]])).encode()
+            return blobs[args[2]]
+        diff = 'diff --git a/web/index.html b/web/index.html\n+<link rel="icon" type="image/png" sizes="48x48" href="favicon.png">\n'
+        for idx, a in enumerate(assets_list):
+            p = a['path']
+            diff += f'diff --git a/{p} b/{p}\nindex {idx}111111..{idx}222222 100644\nBinary files a/{p} and b/{p} differ\n'
+        calls = []
+        def provider(url, headers, data=None, method=None):
+            calls.append((url, data))
+            if data is None:
+                return {'models': [{'name': 'models/gemini-test', 'supportedGenerationMethods': ['generateContent']}]}
+            raise RuntimeError('API HTTP 400')
+        with tempfile.TemporaryDirectory() as temp, patch.object(self.png, 'load_receipt', return_value=mock_receipt):
+            directory = Path(temp)
+            assets = self.png.prepare_assets(state, state['files'], git_fn, directory)
+            full_state = dict(state, assets=assets, input_sha256=self.png.input_digest(diff, assets))
+            gate.write(directory/'state.json', full_state)
+            (directory/'input.txt').write_bytes(diff.encode())
+            with patch.dict(os.environ, {'GEMINI_API_KEY': 'test', 'AI_REVIEW_MODEL': 'gemini-test'}), patch.object(gate, 'request', side_effect=provider):
+                with self.assertRaises(RuntimeError):
+                    gate.review(directory)
+        sys_rules = calls[1][1]['systemInstruction']['parts'][0]['text']
+        self.assertIn('Nano Banana favicon and PWA/maskable PNG icons', sys_rules)
+        self.assertIn('80% safe-zone circular maskable clearance', sys_rules)
+        inline = [p['inlineData'] for p in calls[1][1]['contents'][0]['parts'] if 'inlineData' in p]
+        self.assertEqual([base64.b64decode(i['data']) for i in inline], samples)
+
 
 
 class PlatformContextTests(unittest.TestCase):

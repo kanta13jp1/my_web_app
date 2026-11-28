@@ -49,6 +49,24 @@
         ]
       },
       {
+        "source": "/labs/astra-price-boundary/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/labs/skill-json-check/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "**/*.wgsl",
         "headers": [
           {

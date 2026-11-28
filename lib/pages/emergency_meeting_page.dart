@@ -47,9 +47,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     'gpt-5.4',
     'gpt-4o-mini',
     'claude-3-haiku-20240307',
-    'gemini-2.5-flash',
+    'gemini-4-hydrogen',
     'gemma-3n-e2b-it',
-    'deepseek-chat',
+    'deepseek-v4-flash',
   ];
 
   static List<Map<String, dynamic>> _defaultBoardMeetingModels() {

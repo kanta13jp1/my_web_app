@@ -106,6 +106,7 @@ class _BlogComposePageState extends State<BlogComposePage> {
           title: title,
           content: _contentCtrl.text,
           notes: _notesCtrl.text,
+          targetPlatforms: const ['app'],
           tags: _parseTags(),
         );
         _editId = result['id']?.toString();

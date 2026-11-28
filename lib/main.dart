@@ -29,6 +29,7 @@ import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/agent_board_page.dart';
+import 'package:my_web_app/pages/deadline_weight_page.dart';
 import 'package:my_web_app/pages/autonomous_ops_console_page.dart';
 import 'package:my_web_app/pages/micro_mentor_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
@@ -568,7 +569,9 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => LandingPage(
           signupCompletionService: signupCompletionService,
+          shopLoginUri: uri,
         ),
+        settings: settings,
       );
     case '/jev-mario-lab':
       return MaterialPageRoute(
@@ -643,6 +646,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AgentBoardPage(),
         settings: const RouteSettings(name: '/agent-board'),
+      );
+    case '/deadline-weight':
+      return MaterialPageRoute(
+        builder: (_) => const DeadlineWeightPage(),
+        settings: const RouteSettings(name: '/deadline-weight'),
       );
     case '/ai-company-builder':
       return MaterialPageRoute(

@@ -39,4 +39,24 @@ void main() {
       expect(find.textContaining('完全無料'), findsNothing);
     },
   );
+
+  testWidgets(
+    'frames feature comparison factually without unverified superiority claims',
+    (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: UserManualPage()));
+      await tester.scrollUntilVisible(
+        find.text('4. 独自機能・機能差の一覧（比較条件の明記）'),
+        500,
+        maxScrolls: 30,
+      );
+
+      expect(find.textContaining('競合21製品を上回る'), findsNothing);
+      expect(find.text('4. 独自機能・機能差の一覧（比較条件の明記）'), findsOneWidget);
+      expect(
+        find.textContaining('顧客成果の優位性を実証したものではありません'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('実ユーザー比較成果は未検証です'), findsOneWidget);
+    },
+  );
 }

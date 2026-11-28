@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/shop_attribution.dart';
+import '../models/shop_login_continuation.dart';
+import '../services/shop_community_repository.dart';
 import '../services/shop_funnel_service.dart';
 import '../services/shop_service.dart';
 import '../theme/design_tokens.dart';
 import '../view_models/shop_view_models.dart';
+import '../widgets/shop_product_community.dart';
 
 typedef ShopUrlLauncher = Future<bool> Function(Uri uri, bool external);
 
@@ -369,6 +372,7 @@ class DigitalProductPage extends StatefulWidget {
     this.funnel,
     this.urlLauncher,
     this.attributionUri,
+    this.communityRepository,
   });
 
   final String productId;
@@ -377,6 +381,7 @@ class DigitalProductPage extends StatefulWidget {
   final ShopFunnelService? funnel;
   final ShopUrlLauncher? urlLauncher;
   final Uri? attributionUri;
+  final ShopCommunityRepository? communityRepository;
 
   @override
   State<DigitalProductPage> createState() => _DigitalProductPageState();
@@ -413,6 +418,11 @@ const _hexcivScreenshots = <_ProductScreenshot>[
 ];
 
 class _DigitalProductPageState extends State<DigitalProductPage> {
+  final _historyKey = GlobalKey();
+  final _reviewsKey = GlobalKey();
+  late final ShopCommunityRepository? _communityRepository =
+      widget.communityRepository ??
+          (widget.service == null ? SupabaseShopCommunityRepository() : null);
   late final ShopProductViewModel _viewModel = ShopProductViewModel(
     gateway: widget.service ?? ShopService(),
     productId: widget.productId,
@@ -503,7 +513,18 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         builder: (context, _) {
           return Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              key: const ValueKey('product-detail-scroll'),
+              // Reserve space for the shared floating Inbox/AI controls so
+              // the final community action can scroll fully above them.
+              // Include enlarged text and the device's bottom safe area.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                48 +
+                    MediaQuery.textScalerOf(context).scale(48) +
+                    MediaQuery.viewPaddingOf(context).bottom,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1040),
                 child: _buildBody(),
@@ -597,6 +618,16 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         ],
         const SizedBox(height: 32),
         _specs(product),
+        if (_communityRepository != null) ...[
+          const SizedBox(height: 24),
+          ShopProductCommunity(
+            key: ValueKey('community-${product.id}'),
+            product: product,
+            repository: _communityRepository,
+            historyKey: _historyKey,
+            reviewsKey: _reviewsKey,
+          ),
+        ],
       ],
     );
   }
@@ -616,6 +647,12 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             _MetaChip(
               icon: Icons.file_present_outlined,
               label: product.formatLabel,
+            ),
+            _MetaChip(
+              icon: Icons.new_releases_outlined,
+              label: product.version.isEmpty
+                  ? '配布版 未登録'
+                  : '配布版 v${product.version}',
             ),
           ],
         ),
@@ -638,10 +675,29 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
             height: 1.7,
           ),
         ),
+        if (_communityRepository != null)
+          Wrap(
+            spacing: 12,
+            children: [
+              TextButton.icon(
+                key: const ValueKey('product-release-history-link'),
+                onPressed: () => _scrollTo(_historyKey),
+                icon: const Icon(Icons.history),
+                label: const Text('更新情報'),
+              ),
+              TextButton.icon(
+                key: const ValueKey('product-reviews-link'),
+                onPressed: () => _scrollTo(_reviewsKey),
+                icon: const Icon(Icons.star_outline),
+                label: const Text('口コミ・評価'),
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             Text(
               '¥${product.priceJpy}',
@@ -651,7 +707,6 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 8),
             const Text(
               '税込 / 買い切り',
               style: TextStyle(color: DesignTokens.textSecondary, fontSize: 13),
@@ -724,6 +779,18 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
         ),
       ],
     );
+  }
+
+  void _scrollTo(GlobalKey target) {
+    final targetContext = target.currentContext;
+    if (targetContext != null) {
+      unawaited(
+        Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 250),
+        ),
+      );
+    }
   }
 
   Widget _productScreenshotThumbnail(int index) {
@@ -852,7 +919,12 @@ class _DigitalProductPageState extends State<DigitalProductPage> {
           _PrimaryShopButton(
             label: 'ログインして購入',
             icon: Icons.login,
-            onPressed: () => Navigator.of(context).pushNamed('/login'),
+            onPressed: () => Navigator.of(context).pushNamed(
+              ShopLoginContinuation.loginUri(
+                productId: widget.productId,
+                attribution: _attribution,
+              ).toString(),
+            ),
           ),
         ],
       );
