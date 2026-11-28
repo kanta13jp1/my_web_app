@@ -1,0 +1,56 @@
+-- REVIEW ONLY. NEVER RUN. Fresh third connection after A and B have committed.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+select 1 / ((count(*) = 1)::int)
+from public.payroll_transport_fixture_guard where token = :'fixture_token'::uuid;
+do $verify$ declare c integer; begin
+  select count(*) into c from public.asset_payroll_accounts
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001'
+      and id = 'aaaaaaaa-2222-4222-8222-222222222222'
+      and display_label = 'synthetic A' and not archived and target_increase_yen is null;
+  if c <> 1 then raise exception 'account count must equal one'; end if;
+  select count(*) into c from public.asset_payroll_accounts
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001';
+  if c <> 1 then raise exception 'unexpected additional account'; end if;
+  select count(*) into c from payroll_snapshot_private.account_create_receipts_v1
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001'
+      and request_id = 'aaaaaaaa-1111-4111-8111-111111111111'
+      and account_id = 'aaaaaaaa-2222-4222-8222-222222222222';
+  if c <> 1 then raise exception 'committed receipt missing'; end if;
+  select count(*) into c from payroll_snapshot_private.account_create_receipts_v1
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001';
+  if c <> 1 then raise exception 'unexpected extra receipt'; end if;
+  select count(*) into c from payroll_snapshot_private.account_create_heads_v1
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001' and revision = 1;
+  if c <> 1 then raise exception 'revision mismatch'; end if;
+end $verify$;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000001', true);
+do $replay$ declare result jsonb; begin
+  result := public.payroll_account_create_initial_v1(
+    'aaaaaaaa-1111-4111-8111-111111111111',
+    'aaaaaaaa-2222-4222-8222-222222222222', 0, 'synthetic A', true);
+  if result->>'status' is distinct from 'matching_receipt'
+    or result->>'account_id' is distinct from 'aaaaaaaa-2222-4222-8222-222222222222'
+  then raise exception 'committed replay did not identify original request'; end if;
+  begin
+    perform public.payroll_account_create_initial_v1(
+      'aaaaaaaa-1111-4111-8111-111111111111',
+      'aaaaaaaa-2222-4222-8222-222222222222', 0, 'changed synthetic', true);
+    raise exception 'different payload unexpectedly accepted';
+  exception when invalid_parameter_value then null;
+  end;
+end $replay$;
+commit;
+do $after_replay$ declare c integer; begin
+  select count(*) into c from public.asset_payroll_accounts
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001';
+  if c <> 1 then raise exception 'replay added an account'; end if;
+  select count(*) into c from payroll_snapshot_private.account_create_receipts_v1
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001';
+  if c <> 1 then raise exception 'replay added a receipt'; end if;
+  select count(*) into c from payroll_snapshot_private.account_create_heads_v1
+    where user_id = 'aaaaaaaa-0000-4000-8000-000000000001' and revision = 1;
+  if c <> 1 then raise exception 'replay changed revision'; end if;
+end $after_replay$;

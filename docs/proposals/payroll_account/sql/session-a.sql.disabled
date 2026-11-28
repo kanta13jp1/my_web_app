@@ -1,0 +1,23 @@
+-- REVIEW ONLY. NEVER RUN. Synthetic fixture only, isolated verified container.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+-- Guard below is supplemental and cannot attest that a local endpoint is safe.
+select 1 / ((count(*) = 1)::int)
+from public.payroll_transport_fixture_guard where token = :'fixture_token'::uuid;
+set application_name = 'synthetic_payroll_account_a';
+begin isolation level read committed;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000001', true);
+do $test$ declare result jsonb; begin
+  result := public.payroll_account_create_initial_v1(
+    'aaaaaaaa-1111-4111-8111-111111111111',
+    'aaaaaaaa-2222-4222-8222-222222222222', 0, 'synthetic A', true);
+  if result->>'status' is distinct from 'created_in_transaction'
+    or result->>'account_id' is distinct from 'aaaaaaaa-2222-4222-8222-222222222222'
+  then raise exception 'session A did not create expected synthetic request'; end if;
+end $test$;
+\echo SYNTHETIC_A_WAITING_WITH_UNCOMMITTED_ROW
+-- A trusted controller must hold here until it has proved B is blocked by A.
+\prompt 'synthetic-only gate: ' release_gate
+commit;
+\echo SYNTHETIC_A_COMMITTED

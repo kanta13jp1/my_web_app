@@ -1,0 +1,19 @@
+-- REVIEW ONLY. Synthetic disposable fixture only.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+select 1 / ((count(*) = 1)::int) from public.payroll_transport_fixture_guard
+  where token = :'fixture_token'::uuid;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','aaaaaaaa-0000-4000-8000-000000000001',true);
+insert into public.asset_payroll_accounts(user_id,id,display_label) values
+  ('aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-9999-4999-8999-999999999999','synthetic legacy');
+update public.asset_payroll_accounts set display_label = 'synthetic changed', archived = true
+  where id = 'aaaaaaaa-9999-4999-8999-999999999999';
+do $test$ begin
+  if (select count(*) from public.asset_payroll_accounts where
+      id = 'aaaaaaaa-9999-4999-8999-999999999999' and archived
+      and display_label = 'synthetic changed') <> 1
+  then raise exception 'legacy positive control failed'; end if;
+end $test$;
+rollback;

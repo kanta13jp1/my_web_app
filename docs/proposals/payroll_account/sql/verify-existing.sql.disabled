@@ -1,0 +1,29 @@
+-- REVIEW ONLY. NEVER RUN. Check only synthetic C/D, before and after all stages.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+select 1 / ((count(*) = 1)::int)
+from public.payroll_transport_fixture_guard where token = :'fixture_token'::uuid;
+do $preserve$ begin
+  if exists ((select * from isolated_fixture_evidence.accounts except all
+       select * from public.asset_payroll_accounts where user_id in
+       ('cccccccc-0000-4000-8000-000000000003','dddddddd-0000-4000-8000-000000000004'))
+    union all (select * from public.asset_payroll_accounts where user_id in
+       ('cccccccc-0000-4000-8000-000000000003','dddddddd-0000-4000-8000-000000000004')
+       except all select * from isolated_fixture_evidence.accounts))
+  then raise exception 'existing synthetic accounts changed'; end if;
+  if exists ((select * from isolated_fixture_evidence.observations except all
+       select * from public.asset_payroll_balance_observations)
+    union all (select * from public.asset_payroll_balance_observations except all
+       select * from isolated_fixture_evidence.observations))
+  then raise exception 'existing synthetic observations changed'; end if;
+  if exists ((select * from isolated_fixture_evidence.selections except all
+       select * from public.asset_payroll_balance_selections)
+    union all (select * from public.asset_payroll_balance_selections except all
+       select * from isolated_fixture_evidence.selections))
+  then raise exception 'existing synthetic selections changed'; end if;
+  if exists ((select * from isolated_fixture_evidence.history except all
+       select * from public.asset_payroll_balance_selection_history)
+    union all (select * from public.asset_payroll_balance_selection_history except all
+       select * from isolated_fixture_evidence.history))
+  then raise exception 'existing synthetic history changed'; end if;
+end $preserve$;
