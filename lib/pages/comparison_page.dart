@@ -67192,8 +67192,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   static const _pageBackground = Color(0xFF080812);
   static const _borderColor = Color(0xFF2A3044);
   static const _textPrimary = Color(0xFFF5F7FB);
-  static const _textSecondary = Color(0xFFB2BDD3);
-  static const _textMuted = Color(0xFF7E8AA6);
   static const _indigo = Color(0xFF3D5AFE);
 
   static const _featuredCompetitorKeys = <String>[
