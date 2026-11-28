@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import subprocess
+from time import monotonic
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -51,6 +52,9 @@ _DIAGNOSTIC_ROUTES = {
     '/rest/v1/asset_payroll_accounts': 'asset_payroll_accounts',
     '/rest/v1/rpc/asset_management_recent_cfo_assets': 'recent_cfo_assets_rpc',
     '/auth/v1/token': 'auth_token',
+    '/functions/v1/core-hub': 'functions_core_hub',
+    '/functions/v1/ai-hub': 'functions_ai_hub',
+    '/functions/v1/growth-hub': 'functions_growth_hub',
 }
 _DIAGNOSTIC_METHODS = {'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'}
 
@@ -82,7 +86,40 @@ def length_bucket(length):
     return 'above_16384'
 
 
-def report_rejection(method, target, reason, length=None):
+_AI_HUB_DIAGNOSTIC_ACTIONS = {
+    'provider.chat': 'provider_chat',
+    'provider.chat_auto': 'provider_chat_auto',
+    'ai_hub.asset_chat': 'asset_chat',
+    'asset_liability.verify_annual_rate_evidence': 'asset_verify_rate',
+    'asset_subscription.analyze_statement': 'asset_subscription_analyze',
+    'asset.disposable_balance.compute': 'asset_disposable_balance',
+    'expense.classify': 'expense_classify',
+    'payslip.parse': 'payslip_parse',
+}
+
+
+def ai_hub_action_category(body):
+    try:
+        payload = json.loads(body)
+    except (ValueError, RecursionError):
+        return 'unknown'
+    action = payload.get('action') if isinstance(payload, dict) else None
+    if not isinstance(action, str):
+        return 'unknown'
+    if action == 'provider.chat_auto':
+        trace_id = payload.get('trace_id')
+        if trace_id == 'asset-management-ai-summary':
+            return 'provider_chat_auto_asset_summary'
+        if trace_id == 'savings-life-plan-proposal':
+            return 'provider_chat_auto_savings_plan'
+        message = payload.get('message')
+        if isinstance(message, str) and message.lstrip().startswith(
+                'あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。'):
+            return 'provider_chat_auto_waste_training'
+    return _AI_HUB_DIAGNOSTIC_ACTIONS.get(action, 'unknown')
+
+
+def report_rejection(method, target, reason, length=None, *, action_category=None):
     # urlsplit may reject malformed targets; never print the untrusted input.
     try:
         path = urlsplit(target).path
@@ -93,6 +130,8 @@ def report_rejection(method, target, reason, length=None):
              'reason': reason if reason in {'denied_mutation', 'invalid_length', 'oversize_body'} else 'unknown',
              'phase': PHASE if PHASE in PHASES else 'unknown',
              'length_bucket': length_bucket(length)}
+    if action_category is not None:
+        event['action_category'] = action_category
     print('FIXTURE_REJECTED ' + json.dumps(event, sort_keys=True), flush=True)
 
 
@@ -180,6 +219,27 @@ def dispatch(method, target, headers, body=b''):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def _read_rejected_body(self, length):
+        # Diagnostics must not hold the fixture server open on a partial upload.
+        deadline = monotonic() + 1
+        original_timeout = self.connection.gettimeout()
+        body = bytearray()
+        try:
+            while len(body) < length:
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    return None
+                self.connection.settimeout(remaining)
+                chunk = self.rfile.read1(length - len(body))
+                if not chunk:
+                    return None
+                body.extend(chunk)
+        except OSError:
+            return None
+        finally:
+            self.connection.settimeout(original_timeout)
+        return body
+
     def _handle(self):
         raw_length = self.headers.get('content-length', '0')
         if (self.headers.get('transfer-encoding') or len(raw_length) > 6 or
@@ -193,7 +253,16 @@ class Handler(BaseHTTPRequestHandler):
         if length > 1024:
             if self.command not in {'GET', 'OPTIONS'}:
                 COUNTS['rejected_writes'] += 1
-                report_rejection(self.command, getattr(self, 'path', ''), 'oversize_body', length)
+                path = getattr(self, 'path', '')
+                action_category = None
+                # This server only accepts synthetic loopback traffic in an isolated test.
+                # Classify known actions in a bounded body without logging its contents.
+                if self.command == 'POST' and path.partition('?')[0] == '/functions/v1/ai-hub' and length <= 4096:
+                    rejected_body = self._read_rejected_body(length)
+                    if rejected_body is not None:
+                        action_category = ai_hub_action_category(rejected_body)
+                report_rejection(self.command, path, 'oversize_body', length,
+                                 action_category=action_category)
             self.send_error(413)
             return
         body = self.rfile.read(length)
