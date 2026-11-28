@@ -3,6 +3,12 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-10-07 (WEB版 cloud — OMOCHA WORKS + AI エージェント カンバン盤)
+
+- `feedback_success_20261007_web_omocha_kanban.md` — `/grill-me` 1 問 1 答で列/件数/鮮度/更新方式/テスト範囲を先に確定 / 変換ロジックを `(rows, now)` 純粋関数へ / `wbs_tasks.instance` が既に実エージェントデータ / 未知 agent ID はそのまま通して新 fleet に追従。
+- `feedback_correction_20261007_web_omocha_kanban.md` — 元ツイートの「みてるだけで楽しい」を"誠実化"の名で削りかけ指摘で停止 (演出値は削除ではなくラベル分岐が正解) / 失敗テストを実装の時刻源を読まずに仮説修正して外した。
+- `project_20261007_web_omocha_kanban.md` — 新 route は `kAllAppRoutes` にも必須 / `E2E-Exception:` `High-Risk-Ultrareview-Exception:` の機械可読形式 (body edited では再走しない) / ci-auto-fix bot push と `action_required` / `IntrinsicHeight`+`ListView` の実行時 assert / `AssetManagementPage` の `_now` は `debugCalendarNow` で上書き不可 / クラウドセッションの環境差分 (Dart SDK・notebooklm・ANON_KEY 無し)。
+
 ## 2026-09-21 — Skill curation
 
 - [Agent skill curation completion](vault/decision_20260921_skill_curation_completion.md) — canonical adoption decisions, upstream integration, offline validation, and review handoff.
@@ -40,6 +46,9 @@ memory from true orphan files.
 - [[feedback_success_20260711_web_seo_h7]]
 - [[feedback_correction_20260711_web_seo_h7]]
 - [[project_20260711_web_seo_h7]]
+- [[feedback_success_20261007_web_omocha_kanban]]
+- [[feedback_correction_20261007_web_omocha_kanban]]
+- [[project_20261007_web_omocha_kanban]]
 - [[project_20260417_win_opus47]]
 - [[project_20260417_win_web_disabled]]
 - [[project_20260419_ps5]]
@@ -129,4 +138,20 @@ memory from true orphan files.
 - 🟡 AI大学: 学習リマインダー通知バッチ (notification-center EF action)
 - 🟡 Rule 17 WF health チェック (最近失敗した run の集計)
 - 🟢 t-1 ブログ dispatch (未投稿 draft があれば)
+-->
+
+<!-- wrap-up 20261007
+未完了: 0 件 (#4304 / #4324 / #4396 すべて main へマージ済)
+
+ユーザー側の残操作 (こちらからは実行不可):
+- fine-grained PAT (対象 my_web_app / Actions: read + Metadata: read) 発行 →
+  Supabase Function Secret `GH_ACTIONS_READ_TOKEN` に設定。
+  設定まで OMOCHA WORKS (/autonomous-ops-console) はシミュレーション表示のまま。
+
+次回優先候補 (Step 6 参照):
+- 🔴 GH_ACTIONS_READ_TOKEN 設定後の /autonomous-ops-console 実データ疎通確認 (バッジが「実データ · GitHub Actions」になるか)
+- 🟡 /agent-board をホーム導線 (home_tool_catalog) とサイトマップに露出させ、発見可能にする
+- 🟡 /agent-board の「ブロック」列に理由 (recovery_plan) を出し、眺めるだけで詰まりが分かるようにする
+- 🟢 /wrap-up skill のクラウド (Linux) 対応: memory/ パスをリポジトリ内に、NotebookLM/WBS-SYNC を環境検出で条件分岐
+- 🟢 /meal-log の AI 栄養推定 (food_analysis EF 未実装 / UI に内部メモ露出) の解消
 -->
