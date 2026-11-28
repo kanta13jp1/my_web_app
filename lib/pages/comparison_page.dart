@@ -7,6 +7,7 @@ import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_outcome_cards_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_pain_points_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_related_comparisons_section.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_switch_plan_section.dart';
@@ -67693,7 +67694,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               children: [
                 _buildBreadcrumb(context),
                 _buildHero(context),
-                _buildOutcomeCards(),
+                ComparisonOutcomeCardsSection(accentColor: _info.accentColor),
                 ComparisonPainPointsSection(
                   competitorName: _info.name,
                   painPoints: _info.painPoints,
@@ -67971,63 +67972,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     );
   }
 
-  Widget _buildOutcomeCards() {
-    final cards = [
-      _buildOutcomeCard(
-        icon: Icons.hub_rounded,
-        title: '日常の作業をひとつに集約',
-        body: 'ノート・タスク・財務・習慣・AI大学まで、別アプリで分かれていた流れをまとめます。',
-        accent: _info.accentColor,
-      ),
-      _buildOutcomeCard(
-        icon: Icons.currency_yen_rounded,
-        title: 'まず無料で始めて、必要になってから広げる',
-        body: '比較検討の段階でも登録しやすく、月額の積み上がりを気にせず試せます。',
-        accent: _orange,
-      ),
-      _buildOutcomeCard(
-        icon: Icons.auto_graph_rounded,
-        title: 'AI が「今日やること」を1件に絞る',
-        body: '判断・実行・振り返りまでを、ひとつの流れとして支援します。',
-        accent: _indigo,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 760) {
-                return Column(
-                  children: cards
-                      .map(
-                        (card) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: card,
-                        ),
-                      )
-                      .toList(),
-                );
-              }
-
-              return Row(
-                children: [
-                  for (var i = 0; i < cards.length; i++) ...[
-                    Expanded(child: cards[i]),
-                    if (i != cards.length - 1) const SizedBox(width: 12),
-                  ],
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildFeatureTable() {
     if (!_showLegacyClaims) {
       return ComparisonEvidenceSection(
@@ -68237,55 +68181,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOutcomeCard({
-    required IconData icon,
-    required String title,
-    required String body,
-    required Color accent,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surfacePrimary,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _textPrimary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(
-              fontSize: 13,
-              color: _textSecondary,
-              height: 1.7,
-            ),
           ),
         ],
       ),
