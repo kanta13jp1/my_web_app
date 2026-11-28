@@ -9,7 +9,9 @@ import '../features/horse_racing/horse_racing_data_gateway.dart';
 import '../features/horse_racing/horse_racing_decision_support.dart';
 import '../features/horse_racing/horse_racing_performance_view_model.dart';
 import '../features/horse_racing/horse_racing_tab_and_ticket_helper.dart';
+import '../features/horse_racing/horse_racing_today_action_bar.dart';
 import '../widgets/home_back_button.dart';
+import '../widgets/horse_racing_venue_header.dart';
 import 'horse_provider_leaderboard_page.dart';
 import 'horseracing_race_detail_page.dart';
 
@@ -604,6 +606,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildTodayTab() {
+    final total = _todayRaces.length;
+    final predicted = _todayRaces.where(_hasPrediction).length;
+    final entriesReady =
+        _todayRaces.where((race) => _entriesOf(race).length >= 3).length;
+    final next = _nextRace();
+    final nextLabel = next == null
+        ? '次走なし'
+        : '${next['venue'] ?? ''} ${next['race_number'] ?? '?'}R ${next['post_time'] ?? ''}';
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -633,7 +644,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
         ),
-        _buildTodayActionBar(),
+        HorseRacingTodayActionBar(
+          totalRaces: total,
+          predictedRaces: predicted,
+          entriesReadyRaces: entriesReady,
+          nextRaceLabel: nextLabel,
+          isPredicting: _isPredicting,
+          predictionStatus: _predictionStatus,
+          onGeneratePredictions: _runAiPredictions,
+        ),
         if (_todayRaces.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -678,77 +697,6 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         else
           _buildTodayRacesList(shrinkWrap: true),
       ],
-    );
-  }
-
-  Widget _buildTodayActionBar() {
-    final total = _todayRaces.length;
-    final predicted = _todayRaces.where(_hasPrediction).length;
-    final entriesReady =
-        _todayRaces.where((race) => _entriesOf(race).length >= 3).length;
-    final next = _nextRace();
-    final nextLabel = next == null
-        ? '次走なし'
-        : '${next['venue'] ?? ''} ${next['race_number'] ?? '?'}R ${next['post_time'] ?? ''}';
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _summaryChip('レース', '$total件', Icons.event_available),
-              _summaryChip('AI予想', '$predicted/$total', Icons.psychology),
-              _summaryChip('出走馬あり', '$entriesReady件', Icons.list_alt),
-              _summaryChip('次走', nextLabel, Icons.schedule),
-              FilledButton.icon(
-                onPressed: _isPredicting || total == 0
-                    ? null
-                    : () => _runAiPredictions(),
-                icon: _isPredicting
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.auto_awesome, size: 16),
-                label: Text(_isPredicting ? 'AI予想中' : '今日のAI予想を今すぐ生成'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF6B35),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_predictionStatus != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              _predictionStatus!,
-              style: const TextStyle(
-                color: Color(0xFFFFB199),
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -899,93 +847,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildVenueHeader(String venue, int raceCount) {
-    const narVenues = {
-      '金沢',
-      '園田',
-      '姫路',
-      '水沢',
-      '門別',
-      '盛岡',
-      '浦和',
-      '船橋',
-      '大井',
-      '川崎',
-      '笠松',
-      '名古屋',
-      '高知',
-      '佐賀',
-      '帯広',
-      '不明',
-    };
-    const overseasVenues = {'シャンティン', 'シャティン', 'Sha Tin', '沙田'};
-    final isOverseas = overseasVenues.contains(venue);
-    final isJra = !isOverseas && !narVenues.contains(venue);
-    final color = isOverseas
-        ? const Color(0xFF059669)
-        : isJra
-            ? const Color(0xFF2563EB)
-            : const Color(0xFF7C3AED);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isOverseas
-                ? Icons.flight_takeoff
-                : isJra
-                    ? Icons.stadium
-                    : Icons.location_on,
-            color: color,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            venue,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              isOverseas
-                  ? '海外'
-                  : isJra
-                      ? 'JRA'
-                      : '地方',
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
-            ),
-          ),
-          const Spacer(),
-          Text(
-            '$raceCount R',
-            style: TextStyle(
-              color: color.withValues(alpha: 0.8),
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
+    return HorseRacingVenueHeader(
+      venue: venue,
+      raceCount: raceCount,
     );
   }
 

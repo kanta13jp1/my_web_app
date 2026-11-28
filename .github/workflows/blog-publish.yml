@@ -16,13 +16,33 @@ on:
       platforms:
         # ⚠️ 2026-07-12: Qiita アカウント利用停止につき既定から qiita を除外。
         # 停止解除まで qiita を指定しないこと。
-        description: '投稿先プラットフォーム (通常は devto のみ / qiita は停止中)'
+        description: '投稿先プラットフォーム (devto / app / app,devto; qiita は停止中)'
         required: false
         default: 'devto'
       dry_run:
         description: 'ドライラン (true=投稿しない, false=実投稿)'
         required: false
         default: 'false'
+      app_title:
+        description: 'my_web_app 公式ブログのタイトル (省略時は本文 H1 / frontmatter から抽出)'
+        required: false
+        default: ''
+      app_slug:
+        description: '重複防止用スラッグ / idempotency_key (例: blog-20261129-ai-daily-routine)'
+        required: false
+        default: ''
+      app_content_b64:
+        description: 'UTF-8 Markdown 本文の Base64 (別リポジトリからの dispatch 用)'
+        required: false
+        default: ''
+      app_tags:
+        description: 'my_web_app 公式ブログ用タグ (カンマ区切り; 省略時は frontmatter または既定値)'
+        required: false
+        default: ''
+      app_notes:
+        description: 'my_web_app 公式ブログの監査メモ (例: idempotency_key=...)'
+        required: false
+        default: ''
   schedule:
     # UTC 時刻。JST = UTC+9 なので、12:00 UTC = 21:00 JST (毎日夜9時)
     - cron: '0 12 * * *'  # 毎日 12:00 UTC = 21:00 JST
@@ -53,12 +73,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
+      # ── Step 1.5: プラットフォーム判定 & 未投稿ドラフト自動選択 ─────────
       - name: Resolve publish draft
         id: auto_select
         env:
           DRAFT_PATH_INPUT: ${{ github.event.inputs.draft_path }}
+          PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
         run: |
+          HAS_APP_TARGET="false"
+          HAS_EXTERNAL_TARGET="false"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            HAS_EXTERNAL_TARGET="true"
+          else
+            NORMALIZED_PLATFORMS=$(printf '%s' "${PLATFORMS_INPUT:-devto}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+            IFS=',' read -r -a PLATFORM_LIST <<< "$NORMALIZED_PLATFORMS"
+            for p in "${PLATFORM_LIST[@]}"; do
+              case "$p" in
+                app) HAS_APP_TARGET="true" ;;
+                qiita|devto) HAS_EXTERNAL_TARGET="true" ;;
+              esac
+            done
+          fi
+          echo "has_app_target=$HAS_APP_TARGET" >> "$GITHUB_OUTPUT"
+          echo "has_external_target=$HAS_EXTERNAL_TARGET" >> "$GITHUB_OUTPUT"
+
+          if [ "$HAS_EXTERNAL_TARGET" = "false" ]; then
+            echo "has_draft=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ External platforms (qiita/devto) not requested; skipping external draft selection."
+            exit 0
+          fi
+
           # docs/blog-drafts/ から未投稿ドラフトを日付順(古い順)で探す
           # YYYY-MM-DD.md 形式の日次自動レポートはスキップ
           # frontmatter なし (# 見出しのみ) のファイルも対象
@@ -115,7 +159,7 @@ jobs:
       # ── Step 1.7: DB status='ready' 記事の自動公開 ───────────────────────
       # admin UI で「公開準備完了」に設定した記事を blog.publish_post EF で自動公開する
       - name: Step 1.7 - Auto-publish DB ready posts
-        if: github.event_name == 'schedule' || github.event.inputs.dry_run != 'true'
+        if: github.event_name == 'schedule' || (github.event.inputs.dry_run != 'true' && steps.auto_select.outputs.has_external_target == 'true')
         continue-on-error: true
         env:
           SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
@@ -177,6 +221,25 @@ jobs:
               except Exception as e:
                   print(f"  ⚠️ Failed: {e}")
           PY
+
+      # ── Step 1.8: my_web_app 公式ブログ (`target_platforms: ['app']`) 公開 ─
+      - name: Step 1.8 - Publish to my_web_app blog (app)
+        if: steps.auto_select.outputs.has_app_target == 'true'
+        id: app_publish
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRAFT_PATH: ${{ steps.auto_select.outputs.draft_path || github.event.inputs.draft_path }}
+          APP_TITLE: ${{ github.event.inputs.app_title }}
+          APP_SLUG: ${{ github.event.inputs.app_slug }}
+          APP_CONTENT_B64: ${{ github.event.inputs.app_content_b64 }}
+          APP_TAGS: ${{ github.event.inputs.app_tags }}
+          APP_NOTES: ${{ github.event.inputs.app_notes }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          python3 scripts/publish_app_blog_post.py \
+            --github-output "$GITHUB_OUTPUT" \
+            --trace-id "$TRACE_ID"
 
       # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
       - name: Step 2 - Extract metadata from draft
@@ -498,9 +561,13 @@ jobs:
       - name: Step 6 - schedule_task_runs 記録
         if: always()
         env:
-          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title || steps.app_publish.outputs.title || github.event.inputs.app_title }}
           QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
           DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
+          APP_POST_ID: ${{ steps.app_publish.outputs.post_id }}
+          APP_URL: ${{ steps.app_publish.outputs.app_url }}
+          APP_DEDUP_ACTION: ${{ steps.app_publish.outputs.dedup_action }}
+          HAS_APP_TARGET: ${{ steps.auto_select.outputs.has_app_target }}
           DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
         run: |
           DRY_RUN="$DRY_RUN_INPUT"
@@ -510,7 +577,12 @@ jobs:
              [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
             STATUS="failure"
           fi
-          SUMMARY="blog-publish: $ARTICLE_TITLE | dry_run=$DRY_RUN | qiita=$QIITA_URL | devto=$DEVTO_URL"
+          if [ "$HAS_APP_TARGET" = "true" ] && \
+             [ "$DRY_RUN" != "true" ] && \
+             [ -z "$APP_POST_ID" ]; then
+            STATUS="failure"
+          fi
+          SUMMARY="blog-publish: $ARTICLE_TITLE | dry_run=$DRY_RUN | qiita=$QIITA_URL | devto=$DEVTO_URL | app=${APP_POST_ID}(${APP_DEDUP_ACTION})"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -524,11 +596,14 @@ jobs:
       - name: Job Summary
         if: always()
         env:
-          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
-          DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path }}
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title || steps.app_publish.outputs.title || github.event.inputs.app_title }}
+          DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path || github.event.inputs.draft_path }}
           DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
           QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
           DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
+          APP_POST_ID: ${{ steps.app_publish.outputs.post_id }}
+          APP_URL: ${{ steps.app_publish.outputs.app_url }}
+          APP_DEDUP_ACTION: ${{ steps.app_publish.outputs.dedup_action }}
         run: |
           DRY_RUN="$DRY_RUN_INPUT"
           QIITA="$QIITA_URL"
@@ -542,6 +617,11 @@ jobs:
             echo "| ドラフト | \`$DRAFT_PATH_OUT\` |"
             echo "| タイトル | $ARTICLE_TITLE |"
             echo "| ドライラン | $DRY_RUN |"
+            if [ -n "$APP_POST_ID" ]; then
+              echo "| my_web_app (公式ブログ) | \`$APP_DEDUP_ACTION\` (id=\`$APP_POST_ID\`) ${APP_URL:+[公開URL]($APP_URL)} |"
+            else
+              echo "| my_web_app (公式ブログ) | スキップ |"
+            fi
             if [ -n "$QIITA" ]; then
               echo "| Qiita | [投稿済み]($QIITA) |"
             else
@@ -558,8 +638,8 @@ jobs:
       - name: DLQ — record failure to incident-reports
         if: failure()
         env:
-          DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path }}
-          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path || github.event.inputs.draft_path }}
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title || steps.app_publish.outputs.title || github.event.inputs.app_title }}
           GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
           BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
           PLATFORMS_INPUT: ${{ github.event.inputs.platforms }}
