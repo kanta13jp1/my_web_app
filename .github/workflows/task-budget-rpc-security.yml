@@ -1,0 +1,41 @@
+name: Task budget RPC security
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261102230402_harden_task_budget_rpc.sql'
+      - 'scripts/task_budget_rpc_contract.sql'
+      - '.github/workflows/task-budget-rpc-security.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: task-budget-rpc-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  isolated-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: budget_rpc_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Test RPC authorization and service role behavior
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: ci-only-password
+          PGDATABASE: budget_rpc_test
+        run: psql --no-psqlrc -v ON_ERROR_STOP=1 -f scripts/task_budget_rpc_contract.sql
