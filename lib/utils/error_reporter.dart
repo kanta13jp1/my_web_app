@@ -40,6 +40,9 @@ class ErrorReporterDiagnosticSnapshot {
     required this.suppressedThrottleCount,
     required this.uniqueFingerprints,
     required this.platform,
+    this.sentryReportedCount = 0,
+    this.suppressedSentryDuplicateCount = 0,
+    this.suppressedSentryThrottleCount = 0,
   });
 
   final bool sentryEnabled;
@@ -49,6 +52,9 @@ class ErrorReporterDiagnosticSnapshot {
   final int suppressedThrottleCount;
   final int uniqueFingerprints;
   final String platform;
+  final int sentryReportedCount;
+  final int suppressedSentryDuplicateCount;
+  final int suppressedSentryThrottleCount;
 }
 
 class ErrorReporter {
@@ -56,6 +62,7 @@ class ErrorReporter {
   static final ErrorReporter instance = ErrorReporter._();
 
   static const int _maxPerSession = 10;
+  static const int _maxSentryEventsPerSession = 10;
   static const String _sentryDsn = String.fromEnvironment('SENTRY_DSN');
   static const String _sentryEnvironment =
       String.fromEnvironment('SENTRY_ENVIRONMENT');
@@ -66,9 +73,13 @@ class ErrorReporter {
   );
 
   final Set<String> _seen = {};
+  final Set<String> _seenSentryFingerprints = {};
   int _count = 0;
   int _suppressedDuplicateCount = 0;
   int _suppressedThrottleCount = 0;
+  int _sentryReportedCount = 0;
+  int _suppressedSentryDuplicateCount = 0;
+  int _suppressedSentryThrottleCount = 0;
   bool _isReporting = false;
   bool _handlersInstalled = false;
   bool _sentryEnabled = false;
@@ -92,6 +103,9 @@ class ErrorReporter {
       suppressedThrottleCount: _suppressedThrottleCount,
       uniqueFingerprints: _seen.length,
       platform: kIsWeb ? 'web' : 'vm',
+      sentryReportedCount: _sentryReportedCount,
+      suppressedSentryDuplicateCount: _suppressedSentryDuplicateCount,
+      suppressedSentryThrottleCount: _suppressedSentryThrottleCount,
     );
   }
 
@@ -111,9 +125,13 @@ class ErrorReporter {
   @visibleForTesting
   void resetForTesting() {
     _seen.clear();
+    _seenSentryFingerprints.clear();
     _count = 0;
     _suppressedDuplicateCount = 0;
     _suppressedThrottleCount = 0;
+    _sentryReportedCount = 0;
+    _suppressedSentryDuplicateCount = 0;
+    _suppressedSentryThrottleCount = 0;
     _isReporting = false;
     _sentryEnabled = false;
     _testSentrySink = null;
@@ -229,6 +247,71 @@ class ErrorReporter {
     }
   }
 
+  @visibleForTesting
+  void configureSentryForTesting(SentryFlutterOptions options) =>
+      _configureSentry(options);
+
+  @visibleForTesting
+  static String buildSentryEventFingerprint(SentryEvent event) {
+    final exceptions = event.exceptions;
+    if (exceptions != null && exceptions.isNotEmpty) {
+      final primary = exceptions.last;
+      final type = primary.type?.trim() ?? '';
+      final rawValue = primary.value ?? event.throwable?.toString() ?? '';
+      final cleanValue = sanitizeMessage(rawValue);
+      final clippedValue = cleanValue.substring(0, min(120, cleanValue.length));
+
+      SentryStackFrame? topFrame;
+      for (final ex in exceptions.reversed) {
+        final frames = ex.stackTrace?.frames;
+        if (frames != null && frames.isNotEmpty) {
+          topFrame = frames.last;
+          break;
+        }
+      }
+
+      final frameSig = topFrame == null
+          ? ''
+          : '${topFrame.fileName ?? topFrame.absPath ?? ''}:'
+              '${topFrame.function ?? ''}:'
+              '${topFrame.lineNo ?? ''}:'
+              '${topFrame.colNo ?? ''}';
+      return 'exc|$type|$clippedValue|$frameSig';
+    }
+
+    final throwable = event.throwable;
+    if (throwable != null) {
+      final clean = sanitizeMessage(throwable.toString());
+      final clipped = clean.substring(0, min(120, clean.length));
+      return 'throwable|${throwable.runtimeType}|$clipped';
+    }
+
+    final formatted = event.message?.formatted;
+    if (formatted != null && formatted.isNotEmpty) {
+      final clean = sanitizeMessage(formatted);
+      final clipped = clean.substring(0, min(120, clean.length));
+      return 'msg|$clipped';
+    }
+
+    return 'unknown|${event.transaction ?? ''}|${event.culprit ?? ''}';
+  }
+
+  @visibleForTesting
+  SentryEvent? beforeSendSentryEvent(SentryEvent event, Hint hint) {
+    final fingerprint = buildSentryEventFingerprint(event);
+    if (_seenSentryFingerprints.contains(fingerprint)) {
+      _suppressedSentryDuplicateCount++;
+      return null;
+    }
+    if (_sentryReportedCount >= _maxSentryEventsPerSession) {
+      _suppressedSentryThrottleCount++;
+      return null;
+    }
+    _seenSentryFingerprints.add(fingerprint);
+    _sentryReportedCount++;
+    return event;
+  }
+
   void _configureSentry(SentryFlutterOptions options) {
     final environment = _sentryEnvironment.trim().isNotEmpty
         ? _sentryEnvironment.trim()
@@ -240,7 +323,8 @@ class ErrorReporter {
       ..dsn = _sentryDsn.trim()
       ..environment = environment
       ..debug = _sentryDebug
-      ..sendDefaultPii = false;
+      ..sendDefaultPii = false
+      ..beforeSend = beforeSendSentryEvent;
 
     if (_sentryRelease.trim().isNotEmpty) {
       options.release = _sentryRelease.trim();
