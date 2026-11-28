@@ -12,7 +12,9 @@ import '../services/inbox_capture_service.dart';
 import '../services/note_semantic_search_service.dart';
 import '../services/note_tag_hierarchy_service.dart';
 import '../services/note_tag_service.dart';
+import '../services/note_wiki_link_service.dart';
 import '../services/public_memo_service.dart';
+import '../widgets/note_hierarchy_tree_view.dart';
 import 'note_editor_page.dart';
 
 enum _NoteCardAction {
@@ -93,6 +95,8 @@ class _NoteListPageState extends State<NoteListPage> {
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
   bool _showInboxOnly = false;
+  bool _showHierarchyTree = false;
+  final Set<String> _expandedTreeNoteIds = <String>{};
   List<Map<String, dynamic>> _notes = [];
   List<_LocalDraftEntry> _draftEntries = [];
   Set<String> _publishedNoteIds = <String>{};
@@ -607,7 +611,7 @@ class _NoteListPageState extends State<NoteListPage> {
           .select(
             'id, title, content, created_at, updated_at, is_pinned, is_favorite, '
             'reminder_date, tags, capture_status, capture_source, inbox_saved_at, '
-            'notebook_collection_id',
+            'notebook_collection_id, parent_note_id',
           )
           .eq('user_id', userId)
           .eq('is_archived', false)
@@ -1919,44 +1923,57 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SegmentedButton<_NoteListView>(
-                showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment<_NoteListView>(
-                    value: _NoteListView.all,
-                    icon: Icon(Icons.list_alt),
-                    label: Text('すべて'),
-                  ),
-                  ButtonSegment<_NoteListView>(
-                    value: _NoteListView.favorites,
-                    icon: Icon(
-                      Icons.star_border,
-                      key: Key('note_list_page_favorites_filter'),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                SegmentedButton<_NoteListView>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment<_NoteListView>(
+                      value: _NoteListView.all,
+                      icon: Icon(Icons.list_alt),
+                      label: Text('すべて'),
                     ),
-                    label: Text('お気に入り'),
-                  ),
-                  ButtonSegment<_NoteListView>(
-                    value: _NoteListView.inbox,
-                    icon: Icon(
-                      Icons.inbox_outlined,
-                      key: Key('note_list_page_inbox_filter'),
+                    ButtonSegment<_NoteListView>(
+                      value: _NoteListView.favorites,
+                      icon: Icon(
+                        Icons.star_border,
+                        key: Key('note_list_page_favorites_filter'),
+                      ),
+                      label: Text('お気に入り'),
                     ),
-                    label: Text('Inbox'),
-                  ),
-                ],
-                selected: <_NoteListView>{
-                  if (_showInboxOnly)
-                    _NoteListView.inbox
-                  else if (_showFavoritesOnly)
-                    _NoteListView.favorites
-                  else
-                    _NoteListView.all,
-                },
-                onSelectionChanged: (selection) =>
-                    _setListView(selection.single),
-              ),
+                    ButtonSegment<_NoteListView>(
+                      value: _NoteListView.inbox,
+                      icon: Icon(
+                        Icons.inbox_outlined,
+                        key: Key('note_list_page_inbox_filter'),
+                      ),
+                      label: Text('Inbox'),
+                    ),
+                  ],
+                  selected: <_NoteListView>{
+                    if (_showInboxOnly)
+                      _NoteListView.inbox
+                    else if (_showFavoritesOnly)
+                      _NoteListView.favorites
+                    else
+                      _NoteListView.all,
+                  },
+                  onSelectionChanged: (selection) =>
+                      _setListView(selection.single),
+                ),
+                FilterChip(
+                  key: const Key('note_list_tree_view_toggle'),
+                  avatar: const Icon(Icons.account_tree_outlined, size: 16),
+                  label: const Text('階層ツリー'),
+                  selected: _showHierarchyTree,
+                  onSelected: (bool selected) {
+                    setState(() => _showHierarchyTree = selected);
+                  },
+                ),
+              ],
             ),
           ),
           if (tagOptions.isNotEmpty)
@@ -2115,85 +2132,111 @@ class _NoteListPageState extends State<NoteListPage> {
                           ],
                         ),
                       )
-                    : ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          if (inboxEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              'Inbox（未整理）',
-                              '思いついたことをそのまま置き、あとから整理できます。',
-                            ),
-                            ...inboxEntries.map(
-                              (note) => _buildNoteCard(context, note),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          if (!_showInboxOnly &&
-                              _searchQuery.isEmpty &&
-                              _selectedTag == null &&
-                              _draftEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              '下書き',
-                              'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
-                            ),
-                            ..._draftEntries.map(
-                              (draft) => _buildDraftCard(context, draft),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          if (reminderEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              'リマインダー',
-                              'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
-                            ),
-                            ...reminderEntries.map(
-                              (note) => _buildNoteCard(
-                                context,
-                                note,
-                                highlightReminder: true,
+                    : (_showHierarchyTree && visibleNotes.isNotEmpty)
+                        ? NoteHierarchyTreeView(
+                            notes: visibleNotes
+                                .map(
+                                  (Map<String, dynamic> note) => NoteSummary(
+                                    id: _noteId(note),
+                                    title: _noteTitle(note),
+                                    content: note['content'] as String? ?? '',
+                                    parentNoteId:
+                                        note['parent_note_id']?.toString(),
+                                  ),
+                                )
+                                .toList(growable: false),
+                            expandedIds: _expandedTreeNoteIds,
+                            onToggleExpand: (String id) {
+                              setState(() {
+                                if (!_expandedTreeNoteIds.remove(id)) {
+                                  _expandedTreeNoteIds.add(id);
+                                }
+                              });
+                            },
+                            onOpenNote: (NoteSummary note) =>
+                                _navigateToEditor(context, note.id),
+                            onAddSubpage: (NoteSummary note) =>
+                                _navigateToEditor(context, null, note.id),
+                          )
+                        : ListView(
+                            padding: const EdgeInsets.all(16),
+                            children: [
+                              if (inboxEntries.isNotEmpty) ...[
+                                _buildSectionHeader(
+                                  'Inbox（未整理）',
+                                  '思いついたことをそのまま置き、あとから整理できます。',
+                                ),
+                                ...inboxEntries.map(
+                                  (note) => _buildNoteCard(context, note),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              if (!_showInboxOnly &&
+                                  _searchQuery.isEmpty &&
+                                  _selectedTag == null &&
+                                  _draftEntries.isNotEmpty) ...[
+                                _buildSectionHeader(
+                                  '下書き',
+                                  'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
+                                ),
+                                ..._draftEntries.map(
+                                  (draft) => _buildDraftCard(context, draft),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              if (reminderEntries.isNotEmpty) ...[
+                                _buildSectionHeader(
+                                  'リマインダー',
+                                  'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
+                                ),
+                                ...reminderEntries.map(
+                                  (note) => _buildNoteCard(
+                                    context,
+                                    note,
+                                    highlightReminder: true,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              if (widget.prioritizeShareCandidates &&
+                                  shareCandidateEntries.isNotEmpty) ...[
+                                _buildSectionHeader(
+                                  '共有向け候補',
+                                  'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
+                                ),
+                                ...shareCandidateEntries.map((entry) {
+                                  final note =
+                                      entry['note'] as Map<String, dynamic>;
+                                  final score = entry['score'] as int;
+                                  final reasons = List<String>.from(
+                                    entry['reasons'] as List,
+                                  );
+                                  return _buildNoteCard(
+                                    context,
+                                    note,
+                                    highlightShareCandidate: true,
+                                    shareScore: score,
+                                    shareReasons: reasons,
+                                  );
+                                }),
+                                const SizedBox(height: 8),
+                              ],
+                              if (remainingNotes.isNotEmpty)
+                                _buildSectionHeader(
+                                  widget.prioritizeShareCandidates
+                                      ? 'すべてのメモ'
+                                      : 'メモ一覧',
+                                  _showFavoritesOnly
+                                      ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
+                                      : widget.prioritizeShareCandidates
+                                          ? '共有候補の下に、残りのメモを時系列で表示します。'
+                                          : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
+                                ),
+                              ...remainingNotes.map(
+                                (note) => _buildNoteCard(context, note),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          if (widget.prioritizeShareCandidates &&
-                              shareCandidateEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              '共有向け候補',
-                              'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
-                            ),
-                            ...shareCandidateEntries.map((entry) {
-                              final note =
-                                  entry['note'] as Map<String, dynamic>;
-                              final score = entry['score'] as int;
-                              final reasons = List<String>.from(
-                                entry['reasons'] as List,
-                              );
-                              return _buildNoteCard(
-                                context,
-                                note,
-                                highlightShareCandidate: true,
-                                shareScore: score,
-                                shareReasons: reasons,
-                              );
-                            }),
-                            const SizedBox(height: 8),
-                          ],
-                          if (remainingNotes.isNotEmpty)
-                            _buildSectionHeader(
-                              widget.prioritizeShareCandidates
-                                  ? 'すべてのメモ'
-                                  : 'メモ一覧',
-                              _showFavoritesOnly
-                                  ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
-                                  : widget.prioritizeShareCandidates
-                                      ? '共有候補の下に、残りのメモを時系列で表示します。'
-                                      : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
-                            ),
-                          ...remainingNotes.map(
-                            (note) => _buildNoteCard(context, note),
+                            ],
                           ),
-                        ],
-                      ),
           ),
         ],
       ),
@@ -2206,13 +2249,18 @@ class _NoteListPageState extends State<NoteListPage> {
     );
   }
 
-  Future<void> _navigateToEditor(BuildContext context, [String? noteId]) async {
+  Future<void> _navigateToEditor(
+    BuildContext context, [
+    String? noteId,
+    String? parentNoteId,
+  ]) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/note-editor'),
         builder: (_) => NoteEditorPage(
           noteId: noteId,
+          initialParentNoteId: parentNoteId,
           supabaseClient: _supabase,
           semanticSearchService: _semanticSearchService,
         ),
